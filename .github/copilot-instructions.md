@@ -1,0 +1,192 @@
+# Wattwise Platform — AI Agent Instructions
+
+## Project Overview
+
+**Wattwise** is a modern SaaS platform for energy management and monitoring. The platform is built with a Next.js 16 frontend using React 19 and TypeScript 5, with a Supabase backend for data persistence and authentication.
+
+**Repository:** `wattwise_platform`  
+**Status:** Active development  
+**Deployment:** Vercel-ready  
+
+---
+
+## Technology Stack
+
+### Frontend
+- **Next.js 16.1.7** — App Router (file-based routing in `app/` directory)
+- **React 19.2.3** — UI library with React Compiler enabled for optimization
+- **TypeScript 5** — Strict mode enabled; project uses path aliases (`@/*` → project root)
+- **Tailwind CSS 4** — Utility-first styling with `@tailwindcss/postcss`
+- **Lucide React** — Icon library for UI components
+- **Recharts 3.8.0** — Charts and data visualization library
+
+### Backend & Services
+- **Supabase** — PostgreSQL database, authentication, and real-time API (`@supabase/supabase-js`)
+- **Environment Variables** — Configured in `.env.local` (contains Supabase credentials, API keys)
+
+### DevOps & PWA
+- **Serwist 9.5.7** — Service Worker integration for offline-first PWA features
+- **ESLint 9** — Linting with Next.js web vitals and TypeScript config
+- **PostCSS 4** — CSS preprocessing for Tailwind
+
+---
+
+## Essential Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start local dev server (http://localhost:3000) with hot reload |
+| `npm run build` | Production build; validates TypeScript and runs ESLint |
+| `npm run start` | Run production build locally |
+| `npm run lint` | Run ESLint checks; fix issues with `npm run lint -- --fix` |
+
+---
+
+## Project Structure & Conventions
+
+### App Directory (Next.js App Router)
+- **`app/layout.tsx`** — Root layout; wraps all pages with global providers (Supabase client, theme, etc.)
+- **`app/page.tsx`** — Homepage (`/` route); start editing here for UI changes
+- **`app/globals.css`** — Global styles (imported in layout); Tailwind directives go here
+- **New pages/routes:** Create folders/files in `app/` following Next.js conventions:
+  - `app/dashboard/page.tsx` → `/dashboard` route
+  - `app/api/route.ts` → `/api` endpoint
+  - `app/(auth)/login/page.tsx` → `/login` route with optional layout grouping
+
+### Code Organization
+- **Components:** Place reusable React components in a `components/` directory (create if needed)
+- **Utilities:** Helper functions, constants, and services in `lib/` or `utils/` directories
+- **API Routes:** Backend logic in `app/api/route.ts` files (Next.js server functions)
+- **Styling:** Use Tailwind CSS classes directly in JSX; avoid inline styles unless necessary
+
+### Naming Conventions
+- **Page components:** `PascalCase` (e.g., `Dashboard.tsx`)
+- **Utility files:** `camelCase` (e.g., `authService.ts`, `formatDate.ts`)
+- **Component files:** `PascalCase` (e.g., `Button.tsx`, `DataTable.tsx`)
+- **CSS files:** `kebab-case` if custom; prefer Tailwind classes in JSX
+
+---
+
+## Architecture & Key Patterns
+
+### React Compiler Mode
+- **Enabled in `next.config.ts`** — Automatically optimizes component re-renders
+- **Benefit:** Reduces need for manual `useMemo`/`useCallback` optimization
+- **Best Practice:** Write components naturally; the compiler handles memoization
+
+### Supabase Integration
+- Client initializes in `layout.tsx` or a dedicated auth provider
+- Use Supabase client for:
+  - Real-time subscriptions (`on('*')` listeners)
+  - Query data with `.from('table').select()` syntax
+  - Handle authentication via `auth.signInWithPassword()`, etc.
+- **Security:** Never expose `SUPABASE_SECRET_KEY` in client code; server-only use in API routes
+
+### Data Visualization
+- Use **Recharts** for charts; components are lightweight and responsive
+- Common patterns: `LineChart`, `BarChart`, `PieChart` with responsive container
+
+### PWA & Service Workers (via Serwist)
+- Configured in `next.config.ts`; provides offline caching and background sync
+- Impact on development: Service Workers cache assets aggressively; hard-refresh in dev if needed
+
+### Resource Optimization (Supabase Free Tier)
+- **Database Throttling:** Prioritize logic that aggregates hardware data. Avoid frequent, high-volume inserts; prefer batched updates or averaged data points (e.g., 1-minute intervals).
+- **Query Efficiency:** Always include `limit()` on fetch requests to prevent over-fetching.
+- **Edge Function Usage:** Use Edge Functions for heavy Meralco calculations to keep the database size lean (storing only final results, not raw calculation steps).
+
+---
+
+## Development Practices
+
+### TypeScript Standards
+- **Strict Mode:** All files must pass TypeScript strict checks
+- **Type Safety:** Avoid `any` types; use proper interfaces/generics
+- **Imports:** Use path aliases (`import { ... } from '@/components/...'`)
+
+### Linting & Code Quality
+- Run **ESLint** before committing: `npm run lint`
+- Fix auto-fixable issues: `npm run lint -- --fix`
+- Linter checks: Next.js web vitals, TypeScript safety, best practices
+
+### Git Workflow
+- Feature branches: `feature/feature-name`
+- Development branch: `dev` (main integration branch)
+- Production branch: `main` (stable releases)
+- Commit messages: Descriptive, present tense (e.g., "Add user authentication flow")
+
+### Environment Variables
+- Store in `.env.local` (not committed to git)
+- Required variables:
+  - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Public API key
+  - Additional keys as project grows (API endpoints, feature flags, etc.)
+- **Note:** `NEXT_PUBLIC_*` prefix makes variables available to browser; other vars server-only
+
+---
+
+## Common Pitfalls & Solutions
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Page doesn't update after env var change | `.env.local` requires dev server restart | Stop `npm run dev`, then restart |
+| Service Worker caching old assets | Serwist aggressive caching in production | Hard-refresh (Cmd+Shift+R) to clear cache |
+| TypeScript build fails unexpectedly | Strict mode catches unused/untyped code | Run `npm run build` locally before push |
+| Form state not reactive | Missing `useState` or dependency array | Use proper React hooks; check dependency arrays |
+| Supabase queries fail silently | Missing error handling or auth token expired | Add `.catch()` handlers; check console logs |
+| Slow initial page load | Over-fetching data or missing route caching | Use Next.js `revalidate` for static generation (`next/cache`) |
+
+---
+
+## Debugging & Troubleshooting
+
+### Dev Server Issues
+- **Clear cache:** `rm -rf .next && npm run dev`
+- **Hot reload not working:** Ensure file is in watched directory (`app/`, `components/`, etc.)
+- **Port conflict (3000 in use):** Change port with `npm run dev -- -p 3001`
+
+### TypeScript Errors at Build
+- Run `npm run build` to catch all issues before push
+- Check for implicit `any` types or missing type definitions
+
+### Supabase Connection Issues
+- Verify `.env.local` has correct `SUPABASE_URL` and `ANON_KEY`
+- Check Supabase dashboard for active sessions and rate limits
+- Use browser DevTools Network tab to debug API calls
+
+---
+
+## AI Agent Guidelines
+
+When working on this codebase:
+
+1. **Start with `npm run dev`** to see live changes
+2. **Always run `npm run lint`** and **`npm run build`** before marking work complete
+3. **Prefer component-driven development:** Extract reusable components early
+4. **Use Tailwind CSS utilities** exclusively; avoid custom CSS unless necessary
+5. **Type all React props** with TypeScript; use generics for reusable patterns
+6. **Handle async/await properly:** Wrap Supabase calls in error boundaries or try-catch
+7. **Respect the React Compiler:** Avoid patterns that defeat static analysis (e.g., inline function definitions in props where possible)
+8. **Document complex logic:** Add comments for non-obvious Supabase queries or algorithms
+9. **Keep env vars organized:** Document all required env vars in a `.env.example` file as project grows
+10. **Optimize for Free Tier:** Every database interaction must be "lean." Avoid creating large audit logs or redundant history rows that consume the 500MB storage limit.
+11. **Aggressive Caching:** Use SWR or TanStack Query patterns to cache energy data in the browser, reducing the number of direct API calls to Supabase.
+12. **Meralco Logic Location:** Ensure all Philippine-specific billing logic (VAT, System Loss, etc.) is modularized so it can be easily moved to a Supabase Edge Function to maintain a single source of truth.
+13. **Professional Aesthetic (No Unnecessary Emojis):** Do not use emojis in console logs, terminal output, or UI elements (buttons, labels, headers) unless specifically requested for a "Status Icon" (e.g., a green circle for 'Live'). Keep the interface and logs professional and text-based.
+14. **Environment Parity:** If suggesting a port change for development (to avoid conflicts with `wattwise_web`), default to `3001` for the platform while keeping `3000` for the hardware local bridge if necessary.
+
+---
+
+## Useful Resources
+
+- [Next.js 16 Docs](https://nextjs.org/docs)
+- [React 19 Docs](https://react.dev)
+- [Tailwind CSS 4 Docs](https://tailwindcss.com)
+- [Supabase Docs](https://supabase.io/docs)
+- [Recharts Docs](https://recharts.org)
+- [Lucide Icons](https://lucide.dev)
+
+---
+
+**Last Updated:** March 18, 2026  
+**Maintained By:** Wattwise Dev Team
