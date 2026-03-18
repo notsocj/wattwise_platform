@@ -100,7 +100,127 @@
 
 ---
 
-## Project Structure & Conventions
+## Design System (Neo-Utility — 2026)
+
+### Typography
+All UI uses **Space Grotesk** for its technical, modern personality and stable number rendering.
+
+| Role | Size | Weight | Usage |
+|------|------|--------|-------|
+| Heading 1 | 32px | Bold | Household overview values |
+| Heading 2 | 24px | Semi-Bold | Section headers |
+| Body Text | 16px | Regular | Device names, descriptions |
+| Technical/Mono | 14px | Medium | Voltage readings, amperage thresholds |
+
+### Color Palette (High-Contrast Dark Mode)
+
+#### Core Foundation
+| Token | Hex | Purpose |
+|-------|-----|---------|
+| Background Base | `#121212` | True dark — reduces eye strain, optimizes OLED battery |
+| Surface / Cards | `#1E1E1E` | Soft charcoal — subtle depth for interactive elements |
+
+#### Action & Status Colors
+| Token | Hex | Purpose |
+|-------|-----|---------|
+| Primary Action (Neon Mint) | `#00E66F` | Active states, primary buttons, electricity logo glow |
+| Bida (Success Green) | `#10B981` | Savings celebrations, "Under Budget" states |
+| Naku! (Warning Amber) | `#F59E0B` | Usage spikes, approaching budget limits |
+| Danger (High-Alert Red) | `#EF4444` | Safety cutoffs, over-current trips, "Global Off" controls |
+
+### Visual Effects
+- **Glow:** `box-shadow` with 20–40px blur using `#00E66F` at 40–60% opacity — applied to the electricity logo and active Neon Mint elements.
+- **Glassmorphism:** Device Detail sub-cards use a slightly transparent surface (`bg-white/5` + `backdrop-blur`) to create a "Liquid Glass" layered effect.
+- **Roundness:** `border-radius: 8px` (Round Eight) — standard for all buttons and container cards.
+
+### Implementation Notes for AI Agent
+- Load **Space Grotesk** via `next/font/google` in `app/layout.tsx` and apply it to `<html>` as the default sans font via Tailwind's `fontFamily` config.
+- Define all palette tokens as Tailwind CSS custom colors in `tailwind.config.ts` (e.g., `mint: '#00E66F'`, `surface: '#1E1E1E'`) so they are available as utility classes across the codebase.
+- Never hard-code hex values in component JSX — always use the Tailwind token (e.g., `bg-surface`, `text-mint`, `shadow-mint-glow`).
+- The `#EF4444` Danger color must **only** appear on destructive or safety-critical actions. Do not use it for decorative purposes.
+
+---
+
+## Screen Specifications (2026 Fleet-Scale Edition)
+
+### 1. Onboarding Flow (The Entry)
+
+#### Splash Screen
+- **Core Branding:** Centralized WattWise electricity bolt logo with the signature circular green glow on a true dark background.
+- **Visuals:** Minimalist and high-impact to establish the energy-saving aesthetic immediately.
+- **Function:** Initial load and brand establishment.
+
+#### Welcome Screen
+- **Value Proposition:** "Smart Energy. Real Savings."
+- **Branding:** Unified logo and glow matching the Splash screen for visual continuity.
+- **Actions:** Dual high-contrast buttons — *Login* (Solid Neon Mint fill) and *Register* (Outlined variant).
+- **Footnote:** "Optimized for sustainable living."
+
+#### Login Screen
+- **Branding:** Consistent glow-logo at the top.
+- **Inputs:** Email and Password fields with internal iconography and "Forgot Password?" link.
+- **Action:** Primary tactile "Login" button with the signature neon mint glow.
+- **Navigation:** "Register" link for new users.
+
+#### Registration Screen
+- **Branding:** Consistent glow-logo at the top.
+- **Inputs:**
+  - *Home Name:* (e.g., "Santos Residence") to personalize the multi-device hub.
+  - *Email Address:* Primary account identifier.
+  - *Password:* Secure entry with visibility toggle.
+- **Action:** Primary "Sign Up" button.
+- **Navigation:** "Log In" link for existing users.
+
+---
+
+### 2. Multi-Device Command Center
+
+#### Home Dashboard (The Fleet View)
+- **Unified Branding:** "WattWise" header with the electricity icon.
+- **Household Pulse:**
+  - *Total Live Wattage:* Real-time aggregate power draw across all devices.
+  - *Total Daily Cost (₱):* Live financial conversion using Meralco unbundled rates.
+- **Device Grid:**
+  - *Active Device Cards:* Solid surface cards for units like "Aircon" or "Fridge."
+  - *Live Metrology:* Shows individual wattage per card.
+  - *30A Relay Toggle:* Neon Mint switch for immediate remote power control.
+- **Expansion:** "Add Appliance" tile (dashed border) with a large "+" icon.
+- **Safety Layer:** "Slide to Power Off All" emergency disconnect button at the bottom.
+- **Mascot Tip:** Sticky AI tip banner (e.g., "Overall usage is 10% lower today. Bida!").
+
+#### Device Detail (The Hardware Inspector)
+- **Focus Mode:** No bottom navigation to keep the user focused on the specific hardware unit.
+- **Metrology Gauges:** Three "Liquid Glass" circular progress rings for Power (W), Voltage (V), and Current (A).
+- **Device Wallet:**
+  - *Monthly Budget:* Interactive slider to set a PHP limit.
+  - *Burn Rate:* Progress bar visualizing consumption against the budget.
+- **Hardware Controls:**
+  - *Massive Relay Toggle:* Large, central tactile button for physical power switching.
+  - *Auto-Trip Slider:* Safety configuration for over-current thresholds.
+- **Diagnostics:** Wi-Fi RSSI and Board Temp readings at the bottom.
+
+---
+
+### 3. The Strategy Center
+
+#### Insights Dashboard (The Analytics Hub)
+- **Device Performance Leaderboard:** Ranked list from "Expensive" to "Efficient."
+- **Coaching Feed (Bento Layout):**
+  - *Naku! Alert (Orange/Red):* High-priority cards for spikes (e.g., "Critical Spike!").
+  - *Bida Recap (Green):* Positive reinforcement for staying under budget.
+  - *Strategy Tip:* Actionable advice (e.g., "Shift laundry to off-peak hours").
+- **Trend Comparison:** Interactive weekly bar charts comparing "This Wk" vs. "Last Wk."
+- **Financial Forecast:** Bold readout showing predicted bill and projected savings percentage.
+
+---
+
+### 4. Navigation Architecture
+- **Standardized 2-Tab Navbar:** Persistent navigation on Home and Insights screens:
+  - *Home Tab:* Fleet View & Device Grid.
+  - *Insights Tab:* Analytics, Mascot Feed, and Leaderboards.
+- **Visual State:** Active tab is highlighted with a green glow indicator.
+
+---
 
 ### App Directory (Next.js App Router)
 - **`app/layout.tsx`** — Root layout; wraps all pages with global providers (Supabase client, theme, etc.)
