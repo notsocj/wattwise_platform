@@ -10,6 +10,64 @@
 
 ---
 
+## Platform Features & Architecture Overview
+
+### Part 1: Core Web App Features (The User PWA)
+
+#### 1. Unbundled Meralco Billing Engine
+- **Description:** Translates raw kWh into exact Philippine Pesos using unbundled Meralco formulas (Generation, Transmission, System Loss) plus the 12% VAT.
+- **User Value:** Users see exactly how much their appliance is costing them right now, eliminating "bill shock" at the end of the month.
+
+#### 2. Taglish AI "Tipid" Advisor (OpenAI Powered)
+- **Description:** Analyzes aggregated daily usage and delivers hyper-personalized, casual Taglish insights (e.g., Budget "Naku!" Alerts and Weekly "Bida" Recaps).
+- **User Value:** Transforms raw data into actionable financial advice that feels like a text message from a friend, increasing user engagement.
+
+#### 3. Live Power Gauge & Analytics Dashboard
+- **Description:** Displays real-time telemetry (Watts, Volts, Amps) pulled via Supabase Realtime, alongside historical bar charts for daily and weekly consumption.
+- **User Value:** Gives users a visual understanding of their appliance's power draw and historical usage trends.
+
+#### 4. Remote 30A "Kill Switch" (Optimistic UI)
+- **Description:** A secure, high-priority toggle on the dashboard that sends an MQTT command to the ESP32-S3 to physically cut power to the plugged-in appliance.
+- **User Value:** Allows users to turn off forgotten appliances remotely (e.g., an iron or aircon) from anywhere with an internet connection.
+
+#### 5. Mobile-First Progressive Web App (PWA)
+- **Description:** Powered by Serwist, the web app can be installed directly to a user's phone home screen (iOS/Android) without going through the App Store, featuring caching for fast load times even on slow networks.
+- **User Value:** Feels exactly like a native mobile app without the overhead of app store deployment.
+
+### Part 2: System-Wide & Hardware Features (The IoT Architecture)
+
+#### 1. Over-Current "Safety Trip" Protection
+- **Description:** The hardware autonomously monitors current spikes. If an appliance draws dangerous levels of current, the ESP32-S3 cuts the 30A relay instantly, bypassing the web app entirely, and logs the event to the cloud.
+- **System Value:** Prevents electrical fires and protects the hardware, satisfying strict engineering safety standards for the thesis.
+
+#### 2. Aggregated Data Throttling
+- **Description:** Instead of hammering the database every second, the system averages telemetry data (e.g., every 1 minute or 1 hour) before inserting it into Supabase.
+- **System Value:** Ensures the platform remains fully operational and highly scalable within the 500MB Supabase Free Tier limit.
+
+### Part 3: Super Admin "Mission Control" (Owner Dashboard)
+
+#### 1. Meralco Rate Editor (Global System Variable)
+- **Function:** A single form to update the unbundled Meralco rates (Generation, Transmission, System Loss, etc.).
+- **Mechanism:** Updates the active row in the `meralco_rates` table. This acts as the single source of truth for all users' cost calculations across the platform.
+
+#### 2. Revenue & Growth (Sales & Adoption)
+- **Function:** Tracks total registered users, active devices, and hypothetical MRR (Monthly Recurring Revenue).
+- **Mechanism:** Counts rows in the `profiles` and `devices` tables grouped by account creation date to generate a 30-day growth chart.
+
+#### 3. OpenAI Usage & Cost Tracker
+- **Function:** Monitors the exact token usage and estimated USD cost of your Taglish AI advisor.
+- **Mechanism:** Every time an insight is generated, the backend saves the `prompt_tokens` and `completion_tokens` into the `ai_insights` table. The dashboard aggregates these to calculate real-time API costs.
+
+#### 4. Database & System Health (Free Tier Monitor)
+- **Function:** Tracks the volume of telemetry data being ingested to ensure you do not hit the Supabase 500MB limit.
+- **Mechanism:** Monitors the total row count in the `energy_logs` table and tracks how many ESP32-S3 devices are currently "Online" based on their last ping.
+
+#### 5. Global Energy Analytics (The "Big Picture")
+- **Function:** Calculates the total kWh monitored by the entire WattWise platform and the total estimated Pesos saved by all users.
+- **Mechanism:** Runs an aggregated sum of all `energy_logs` across the entire database to prove the macro-level impact of your thesis.
+
+---
+
 ## Technology Stack
 
 ### Frontend
