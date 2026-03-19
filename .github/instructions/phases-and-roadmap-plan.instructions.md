@@ -15,7 +15,7 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~20% | Design system done, auth UI built (no backend), no dashboard yet |
+| 1 — Foundation | In Progress | ~45% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done |
 | 2 — Billing & Control | Not Started | 0% | Blocked by Phase 1 Supabase bootstrap |
 | 3 — AI & PWA | Not Started | 0% | Blocked by Phase 2 billing data |
 | 4 — Super Admin | Not Started | 0% | Blocked by Phases 1–3 |
@@ -28,19 +28,19 @@ applyTo: "**"
 
 ### Platform Tasks (Web)
 
-- [ ] **Supabase Project Bootstrap**
-  - [ ] Create Supabase project and configure `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - [ ] Run SQL migrations to create all 6 tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `relay_commands`, `ai_insights`
-  - [ ] Create all required indexes (`idx_energy_logs_device_time`, `idx_ai_insights_user_type_date`)
-  - [ ] Enable Row Level Security (RLS) policies on all tables
+- [x] **Supabase Project Bootstrap**
+  - [ ] Create Supabase project and configure `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` *(env vars stubbed — fill in real values from Supabase dashboard)*
+  - [x] Run SQL migrations to create all 6 tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `relay_commands`, `ai_insights` *(migration at `supabase/migrations/001_initial_schema.sql`)*
+  - [x] Create all required indexes (`idx_energy_logs_device_time`, `idx_ai_insights_user_type_date`)
+  - [x] Enable Row Level Security (RLS) policies on all tables
 
-- [ ] **Authentication Flow**
-  - [ ] Implement Supabase Auth provider wrapper in `app/layout.tsx`
-  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete — no Supabase auth logic yet)*
-  - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete — no Supabase auth logic yet)*
+- [x] **Authentication Flow**
+  - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` in `components/providers/SupabaseProvider.tsx`, session fetched server-side)*
+  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired)*
+  - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired)*
   - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
-  - [ ] Implement auth middleware to protect `/dashboard` and other authenticated routes
-  - [ ] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert
+  - [x] Implement auth middleware to protect `/dashboard` and other authenticated routes *(`proxy.ts` — uses Next.js 16 `proxy` convention)*
+  - [x] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert *(PostgreSQL trigger `handle_new_user` in migration)*
 
 - [x] **Design System Setup** *(95% complete)*
   - [x] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`

@@ -1,11 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Zap, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
+    setError(null);
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-base tracking-tight">
@@ -27,6 +48,13 @@ export default function LoginPage() {
 
       {/* Form Section */}
       <div className="flex flex-col flex-1 px-6 pt-6">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
+
         {/* Email */}
         <div className="mb-5">
           <label className="block text-white text-base font-semibold mb-2">
@@ -35,6 +63,8 @@ export default function LoginPage() {
           <input
             type="email"
             placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -48,6 +78,8 @@ export default function LoginPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
             />
             <button
@@ -68,8 +100,12 @@ export default function LoginPage() {
         </div>
 
         {/* Login Button */}
-        <button className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95">
-          Login
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         {/* Register Link */}

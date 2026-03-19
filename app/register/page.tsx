@@ -1,11 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Zap, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister() {
+    setError(null);
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    // Profile row is auto-created by Supabase trigger (handle_new_user)
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-base tracking-tight">
@@ -32,6 +65,13 @@ export default function RegisterPage() {
         {/* Create Account Heading */}
         <h2 className="text-xl font-bold text-white mb-6">Create Account</h2>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
+
         {/* Home Name */}
         <div className="mb-5">
           <label className="block text-white text-base font-semibold mb-2">
@@ -40,6 +80,8 @@ export default function RegisterPage() {
           <input
             type="text"
             placeholder="e.g., Santos Residence"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -52,6 +94,8 @@ export default function RegisterPage() {
           <input
             type="email"
             placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -65,6 +109,8 @@ export default function RegisterPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
             />
             <button
@@ -81,8 +127,12 @@ export default function RegisterPage() {
         <p className="text-white/40 text-xs mb-8">Must be at least 8 characters long.</p>
 
         {/* Sign Up Button */}
-        <button className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95">
-          Sign Up
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Creating Account..." : "Sign Up"}
         </button>
 
         {/* Login Link */}
