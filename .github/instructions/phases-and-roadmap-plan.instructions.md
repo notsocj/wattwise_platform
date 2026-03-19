@@ -11,6 +11,17 @@ applyTo: "**"
 
 ---
 
+## Progress Summary
+
+| Phase | Status | Completion | Notes |
+|---|---|---|---|
+| 1 — Foundation | In Progress | ~20% | Design system done, auth UI built (no backend), no dashboard yet |
+| 2 — Billing & Control | Not Started | 0% | Blocked by Phase 1 Supabase bootstrap |
+| 3 — AI & PWA | Not Started | 0% | Blocked by Phase 2 billing data |
+| 4 — Super Admin | Not Started | 0% | Blocked by Phases 1–3 |
+
+---
+
 ## Phase 1: Foundation & "The Digital Twin"
 
 **Objective:** Establish the complete data pipeline — from the physical PZEM-004T sensor on the ESP32-S3, through Supabase, to a live dashboard in the browser. By the end of this phase, a user can register, pair a device, and see real-time Watts on screen.
@@ -25,16 +36,16 @@ applyTo: "**"
 
 - [ ] **Authentication Flow**
   - [ ] Implement Supabase Auth provider wrapper in `app/layout.tsx`
-  - [ ] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password
-  - [ ] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link
-  - [ ] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
+  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete — no Supabase auth logic yet)*
+  - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete — no Supabase auth logic yet)*
+  - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
   - [ ] Implement auth middleware to protect `/dashboard` and other authenticated routes
   - [ ] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert
 
-- [ ] **Design System Setup**
-  - [ ] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`
-  - [ ] Configure Tailwind 4 custom tokens: `bg-base (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
-  - [ ] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
+- [x] **Design System Setup** *(95% complete)*
+  - [x] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`
+  - [x] Configure Tailwind 4 custom tokens: `bg-base (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
+  - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
 
 - [ ] **Device Pairing & Registration**
@@ -225,7 +236,7 @@ applyTo: "**"
   - [ ] Build sticky AI tip banner on Home Dashboard showing latest insight snippet
   - [ ] Tapping the banner navigates to the full Insights Dashboard
 
-### Hardware Tasks (Firmware)2
+### Hardware Tasks (Firmware)
 
 - [ ] **Telemetry Enrichment**
   - [ ] Add Wi-Fi RSSI (signal strength in dBm) to the 1-minute payload

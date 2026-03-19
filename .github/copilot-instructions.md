@@ -355,6 +355,33 @@ When working on this codebase:
 
 ---
 
+## Automatic Documentation Sync (Mandatory)
+
+**After every implementation task** (new feature, bug fix, refactor, or file creation), you **must** update the following instruction files in `.github/instructions/` to reflect the current state of the codebase:
+
+### 1. `phases-and-roadmap-plan.instructions.md`
+- **Check off completed items:** Change `- [ ]` to `- [x]` for any task that was just implemented.
+- **Update the Progress Summary table** at the top with the new completion percentage and notes.
+- **Add partial-completion annotations** (e.g., `*(UI complete — no backend logic yet)*`) when a task is only partially done.
+- **Never uncheck a previously completed item** unless the feature was reverted.
+
+### 2. `ai-workflow.instructions.md`
+- If the implementation introduces a **new pattern** (e.g., a new Supabase query pattern, a new API route convention, a new component structure), add it to the relevant section.
+- If a **constraint was violated** during implementation and corrected, add a note to the "Quick Reference — What NOT to Do" table.
+
+### 3. `supabase-schema-context.instructions.md`
+- If the implementation **adds or modifies a database table, column, index, or RPC function**, update the schema documentation to match.
+- If a **new common query pattern** was introduced, add it to the "Common Query Patterns" section.
+
+### When to Skip
+- Do **not** update instruction files for trivial changes (e.g., fixing a typo, adjusting padding, renaming a CSS class) that don't affect roadmap progress or architectural patterns.
+
+### How to Update
+- Read the current file contents before editing to avoid overwriting recent changes.
+- Keep edits minimal and surgical — only change what's necessary to reflect the new state.
+
+---
+
 ## Useful Resources
 
 - [Next.js 16 Docs](https://nextjs.org/docs)
@@ -366,5 +393,5 @@ When working on this codebase:
 
 ---
 
-**Last Updated:** March 18, 2026  
+**Last Updated:** March 19, 2026  
 **Maintained By:** Wattwise Dev Team
