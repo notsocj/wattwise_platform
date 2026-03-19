@@ -16,7 +16,7 @@ applyTo: "**"
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~50% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard UI built with mock data |
-| 2 — Billing & Control | Scaffolded | ~5% | Route placeholders created (`/dashboard/[deviceId]`, `/api/relay`), blocked by Phase 1 completion |
+| 2 — Billing & Control | In Progress | ~15% | Device Detail UI built (gauges, wallet, relay toggle, safety thresholds, diagnostics — mock data), route placeholders for API |
 | 3 — AI & PWA | In Progress | ~25% | Insights dashboard UI built (leaderboard, coaching feed, trend chart, forecast — mock data), bottom nav done, AI tip banner done |
 | 4 — Super Admin | Scaffolded | ~5% | Route placeholders created (all 5 admin pages + layout), blocked by Phases 1–3 |
 
@@ -114,16 +114,16 @@ applyTo: "**"
   - [ ] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function
   - [ ] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded
 
-- [ ] **Device Detail Screen**
-  - [ ] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
-  - [ ] Implement three "Liquid Glass" gauge rings: Power (W), Voltage (V), Current (A)
-  - [ ] Build **Device Wallet** section:
-    - [ ] Monthly Budget slider (PHP) — updates `profiles.monthly_budget_php`
-    - [ ] Burn Rate progress bar — current spend vs. budget, color-coded (Bida/Naku!/Danger)
-  - [ ] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
+- [x] **Device Detail Screen** *(UI complete — mock data, no Supabase wiring yet)*
+  - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
+  - [x] Implement three "Liquid Glass" gauge rings: Power (W), Voltage (V), Current (A)
+  - [x] Build **Device Wallet** section:
+    - [x] Monthly Budget slider (PHP) — updates `profiles.monthly_budget_php`
+    - [x] Burn Rate progress bar — current spend vs. budget, color-coded (Bida/Naku!/Danger)
+  - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
-- [ ] **Remote 30A Kill Switch (Optimistic UI)**
-  - [ ] Build large tactile relay toggle button on Device Detail page
+- [ ] **Remote 30A Kill Switch (Optimistic UI)** *(UI toggle built — no MQTT/Supabase wiring yet)*
+  - [x] Build large tactile relay toggle button on Device Detail page
   - [ ] Implement optimistic UI pattern:
     1. [ ] Immediately update local state to `off` on user tap
     2. [ ] INSERT into `relay_commands` table: `{ device_id, command: 'OFF', status: 'pending', origin: 'user' }`
