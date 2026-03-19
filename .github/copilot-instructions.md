@@ -130,14 +130,18 @@ All UI uses **Space Grotesk** for its technical, modern personality and stable n
 
 ### Visual Effects
 - **Glow:** `box-shadow` with 20–40px blur using `#00E66F` at 40–60% opacity — applied to the electricity logo and active Neon Mint elements.
+- **Accent Bars:** Left-side pill-shaped mint accent bars on stat cards and device cards — `w-1 bg-mint/60` (stat cards) or `w-1 bg-mint/50` (device cards) with `rounded-r-full` to create a rounded right edge.
+- **Borders:** Neutral dark borders using `border-white/5` (normal) or `border-white/[0.06]` (slightly more visible) for card separators; status colors only for interactive elements (mint for buttons, danger for destructive actions).
 - **Glassmorphism:** Device Detail sub-cards use a slightly transparent surface (`bg-white/5` + `backdrop-blur`) to create a "Liquid Glass" layered effect.
-- **Roundness:** `border-radius: 8px` (Round Eight) — standard for all buttons and container cards.
+- **Roundness:** `rounded-xl` (12px) for main card containers; `rounded-lg` (8px) for icon backgrounds; `rounded-full` for circular elements and pill toggles.
 
 ### Implementation Notes for AI Agent
 - Load **Space Grotesk** via `next/font/google` in `app/layout.tsx` and apply it to `<html>` as the default sans font via Tailwind's `fontFamily` config.
-- Define all palette tokens as Tailwind CSS custom colors in `tailwind.config.ts` (e.g., `mint: '#00E66F'`, `surface: '#1E1E1E'`) so they are available as utility classes across the codebase.
+- Define all palette tokens as Tailwind CSS custom colors in `app/globals.css` with `@theme` (e.g., `--color-mint: #00E66F`, `--color-surface: #1E1E1E`) so they are available as utility classes across the codebase.
 - Never hard-code hex values in component JSX — always use the Tailwind token (e.g., `bg-surface`, `text-mint`, `shadow-mint-glow`).
+- For card/container borders and subtle backgrounds, use neutral white opacity (e.g., `border-white/5`, `bg-white/[0.04]`) to avoid green tint on non-interactive surfaces.
 - The `#EF4444` Danger color must **only** appear on destructive or safety-critical actions. Do not use it for decorative purposes.
+- Large metric numbers (watts, cost) use `text-mint` with unit labels in `text-white/50` for visual hierarchy.
 
 ---
 

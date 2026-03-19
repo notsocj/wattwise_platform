@@ -26,7 +26,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} antialiased bg-base text-white`}>
+      <body suppressHydrationWarning className={`${spaceGrotesk.variable} antialiased bg-base text-white`}>
         <SupabaseProvider session={session}>
           {children}
         </SupabaseProvider>

@@ -3,16 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Zap } from "lucide-react";
+import { useSupabase } from "@/components/providers/SupabaseProvider";
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { session } = useSupabase();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace("/onboarding");
+      router.replace(session ? "/dashboard" : "/onboarding");
     }, 2500);
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [router, session]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-base tracking-tight transition-opacity duration-500">
