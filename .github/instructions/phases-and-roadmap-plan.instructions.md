@@ -15,9 +15,9 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~45% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, all route placeholders scaffolded |
+| 1 — Foundation | In Progress | ~50% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard UI built with mock data |
 | 2 — Billing & Control | Scaffolded | ~5% | Route placeholders created (`/dashboard/[deviceId]`, `/api/relay`), blocked by Phase 1 completion |
-| 3 — AI & PWA | Scaffolded | ~5% | Route placeholders created (`/insights`, `/api/insights`), blocked by Phase 2 |
+| 3 — AI & PWA | In Progress | ~25% | Insights dashboard UI built (leaderboard, coaching feed, trend chart, forecast — mock data), bottom nav done, AI tip banner done |
 | 4 — Super Admin | Scaffolded | ~5% | Route placeholders created (all 5 admin pages + layout), blocked by Phases 1–3 |
 
 ---
@@ -211,18 +211,18 @@ applyTo: "**"
   - [ ] System prompt must compare week-over-week and provide positive reinforcement
   - [ ] Display as a **green "Bida" card** on the Insights Dashboard
 
-- [ ] **Insights Dashboard (`app/insights/page.tsx`)**
-  - [ ] Build **Device Performance Leaderboard** — ranked from most expensive to most efficient
-  - [ ] Build **Coaching Feed** (Bento layout):
-    - [ ] Naku! Alert card (amber/red styling)
-    - [ ] Bida Recap card (green styling)
-    - [ ] Strategy Tip card (actionable advice)
-  - [ ] Build **Trend Comparison** — "This Wk" vs. "Last Wk" interactive bar chart
-  - [ ] Build **Financial Forecast** — predicted monthly bill + projected savings %
+- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(UI complete — mock data, no backend logic yet)*
+  - [x] Build **Device Performance Leaderboard** — ranked from most expensive to most efficient
+  - [x] Build **Coaching Feed** (Bento layout):
+    - [x] Naku! Alert card (amber/red styling)
+    - [x] Bida Recap card (green styling)
+    - [x] Strategy Tip card (actionable advice)
+  - [x] Build **Trend Comparison** — "This Wk" vs. "Last Wk" interactive bar chart
+  - [x] Build **Financial Forecast** — predicted monthly bill + projected savings %
 
-- [ ] **Bottom Navigation Bar**
-  - [ ] Implement persistent 2-tab navbar: **Home** (fleet view) and **Insights** (analytics)
-  - [ ] Active tab highlighted with green glow indicator
+- [x] **Bottom Navigation Bar**
+  - [x] Implement persistent 2-tab navbar: **Home** (fleet view) and **Insights** (analytics)
+  - [x] Active tab highlighted with green glow indicator
   - [ ] Navigation bar hidden on Device Detail page (focus mode)
 
 - [ ] **Serwist PWA Configuration**
@@ -232,9 +232,9 @@ applyTo: "**"
   - [ ] Add install prompt banner for iOS/Android home screen installation
   - [ ] Test offline behavior: cached dashboard loads, graceful fallback for live data
 
-- [ ] **Mascot/AI Tip Banner**
-  - [ ] Build sticky AI tip banner on Home Dashboard showing latest insight snippet
-  - [ ] Tapping the banner navigates to the full Insights Dashboard
+- [x] **Mascot/AI Tip Banner** *(UI complete — mock data, no backend logic yet)*
+  - [x] Build sticky AI tip banner on Home Dashboard showing latest insight snippet
+  - [x] Tapping the banner navigates to the full Insights Dashboard
 
 ### Hardware Tasks (Firmware)
 

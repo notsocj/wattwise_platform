@@ -117,9 +117,9 @@ export default function DashboardPage() {
               <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
                 Total Live Wattage
               </p>
-              <p className="text-5xl font-bold tracking-tight text-mint">
+              <p className="text-5xl font-bold tracking-tight text-white">
                 {totalWatts.toLocaleString()}
-                <span className="text-lg font-medium text-mint/70 ml-1">
+                <span className="text-lg font-medium text-white/50 ml-1">
                   W
                 </span>
               </p>
@@ -141,8 +141,8 @@ export default function DashboardPage() {
           <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
             Total Daily Cost
           </p>
-          <p className="text-5xl font-bold tracking-tight text-mint">
-            <span className="text-3xl font-semibold text-mint/70 mr-0.5">
+          <p className="text-5xl font-bold tracking-tight text-white">
+            <span className="text-3xl font-semibold text-white/50 mr-0.5">
               ₱
             </span>
             {MOCK_DAILY_COST.toLocaleString("en-PH", {
