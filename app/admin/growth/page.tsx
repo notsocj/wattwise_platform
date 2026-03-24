@@ -1,17 +1,20 @@
-import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
 
 export default function AdminGrowthPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-6">
-      <div className="w-16 h-16 rounded-full bg-mint/10 flex items-center justify-center mb-6">
-        <TrendingUp className="w-8 h-8 text-mint" />
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <TrendingUp className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">Revenue & Growth</h1>
       </div>
-      <h1 className="text-2xl font-bold mb-2">Revenue &amp; Growth</h1>
-      <p className="text-white/50 text-center mb-8">
-        User growth charts and MRR tracking coming soon.
+      <p className="text-white/50 mb-8">
+        User adoption, active devices, and hypothetical MRR tracking.
       </p>
-      <Link href="/admin" className="text-mint hover:underline text-sm">Back to Admin</Link>
+      <div className="rounded-lg border border-white/10 bg-surface p-6">
+        <p className="text-white/40 text-sm">
+          30-day user growth chart, total users, active devices, and new user metrics will be displayed here.
+        </p>
+      </div>
     </div>
   );
 }

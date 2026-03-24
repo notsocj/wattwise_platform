@@ -160,6 +160,11 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
    - `energy_logs` data is aggregated before insertion (e.g., 1-minute or hourly averages) to stay within 500MB limit.
    - `ai_insights` caching prevents redundant API calls to OpenAI.
 
+6. **Super Admin RLS Policies** *(migration at `supabase/migrations/002_admin_rls_policies.sql`)*:
+   - Super admins (`profiles.role = 'super_admin'`) have SELECT access to all rows in: `profiles`, `devices`, `energy_logs`, `relay_commands`, `ai_insights`.
+   - Super admins have INSERT and UPDATE access on `meralco_rates` for rate management.
+   - Policy pattern uses `EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')`.
+
 ---
 
 ## Common Query Patterns
@@ -194,4 +199,10 @@ SELECT * FROM meralco_rates
 WHERE effective_month <= CURRENT_DATE
 ORDER BY effective_month DESC
 LIMIT 1;
+```
+
+### Fetch User Role for Admin Middleware
+```sql
+SELECT role FROM profiles
+WHERE id = $1;
 ```

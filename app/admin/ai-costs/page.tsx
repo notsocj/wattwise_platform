@@ -1,17 +1,20 @@
-import Link from 'next/link';
 import { Brain } from 'lucide-react';
 
 export default function AdminAiCostsPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-6">
-      <div className="w-16 h-16 rounded-full bg-mint/10 flex items-center justify-center mb-6">
-        <Brain className="w-8 h-8 text-mint" />
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <Brain className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">OpenAI Cost Tracker</h1>
       </div>
-      <h1 className="text-2xl font-bold mb-2">OpenAI Cost Tracker</h1>
-      <p className="text-white/50 text-center mb-8">
-        Token usage analytics and cost estimation coming soon.
+      <p className="text-white/50 mb-8">
+        Monitor token usage, estimated USD costs, and insight generation volume.
       </p>
-      <Link href="/admin" className="text-mint hover:underline text-sm">Back to Admin</Link>
+      <div className="rounded-lg border border-white/10 bg-surface p-6">
+        <p className="text-white/40 text-sm">
+          Daily token usage chart, total insights generated, and cost breakdown by insight type will be displayed here.
+        </p>
+      </div>
     </div>
   );
 }

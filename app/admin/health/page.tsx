@@ -1,17 +1,20 @@
-import Link from 'next/link';
 import { HeartPulse } from 'lucide-react';
 
 export default function AdminHealthPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-6">
-      <div className="w-16 h-16 rounded-full bg-mint/10 flex items-center justify-center mb-6">
-        <HeartPulse className="w-8 h-8 text-mint" />
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <HeartPulse className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">System Health</h1>
       </div>
-      <h1 className="text-2xl font-bold mb-2">System Health</h1>
-      <p className="text-white/50 text-center mb-8">
-        Database storage monitor and device fleet status coming soon.
+      <p className="text-white/50 mb-8">
+        Database storage usage, device fleet status, and Supabase Free Tier monitoring.
       </p>
-      <Link href="/admin" className="text-mint hover:underline text-sm">Back to Admin</Link>
+      <div className="rounded-lg border border-white/10 bg-surface p-6">
+        <p className="text-white/40 text-sm">
+          Storage progress bar, online/offline device counts, and device health table will be displayed here.
+        </p>
+      </div>
     </div>
   );
 }

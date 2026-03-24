@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** March 19, 2026
+> **Last Updated:** March 24, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -15,6 +15,10 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
+| 1 — Foundation | In Progress | ~45% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, all route placeholders scaffolded |
+| 2 — Billing & Control | Scaffolded | ~5% | Route placeholders created (`/dashboard/[deviceId]`, `/api/relay`), blocked by Phase 1 completion |
+| 3 — AI & PWA | Scaffolded | ~5% | Route placeholders created (`/insights`, `/api/insights`), blocked by Phase 2 |
+| 4 — Super Admin | In Progress | ~20% | Route guard + role-based middleware + sidebar layout done, admin RLS policies created, page scaffolds updated for sidebar layout, functional page implementations pending |
 | 1 — Foundation | In Progress | ~50% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard UI built with mock data |
 | 2 — Billing & Control | In Progress | ~15% | Device Detail UI built (gauges, wallet, relay toggle, safety thresholds, diagnostics — mock data), route placeholders for API |
 | 3 — AI & PWA | In Progress | ~25% | Insights dashboard UI built (leaderboard, coaching feed, trend chart, forecast — mock data), bottom nav done, AI tip banner done |
@@ -269,11 +273,14 @@ applyTo: "**"
 
 ### Platform Tasks (Web)
 
-- [ ] **Super Admin Route Guard**
-  - [ ] Create `app/admin/layout.tsx` with role-based access control
-  - [ ] Check `profiles.role === 'super_admin'` on every admin page load
-  - [ ] Redirect non-admin users to `/dashboard` with unauthorized toast
-  - [ ] Create admin navigation sidebar (separate from user 2-tab nav)
+- [x] **Super Admin Route Guard**
+  - [x] Create `app/admin/layout.tsx` with role-based access control *(async Server Component, fetches profile + verifies super_admin role, redirects non-admins)*
+  - [x] Check `profiles.role === 'super_admin'` on every admin page load *(defense-in-depth: middleware + layout both verify role)*
+  - [x] Redirect non-admin users to `/dashboard` with unauthorized toast *(middleware redirects to `/login?error=unauthorized`, layout redirects to `/dashboard`)*
+  - [x] Create admin navigation sidebar (separate from user 2-tab nav) *(`components/admin/AdminSidebar.tsx` — client component with active nav state, sign-out, 6 nav links)*
+  - [x] Update middleware to gate `/admin` routes by `super_admin` role *(queries `profiles` table for `/admin` paths only)*
+  - [x] Update login page with role-based redirect *(super_admin → `/admin`, user → `/dashboard`)*
+  - [x] Create super_admin RLS policies *(migration at `supabase/migrations/002_admin_rls_policies.sql` — SELECT on all tables + INSERT/UPDATE on meralco_rates)*
 
 - [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)**
   - [ ] Build form with 7 unbundled rate fields: Generation, Transmission, System Loss, Distribution, Subsidies, Government Taxes, Universal Charges

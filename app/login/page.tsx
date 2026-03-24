@@ -1,30 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Zap, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (searchParams.get("error") === "unauthorized") {
+      setError("You do not have permission to access that page.");
+    }
+  }, [searchParams]);
+
   async function handleLogin() {
     setError(null);
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
       return;
     }
-    router.push("/dashboard");
+
+    // Fetch user role for redirect
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    const destination = profile?.role === "super_admin" ? "/admin" : "/dashboard";
+    setLoading(false);
+    router.push(destination);
     router.refresh();
   }
 
