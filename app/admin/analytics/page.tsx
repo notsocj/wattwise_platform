@@ -1,17 +1,20 @@
-import Link from 'next/link';
 import { Globe } from 'lucide-react';
 
 export default function AdminAnalyticsPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-6">
-      <div className="w-16 h-16 rounded-full bg-mint/10 flex items-center justify-center mb-6">
-        <Globe className="w-8 h-8 text-mint" />
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <Globe className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">Global Energy Analytics</h1>
       </div>
-      <h1 className="text-2xl font-bold mb-2">Global Energy Analytics</h1>
-      <p className="text-white/50 text-center mb-8">
-        Platform-wide kWh monitoring and savings tracking coming soon.
+      <p className="text-white/50 mb-8">
+        Platform-wide energy impact: total kWh monitored and estimated savings.
       </p>
-      <Link href="/admin" className="text-mint hover:underline text-sm">Back to Admin</Link>
+      <div className="rounded-lg border border-white/10 bg-surface p-6">
+        <p className="text-white/40 text-sm">
+          Total kWh, total users, total devices, estimated savings, and daily consumption chart will be displayed here.
+        </p>
+      </div>
     </div>
   );
 }
