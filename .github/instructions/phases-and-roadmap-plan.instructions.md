@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** March 24, 2026
+> **Last Updated:** March 26, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -20,7 +20,7 @@ applyTo: "**"
 | 3 — AI & PWA | Scaffolded | ~5% | Route placeholders created (`/insights`, `/api/insights`), blocked by Phase 2 |
 | 4 — Super Admin | In Progress | ~20% | Route guard + role-based middleware + sidebar layout done, admin RLS policies created, page scaffolds updated for sidebar layout, functional page implementations pending |
 | 1 — Foundation | In Progress | ~50% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard UI built with mock data |
-| 2 — Billing & Control | In Progress | ~15% | Device Detail UI built (gauges, wallet, relay toggle, safety thresholds, diagnostics — mock data), route placeholders for API |
+| 2 — Billing & Control | In Progress | ~25% | Device Detail UI built (gauges, wallet, relay toggle, safety thresholds, diagnostics — mock data); `lib/meralco-rates.ts` added, `computeMeralcoBill` implemented, Dashboard Total Daily Cost now derived from unbundled formula (mock kWh source) |
 | 3 — AI & PWA | In Progress | ~25% | Insights dashboard UI built (leaderboard, coaching feed, trend chart, forecast — mock data), bottom nav done, AI tip banner done |
 | 4 — Super Admin | Scaffolded | ~5% | Route placeholders created (all 5 admin pages + layout), blocked by Phases 1–3 |
 
@@ -107,16 +107,16 @@ applyTo: "**"
 ### Platform Tasks (Web)
 
 - [ ] **Unbundled Meralco Billing Module**
-  - [ ] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
+  - [x] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
     ```
     generation: 5.3727, transmission: 0.8468, systemLoss: 0.5012,
     distribution: 1.4798, subsidies: -0.0682, governmentTaxes: 0.2563,
     universalCharges: 0.1754, VAT: 12%
     ```
-  - [ ] Implement `computeMeralcoBill(kWh: number): number` — unbundled subtotal × (1 + 0.12)
+  - [x] Implement `computeMeralcoBill(kWh: number): number` — unbundled subtotal × (1 + 0.12)
   - [ ] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`)
   - [ ] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function
-  - [ ] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded
+  - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(currently sourced from mock device `dailyKWh`; Supabase rates/data wiring pending)*
 
 - [x] **Device Detail Screen** *(UI complete — mock data, no Supabase wiring yet)*
   - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)

@@ -16,6 +16,7 @@ import {
   Refrigerator,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
+import { computeMeralcoBill } from "@/lib/meralco-rates";
 
 // --- Mock data (will be replaced with Supabase Realtime in Phase 1) ---
 const MOCK_DEVICES = [
@@ -23,6 +24,7 @@ const MOCK_DEVICES = [
     id: "dev-1",
     name: "Master Bedroom Aircon",
     watts: 850,
+    dailyKWh: 8.4,
     isOnline: true,
     relayOn: true,
     icon: Wind,
@@ -31,6 +33,7 @@ const MOCK_DEVICES = [
     id: "dev-2",
     name: "Kitchen Fridge",
     watts: 120,
+    dailyKWh: 2.2,
     isOnline: true,
     relayOn: true,
     icon: Refrigerator,
@@ -39,14 +42,13 @@ const MOCK_DEVICES = [
     id: "dev-3",
     name: "Entertainment Hub",
     watts: 280,
+    dailyKWh: 3.1,
     isOnline: true,
     relayOn: true,
     icon: Tv,
   },
 ];
 
-const MOCK_TOTAL_WATTS = 1250;
-const MOCK_DAILY_COST = 450.5;
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 
 // --- Slide-to-confirm threshold in pixels ---
@@ -59,10 +61,13 @@ export default function DashboardPage() {
   const slideRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
 
-  const totalWatts = devices.reduce(
-    (sum, d) => sum + (d.relayOn ? d.watts : 0),
+  const totalWatts = devices.reduce((sum, d) => sum + (d.relayOn ? d.watts : 0), 0);
+
+  const totalDailyKWh = devices.reduce(
+    (sum, d) => sum + (d.relayOn ? d.dailyKWh : 0),
     0
   );
+  const totalDailyCostPhp = computeMeralcoBill(totalDailyKWh);
 
   // --- Relay toggle (optimistic, mock) ---
   const toggleRelay = useCallback((deviceId: string) => {
@@ -145,7 +150,7 @@ export default function DashboardPage() {
             <span className="text-3xl font-semibold text-white/50 mr-0.5">
               ₱
             </span>
-            {MOCK_DAILY_COST.toLocaleString("en-PH", {
+            {totalDailyCostPhp.toLocaleString("en-PH", {
               minimumFractionDigits: 2,
             })}
           </p>
