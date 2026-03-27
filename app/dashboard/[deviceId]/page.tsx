@@ -1,38 +1,52 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   Bot,
-  Power,
-  Wifi,
-  Cpu,
-  Shield,
   Wallet,
-  Zap,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import {
+  computeMeralcoBill,
+  getActiveMeralcoRates,
+} from "@/lib/meralco-rates";
 
-// --- Mock data (will be replaced with Supabase Realtime + device queries) ---
-const MOCK_DEVICE = {
-  id: "dev-1",
-  name: "Master Bedroom Aircon",
-  deviceCode: "WW-AC-042",
-  watts: 1250,
-  maxWatts: 2000,
-  volts: 230,
-  maxVolts: 260,
-  amps: 5.4,
-  maxAmps: 30,
-  monthlyBudget: 1500,
-  currentSpend: 1242,
-  relayOn: true,
-  relayState: "30A ACTIVE",
-  autoTripAmps: 20,
-  surgeProtectionVolts: 250,
-  wifiRssi: -42,
-  boardTempC: 34.2,
+type DeviceRow = {
+  id: string;
+  device_name: string;
 };
+
+type ProfileRow = {
+  monthly_budget_php: number | string | null;
+};
+
+type EnergyLogRow = {
+  energy_kwh: number | string;
+  average_watts: number | string | null;
+};
+
+type DeviceViewModel = {
+  id: string;
+  name: string;
+  deviceCode: string;
+  watts: number;
+  maxWatts: number;
+  volts: number;
+  maxVolts: number;
+  amps: number;
+  maxAmps: number;
+  monthlyBudget: number;
+  currentSpend: number;
+};
+
+function toNumber(value: number | string | null): number {
+  if (value === null) {
+    return 0;
+  }
+
+  const numericValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
 
 // --- Circular gauge component ---
 function CircularGauge({
@@ -48,25 +62,24 @@ function CircularGauge({
   unit: string;
   color?: string;
 }) {
-  const radius = 38;
-  const stroke = 5;
+  const radius = 42;
+  const stroke = 6;
+  const center = 50;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(value / max, 1);
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-[96px] h-[96px]">
+    <div className="flex flex-col items-center px-1">
+      <div className="relative aspect-square w-full max-w-[108px]">
         <svg
-          width="96"
-          height="96"
-          viewBox="0 0 96 96"
-          className="-rotate-90"
+          viewBox="0 0 100 100"
+          className="h-full w-full -rotate-90"
         >
           {/* Track */}
           <circle
-            cx="48"
-            cy="48"
+            cx={center}
+            cy={center}
             r={radius}
             fill="none"
             stroke="rgba(255,255,255,0.06)"
@@ -74,8 +87,8 @@ function CircularGauge({
           />
           {/* Progress */}
           <circle
-            cx="48"
-            cy="48"
+            cx={center}
+            cy={center}
             r={radius}
             fill="none"
             stroke={color}
@@ -91,27 +104,101 @@ function CircularGauge({
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold leading-none">{value}</span>
-          <span className="text-[10px] text-mint/70 font-medium mt-0.5">
+          <span className="text-2xl font-bold leading-none">{value}</span>
+          <span className="mt-1 text-[11px] font-medium text-mint/70">
             {unit}
           </span>
         </div>
       </div>
-      <span className="text-[10px] font-semibold tracking-wider text-white/40 uppercase mt-2">
+      <span className="mt-2.5 text-[11px] font-semibold tracking-wider text-white/40 uppercase">
         {label}
       </span>
     </div>
   );
 }
 
-export default function DeviceDetailPage(_props: {
+export default async function DeviceDetailPage(props: {
   params: Promise<{ deviceId: string }>;
 }) {
-  const router = useRouter();
-  const [device, setDevice] = useState(MOCK_DEVICE);
+  const { deviceId } = await props.params;
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const [{ data: deviceData }, { data: profileData }, { data: logsData }, activeRates] =
+    await Promise.all([
+      supabase
+        .from("devices")
+        .select("id, device_name")
+        .eq("id", deviceId)
+        .eq("user_id", user.id)
+        .maybeSingle<DeviceRow>(),
+      supabase
+        .from("profiles")
+        .select("monthly_budget_php")
+        .eq("id", user.id)
+        .maybeSingle<ProfileRow>(),
+      supabase
+        .from("energy_logs")
+        .select("energy_kwh, average_watts")
+        .eq("device_id", deviceId)
+        .gte("recorded_at", startOfMonth.toISOString())
+        .lte("recorded_at", endOfToday.toISOString())
+        .order("recorded_at", { ascending: false })
+        .limit(100),
+      getActiveMeralcoRates(supabase),
+    ]);
+
+  if (!deviceData) {
+    redirect("/dashboard");
+  }
+
+  const logs = (logsData ?? []) as EnergyLogRow[];
+  const latestLog = logs[0];
+
+  const watts = Math.round(toNumber(latestLog?.average_watts ?? 0));
+  const volts = 230;
+  const amps = Number((watts / volts).toFixed(1));
+  const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
+  const monthlyKWh = logs.reduce((sum, log) => sum + toNumber(log.energy_kwh), 0);
+  const currentSpend = computeMeralcoBill(
+    monthlyKWh,
+    activeRates.rates,
+    activeRates.vatRate
+  );
+
+  const device: DeviceViewModel = {
+    id: deviceData.id,
+    name: deviceData.device_name,
+    deviceCode: `WW-${deviceData.id.slice(0, 8).toUpperCase()}`,
+    watts,
+    maxWatts: 2000,
+    volts,
+    maxVolts: 260,
+    amps,
+    maxAmps: 30,
+    monthlyBudget,
+    currentSpend,
+  };
+
+  const safeMonthlyBudget = device.monthlyBudget > 0 ? device.monthlyBudget : 1;
 
   const burnPercent = Math.min(
-    (device.currentSpend / device.monthlyBudget) * 100,
+    (device.currentSpend / safeMonthlyBudget) * 100,
     100
   );
   const burnColor =
@@ -121,29 +208,18 @@ export default function DeviceDetailPage(_props: {
         ? "bg-naku"
         : "bg-mint";
 
-  const toggleRelay = () => {
-    setDevice((prev) => ({ ...prev, relayOn: !prev.relayOn }));
-  };
-
-  // Wi-Fi signal quality label
-  const wifiLabel =
-    device.wifiRssi >= -50
-      ? "Excellent"
-      : device.wifiRssi >= -70
-        ? "Good"
-        : "Weak";
-
   return (
     <div className="min-h-screen bg-base text-white pb-8">
       {/* ===== Header ===== */}
-      <header className="flex items-center gap-3 px-5 pt-5 pb-4">
-        <button
-          onClick={() => router.back()}
+      <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
+        <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard"
           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
           aria-label="Go back"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
+        </Link>
         <div>
           <h1 className="text-[15px] font-bold leading-tight">
             {device.name}
@@ -152,23 +228,26 @@ export default function DeviceDetailPage(_props: {
             Device ID: {device.deviceCode}
           </p>
         </div>
+        </div>
+        {/* Logout intentionally omitted on Device Detail page */}
       </header>
 
-      <div className="px-5 flex flex-col gap-5">
+      <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
         {/* ===== AI Naku! Tip ===== */}
         <div className="flex items-start gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
           <div className="w-9 h-9 rounded-full bg-mint/15 flex items-center justify-center shrink-0 mt-0.5">
             <Bot className="w-4 h-4 text-mint" />
           </div>
           <p className="text-sm text-white/70 leading-relaxed">
-            <span className="text-naku font-bold">Naku!</span> This Aircon is
-            nearing its ₱1,500 monthly limit. Consider increasing the thermostat
-            by 2 degrees to save!
+            <span className="text-naku font-bold">Naku!</span> This unit is
+            currently at ₱{device.currentSpend.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {" "}out of a ₱{device.monthlyBudget.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {" "}home monthly budget.
           </p>
         </div>
 
         {/* ===== Metrology Gauges ===== */}
-        <div className="flex items-center justify-around py-2">
+        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] px-2 py-8">
           <CircularGauge
             value={device.watts}
             max={device.maxWatts}
@@ -187,25 +266,25 @@ export default function DeviceDetailPage(_props: {
             label="Current"
             unit="AMPS"
           />
-        </div>
+        </section>
 
-        {/* ===== Device Wallet ===== */}
+        {/* ===== Appliance Burn Rate ===== */}
         <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-mint" />
               <h3 className="text-sm font-bold uppercase tracking-wider">
-                Device Wallet
+                Appliance Burn Rate
               </h3>
             </div>
-            <span className="text-[10px] text-white/40 font-medium">
-              Monthly Cycle
+            <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
+              Set Budget On Home
             </span>
           </div>
 
           {/* Budget row */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-white/70">Monthly Budget</span>
+            <span className="text-sm text-white/70">Home Budget (View Only)</span>
             <span className="text-lg font-bold">
               <span className="text-white/50 text-sm mr-0.5">₱</span>
               {device.monthlyBudget.toLocaleString()}
@@ -242,108 +321,6 @@ export default function DeviceDetailPage(_props: {
           </div>
         </section>
 
-        {/* ===== Massive Relay Toggle ===== */}
-        <section className="flex flex-col items-center py-4">
-          <button
-            onClick={toggleRelay}
-            className={`w-28 h-28 rounded-full flex items-center justify-center transition-all duration-300 ${
-              device.relayOn
-                ? "bg-mint/15 border-2 border-mint shadow-mint-glow"
-                : "bg-white/[0.04] border-2 border-white/10"
-            }`}
-            aria-label={device.relayOn ? "Power off" : "Power on"}
-          >
-            <Power
-              className={`w-10 h-10 transition-colors ${
-                device.relayOn ? "text-mint" : "text-white/30"
-              }`}
-            />
-          </button>
-          <p
-            className={`text-sm font-bold mt-3 uppercase tracking-wider ${
-              device.relayOn ? "text-mint" : "text-white/30"
-            }`}
-          >
-            Power {device.relayOn ? "On" : "Off"}
-          </p>
-          <p className="text-[10px] text-mint/50 font-medium mt-1 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-mint" />
-            Relay State: {device.relayState}
-          </p>
-        </section>
-
-        {/* ===== Safety Thresholds ===== */}
-        <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-4 h-4 text-mint" />
-            <h3 className="text-sm font-bold uppercase tracking-wider">
-              Safety Thresholds
-            </h3>
-          </div>
-
-          {/* Auto-Trip (Overload) */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/70">
-                Auto-Trip (Overload)
-              </span>
-              <span className="text-sm font-bold text-mint">
-                {device.autoTripAmps.toFixed(1)} A
-              </span>
-            </div>
-            <input
-              type="range"
-              min={5}
-              max={30}
-              step={0.5}
-              value={device.autoTripAmps}
-              onChange={(e) =>
-                setDevice((prev) => ({
-                  ...prev,
-                  autoTripAmps: parseFloat(e.target.value),
-                }))
-              }
-              className="w-full h-1.5 rounded-full appearance-none bg-white/[0.06] accent-mint cursor-pointer"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-white/30">Safe: 5A</span>
-              <span className="text-[10px] text-white/30">Critical: 30A</span>
-            </div>
-          </div>
-
-          {/* Surge Protection */}
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-white/70">Surge Protection</span>
-              <span className="text-sm font-bold text-mint">
-                {device.surgeProtectionVolts} V
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== Diagnostics Footer ===== */}
-        <section className="flex items-center justify-around py-4 border-t border-white/[0.06]">
-          <div className="flex items-center gap-2">
-            <Wifi className="w-4 h-4 text-mint" />
-            <div>
-              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">
-                Wi-Fi RSSI
-              </p>
-              <p className="text-sm font-bold">{device.wifiRssi} dBm</p>
-              <p className="text-[10px] text-bida">({wifiLabel})</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-mint" />
-            <div>
-              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">
-                Board Temp
-              </p>
-              <p className="text-sm font-bold">{device.boardTempC} °C</p>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );

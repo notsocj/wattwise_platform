@@ -26,21 +26,13 @@
 - **Description:** Displays real-time telemetry (Watts, Volts, Amps) pulled via Supabase Realtime, alongside historical bar charts for daily and weekly consumption.
 - **User Value:** Gives users a visual understanding of their appliance's power draw and historical usage trends.
 
-#### 4. Remote 30A "Kill Switch" (Optimistic UI)
-- **Description:** A secure, high-priority toggle on the dashboard that sends an MQTT command to the ESP32-S3 to physically cut power to the plugged-in appliance.
-- **User Value:** Allows users to turn off forgotten appliances remotely (e.g., an iron or aircon) from anywhere with an internet connection.
-
-#### 5. Mobile-First Progressive Web App (PWA)
+#### 4. Mobile-First Progressive Web App (PWA)
 - **Description:** Powered by Serwist, the web app can be installed directly to a user's phone home screen (iOS/Android) without going through the App Store, featuring caching for fast load times even on slow networks.
 - **User Value:** Feels exactly like a native mobile app without the overhead of app store deployment.
 
 ### Part 2: System-Wide & Hardware Features (The IoT Architecture)
 
-#### 1. Over-Current "Safety Trip" Protection
-- **Description:** The hardware autonomously monitors current spikes. If an appliance draws dangerous levels of current, the ESP32-S3 cuts the 30A relay instantly, bypassing the web app entirely, and logs the event to the cloud.
-- **System Value:** Prevents electrical fires and protects the hardware, satisfying strict engineering safety standards for the thesis.
-
-#### 2. Aggregated Data Throttling
+#### 1. Aggregated Data Throttling
 - **Description:** Instead of hammering the database every second, the system averages telemetry data (e.g., every 1 minute or 1 hour) before inserting it into Supabase.
 - **System Value:** Ensures the platform remains fully operational and highly scalable within the 500MB Supabase Free Tier limit.
 
@@ -126,7 +118,7 @@ All UI uses **Space Grotesk** for its technical, modern personality and stable n
 | Primary Action (Neon Mint) | `#00E66F` | Active states, primary buttons, electricity logo glow |
 | Bida (Success Green) | `#10B981` | Savings celebrations, "Under Budget" states |
 | Naku! (Warning Amber) | `#F59E0B` | Usage spikes, approaching budget limits |
-| Danger (High-Alert Red) | `#EF4444` | Safety cutoffs, over-current trips, "Global Off" controls |
+| Danger (High-Alert Red) | `#EF4444` | Critical alerts, failures, destructive actions |
 
 ### Visual Effects
 - **Glow:** `box-shadow` with 20–40px blur using `#00E66F` at 40–60% opacity — applied to the electricity logo and active Neon Mint elements.
@@ -187,9 +179,7 @@ All UI uses **Space Grotesk** for its technical, modern personality and stable n
 - **Device Grid:**
   - *Active Device Cards:* Solid surface cards for units like "Aircon" or "Fridge."
   - *Live Metrology:* Shows individual wattage per card.
-  - *30A Relay Toggle:* Neon Mint switch for immediate remote power control.
 - **Expansion:** "Add Appliance" tile (dashed border) with a large "+" icon.
-- **Safety Layer:** "Slide to Power Off All" emergency disconnect button at the bottom.
 - **Mascot Tip:** Sticky AI tip banner (e.g., "Overall usage is 10% lower today. Bida!").
 
 #### Device Detail (The Hardware Inspector)
@@ -198,9 +188,6 @@ All UI uses **Space Grotesk** for its technical, modern personality and stable n
 - **Device Wallet:**
   - *Monthly Budget:* Interactive slider to set a PHP limit.
   - *Burn Rate:* Progress bar visualizing consumption against the budget.
-- **Hardware Controls:**
-  - *Massive Relay Toggle:* Large, central tactile button for physical power switching.
-  - *Auto-Trip Slider:* Safety configuration for over-current thresholds.
 - **Diagnostics:** Wi-Fi RSSI and Board Temp readings at the bottom.
 
 ---

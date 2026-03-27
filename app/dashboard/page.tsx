@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   Zap,
@@ -10,106 +7,200 @@ import {
   Bot,
   ChevronRight,
   Plus,
-  Power,
   Wind,
   Tv,
   Refrigerator,
+  Wallet,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import { computeMeralcoBill } from "@/lib/meralco-rates";
-
-// --- Mock data (will be replaced with Supabase Realtime in Phase 1) ---
-const MOCK_DEVICES = [
-  {
-    id: "dev-1",
-    name: "Master Bedroom Aircon",
-    watts: 850,
-    dailyKWh: 8.4,
-    isOnline: true,
-    relayOn: true,
-    icon: Wind,
-  },
-  {
-    id: "dev-2",
-    name: "Kitchen Fridge",
-    watts: 120,
-    dailyKWh: 2.2,
-    isOnline: true,
-    relayOn: true,
-    icon: Refrigerator,
-  },
-  {
-    id: "dev-3",
-    name: "Entertainment Hub",
-    watts: 280,
-    dailyKWh: 3.1,
-    isOnline: true,
-    relayOn: true,
-    icon: Tv,
-  },
-];
+import LogoutButton from "@/components/ui/LogoutButton";
+import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import {
+  computeMeralcoBill,
+  getActiveMeralcoRates,
+} from "@/lib/meralco-rates";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 
-// --- Slide-to-confirm threshold in pixels ---
-const SLIDE_THRESHOLD = 200;
+type DeviceRow = {
+  id: string;
+  device_name: string;
+  is_online: boolean | null;
+};
 
-export default function DashboardPage() {
-  const [devices, setDevices] = useState(MOCK_DEVICES);
-  const [slideX, setSlideX] = useState(0);
-  const [isSlidingActive, setIsSlidingActive] = useState(false);
-  const slideRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef(0);
+type EnergyLogRow = {
+  device_id: string;
+  energy_kwh: number | string;
+  average_watts: number | string | null;
+};
 
-  const totalWatts = devices.reduce((sum, d) => sum + (d.relayOn ? d.watts : 0), 0);
+type ProfileRow = {
+  monthly_budget_php: number | string | null;
+};
 
-  const totalDailyKWh = devices.reduce(
-    (sum, d) => sum + (d.relayOn ? d.dailyKWh : 0),
+type DashboardDevice = {
+  id: string;
+  name: string;
+  watts: number;
+  dailyKWh: number;
+  isOnline: boolean;
+  icon: typeof Wind;
+};
+
+function getDeviceIcon(deviceName: string) {
+  const label = deviceName.toLowerCase();
+
+  if (label.includes("aircon") || label.includes("ac") || label.includes("fan")) {
+    return Wind;
+  }
+
+  if (label.includes("fridge") || label.includes("freezer") || label.includes("ref")) {
+    return Refrigerator;
+  }
+
+  return Tv;
+}
+
+function toNumber(value: number | string | null): number {
+  if (value === null) {
+    return 0;
+  }
+
+  const numericValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const [{ data: devicesData }, { data: profileData }, activeRates] = await Promise.all([
+    supabase
+      .from("devices")
+      .select("id, device_name, is_online")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("monthly_budget_php")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+    getActiveMeralcoRates(supabase),
+  ]);
+
+  const devicesRows = (devicesData ?? []) as DeviceRow[];
+  const deviceIds = devicesRows.map((device) => device.id);
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const [dailyLogsResult, monthlyLogsResult] = deviceIds.length
+    ? await Promise.all([
+        supabase
+          .from("energy_logs")
+          .select("device_id, energy_kwh, average_watts")
+          .in("device_id", deviceIds)
+          .gte("recorded_at", startOfDay.toISOString())
+          .lte("recorded_at", endOfDay.toISOString())
+          .order("recorded_at", { ascending: false })
+          .limit(100),
+        supabase
+          .from("energy_logs")
+          .select("device_id, energy_kwh, average_watts")
+          .in("device_id", deviceIds)
+          .gte("recorded_at", startOfMonth.toISOString())
+          .lte("recorded_at", endOfDay.toISOString())
+          .order("recorded_at", { ascending: false })
+          .limit(100),
+      ])
+    : [{ data: [] as EnergyLogRow[] }, { data: [] as EnergyLogRow[] }];
+
+  const logs = (dailyLogsResult.data ?? []) as EnergyLogRow[];
+  const monthlyLogs = (monthlyLogsResult.data ?? []) as EnergyLogRow[];
+
+  const latestWattsByDevice = new Map<string, number>();
+  const dailyKWhByDevice = new Map<string, number>();
+
+  for (const log of logs) {
+    const kWh = toNumber(log.energy_kwh);
+    const watts = toNumber(log.average_watts);
+
+    dailyKWhByDevice.set(
+      log.device_id,
+      (dailyKWhByDevice.get(log.device_id) ?? 0) + kWh
+    );
+
+    if (!latestWattsByDevice.has(log.device_id)) {
+      latestWattsByDevice.set(log.device_id, Math.max(0, watts));
+    }
+  }
+
+  const devices: DashboardDevice[] = devicesRows.map((device) => ({
+    id: device.id,
+    name: device.device_name,
+    watts: Math.round(latestWattsByDevice.get(device.id) ?? 0),
+    dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
+    isOnline: Boolean(device.is_online),
+    icon: getDeviceIcon(device.device_name),
+  }));
+
+  const totalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
+
+  const totalDailyKWh = devices.reduce((sum, d) => sum + d.dailyKWh, 0);
+  const totalDailyCostPhp = computeMeralcoBill(
+    totalDailyKWh,
+    activeRates.rates,
+    activeRates.vatRate
+  );
+
+  const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
+  const safeMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : 1;
+  const totalMonthlyKWh = monthlyLogs.reduce(
+    (sum, log) => sum + toNumber(log.energy_kwh),
     0
   );
-  const totalDailyCostPhp = computeMeralcoBill(totalDailyKWh);
-
-  // --- Relay toggle (optimistic, mock) ---
-  const toggleRelay = useCallback((deviceId: string) => {
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === deviceId ? { ...d, relayOn: !d.relayOn } : d
-      )
-    );
-  }, []);
-
-  // --- Slide-to-power-off gesture handlers ---
-  const handleSlideStart = useCallback((clientX: number) => {
-    startXRef.current = clientX;
-    setIsSlidingActive(true);
-  }, []);
-
-  const handleSlideMove = useCallback(
-    (clientX: number) => {
-      if (!isSlidingActive) return;
-      const delta = Math.max(0, clientX - startXRef.current);
-      setSlideX(Math.min(delta, SLIDE_THRESHOLD));
-    },
-    [isSlidingActive]
+  const homeMonthlySpendPhp = computeMeralcoBill(
+    totalMonthlyKWh,
+    activeRates.rates,
+    activeRates.vatRate
   );
-
-  const handleSlideEnd = useCallback(() => {
-    if (slideX >= SLIDE_THRESHOLD) {
-      // Power off all devices
-      setDevices((prev) => prev.map((d) => ({ ...d, relayOn: false })));
-    }
-    setSlideX(0);
-    setIsSlidingActive(false);
-  }, [slideX]);
+  const homeBurnPercent = Math.min(
+    (homeMonthlySpendPhp / safeMonthlyBudget) * 100,
+    100
+  );
+  const homeBurnColor =
+    homeBurnPercent >= 90
+      ? "bg-danger"
+      : homeBurnPercent >= 70
+        ? "bg-naku"
+        : "bg-mint";
 
   return (
     <div className="min-h-screen bg-base text-white pb-24">
       {/* ===== Header ===== */}
-      <header className="flex items-center gap-2 px-5 pt-5 pb-4">
-        <Zap className="w-5 h-5 text-mint fill-mint" />
-        <h1 className="text-lg font-bold tracking-tight">
-          Watt<span className="text-mint">Wise</span>
-        </h1>
+      <header className="flex items-center justify-between px-5 pt-5 pb-4">
+        <div className="flex items-center gap-2">
+          <Zap className="w-5 h-5 text-mint fill-mint" />
+          <h1 className="text-lg font-bold tracking-tight">
+            Watt<span className="text-mint">Wise</span>
+          </h1>
+        </div>
+        <LogoutButton />
       </header>
 
       <div className="px-5 flex flex-col gap-4">
@@ -158,6 +249,54 @@ export default function DashboardPage() {
             <TrendingUp className="w-3.5 h-3.5" />
             <span className="font-medium">2% increase from yesterday</span>
           </div>
+          <p className="text-[10px] text-white/40 mt-2">
+            Rates source: Supabase ({activeRates.effectiveMonth}) | VAT: {(activeRates.vatRate * 100).toFixed(2)}%
+          </p>
+        </div>
+
+        {/* ===== Home Wallet Card ===== */}
+        <div className="relative rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5 overflow-hidden">
+          <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
+
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-mint" />
+              <h2 className="text-[13px] font-bold uppercase tracking-wider">
+                Home Wallet
+              </h2>
+            </div>
+            <span className="text-[10px] text-white/40 font-medium">
+              Monthly Cycle
+            </span>
+          </div>
+
+          <HomeBudgetEditor initialBudget={monthlyBudget} />
+
+          <div className="mb-1.5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/40">Home Burn Rate</span>
+              <span className="text-xs text-white/50">
+                ₱ {homeMonthlySpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
+              </span>
+            </div>
+            <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${homeBurnColor}`}
+                style={{ width: `${homeBurnPercent}%` }}
+              />
+            </div>
+            <p
+              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
+                homeBurnPercent >= 90
+                  ? "text-danger"
+                  : homeBurnPercent >= 70
+                    ? "text-naku"
+                    : "text-bida"
+              }`}
+            >
+              {homeBurnPercent.toFixed(1)}% of home budget consumed
+            </p>
+          </div>
         </div>
 
         {/* ===== AI Tip Banner ===== */}
@@ -205,27 +344,8 @@ export default function DashboardPage() {
                       {device.name}
                     </p>
                     <p className="text-xs text-white/50">
-                      {device.relayOn ? `${device.watts}W active` : "Off"}
+                      {device.isOnline ? `${device.watts}W active` : "Offline"}
                     </p>
-                  </div>
-                  <div className="mt-2 flex items-center">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleRelay(device.id);
-                      }}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        device.relayOn ? "bg-mint" : "bg-white/10"
-                      }`}
-                      aria-label={`Toggle ${device.name} relay`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
-                          device.relayOn ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
                   </div>
                 </Link>
               );
@@ -243,46 +363,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* ===== Slide to Power Off All ===== */}
-        <div className="mt-4 mb-2">
-          <div
-            ref={slideRef}
-            className="relative w-full h-14 rounded-2xl bg-danger/10 border border-danger/20 overflow-hidden select-none touch-none"
-            onMouseDown={(e) => handleSlideStart(e.clientX)}
-            onMouseMove={(e) => handleSlideMove(e.clientX)}
-            onMouseUp={handleSlideEnd}
-            onMouseLeave={() => {
-              if (isSlidingActive) handleSlideEnd();
-            }}
-            onTouchStart={(e) =>
-              handleSlideStart(e.touches[0].clientX)
-            }
-            onTouchMove={(e) =>
-              handleSlideMove(e.touches[0].clientX)
-            }
-            onTouchEnd={handleSlideEnd}
-          >
-            {/* Track label */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-xs font-bold tracking-widest text-danger/70 uppercase">
-                Slide to Power Off All
-              </span>
-            </div>
-            {/* Slider thumb */}
-            <div
-              className="absolute top-1.5 left-1.5 w-11 h-11 rounded-xl bg-danger flex items-center justify-center transition-shadow"
-              style={{
-                transform: `translateX(${slideX}px)`,
-                boxShadow:
-                  slideX > 0
-                    ? "0 0 20px rgba(239, 68, 68, 0.5)"
-                    : "none",
-              }}
-            >
-              <Power className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* ===== Bottom Navigation ===== */}

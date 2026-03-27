@@ -1,5 +1,5 @@
 ---
-description: Supabase database schema reference for Wattwise platform. Required context when building features that interact with profiles, devices, energy data, relay commands, Meralco rates, or AI insights. Apply when writing queries, API routes, or database migrations.
+description: Supabase database schema reference for Wattwise platform. Required context when building features that interact with profiles, devices, energy data, Meralco rates, or AI insights. Apply when writing queries, API routes, or database migrations.
 applyTo: "**"
 ---
 
@@ -47,6 +47,7 @@ Stores unbundled Meralco billing rates that update monthly.
 CREATE TABLE meralco_rates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   effective_month DATE NOT NULL UNIQUE, -- e.g., '2026-03-01'
+  vat_rate NUMERIC(6, 4) NOT NULL,
   generation NUMERIC(10, 4) NOT NULL,
   transmission NUMERIC(10, 4) NOT NULL,
   system_loss NUMERIC(10, 4) NOT NULL,
@@ -58,7 +59,7 @@ CREATE TABLE meralco_rates (
 );
 ```
 
-**Purpose:** Single source of truth for Meralco billing components. Super Admin edits this to update cost calculations across all users.
+**Purpose:** Single source of truth for Meralco billing components and VAT. Super Admin edits this to update cost calculations across all users.
 
 ---
 
@@ -103,27 +104,7 @@ CREATE INDEX idx_energy_logs_device_time ON energy_logs(device_id, recorded_at D
 
 ---
 
-### 5. RELAY COMMANDS & SAFETY EVENTS (Hardware Handshake & Protection)
-
-Logs all remote and hardware-triggered relay control events.
-
-```sql
-CREATE TABLE relay_commands (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  device_id UUID REFERENCES devices(id) ON DELETE CASCADE,
-  command VARCHAR(10) NOT NULL, -- 'ON', 'OFF', or 'TRIP'
-  origin VARCHAR(20) DEFAULT 'user', -- 'user' (web app) or 'system' (hardware safety trip)
-  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'confirmed', 'failed'
-  sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  confirmed_at TIMESTAMP WITH TIME ZONE
-);
-```
-
-**Purpose:** Audit trail of relay commands (user-initiated or hardware safety trips). Tracks MQTT acknowledgement status for the optimistic UI pattern.
-
----
-
-### 6. AI INSIGHTS (Trigger & Cache + Super Admin Cost Tracking)
+### 5. AI INSIGHTS (Trigger & Cache + Super Admin Cost Tracking)
 
 Caches AI-generated insights to avoid redundant OpenAI API calls.
 
@@ -152,7 +133,7 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
 
 2. **UUID Primary Keys:** All tables use UUID for distributed system compatibility and security.
 
-3. **Timestamps:** Every table includes `created_at` to track data lineage; relay commands also track `confirmed_at` for MQTT acknowledgement timing.
+3. **Timestamps:** Every table includes `created_at` to track data lineage.
 
 4. **Indexes for Performance:** Strategic indexes on `energy_logs` and `ai_insights` ensure queries remain fast even as data accumulates.
 
@@ -161,7 +142,7 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
    - `ai_insights` caching prevents redundant API calls to OpenAI.
 
 6. **Super Admin RLS Policies** *(migration at `supabase/migrations/002_admin_rls_policies.sql`)*:
-   - Super admins (`profiles.role = 'super_admin'`) have SELECT access to all rows in: `profiles`, `devices`, `energy_logs`, `relay_commands`, `ai_insights`.
+  - Super admins (`profiles.role = 'super_admin'`) have SELECT access to all rows in: `profiles`, `devices`, `energy_logs`, `ai_insights`.
    - Super admins have INSERT and UPDATE access on `meralco_rates` for rate management.
    - Policy pattern uses `EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')`.
 
@@ -201,8 +182,52 @@ ORDER BY effective_month DESC
 LIMIT 1;
 ```
 
+### Upsert Monthly Meralco Rates (including VAT)
+```sql
+INSERT INTO meralco_rates (
+  effective_month,
+  vat_rate,
+  generation,
+  transmission,
+  system_loss,
+  distribution,
+  subsidies,
+  government_taxes,
+  universal_charges
+) VALUES (
+  '2026-03-01',
+  0.12,
+  5.3727,
+  0.8468,
+  0.5012,
+  1.4798,
+  -0.0682,
+  0.2563,
+  0.1754
+)
+ON CONFLICT (effective_month) DO UPDATE
+SET
+  vat_rate = EXCLUDED.vat_rate,
+  generation = EXCLUDED.generation,
+  transmission = EXCLUDED.transmission,
+  system_loss = EXCLUDED.system_loss,
+  distribution = EXCLUDED.distribution,
+  subsidies = EXCLUDED.subsidies,
+  government_taxes = EXCLUDED.government_taxes,
+  universal_charges = EXCLUDED.universal_charges;
+```
+
 ### Fetch User Role for Admin Middleware
 ```sql
 SELECT role FROM profiles
 WHERE id = $1;
 ```
+
+### Update Home Monthly Budget (Home Dashboard only)
+```sql
+UPDATE profiles
+SET monthly_budget_php = $2
+WHERE id = $1;
+```
+
+**Usage note:** `$1` must be the authenticated `auth.uid()` profile id. Budget edits should only be exposed in the Home Dashboard wallet editor UI.

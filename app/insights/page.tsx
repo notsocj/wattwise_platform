@@ -1,71 +1,230 @@
-"use client";
-
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
-import {
-  Zap,
-  AlertTriangle,
-  Trophy,
-  Lightbulb,
-  Leaf,
-  TrendingDown,
-} from "lucide-react";
+import { redirect } from "next/navigation";
+import { Zap, AlertTriangle, Trophy, Leaf, TrendingDown } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
+import WeeklyUsageChart, {
+  type WeeklyUsagePoint,
+} from "@/components/insights/WeeklyUsageChart";
+import LogoutButton from "@/components/ui/LogoutButton";
+import { createClient } from "@/lib/supabase/server";
+import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 
-// --- Mock data (will be replaced with Supabase queries) ---
-const MOCK_LEADERBOARD = [
-  {
-    rank: 1,
-    name: "Air Conditioner",
-    location: "Master Bedroom",
-    usage: "4.2h usage",
-    cost: 124.5,
-    tag: "HIGH COST",
-    tagColor: "text-danger",
-  },
-  {
-    rank: 2,
-    name: "Electric Oven",
-    location: "Kitchen",
-    usage: "45m usage",
-    cost: 45.2,
-    tag: "MODERATE",
-    tagColor: "text-naku",
-  },
-  {
-    rank: 3,
-    name: "LED Lighting",
-    location: "Whole House",
-    usage: "8h usage",
-    cost: 12.15,
-    tag: "EFFICIENT",
-    tagColor: "text-bida",
-  },
-];
+type DeviceRow = {
+  id: string;
+  device_name: string;
+};
 
-const MOCK_WEEKLY_DATA = [
-  { day: "MON", thisWk: 18, lastWk: 22 },
-  { day: "TUE", thisWk: 24, lastWk: 20 },
-  { day: "WED", thisWk: 15, lastWk: 25 },
-  { day: "THU", thisWk: 20, lastWk: 18 },
-  { day: "FRI", thisWk: 28, lastWk: 24 },
-];
+type EnergyLogRow = {
+  device_id: string;
+  energy_kwh: number | string;
+  recorded_at: string;
+};
 
-export default function InsightsPage() {
+type LeaderboardItem = {
+  rank: number;
+  name: string;
+  usageKWh: number;
+  cost: number;
+  tag: "HIGH COST" | "MODERATE" | "EFFICIENT";
+  tagColor: "text-danger" | "text-naku" | "text-bida";
+};
+
+const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+function toNumber(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getStartOfWeek(date: Date): Date {
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  copy.setDate(copy.getDate() + mondayOffset);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function getMondayBasedIndex(date: Date): number {
+  return (date.getDay() + 6) % 7;
+}
+
+function getTagForCost(cost: number, averageCost: number): {
+  tag: LeaderboardItem["tag"];
+  tagColor: LeaderboardItem["tagColor"];
+} {
+  if (averageCost <= 0) {
+    return { tag: "MODERATE", tagColor: "text-naku" };
+  }
+
+  if (cost >= averageCost * 1.2) {
+    return { tag: "HIGH COST", tagColor: "text-danger" };
+  }
+
+  if (cost <= averageCost * 0.8) {
+    return { tag: "EFFICIENT", tagColor: "text-bida" };
+  }
+
+  return { tag: "MODERATE", tagColor: "text-naku" };
+}
+
+export default async function InsightsPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: devicesData } = await supabase
+    .from("devices")
+    .select("id, device_name")
+    .order("created_at", { ascending: true });
+
+  const devices = (devicesData ?? []) as DeviceRow[];
+  const deviceIds = devices.map((device) => device.id);
+
+  const activeRates = await getActiveMeralcoRates(supabase);
+
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const startOfThisWeek = getStartOfWeek(now);
+  const startOfLastWeek = new Date(startOfThisWeek);
+  startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+
+  const { data: logsData } = deviceIds.length
+    ? await supabase
+        .from("energy_logs")
+        .select("device_id, energy_kwh, recorded_at")
+        .in("device_id", deviceIds)
+        .gte("recorded_at", startOfLastWeek.toISOString())
+        .lte("recorded_at", endOfToday.toISOString())
+        .order("recorded_at", { ascending: false })
+        .limit(100)
+    : { data: [] as EnergyLogRow[] };
+
+  const logs = (logsData ?? []) as EnergyLogRow[];
+
+  const thisWeekKWhByDevice = new Map<string, number>();
+  const thisWeekDaily = new Array<number>(7).fill(0);
+  const lastWeekDaily = new Array<number>(7).fill(0);
+
+  let thisWeekKWhTotal = 0;
+  let lastWeekKWhTotal = 0;
+
+  for (const log of logs) {
+    const logDate = new Date(log.recorded_at);
+    const kWh = toNumber(log.energy_kwh);
+
+    if (logDate >= startOfThisWeek) {
+      thisWeekKWhTotal += kWh;
+      const dayIndex = getMondayBasedIndex(logDate);
+      thisWeekDaily[dayIndex] += kWh;
+      thisWeekKWhByDevice.set(
+        log.device_id,
+        (thisWeekKWhByDevice.get(log.device_id) ?? 0) + kWh
+      );
+      continue;
+    }
+
+    if (logDate >= startOfLastWeek && logDate < startOfThisWeek) {
+      lastWeekKWhTotal += kWh;
+      const dayIndex = getMondayBasedIndex(logDate);
+      lastWeekDaily[dayIndex] += kWh;
+    }
+  }
+
+  const rawLeaderboard = devices.map((device) => {
+    const usageKWh = thisWeekKWhByDevice.get(device.id) ?? 0;
+    const cost = computeMeralcoBill(
+      usageKWh,
+      activeRates.rates,
+      activeRates.vatRate
+    );
+
+    return {
+      name: device.device_name,
+      usageKWh,
+      cost,
+    };
+  });
+
+  const avgCost =
+    rawLeaderboard.length > 0
+      ? rawLeaderboard.reduce((sum, item) => sum + item.cost, 0) /
+        rawLeaderboard.length
+      : 0;
+
+  const leaderboard: LeaderboardItem[] = rawLeaderboard
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, 5)
+    .map((item, index) => {
+      const { tag, tagColor } = getTagForCost(item.cost, avgCost);
+      return {
+        rank: index + 1,
+        name: item.name,
+        usageKWh: item.usageKWh,
+        cost: item.cost,
+        tag,
+        tagColor,
+      };
+    });
+
+  const weeklyData: WeeklyUsagePoint[] = WEEKDAY_LABELS.map((day, index) => ({
+    day,
+    thisWk: Number(thisWeekDaily[index].toFixed(2)),
+    lastWk: Number(lastWeekDaily[index].toFixed(2)),
+  }));
+
+  const thisWeekPhp = computeMeralcoBill(
+    thisWeekKWhTotal,
+    activeRates.rates,
+    activeRates.vatRate
+  );
+  const lastWeekPhp = computeMeralcoBill(
+    lastWeekKWhTotal,
+    activeRates.rates,
+    activeRates.vatRate
+  );
+
+  const weekSavingsPhp = Math.max(lastWeekPhp - thisWeekPhp, 0);
+  const savingsPercent =
+    lastWeekPhp > 0 ? (weekSavingsPhp / lastWeekPhp) * 100 : 0;
+
+  const daysElapsedThisWeek = Math.min(
+    getMondayBasedIndex(now) + 1,
+    7
+  );
+  const averageDailyCostThisWeek =
+    daysElapsedThisWeek > 0 ? thisWeekPhp / daysElapsedThisWeek : 0;
+  const daysInMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0
+  ).getDate();
+  const projectedMonthlyBill = averageDailyCostThisWeek * daysInMonth;
+
+  const topDevice = leaderboard[0];
+
   return (
     <div className="min-h-screen bg-base text-white pb-24">
       {/* ===== Header ===== */}
-      <header className="flex items-center gap-2 px-5 pt-5 pb-4">
-        <Zap className="w-5 h-5 text-mint fill-mint" />
-        <h1 className="text-lg font-bold tracking-tight">
-          Watt<span className="text-mint">Wise</span>
-        </h1>
+      <header className="flex items-center justify-between px-5 pt-5 pb-4">
+        <div className="flex items-center gap-2">
+          <Zap className="w-5 h-5 text-mint fill-mint" />
+          <h1 className="text-lg font-bold tracking-tight">
+            Watt<span className="text-mint">Wise</span>
+          </h1>
+        </div>
+        <LogoutButton />
       </header>
 
       <div className="px-5 flex flex-col gap-5">
@@ -80,7 +239,12 @@ export default function InsightsPage() {
             </div>
           </div>
           <div className="flex flex-col gap-2.5">
-            {MOCK_LEADERBOARD.map((device) => (
+            {leaderboard.length === 0 ? (
+              <div className="rounded-xl bg-surface border border-white/[0.06] px-4 py-4 text-sm text-white/60">
+                No device usage logs yet for this week.
+              </div>
+            ) : (
+              leaderboard.map((device) => (
               <div
                 key={device.rank}
                 className="relative rounded-xl bg-surface border border-white/[0.06] px-4 py-3.5 flex items-center gap-3 overflow-hidden"
@@ -104,7 +268,7 @@ export default function InsightsPage() {
                     {device.name}
                   </p>
                   <p className="text-[11px] text-white/40 truncate">
-                    {device.location} &middot; {device.usage}
+                    {device.usageKWh.toFixed(2)} kWh this week
                   </p>
                 </div>
 
@@ -118,7 +282,8 @@ export default function InsightsPage() {
                   </p>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
 
@@ -136,10 +301,12 @@ export default function InsightsPage() {
             </div>
             <h3 className="text-xl font-bold mb-1">Critical Spike!</h3>
             <p className="text-sm text-white/70 leading-relaxed mb-3">
-              Water Heater consumption jumped 40% between 2AM-4AM.
+              {topDevice
+                ? `${topDevice.name} is currently your highest-cost device this week at ₱${topDevice.cost.toFixed(2)}.`
+                : "No device spike detected yet. Start logging data to unlock usage alerts."}
             </p>
             <button className="bg-naku text-black text-xs font-bold px-4 py-2 rounded-lg transition-transform active:scale-95">
-              Review Leak
+              Review Device
             </button>
           </div>
 
@@ -155,7 +322,7 @@ export default function InsightsPage() {
                   Weekly Win!
                 </h3>
                 <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                  You saved ₱320 this week by optimizing standby power.
+                  You saved ₱{weekSavingsPhp.toFixed(2)} this week versus last week.
                 </p>
               </div>
               <Trophy className="w-5 h-5 text-bida mt-2" />
@@ -168,7 +335,7 @@ export default function InsightsPage() {
                   Strategy Tip
                 </span>
                 <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
-                  Shift laundry to off-peak hours (10PM+) for better rates.
+                  Focus on your top-load device first; reducing its runtime gives the biggest bill impact.
                 </p>
               </div>
               <Leaf className="w-5 h-5 text-bida mt-2" />
@@ -198,31 +365,7 @@ export default function InsightsPage() {
           </div>
 
           <div className="rounded-xl bg-surface border border-white/[0.06] p-4 overflow-hidden">
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart
-                data={MOCK_WEEKLY_DATA}
-                barGap={2}
-                barCategoryGap="20%"
-              >
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
-                />
-                <YAxis hide />
-                <Bar dataKey="thisWk" radius={[4, 4, 0, 0]} maxBarSize={16}>
-                  {MOCK_WEEKLY_DATA.map((_, i) => (
-                    <Cell key={i} fill="#00E66F" />
-                  ))}
-                </Bar>
-                <Bar dataKey="lastWk" radius={[4, 4, 0, 0]} maxBarSize={16}>
-                  {MOCK_WEEKLY_DATA.map((_, i) => (
-                    <Cell key={i} fill="rgba(255,255,255,0.12)" />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <WeeklyUsageChart data={weeklyData} />
           </div>
         </section>
 
@@ -237,7 +380,10 @@ export default function InsightsPage() {
               <div>
                 <p className="text-4xl font-bold text-mint tracking-tight">
                   <span className="text-2xl text-white/50 mr-0.5">₱</span>
-                  3,420.00
+                  {projectedMonthlyBill.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </div>
               <div className="text-right">
@@ -246,10 +392,16 @@ export default function InsightsPage() {
                 </p>
                 <div className="flex items-center gap-1 justify-end">
                   <TrendingDown className="w-3.5 h-3.5 text-bida" />
-                  <span className="text-lg font-bold text-bida">-15.4%</span>
+                  <span className="text-lg font-bold text-bida">
+                    {savingsPercent > 0 ? "-" : ""}
+                    {Math.abs(savingsPercent).toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </div>
+            <p className="mt-2 text-[10px] text-white/40">
+              Based on active Meralco rate month {activeRates.effectiveMonth} and recent logged usage.
+            </p>
           </div>
         </section>
       </div>
