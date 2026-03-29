@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Zap, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,14 +13,10 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "unauthorized" ? "You do not have permission to access that page." : null
+  );
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("error") === "unauthorized") {
-      setError("You do not have permission to access that page.");
-    }
-  }, [searchParams]);
 
   async function handleLogin() {
     setError(null);
@@ -49,18 +46,24 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col bg-base tracking-tight">
       {/* Top Section — Logo & Branding */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
-        {/* Glow Circle */}
-        <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-full border border-mint/20 bg-mint/10 shadow-mint-glow">
-          <Zap className="h-10 w-10 text-mint fill-mint" />
+        {/* Mascot */}
+        <div className="flex h-24 w-24 items-center justify-center">
+          <Image
+            src="/wattwise_mascot.png"
+            alt="WattWise mascot"
+            width={72}
+            height={72}
+            className="h-20 w-20 object-contain"
+          />
         </div>
 
         {/* Brand Name */}
-        <h1 className="text-3xl font-bold text-white mb-1">
-          Watt<span className="text-mint text-mint-glow">Wise</span>
+        <h1 className="text-3xl font-bold text-white">
+          Watt<span className="text-mint">Wise</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-sm font-semibold text-mint/80">Smart Energy Management</p>
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">INTELLIGENT ENERGY</p>
       </div>
 
       {/* Form Section */}

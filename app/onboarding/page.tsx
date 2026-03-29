@@ -1,36 +1,41 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-base tracking-tight animate-in fade-in duration-700">
       {/* Top Header Logo */}
-      <div className="flex items-center justify-center pt-16 pb-4">
-        <Zap className="h-5 w-5 text-mint fill-mint mr-1.5" />
-        <h2 className="text-xl font-bold text-white flex items-center">
-          Watt<span className="text-mint text-mint-glow">Wise</span>
-        </h2>
-      </div>
+        <div className="flex items-center justify-center pt-16 pb-4">
+          <h2 className="text-xl font-bold text-white flex items-center">
+            Watt<span className="text-mint">Wise</span>
+          </h2>
+        </div>
 
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center flex-1 px-6">
         {/* Core Circular Logo element */}
-        <div className="relative mb-10 flex h-36 w-36 items-center justify-center rounded-full border border-mint/20 bg-mint/5 shadow-mint-glow">
-          <Zap className="h-14 w-14 text-mint fill-mint" />
+        <div className="mb-6 flex items-center justify-center">
+          <Image
+            src="/wattwise_mascot.png"
+            alt="WattWise mascot"
+            width={192}
+            height={192}
+            className="h-48 w-48 object-contain"
+          />
         </div>
 
         {/* Value Proposition */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-white mb-1 tracking-tight">
             Smart Energy.
           </h1>
-          <h1 className="text-4xl font-bold text-mint mb-6 tracking-tight text-mint-glow">
+          <h1 className="text-4xl font-bold text-mint mb-4 tracking-tight">
             Real Savings.
           </h1>
           <p className="text-white/60 text-[17px] leading-relaxed max-w-[320px] mx-auto">
-            Take control of your household energy with industrial-grade precision.
+            Take control of your household energy.
           </p>
         </div>
 

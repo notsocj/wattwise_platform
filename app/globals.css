@@ -17,9 +17,11 @@ body {
 }
 
 .shadow-mint-glow {
-  box-shadow: 0 0 30px rgba(0, 230, 111, 0.5);
+  /* glow removed globally */
+  box-shadow: none !important;
 }
 
 .text-mint-glow {
-  text-shadow: 0 0 15px rgba(0, 230, 111, 0.6);
+  /* glow removed globally */
+  text-shadow: none !important;
 }

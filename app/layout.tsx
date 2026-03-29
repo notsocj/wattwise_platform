@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
+import MobileViewport from "@/components/ui/MobileViewport";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -28,7 +29,7 @@ export default async function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning className={`${spaceGrotesk.variable} antialiased bg-base text-white`}>
         <SupabaseProvider session={session}>
-          {children}
+          <MobileViewport>{children}</MobileViewport>
         </SupabaseProvider>
       </body>
     </html>

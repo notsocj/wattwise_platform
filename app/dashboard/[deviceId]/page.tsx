@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   ArrowLeft,
-  Bot,
   Wallet,
 } from "lucide-react";
+import WattwiseMascot from "@/components/ui/WattwiseMascot";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
@@ -233,10 +233,10 @@ export default async function DeviceDetailPage(props: {
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
-        {/* ===== AI Naku! Tip ===== */}
+        {/* ===== AI Tip ===== */}
         <div className="flex items-start gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
           <div className="w-9 h-9 rounded-full bg-mint/15 flex items-center justify-center shrink-0 mt-0.5">
-            <Bot className="w-4 h-4 text-mint" />
+            <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
           </div>
           <p className="text-sm text-white/70 leading-relaxed">
             <span className="text-naku font-bold">Naku!</span> This unit is

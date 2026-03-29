@@ -11,7 +11,6 @@ import {
   HeartPulse,
   Globe,
   LogOut,
-  Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -45,7 +44,6 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
       {/* Brand Header */}
       <div className="px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-2 mb-3">
-          <Zap className="h-5 w-5 text-mint fill-mint" />
           <span className="text-lg font-bold text-white">
             Watt<span className="text-mint">Wise</span>
           </span>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Zap, AlertTriangle, Trophy, Leaf, TrendingDown } from "lucide-react";
+import { AlertTriangle, Trophy, Leaf, TrendingDown } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import WeeklyUsageChart, {
   type WeeklyUsagePoint,
@@ -219,7 +219,6 @@ export default async function InsightsPage() {
       {/* ===== Header ===== */}
       <header className="flex items-center justify-between px-5 pt-5 pb-4">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-mint fill-mint" />
           <h1 className="text-lg font-bold tracking-tight">
             Watt<span className="text-mint">Wise</span>
           </h1>

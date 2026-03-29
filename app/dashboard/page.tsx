@@ -1,10 +1,8 @@
 import Link from "next/link";
 import {
-  Zap,
   TrendingDown,
   TrendingUp,
   Activity,
-  Bot,
   ChevronRight,
   Plus,
   Wind,
@@ -195,7 +193,6 @@ export default async function DashboardPage() {
       {/* ===== Header ===== */}
       <header className="flex items-center justify-between px-5 pt-5 pb-4">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-mint fill-mint" />
           <h1 className="text-lg font-bold tracking-tight">
             Watt<span className="text-mint">Wise</span>
           </h1>
@@ -304,12 +301,12 @@ export default async function DashboardPage() {
           href="/insights"
           className="flex items-center gap-3 rounded-xl bg-mint/10 border border-mint/20 px-4 py-3 group transition-colors hover:bg-mint/15"
         >
-          <div className="w-9 h-9 rounded-full bg-mint/20 flex items-center justify-center shrink-0">
-            <Bot className="w-4.5 h-4.5 text-mint" />
+          <div className="w-9 h-9 flex items-center justify-center shrink-0">
+            <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold tracking-wider text-mint/70 uppercase">
-              Wattbot Tip
+              Bubolt Tip
             </p>
             <p className="text-sm text-white/80 leading-snug truncate">
               &ldquo;{MOCK_AI_TIP}&rdquo;

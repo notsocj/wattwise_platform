@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** March 28, 2026
+> **Last Updated:** March 29, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -15,14 +15,10 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~45% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, all route placeholders scaffolded |
-| 2 — Billing & Control | Scaffolded | ~5% | Route placeholders created (`/dashboard/[deviceId]`), blocked by Phase 1 completion |
-| 3 — AI & PWA | Scaffolded | ~5% | Route placeholders created (`/insights`, `/api/insights`), blocked by Phase 2 |
-| 4 — Super Admin | In Progress | ~20% | Route guard + role-based middleware + sidebar layout done, admin RLS policies created, page scaffolds updated for sidebar layout, functional page implementations pending |
-| 1 — Foundation | In Progress | ~58% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard now reads `devices` + bounded `energy_logs` queries for live card data |
-| 2 — Billing & Control | In Progress | ~43% | Device Detail UI wired to Supabase (`devices`, `profiles`, `energy_logs`), dashboard Home Wallet now includes a home-only icon-triggered budget editor card, and billing cards use table-driven Meralco rates |
-| 3 — AI & PWA | In Progress | ~38% | Insights dashboard now reads Supabase `devices` + bounded `energy_logs` for leaderboard/trend/forecast, AI cards are still non-OpenAI placeholders, bottom nav + user logout actions done |
-| 4 — Super Admin | Scaffolded | ~5% | Route placeholders created (all 5 admin pages + layout), blocked by Phases 1–3 |
+| 1 — Foundation | In Progress | ~58% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs` |
+| 2 — Billing & Control | In Progress | ~43% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven) |
+| 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
+| 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
 
@@ -45,6 +41,13 @@ applyTo: "**"
   - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
   - [x] Implement auth middleware to protect `/dashboard` and other authenticated routes *(`proxy.ts` — uses Next.js 16 `proxy` convention)*
   - [x] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert *(PostgreSQL trigger `handle_new_user` in migration)*
+  - [x] **Password Reset Flow** *(fully functional with Supabase email integration)*
+    - [x] Build Forgot Password page (`app/forgot-password/page.tsx`) — prompts for email, sends reset link
+    - [x] Build Reset Password page (`app/reset-password/page.tsx`) — validates token, sets new password
+    - [x] Implement `supabase.auth.resetPasswordForEmail()` for sending recovery emails
+    - [x] Implement `supabase.auth.updateUser()` for password update with token validation
+    - [x] Add error handling for expired/invalid tokens and password validation
+    - [x] Create setup guide at `FORGOT_PASSWORD_SETUP.md` with Supabase configuration instructions
 
 - [x] **Design System Setup** *(95% complete)*
   - [x] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`
@@ -58,9 +61,9 @@ applyTo: "**"
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
-  - [ ] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id`
-  - [ ] Display live **Power (W)** gauge on each device card
-  - [ ] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
+  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id`
+  - [x] Display live **Power (W)** gauge on each device card
+  - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
   - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
 
 - [ ] **Historical Charts (Daily View)**
@@ -149,7 +152,7 @@ applyTo: "**"
 - [ ] **OpenAI Integration — Server-Side Only**
   - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only)
   - [ ] Install `openai` npm package
-  - [ ] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
+  - [x] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
 
 - [ ] **Trigger & Cache Flow Implementation**
   - [ ] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
@@ -184,7 +187,7 @@ applyTo: "**"
 - [x] **Bottom Navigation Bar**
   - [x] Implement persistent 2-tab navbar: **Home** (fleet view) and **Insights** (analytics)
   - [x] Active tab highlighted with green glow indicator
-  - [ ] Navigation bar hidden on Device Detail page (focus mode)
+  - [x] Navigation bar hidden on Device Detail page (focus mode)
 
 - [ ] **Serwist PWA Configuration**
   - [ ] Configure Serwist in `next.config.ts` for offline caching
