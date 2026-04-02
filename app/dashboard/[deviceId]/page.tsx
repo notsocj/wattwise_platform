@@ -9,6 +9,7 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 
 type DeviceRow = {
   id: string;
@@ -327,6 +328,8 @@ export default async function DeviceDetailPage(props: {
 
   return (
     <div className="min-h-screen bg-base text-white pb-8">
+      <RealtimeRefreshBridge deviceKeys={[deviceData.id, deviceData.mac_address]} />
+
       {/* ===== Header ===== */}
       <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">

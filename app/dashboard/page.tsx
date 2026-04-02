@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   TrendingDown,
   TrendingUp,
-  Activity,
+  Minus,
   ChevronRight,
   Plus,
   Wind,
@@ -13,6 +13,7 @@ import {
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
+import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -32,6 +33,8 @@ type DeviceRow = {
 type LatestReadingRow = {
   device_id: string;
   average_watts: number | string | null;
+  voltage_v: number | string | null;
+  current_a: number | string | null;
   energy_kwh: number | string | null;
   recorded_at: string | null;
 };
@@ -49,6 +52,8 @@ type DashboardDevice = {
   id: string;
   name: string;
   watts: number;
+  volts: number;
+  amps: number;
   dailyKWh: number;
   isOnline: boolean;
   isActive: boolean;
@@ -120,18 +125,28 @@ export default async function DashboardPage() {
 
   const devicesRows = (devicesData ?? []) as DeviceRow[];
   const deviceIds = devicesRows.map((device) => device.id);
+  const realtimeDeviceKeys = Array.from(
+    new Set(
+      devicesRows.flatMap((device) => [device.id, device.mac_address]).filter(Boolean)
+    )
+  );
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
+
+  const startOfYesterday = new Date(startOfDay);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+  const endOfYesterday = new Date(startOfDay);
+  endOfYesterday.setMilliseconds(-1);
 
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+  const now = new Date();
 
-  const [latestReadingsRes, dailyUsageRes, monthlyUsageRes] = deviceIds.length
+  const [latestReadingsRes, dailyUsageRes, yesterdayUsageRes, monthlyUsageRes] = deviceIds.length
     ? await Promise.all([
         supabase.rpc("get_latest_device_readings", {
           p_user_id: user.id,
@@ -139,29 +154,40 @@ export default async function DashboardPage() {
         supabase.rpc("get_usage_kwh_by_device", {
           p_user_id: user.id,
           p_start: startOfDay.toISOString(),
-          p_end: endOfDay.toISOString(),
+          p_end: now.toISOString(),
+        }),
+        supabase.rpc("get_usage_kwh_by_device", {
+          p_user_id: user.id,
+          p_start: startOfYesterday.toISOString(),
+          p_end: endOfYesterday.toISOString(),
         }),
         supabase.rpc("get_usage_kwh_by_device", {
           p_user_id: user.id,
           p_start: startOfMonth.toISOString(),
-          p_end: endOfDay.toISOString(),
+          p_end: now.toISOString(),
         }),
       ])
     : [
         { data: [] as LatestReadingRow[] },
         { data: [] as UsageByDeviceRow[] },
         { data: [] as UsageByDeviceRow[] },
+        { data: [] as UsageByDeviceRow[] },
       ];
 
   const latestReadings = (latestReadingsRes.data ?? []) as LatestReadingRow[];
   const dailyUsageRows = (dailyUsageRes.data ?? []) as UsageByDeviceRow[];
+  const yesterdayUsageRows = (yesterdayUsageRes.data ?? []) as UsageByDeviceRow[];
   const monthlyUsageRows = (monthlyUsageRes.data ?? []) as UsageByDeviceRow[];
 
   const latestWattsByDevice = new Map<string, number>();
+  const latestVoltsByDevice = new Map<string, number>();
+  const latestAmpsByDevice = new Map<string, number>();
   const latestRecordedAtByDevice = new Map<string, string | null>();
 
   for (const row of latestReadings) {
     latestWattsByDevice.set(row.device_id, Math.max(0, toNumber(row.average_watts)));
+    latestVoltsByDevice.set(row.device_id, Math.max(0, toNumber(row.voltage_v ?? null)));
+    latestAmpsByDevice.set(row.device_id, Math.max(0, toNumber(row.current_a ?? null)));
     latestRecordedAtByDevice.set(row.device_id, row.recorded_at);
   }
 
@@ -177,15 +203,27 @@ export default async function DashboardPage() {
 
   const devices: DashboardDevice[] = devicesRows.map((device) => {
     const latestWatts = Math.round(latestWattsByDevice.get(device.id) ?? 0);
+    const latestVolts = Math.round(latestVoltsByDevice.get(device.id) ?? 0);
+    const latestAmps = latestAmpsByDevice.get(device.id) ?? null;
     const hasFreshTelemetry = isFreshReading(
       latestRecordedAtByDevice.get(device.id) ?? null
     );
     const currentWatts = hasFreshTelemetry ? latestWatts : 0;
+    const currentVolts = hasFreshTelemetry ? (latestVolts > 0 ? latestVolts : 230) : 0;
+    const derivedAmps =
+      currentVolts > 0
+        ? Number((Math.max(0, currentWatts) / currentVolts).toFixed(1))
+        : 0;
+    const currentAmps = hasFreshTelemetry
+      ? Number((Math.max(0, latestAmps ?? derivedAmps)).toFixed(1))
+      : 0;
 
     return {
       id: device.id,
       name: device.device_name,
       watts: currentWatts,
+      volts: currentVolts,
+      amps: currentAmps,
       dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
       isOnline: hasFreshTelemetry,
       isActive: hasFreshTelemetry && currentWatts > 0,
@@ -194,6 +232,7 @@ export default async function DashboardPage() {
   });
 
   const totalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
+  const onlineDeviceCount = devices.filter((device) => device.isOnline).length;
 
   const totalDailyKWh = devices.reduce((sum, d) => sum + d.dailyKWh, 0);
   const totalDailyCostPhp = computeMeralcoBill(
@@ -201,6 +240,44 @@ export default async function DashboardPage() {
     activeRates.rates,
     activeRates.vatRate
   );
+
+  const totalYesterdayKWh = yesterdayUsageRows.reduce(
+    (sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)),
+    0
+  );
+  const totalYesterdayCostPhp = computeMeralcoBill(
+    totalYesterdayKWh,
+    activeRates.rates,
+    activeRates.vatRate
+  );
+  const dayOverDayDeltaPhp = totalDailyCostPhp - totalYesterdayCostPhp;
+  const hasSameSpend = Math.abs(dayOverDayDeltaPhp) < 0.01;
+  const hasNoDailyCostYet = totalDailyCostPhp < 0.01;
+  const showDailyTrend = !hasNoDailyCostYet;
+
+  let TrendIcon = Minus;
+  let trendClassName = "text-white/50";
+  let trendCopy = "No change from yesterday";
+
+  if (!hasNoDailyCostYet && !hasSameSpend && totalYesterdayCostPhp > 0) {
+    const dayOverDayPercent = Math.abs(
+      (dayOverDayDeltaPhp / totalYesterdayCostPhp) * 100
+    );
+
+    if (dayOverDayDeltaPhp > 0) {
+      TrendIcon = TrendingUp;
+      trendClassName = "text-naku";
+      trendCopy = `${dayOverDayPercent.toFixed(1)}% increase from yesterday`;
+    } else {
+      TrendIcon = TrendingDown;
+      trendClassName = "text-bida";
+      trendCopy = `${dayOverDayPercent.toFixed(1)}% decrease from yesterday`;
+    }
+  } else if (!hasNoDailyCostYet && !hasSameSpend && totalYesterdayCostPhp === 0) {
+    TrendIcon = TrendingUp;
+    trendClassName = "text-naku";
+    trendCopy = "New spend today (no usage yesterday)";
+  }
 
   const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
   const safeMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : 1;
@@ -234,39 +311,37 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-base text-white pb-24">
+      <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
+
       {/* ===== Header ===== */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-bold tracking-tight">
-            Watt<span className="text-mint">Wise</span>
-          </h1>
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold tracking-tight">
+              Watt<span className="text-mint">Wise</span>
+            </h1>
+          </div>
+          <LogoutButton />
         </div>
-        <LogoutButton />
       </header>
 
-      <div className="px-5 flex flex-col gap-4">
+      <div className="px-5 pt-[84px] flex flex-col gap-4">
         {/* ===== Total Live Wattage Card ===== */}
         <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
           {/* Mint left accent */}
           <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
-                Total Live Wattage
-              </p>
-              <p className="text-5xl font-bold tracking-tight text-white">
-                {totalWatts.toLocaleString()}
-                <span className="text-lg font-medium text-white/50 ml-1">
-                  W
-                </span>
-              </p>
-              <div className="flex items-center gap-1.5 mt-2 text-bida text-sm">
-                <TrendingDown className="w-3.5 h-3.5" />
-                <span className="font-medium">5% lower than usual</span>
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-mint" />
+          <div>
+            <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
+              Total Live Wattage
+            </p>
+            <p className="text-5xl font-bold tracking-tight text-white">
+              {totalWatts.toLocaleString()}
+              <span className="text-lg font-medium text-white/50 ml-1">
+                W
+              </span>
+            </p>
+            <div className="mt-2 text-bida text-sm">
+              <span className="font-medium">{onlineDeviceCount} device(s) online live</span>
             </div>
           </div>
         </div>
@@ -286,12 +361,14 @@ export default async function DashboardPage() {
               minimumFractionDigits: 2,
             })}
           </p>
-          <div className="flex items-center gap-1.5 mt-2 text-naku text-sm">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span className="font-medium">2% increase from yesterday</span>
-          </div>
+          {showDailyTrend ? (
+            <div className={`flex items-center gap-1.5 mt-2 text-sm ${trendClassName}`}>
+              <TrendIcon className="w-3.5 h-3.5" />
+              <span className="font-medium">{trendCopy}</span>
+            </div>
+          ) : null}
           <p className="text-[10px] text-white/40 mt-2">
-            Rates source: Supabase ({activeRates.effectiveMonth}) | VAT: {(activeRates.vatRate * 100).toFixed(2)}%
+            VAT: {(activeRates.vatRate * 100).toFixed(2)}%
           </p>
         </div>
 
@@ -387,13 +464,13 @@ export default async function DashboardPage() {
                     <p className="text-sm font-semibold leading-tight mb-1 line-clamp-2">
                       {device.name}
                     </p>
-                    <p className="text-xs text-white/50">
-                      {device.isActive
-                        ? `${device.watts}W active`
-                        : device.isOnline
-                          ? "Online (idle)"
-                          : "Offline"}
-                    </p>
+                    <div className="text-[11px]">
+                      <p
+                        className={device.isOnline ? "text-bida" : "text-white/40"}
+                      >
+                        {device.isOnline ? "Online" : "Offline"}
+                      </p>
+                    </div>
                   </div>
                 </Link>
               );

@@ -225,16 +225,18 @@ export default async function InsightsPage() {
   return (
     <div className="min-h-screen bg-base text-white pb-24">
       {/* ===== Header ===== */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-bold tracking-tight">
-            Watt<span className="text-mint">Wise</span>
-          </h1>
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold tracking-tight">
+              Watt<span className="text-mint">Wise</span>
+            </h1>
+          </div>
+          <LogoutButton />
         </div>
-        <LogoutButton />
       </header>
 
-      <div className="px-5 flex flex-col gap-5">
+      <div className="px-5 pt-[84px] flex flex-col gap-5">
         {/* ===== Device Performance Leaderboard ===== */}
         <section>
           <div className="flex items-center justify-between mb-3">

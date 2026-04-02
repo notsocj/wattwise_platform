@@ -15,7 +15,7 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~58% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs` |
+| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
 | 2 — Billing & Control | In Progress | ~51% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic |
 | 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
@@ -61,8 +61,8 @@ applyTo: "**"
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
-  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id`
-  - [x] Display live **Power (W)** gauge on each device card
+  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data, plus periodic refresh fallback for stale telemetry/offline transitions)*
+  - [x] Display live **Power (W)** gauge on each device card *(cards now show live online/offline state plus W/V/A telemetry with freshness gating)*
   - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
   - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
 
@@ -119,7 +119,7 @@ applyTo: "**"
   - [x] Add FIT-All as a first-class per-kWh component (`fit_all`) in schema and runtime billing mapper *(migration at `supabase/migrations/008_add_fit_all_to_meralco_rates.sql` + helper update in `lib/meralco-rates.ts`)*
   - [x] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`) *(dedicated migration at `supabase/migrations/004_seed_march_2026_meralco_rates.sql`)*
   - [x] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function *(shared helper in `lib/meralco-rates.ts` — DB-only source)*
-  - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(now driven by `devices` + `energy_logs` data and active `meralco_rates` row)*
+  - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(now driven by `devices` + `energy_logs` data and active `meralco_rates` row, with day-over-day increase/decrease trend computed from yesterday usage)*
 
 - [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; hardware diagnostics still placeholder-derived)*
   - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
