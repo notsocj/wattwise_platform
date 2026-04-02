@@ -25,13 +25,20 @@ const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 type DeviceRow = {
   id: string;
   device_name: string;
+  mac_address: string;
   is_online: boolean | null;
 };
 
-type EnergyLogRow = {
+type LatestReadingRow = {
   device_id: string;
-  energy_kwh: number | string;
   average_watts: number | string | null;
+  energy_kwh: number | string | null;
+  recorded_at: string | null;
+};
+
+type UsageByDeviceRow = {
+  device_id: string;
+  usage_kwh: number | string;
 };
 
 type ProfileRow = {
@@ -44,8 +51,11 @@ type DashboardDevice = {
   watts: number;
   dailyKWh: number;
   isOnline: boolean;
+  isActive: boolean;
   icon: typeof Wind;
 };
+
+const ACTIVE_READING_WINDOW_MS = 5 * 60 * 1000;
 
 function getDeviceIcon(deviceName: string) {
   const label = deviceName.toLowerCase();
@@ -70,6 +80,20 @@ function toNumber(value: number | string | null): number {
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
+function isFreshReading(recordedAt: string | null): boolean {
+  if (!recordedAt) {
+    return false;
+  }
+
+  const timestamp = new Date(recordedAt).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+
+  return Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -84,7 +108,7 @@ export default async function DashboardPage() {
   const [{ data: devicesData }, { data: profileData }, activeRates] = await Promise.all([
     supabase
       .from("devices")
-      .select("id, device_name, is_online")
+      .select("id, device_name, mac_address, is_online")
       .order("created_at", { ascending: true }),
     supabase
       .from("profiles")
@@ -107,55 +131,67 @@ export default async function DashboardPage() {
   const endOfDay = new Date();
   endOfDay.setHours(23, 59, 59, 999);
 
-  const [dailyLogsResult, monthlyLogsResult] = deviceIds.length
+  const [latestReadingsRes, dailyUsageRes, monthlyUsageRes] = deviceIds.length
     ? await Promise.all([
-        supabase
-          .from("energy_logs")
-          .select("device_id, energy_kwh, average_watts")
-          .in("device_id", deviceIds)
-          .gte("recorded_at", startOfDay.toISOString())
-          .lte("recorded_at", endOfDay.toISOString())
-          .order("recorded_at", { ascending: false })
-          .limit(100),
-        supabase
-          .from("energy_logs")
-          .select("device_id, energy_kwh, average_watts")
-          .in("device_id", deviceIds)
-          .gte("recorded_at", startOfMonth.toISOString())
-          .lte("recorded_at", endOfDay.toISOString())
-          .order("recorded_at", { ascending: false })
-          .limit(100),
+        supabase.rpc("get_latest_device_readings", {
+          p_user_id: user.id,
+        }),
+        supabase.rpc("get_usage_kwh_by_device", {
+          p_user_id: user.id,
+          p_start: startOfDay.toISOString(),
+          p_end: endOfDay.toISOString(),
+        }),
+        supabase.rpc("get_usage_kwh_by_device", {
+          p_user_id: user.id,
+          p_start: startOfMonth.toISOString(),
+          p_end: endOfDay.toISOString(),
+        }),
       ])
-    : [{ data: [] as EnergyLogRow[] }, { data: [] as EnergyLogRow[] }];
+    : [
+        { data: [] as LatestReadingRow[] },
+        { data: [] as UsageByDeviceRow[] },
+        { data: [] as UsageByDeviceRow[] },
+      ];
 
-  const logs = (dailyLogsResult.data ?? []) as EnergyLogRow[];
-  const monthlyLogs = (monthlyLogsResult.data ?? []) as EnergyLogRow[];
+  const latestReadings = (latestReadingsRes.data ?? []) as LatestReadingRow[];
+  const dailyUsageRows = (dailyUsageRes.data ?? []) as UsageByDeviceRow[];
+  const monthlyUsageRows = (monthlyUsageRes.data ?? []) as UsageByDeviceRow[];
 
   const latestWattsByDevice = new Map<string, number>();
-  const dailyKWhByDevice = new Map<string, number>();
+  const latestRecordedAtByDevice = new Map<string, string | null>();
 
-  for (const log of logs) {
-    const kWh = toNumber(log.energy_kwh);
-    const watts = toNumber(log.average_watts);
-
-    dailyKWhByDevice.set(
-      log.device_id,
-      (dailyKWhByDevice.get(log.device_id) ?? 0) + kWh
-    );
-
-    if (!latestWattsByDevice.has(log.device_id)) {
-      latestWattsByDevice.set(log.device_id, Math.max(0, watts));
-    }
+  for (const row of latestReadings) {
+    latestWattsByDevice.set(row.device_id, Math.max(0, toNumber(row.average_watts)));
+    latestRecordedAtByDevice.set(row.device_id, row.recorded_at);
   }
 
-  const devices: DashboardDevice[] = devicesRows.map((device) => ({
-    id: device.id,
-    name: device.device_name,
-    watts: Math.round(latestWattsByDevice.get(device.id) ?? 0),
-    dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
-    isOnline: Boolean(device.is_online),
-    icon: getDeviceIcon(device.device_name),
-  }));
+  const dailyKWhByDevice = new Map<string, number>();
+  for (const row of dailyUsageRows) {
+    dailyKWhByDevice.set(row.device_id, Math.max(0, toNumber(row.usage_kwh)));
+  }
+
+  const monthlyKWhByDevice = new Map<string, number>();
+  for (const row of monthlyUsageRows) {
+    monthlyKWhByDevice.set(row.device_id, Math.max(0, toNumber(row.usage_kwh)));
+  }
+
+  const devices: DashboardDevice[] = devicesRows.map((device) => {
+    const latestWatts = Math.round(latestWattsByDevice.get(device.id) ?? 0);
+    const hasFreshTelemetry = isFreshReading(
+      latestRecordedAtByDevice.get(device.id) ?? null
+    );
+    const currentWatts = hasFreshTelemetry ? latestWatts : 0;
+
+    return {
+      id: device.id,
+      name: device.device_name,
+      watts: currentWatts,
+      dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
+      isOnline: hasFreshTelemetry,
+      isActive: hasFreshTelemetry && currentWatts > 0,
+      icon: getDeviceIcon(device.device_name),
+    };
+  });
 
   const totalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
 
@@ -168,17 +204,25 @@ export default async function DashboardPage() {
 
   const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
   const safeMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : 1;
-  const totalMonthlyKWh = monthlyLogs.reduce(
-    (sum, log) => sum + toNumber(log.energy_kwh),
+  const totalMonthlyKWh = Array.from(monthlyKWhByDevice.values()).reduce(
+    (sum, usageKwh) => sum + usageKwh,
     0
   );
-  const homeMonthlySpendPhp = computeMeralcoBill(
+  const homeMonthlyVariableSpendPhp = computeMeralcoBill(
     totalMonthlyKWh,
     activeRates.rates,
     activeRates.vatRate
   );
+  const homeMonthlyEstimatedBillPhp = computeMeralcoBill(
+    totalMonthlyKWh,
+    activeRates.rates,
+    activeRates.vatRate,
+    {
+      fixedChargesPhp: activeRates.fixedMonthlyChargesPhp,
+    }
+  );
   const homeBurnPercent = Math.min(
-    (homeMonthlySpendPhp / safeMonthlyBudget) * 100,
+    (homeMonthlyEstimatedBillPhp / safeMonthlyBudget) * 100,
     100
   );
   const homeBurnColor =
@@ -273,7 +317,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-white/40">Home Burn Rate</span>
               <span className="text-xs text-white/50">
-                ₱ {homeMonthlySpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
+                ₱ {homeMonthlyEstimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} est. bill (incl fixed fees)
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
@@ -282,6 +326,9 @@ export default async function DashboardPage() {
                 style={{ width: `${homeBurnPercent}%` }}
               />
             </div>
+            <p className="text-[10px] text-white/40 mt-1.5">
+              Variable energy spend: ₱ {homeMonthlyVariableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed monthly fees)
+            </p>
             <p
               className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
                 homeBurnPercent >= 90
@@ -341,7 +388,11 @@ export default async function DashboardPage() {
                       {device.name}
                     </p>
                     <p className="text-xs text-white/50">
-                      {device.isOnline ? `${device.watts}W active` : "Offline"}
+                      {device.isActive
+                        ? `${device.watts}W active`
+                        : device.isOnline
+                          ? "Online (idle)"
+                          : "Offline"}
                     </p>
                   </div>
                 </Link>

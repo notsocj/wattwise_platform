@@ -13,10 +13,10 @@ type DeviceRow = {
   device_name: string;
 };
 
-type EnergyLogRow = {
+type UsageByDeviceDayRow = {
   device_id: string;
-  energy_kwh: number | string;
-  recorded_at: string;
+  day_key: string;
+  usage_kwh: number | string;
 };
 
 type LeaderboardItem = {
@@ -29,15 +29,6 @@ type LeaderboardItem = {
 };
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-function toNumber(value: number | string | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0;
-  }
-
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function getStartOfWeek(date: Date): Date {
   const copy = new Date(date);
@@ -100,18 +91,16 @@ export default async function InsightsPage() {
   const startOfLastWeek = new Date(startOfThisWeek);
   startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
 
-  const { data: logsData } = deviceIds.length
+  const { data: usageByDeviceDayData } = deviceIds.length
     ? await supabase
-        .from("energy_logs")
-        .select("device_id, energy_kwh, recorded_at")
-        .in("device_id", deviceIds)
-        .gte("recorded_at", startOfLastWeek.toISOString())
-        .lte("recorded_at", endOfToday.toISOString())
-        .order("recorded_at", { ascending: false })
-        .limit(100)
-    : { data: [] as EnergyLogRow[] };
+        .rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: startOfLastWeek.toISOString(),
+          p_end: endOfToday.toISOString(),
+        })
+    : { data: [] as UsageByDeviceDayRow[] };
 
-  const logs = (logsData ?? []) as EnergyLogRow[];
+  const usageByDeviceDayRows = (usageByDeviceDayData ?? []) as UsageByDeviceDayRow[];
 
   const thisWeekKWhByDevice = new Map<string, number>();
   const thisWeekDaily = new Array<number>(7).fill(0);
@@ -120,25 +109,35 @@ export default async function InsightsPage() {
   let thisWeekKWhTotal = 0;
   let lastWeekKWhTotal = 0;
 
-  for (const log of logs) {
-    const logDate = new Date(log.recorded_at);
-    const kWh = toNumber(log.energy_kwh);
+  for (const row of usageByDeviceDayRows) {
+    const [yearPart, monthPart, dayPart] = row.day_key.split("-").map(Number);
 
-    if (logDate >= startOfThisWeek) {
-      thisWeekKWhTotal += kWh;
-      const dayIndex = getMondayBasedIndex(logDate);
-      thisWeekDaily[dayIndex] += kWh;
+    if (!yearPart || !monthPart || !dayPart) {
+      continue;
+    }
+
+    const kWhUsage = Number(row.usage_kwh);
+    if (!Number.isFinite(kWhUsage) || kWhUsage < 0) {
+      continue;
+    }
+
+    const dayDate = new Date(yearPart, monthPart - 1, dayPart);
+
+    if (dayDate >= startOfThisWeek) {
+      thisWeekKWhTotal += kWhUsage;
+      const dayIndex = getMondayBasedIndex(dayDate);
+      thisWeekDaily[dayIndex] += kWhUsage;
       thisWeekKWhByDevice.set(
-        log.device_id,
-        (thisWeekKWhByDevice.get(log.device_id) ?? 0) + kWh
+        row.device_id,
+        (thisWeekKWhByDevice.get(row.device_id) ?? 0) + kWhUsage
       );
       continue;
     }
 
-    if (logDate >= startOfLastWeek && logDate < startOfThisWeek) {
-      lastWeekKWhTotal += kWh;
-      const dayIndex = getMondayBasedIndex(logDate);
-      lastWeekDaily[dayIndex] += kWh;
+    if (dayDate >= startOfLastWeek && dayDate < startOfThisWeek) {
+      lastWeekKWhTotal += kWhUsage;
+      const dayIndex = getMondayBasedIndex(dayDate);
+      lastWeekDaily[dayIndex] += kWhUsage;
     }
   }
 
@@ -203,14 +202,23 @@ export default async function InsightsPage() {
     getMondayBasedIndex(now) + 1,
     7
   );
-  const averageDailyCostThisWeek =
-    daysElapsedThisWeek > 0 ? thisWeekPhp / daysElapsedThisWeek : 0;
   const daysInMonth = new Date(
     now.getFullYear(),
     now.getMonth() + 1,
     0
   ).getDate();
-  const projectedMonthlyBill = averageDailyCostThisWeek * daysInMonth;
+  const projectedMonthlyKWh =
+    daysElapsedThisWeek > 0
+      ? (thisWeekKWhTotal / daysElapsedThisWeek) * daysInMonth
+      : 0;
+  const projectedMonthlyBill = computeMeralcoBill(
+    projectedMonthlyKWh,
+    activeRates.rates,
+    activeRates.vatRate,
+    {
+      fixedChargesPhp: activeRates.fixedMonthlyChargesPhp,
+    }
+  );
 
   const topDevice = leaderboard[0];
 

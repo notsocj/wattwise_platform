@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Wallet,
 } from "lucide-react";
-import WattwiseMascot from "@/components/ui/WattwiseMascot";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
@@ -14,6 +13,7 @@ import {
 type DeviceRow = {
   id: string;
   device_name: string;
+  mac_address: string;
 };
 
 type ProfileRow = {
@@ -23,6 +23,20 @@ type ProfileRow = {
 type EnergyLogRow = {
   energy_kwh: number | string;
   average_watts: number | string | null;
+  voltage_v: number | string | null;
+  current_a: number | string | null;
+  recorded_at: string | null;
+};
+
+type LegacyEnergyLogRow = {
+  energy_kwh: number | string;
+  average_watts: number | string | null;
+  recorded_at: string | null;
+};
+
+type UsageByDeviceRow = {
+  device_id: string;
+  usage_kwh: number | string;
 };
 
 type DeviceViewModel = {
@@ -30,14 +44,20 @@ type DeviceViewModel = {
   name: string;
   deviceCode: string;
   watts: number;
+  isOnline: boolean;
+  isActive: boolean;
   maxWatts: number;
   volts: number;
   maxVolts: number;
   amps: number;
   maxAmps: number;
   monthlyBudget: number;
-  currentSpend: number;
+  variableSpendPhp: number;
+  estimatedBillPhp: number;
+  fixedFeeSharePhp: number;
 };
+
+const ACTIVE_READING_WINDOW_MS = 5 * 60 * 1000;
 
 function toNumber(value: number | string | null): number {
   if (value === null) {
@@ -46,6 +66,29 @@ function toNumber(value: number | string | null): number {
 
   const numericValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function toFiniteNumber(value: number | string | null): number | null {
+  if (value === null) {
+    return null;
+  }
+
+  const numericValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function isFreshReading(recordedAt: string | null): boolean {
+  if (!recordedAt) {
+    return false;
+  }
+
+  const timestamp = new Date(recordedAt).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+
+  return Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
 // --- Circular gauge component ---
@@ -139,11 +182,11 @@ export default async function DeviceDetailPage(props: {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const [{ data: deviceData }, { data: profileData }, { data: logsData }, activeRates] =
+  const [{ data: deviceData }, { data: profileData }, usageByDeviceRes, devicesCountRes, activeRates] =
     await Promise.all([
       supabase
         .from("devices")
-        .select("id, device_name")
+        .select("id, device_name, mac_address")
         .eq("id", deviceId)
         .eq("user_id", user.id)
         .maybeSingle<DeviceRow>(),
@@ -152,14 +195,15 @@ export default async function DeviceDetailPage(props: {
         .select("monthly_budget_php")
         .eq("id", user.id)
         .maybeSingle<ProfileRow>(),
+      supabase.rpc("get_usage_kwh_by_device", {
+        p_user_id: user.id,
+        p_start: startOfMonth.toISOString(),
+        p_end: endOfToday.toISOString(),
+      }),
       supabase
-        .from("energy_logs")
-        .select("energy_kwh, average_watts")
-        .eq("device_id", deviceId)
-        .gte("recorded_at", startOfMonth.toISOString())
-        .lte("recorded_at", endOfToday.toISOString())
-        .order("recorded_at", { ascending: false })
-        .limit(100),
+        .from("devices")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
       getActiveMeralcoRates(supabase),
     ]);
 
@@ -167,18 +211,87 @@ export default async function DeviceDetailPage(props: {
     redirect("/dashboard");
   }
 
-  const logs = (logsData ?? []) as EnergyLogRow[];
-  const latestLog = logs[0];
+  const latestTelemetryResult = await supabase
+    .from("energy_logs")
+    .select("energy_kwh, average_watts, voltage_v, current_a, recorded_at")
+    .in("device_id", [deviceData.id, deviceData.mac_address])
+    .order("recorded_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<EnergyLogRow>();
 
-  const watts = Math.round(toNumber(latestLog?.average_watts ?? 0));
-  const volts = 230;
-  const amps = Number((watts / volts).toFixed(1));
+  let latestLog: EnergyLogRow | null = null;
+
+  if (latestTelemetryResult.error) {
+    const { data: legacyLogData } = await supabase
+      .from("energy_logs")
+      .select("energy_kwh, average_watts, recorded_at")
+      .in("device_id", [deviceData.id, deviceData.mac_address])
+      .order("recorded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<LegacyEnergyLogRow>();
+
+    latestLog = legacyLogData
+      ? {
+          ...legacyLogData,
+          voltage_v: null,
+          current_a: null,
+        }
+      : null;
+  } else {
+    latestLog = latestTelemetryResult.data ?? null;
+  }
+
+  const hasFreshTelemetry = isFreshReading(latestLog?.recorded_at ?? null);
+
+  const watts = hasFreshTelemetry
+    ? Math.round(toNumber(latestLog?.average_watts ?? 0))
+    : 0;
+  const voltageReading = hasFreshTelemetry
+    ? toFiniteNumber(latestLog?.voltage_v ?? null)
+    : null;
+  const currentReading = hasFreshTelemetry
+    ? toFiniteNumber(latestLog?.current_a ?? null)
+    : null;
+  const volts = hasFreshTelemetry
+    ? Math.round(Math.max(0, voltageReading ?? 230))
+    : 0;
+  const amps = hasFreshTelemetry
+    ? Number(
+        Math.max(0, currentReading ?? (volts > 0 ? watts / volts : 0)).toFixed(1)
+      )
+    : 0;
   const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
-  const monthlyKWh = logs.reduce((sum, log) => sum + toNumber(log.energy_kwh), 0);
-  const currentSpend = computeMeralcoBill(
+  const usageByDeviceRows = (usageByDeviceRes.data ?? []) as UsageByDeviceRow[];
+  const deviceCount = Math.max(1, devicesCountRes.count ?? 1);
+  const monthlyKWh = Math.max(
+    0,
+    toNumber(
+      usageByDeviceRows.find((row) => row.device_id === deviceData.id)?.usage_kwh ?? 0
+    )
+  );
+
+  const totalMonthlyKWhAcrossHome = usageByDeviceRows.reduce(
+    (sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)),
+    0
+  );
+
+  const fixedFeeSharePhp = totalMonthlyKWhAcrossHome > 0
+    ? activeRates.fixedMonthlyChargesPhp * (monthlyKWh / totalMonthlyKWhAcrossHome)
+    : activeRates.fixedMonthlyChargesPhp / deviceCount;
+
+  const variableSpendPhp = computeMeralcoBill(
     monthlyKWh,
     activeRates.rates,
     activeRates.vatRate
+  );
+
+  const estimatedBillPhp = computeMeralcoBill(
+    monthlyKWh,
+    activeRates.rates,
+    activeRates.vatRate,
+    {
+      fixedChargesPhp: fixedFeeSharePhp,
+    }
   );
 
   const device: DeviceViewModel = {
@@ -186,19 +299,23 @@ export default async function DeviceDetailPage(props: {
     name: deviceData.device_name,
     deviceCode: `WW-${deviceData.id.slice(0, 8).toUpperCase()}`,
     watts,
+    isOnline: hasFreshTelemetry,
+    isActive: hasFreshTelemetry && watts > 0,
     maxWatts: 2000,
     volts,
     maxVolts: 260,
     amps,
     maxAmps: 30,
     monthlyBudget,
-    currentSpend,
+    variableSpendPhp,
+    estimatedBillPhp,
+    fixedFeeSharePhp,
   };
 
   const safeMonthlyBudget = device.monthlyBudget > 0 ? device.monthlyBudget : 1;
 
   const burnPercent = Math.min(
-    (device.currentSpend / safeMonthlyBudget) * 100,
+    (device.estimatedBillPhp / safeMonthlyBudget) * 100,
     100
   );
   const burnColor =
@@ -224,8 +341,8 @@ export default async function DeviceDetailPage(props: {
           <h1 className="text-[15px] font-bold leading-tight">
             {device.name}
           </h1>
-          <p className="text-[11px] text-mint/70">
-            Device ID: {device.deviceCode}
+          <p className="text-[11px] text-white/60">
+            Device ID: {device.deviceCode} • {device.isActive ? "Active" : device.isOnline ? "Online (idle)" : "Offline"}
           </p>
         </div>
         </div>
@@ -239,8 +356,10 @@ export default async function DeviceDetailPage(props: {
             <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
           </div>
           <p className="text-sm text-white/70 leading-relaxed">
-            <span className="text-naku font-bold">Naku!</span> This unit is
-            currently at ₱{device.currentSpend.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="text-naku font-bold">Naku!</span> Variable spend is
+            {" "}₱{device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {" "}and estimated appliance bill is
+            {" "}₱{device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             {" "}out of a ₱{device.monthlyBudget.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             {" "}home monthly budget.
           </p>
@@ -295,10 +414,10 @@ export default async function DeviceDetailPage(props: {
           <div className="mb-1.5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-white/40">
-                Burn Rate (Real-time)
+                Estimated Appliance Bill
               </span>
               <span className="text-xs text-white/50">
-                ₱ {device.currentSpend.toLocaleString()} used
+                ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
@@ -307,6 +426,9 @@ export default async function DeviceDetailPage(props: {
                 style={{ width: `${burnPercent}%` }}
               />
             </div>
+            <p className="text-[10px] text-white/40 mt-1.5">
+              Variable spend: ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
             <p
               className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
                 burnPercent >= 90

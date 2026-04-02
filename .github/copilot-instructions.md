@@ -128,7 +128,7 @@ All UI uses **Space Grotesk** for its technical, modern personality and stable n
 - **Roundness:** `rounded-xl` (12px) for main card containers; `rounded-lg` (8px) for icon backgrounds; `rounded-full` for circular elements and pill toggles.
 
 ### Implementation Notes for AI Agent
-- Load **Space Grotesk** via `next/font/google` in `app/layout.tsx` and apply it to `<html>` as the default sans font via Tailwind's `fontFamily` config.
+- Load **Space Grotesk** from local TTF files in `public/fonts` using `@font-face` declarations in `app/globals.css`, mapping weights (`300/400/500/600/700`) and applying it as the default sans font through `--font-sans`.
 - Define all palette tokens as Tailwind CSS custom colors in `app/globals.css` with `@theme` (e.g., `--color-mint: #00E66F`, `--color-surface: #1E1E1E`) so they are available as utility classes across the codebase.
 - Never hard-code hex values in component JSX — always use the Tailwind token (e.g., `bg-surface`, `text-mint`, `shadow-mint-glow`).
 - For card/container borders and subtle backgrounds, use neutral white opacity (e.g., `border-white/5`, `bg-white/[0.04]`) to avoid green tint on non-interactive surfaces.

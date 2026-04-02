@@ -5,9 +5,13 @@ export type MeralcoRateComponents = {
   transmission: number;
   systemLoss: number;
   distribution: number;
-  subsidies: number;
-  governmentTaxes: number;
   universalCharges: number;
+  fitAll: number;
+};
+
+export type MeralcoFixedCharges = {
+  meteringCharge: number;
+  supplyCharge: number;
 };
 
 type MeralcoRatesRow = {
@@ -17,9 +21,10 @@ type MeralcoRatesRow = {
   transmission: number | string;
   system_loss: number | string;
   distribution: number | string;
-  subsidies: number | string;
-  government_taxes: number | string;
   universal_charges: number | string;
+  fit_all: number | string;
+  metering_charge: number | string;
+  supply_charge: number | string;
 };
 
 function toNumber(value: number | string): number {
@@ -34,14 +39,15 @@ export function mapMeralcoRatesRowToComponents(
     transmission: toNumber(row.transmission),
     systemLoss: toNumber(row.system_loss),
     distribution: toNumber(row.distribution),
-    subsidies: toNumber(row.subsidies),
-    governmentTaxes: toNumber(row.government_taxes),
     universalCharges: toNumber(row.universal_charges),
+    fitAll: toNumber(row.fit_all),
   };
 }
 
 export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   rates: MeralcoRateComponents;
+  fixedCharges: MeralcoFixedCharges;
+  fixedMonthlyChargesPhp: number;
   vatRate: number;
   effectiveMonth: string;
   source: "table";
@@ -51,7 +57,7 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   const { data, error } = await supabase
     .from("meralco_rates")
     .select(
-      "effective_month, vat_rate, generation, transmission, system_loss, distribution, subsidies, government_taxes, universal_charges"
+      "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
     )
     .lte("effective_month", todayIso)
     .order("effective_month", { ascending: false })
@@ -70,6 +76,12 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
 
   return {
     rates: mapMeralcoRatesRowToComponents(data),
+    fixedCharges: {
+      meteringCharge: toNumber(data.metering_charge),
+      supplyCharge: toNumber(data.supply_charge),
+    },
+    fixedMonthlyChargesPhp:
+      toNumber(data.metering_charge) + toNumber(data.supply_charge),
     vatRate: toNumber(data.vat_rate),
     effectiveMonth: data.effective_month,
     source: "table",
@@ -79,17 +91,22 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
 export function computeMeralcoBill(
   kWh: number,
   rates: MeralcoRateComponents,
-  vatRate: number
+  vatRate: number,
+  options?: {
+    fixedChargesPhp?: number;
+  }
 ): number {
   const subtotalPerKWh =
     rates.generation +
     rates.transmission +
     rates.systemLoss +
     rates.distribution +
-    rates.subsidies +
-    rates.governmentTaxes +
-    rates.universalCharges;
+    rates.universalCharges +
+    rates.fitAll;
 
-  const subtotal = subtotalPerKWh * kWh;
-  return subtotal * (1 + vatRate);
+  const variableCharges = subtotalPerKWh * kWh;
+  const fixedCharges = Math.max(0, options?.fixedChargesPhp ?? 0);
+  const preVatTotal = variableCharges + fixedCharges;
+
+  return preVatTotal * (1 + vatRate);
 }

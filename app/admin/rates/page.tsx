@@ -12,7 +12,7 @@ export default function AdminRatesPage() {
       </p>
       <div className="rounded-lg border border-white/10 bg-surface p-6">
         <p className="text-white/40 text-sm">
-          Rate form (Generation, Transmission, System Loss, Distribution, Subsidies, Government Taxes, Universal Charges) and history table will be displayed here.
+          Rate form (Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, Supply Charge, Metering Charge, VAT) and history table will be displayed here.
         </p>
       </div>
     </div>

@@ -52,14 +52,15 @@ CREATE TABLE meralco_rates (
   transmission NUMERIC(10, 4) NOT NULL,
   system_loss NUMERIC(10, 4) NOT NULL,
   distribution NUMERIC(10, 4) NOT NULL,
-  subsidies NUMERIC(10, 4) NOT NULL,
-  government_taxes NUMERIC(10, 4) NOT NULL,
   universal_charges NUMERIC(10, 4) NOT NULL,
+  fit_all NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
+  metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
+  supply_charge NUMERIC(10, 2) NOT NULL DEFAULT 15.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-**Purpose:** Single source of truth for Meralco billing components and VAT. Super Admin edits this to update cost calculations across all users.
+**Purpose:** Single source of truth for Meralco billing components, fixed monthly fees, and VAT. Super Admin edits this to update cost calculations across all users.
 
 ---
 
@@ -90,9 +91,11 @@ High-volume table storing aggregated telemetry from ESP32-S3 devices.
 ```sql
 CREATE TABLE energy_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  device_id UUID REFERENCES devices(id) ON DELETE CASCADE,
+  device_id TEXT NOT NULL, -- transitional: accepts devices.id::text or devices.mac_address
   energy_kwh NUMERIC(10, 4) NOT NULL,
   average_watts NUMERIC(10, 2), -- Helpful for live dashboard gauge
+  voltage_v NUMERIC(10, 2), -- Optional metrology reading for Device Detail voltage gauge
+  current_a NUMERIC(10, 2), -- Optional metrology reading for Device Detail current gauge
   recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -101,6 +104,8 @@ CREATE INDEX idx_energy_logs_device_time ON energy_logs(device_id, recorded_at D
 ```
 
 **Purpose:** Stores aggregated power consumption data. Index ensures fast time-range queries for charts and analytics without timeout or browser crash.
+
+**Transition note:** During key migration, `energy_logs.device_id` may contain either UUID text (`devices.id`) or legacy MAC (`devices.mac_address`). Aggregation queries should normalize both forms when joining device ownership.
 
 ---
 
@@ -159,6 +164,38 @@ ORDER BY recorded_at DESC
 LIMIT 100;
 ```
 
+### Accurate usage by device (cumulative readings, minute-deduped)
+```sql
+SELECT * FROM get_usage_kwh_by_device(
+  p_user_id := $1,
+  p_start := $2,
+  p_end := $3
+);
+```
+
+### Accurate usage by device/day (for weekly charts)
+```sql
+SELECT * FROM get_usage_kwh_by_device_day(
+  p_user_id := $1,
+  p_start := $2,
+  p_end := $3
+);
+```
+
+### Latest per-device telemetry for live cards
+```sql
+SELECT * FROM get_latest_device_readings($1);
+```
+
+### Latest telemetry for Device Detail metrology gauges
+```sql
+SELECT energy_kwh, average_watts, voltage_v, current_a, recorded_at
+FROM energy_logs
+WHERE device_id IN ($1, $2)
+ORDER BY recorded_at DESC
+LIMIT 1;
+```
+
 ### Check for Cached AI Insight
 ```sql
 SELECT message FROM ai_insights
@@ -191,9 +228,10 @@ INSERT INTO meralco_rates (
   transmission,
   system_loss,
   distribution,
-  subsidies,
-  government_taxes,
-  universal_charges
+  universal_charges,
+  fit_all,
+  metering_charge,
+  supply_charge
 ) VALUES (
   '2026-03-01',
   0.12,
@@ -201,9 +239,10 @@ INSERT INTO meralco_rates (
   0.8468,
   0.5012,
   1.4798,
-  -0.0682,
-  0.2563,
-  0.1754
+  0.1754,
+  0.0838,
+  5.00,
+  15.00
 )
 ON CONFLICT (effective_month) DO UPDATE
 SET
@@ -212,9 +251,10 @@ SET
   transmission = EXCLUDED.transmission,
   system_loss = EXCLUDED.system_loss,
   distribution = EXCLUDED.distribution,
-  subsidies = EXCLUDED.subsidies,
-  government_taxes = EXCLUDED.government_taxes,
-  universal_charges = EXCLUDED.universal_charges;
+  universal_charges = EXCLUDED.universal_charges,
+  fit_all = EXCLUDED.fit_all,
+  metering_charge = EXCLUDED.metering_charge,
+  supply_charge = EXCLUDED.supply_charge;
 ```
 
 ### Fetch User Role for Admin Middleware

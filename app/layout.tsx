@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import MobileViewport from "@/components/ui/MobileViewport";
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Wattwise",
@@ -27,7 +21,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={`${spaceGrotesk.variable} antialiased bg-base text-white`}>
+      <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
           <MobileViewport>{children}</MobileViewport>
         </SupabaseProvider>

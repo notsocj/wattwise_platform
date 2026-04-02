@@ -9,30 +9,38 @@ applyTo: "**"
 
 **Hard constraint:** Never calculate energy cost with a single flat rate multiplier (e.g., `totalKWh * 10`). This is incorrect and academically indefensible.
 
-**Required pattern:** Always unbundle the Meralco billing components and apply VAT last:
+**Required pattern:** Always unbundle the Meralco billing components, add fixed monthly charges, then apply VAT last:
 
 ```ts
 // CORRECT — DB-driven unbundled Meralco rate structure
-const activeRate = await getActiveMeralcoRates(supabase); // includes vat_rate
+const activeRate = await getActiveMeralcoRates(supabase); // includes vat_rate + fixed monthly charges
 
-function computeMeralcoBill(kWh: number, rates: MeralcoRateComponents, vatRate: number): number {
+function computeMeralcoBill(
+  kWh: number,
+  rates: MeralcoRateComponents,
+  vatRate: number,
+  fixedChargesPhp: number
+): number {
   const subtotalPerKWh =
     rates.generation +
     rates.transmission +
     rates.systemLoss +
     rates.distribution +
-    rates.subsidies +
-    rates.governmentTaxes +
-    rates.universalCharges;
+    rates.universalCharges +
+    rates.fitAll;
 
-  return subtotalPerKWh * kWh * (1 + vatRate); // VAT applied at the final step only
+  const variableSubtotal = subtotalPerKWh * kWh;
+  const preVatTotal = variableSubtotal + fixedChargesPhp;
+
+  return preVatTotal * (1 + vatRate); // VAT applied at the final step only
 }
 
 // WRONG — never do this
 // const cost = kWh * 10;
 ```
 
-- In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `government_taxes`, `universal_charges`) to the billing component object before calling `computeMeralcoBill`.
+- In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
+- When `energy_logs.energy_kwh` stores cumulative meter readings, never sum all rows directly for a billing period. Compute usage from **sequential deltas** (`current - previous`) per device after minute-bucket dedupe; treat tiny negative drift as jitter (`0`) and only treat large drops as meter reset. Prefer DB RPC aggregation over client-side row scans for monthly/weekly totals.
 - The application must be DB-only: do not use in-code default rate constants, including VAT.
 - If the table query returns no rows or the query fails, surface a clear, actionable admin-visible error or warning (server-side) instructing the admin to add a `meralco_rates` entry. Do not silently fall back to hardcoded constants.
 - All cost values displayed in the UI must be derived from this calculation, never hardcoded.
@@ -67,7 +75,11 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 
 - Default to `.limit(100)` when the exact row count is unknown.
 - For chart data, prefer server-side aggregation via Supabase RPC functions over client-side array processing.
+- For billing-grade totals, use RPCs that aggregate by minute and sum cumulative deltas (`get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`) instead of raw row loops.
 - Cache fetched data using SWR or TanStack Query to avoid re-fetching on re-renders.
+- When correlating `energy_logs.device_id` to devices, normalize and support both key formats (`devices.id` and legacy `devices.mac_address`) to avoid zeroed dashboard totals during schema transition.
+- For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 5 minutes) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
+- For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
 
 ---
 

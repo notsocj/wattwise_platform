@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** March 29, 2026
+> **Last Updated:** April 2, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -16,7 +16,7 @@ applyTo: "**"
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~58% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs` |
-| 2 — Billing & Control | In Progress | ~43% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven) |
+| 2 — Billing & Control | In Progress | ~51% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic |
 | 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
@@ -50,7 +50,7 @@ applyTo: "**"
     - [x] Create setup guide at `FORGOT_PASSWORD_SETUP.md` with Supabase configuration instructions
 
 - [x] **Design System Setup** *(95% complete)*
-  - [x] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`
+  - [x] Load **Space Grotesk** from local TTF files in `public/fonts` via `@font-face` in `app/globals.css`
   - [x] Configure Tailwind 4 custom tokens: `bg-base (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
   - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
@@ -113,15 +113,15 @@ applyTo: "**"
   - [x] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
     ```
     vatRate: 0.12, generation: 5.3727, transmission: 0.8468, systemLoss: 0.5012,
-    distribution: 1.4798, subsidies: -0.0682, governmentTaxes: 0.2563,
-    universalCharges: 0.1754
+    distribution: 1.4798, universalCharges: 0.1754, fitAll: 0.0838
     ```
-  - [x] Implement `computeMeralcoBill(kWh, rates, vatRate)` — unbundled subtotal × (1 + VAT)
+  - [x] Implement `computeMeralcoBill(kWh, rates, vatRate, fixedChargesPhp)` — unbundled subtotal + fixed monthly charges, then VAT
+  - [x] Add FIT-All as a first-class per-kWh component (`fit_all`) in schema and runtime billing mapper *(migration at `supabase/migrations/008_add_fit_all_to_meralco_rates.sql` + helper update in `lib/meralco-rates.ts`)*
   - [x] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`) *(dedicated migration at `supabase/migrations/004_seed_march_2026_meralco_rates.sql`)*
   - [x] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function *(shared helper in `lib/meralco-rates.ts` — DB-only source)*
   - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(now driven by `devices` + `energy_logs` data and active `meralco_rates` row)*
 
-- [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current and hardware diagnostics still placeholder-derived)*
+- [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; hardware diagnostics still placeholder-derived)*
   - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
   - [x] Implement three "Liquid Glass" gauge rings: Power (W), Voltage (V), Current (A)
   - [x] Build **Appliance Budget/Burn** section *(view-only budget on Device Detail; editing moved to Home Wallet to keep a single budget control point)*:
@@ -131,7 +131,7 @@ applyTo: "**"
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**
-  - [ ] Create Supabase RPC `get_daily_totals(p_user_id, p_start_date, p_end_date)`
+  - [x] Create Supabase RPC aggregation functions for accurate weekly/device usage *(implemented as `get_usage_kwh_by_device` and `get_usage_kwh_by_device_day` in `supabase/migrations/006_accuracy_usage_rpcs.sql`)*
   - [ ] Build "This Week vs. Last Week" comparison bar chart using Recharts
   - [ ] Display projected monthly bill based on current daily average
 
@@ -237,7 +237,7 @@ applyTo: "**"
   - [x] Create super_admin RLS policies *(migration at `supabase/migrations/002_admin_rls_policies.sql` — SELECT on all tables + INSERT/UPDATE on meralco_rates)*
 
 - [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)**
-  - [ ] Build form with 7 unbundled rate fields: Generation, Transmission, System Loss, Distribution, Subsidies, Government Taxes, Universal Charges
+  - [ ] Build form with base rate fields: Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, VAT, optional Supply Charge, and Metering Charge
   - [ ] Show computed total rate and total with VAT as live preview
   - [ ] On save → INSERT new row into `meralco_rates` table with `effective_month`
   - [ ] Display history of past rate entries in a table below the form
