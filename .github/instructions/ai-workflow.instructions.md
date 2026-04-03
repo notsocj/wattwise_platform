@@ -40,6 +40,10 @@ function computeMeralcoBill(
 ```
 
 - In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
+- For automated monthly rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
+- Automation must extract **base non-lifeline residential components** for `meralco_rates` and ignore lifeline-only discount/subsidy rows unless tiered billing schema is explicitly implemented.
+- In fully automatic mode (no admin approval), enforce strict parser validation: required fields present, sane numeric ranges, and month-over-month anomaly threshold checks. Abort write on validation failure; do not partially update the active rate row.
+- Prefer storing sync provenance and observability metadata when available (`source_url`, `source_pdf_url`, `fetched_at`, `auto_updated`) and writing run logs to a dedicated table for failed/success runs.
 - When `energy_logs.energy_kwh` stores cumulative meter readings, never sum all rows directly for a billing period. Compute usage from **sequential deltas** (`current - previous`) per device after minute-bucket dedupe; treat tiny negative drift as jitter (`0`) and only treat large drops as meter reset. Prefer DB RPC aggregation over client-side row scans for monthly/weekly totals.
 - The application must be DB-only: do not use in-code default rate constants, including VAT.
 - If the table query returns no rows or the query fails, surface a clear, actionable admin-visible error or warning (server-side) instructing the admin to add a `meralco_rates` entry. Do not silently fall back to hardcoded constants.

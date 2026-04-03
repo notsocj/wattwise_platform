@@ -56,6 +56,10 @@ CREATE TABLE meralco_rates (
   fit_all NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
   supply_charge NUMERIC(10, 2) NOT NULL DEFAULT 15.00,
+  source_url TEXT, -- source page used by automation (Rates Archives)
+  source_pdf_url TEXT, -- exact Summary Schedule PDF URL used for extraction
+  fetched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  auto_updated BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -132,6 +136,35 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
 
 ---
 
+### 6. MERALCO RATE SYNC RUNS (Automation Observability)
+
+Stores success/failure history for monthly automatic Meralco rate sync jobs.
+
+```sql
+CREATE TABLE meralco_rate_sync_runs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('success', 'failed', 'dry_run')),
+  message TEXT NOT NULL,
+  source_url TEXT,
+  pdf_url TEXT,
+  effective_month DATE,
+  raw_rates JSONB,
+  warnings TEXT[] DEFAULT '{}',
+  ran_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_meralco_rate_sync_runs_ran_at
+  ON meralco_rate_sync_runs (ran_at DESC);
+
+CREATE INDEX idx_meralco_rate_sync_runs_status
+  ON meralco_rate_sync_runs (status);
+```
+
+**Purpose:** Provides an auditable run history for automatic rates ingestion, anomaly aborts, parser failures, and successful upserts.
+
+---
+
 ## Key Design Principles
 
 1. **Cascading Deletes:** All foreign keys use `ON DELETE CASCADE` to maintain referential integrity when users delete their profile or devices.
@@ -140,7 +173,7 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
 
 3. **Timestamps:** Every table includes `created_at` to track data lineage.
 
-4. **Indexes for Performance:** Strategic indexes on `energy_logs` and `ai_insights` ensure queries remain fast even as data accumulates.
+4. **Indexes for Performance:** Strategic indexes on `energy_logs`, `ai_insights`, and `meralco_rate_sync_runs` ensure queries remain fast even as data accumulates.
 
 5. **Free Tier Optimization:** 
    - `energy_logs` data is aggregated before insertion (e.g., 1-minute or hourly averages) to stay within 500MB limit.
@@ -255,6 +288,64 @@ SET
   fit_all = EXCLUDED.fit_all,
   metering_charge = EXCLUDED.metering_charge,
   supply_charge = EXCLUDED.supply_charge;
+```
+
+### Upsert Monthly Meralco Rates With Automation Metadata
+```sql
+INSERT INTO meralco_rates (
+  effective_month,
+  vat_rate,
+  generation,
+  transmission,
+  system_loss,
+  distribution,
+  universal_charges,
+  fit_all,
+  metering_charge,
+  supply_charge,
+  source_url,
+  source_pdf_url,
+  fetched_at,
+  auto_updated
+) VALUES (
+  '2026-03-01',
+  0.12,
+  7.8607,
+  1.5223,
+  0.7456,
+  0.9803,
+  0.3216,
+  0.2011,
+  5.00,
+  15.00,
+  'https://company.meralco.com.ph/news-and-advisories/rates-archives',
+  'https://meralcomain.s3.ap-southeast-1.amazonaws.com/2026-03/03-2026_rate_schedule.pdf',
+  NOW(),
+  TRUE
+)
+ON CONFLICT (effective_month) DO UPDATE
+SET
+  vat_rate = EXCLUDED.vat_rate,
+  generation = EXCLUDED.generation,
+  transmission = EXCLUDED.transmission,
+  system_loss = EXCLUDED.system_loss,
+  distribution = EXCLUDED.distribution,
+  universal_charges = EXCLUDED.universal_charges,
+  fit_all = EXCLUDED.fit_all,
+  metering_charge = EXCLUDED.metering_charge,
+  supply_charge = EXCLUDED.supply_charge,
+  source_url = EXCLUDED.source_url,
+  source_pdf_url = EXCLUDED.source_pdf_url,
+  fetched_at = EXCLUDED.fetched_at,
+  auto_updated = EXCLUDED.auto_updated;
+```
+
+### Latest Meralco Auto-Sync Runs
+```sql
+SELECT status, message, effective_month, source_url, pdf_url, warnings, ran_at
+FROM meralco_rate_sync_runs
+ORDER BY ran_at DESC
+LIMIT 20;
 ```
 
 ### Fetch User Role for Admin Middleware
