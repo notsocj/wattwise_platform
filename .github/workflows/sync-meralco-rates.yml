@@ -1,0 +1,86 @@
+name: Sync Meralco Rates
+
+on:
+  schedule:
+    # 03:10 UTC on day 1 of month (11:10 Manila, UTC+8)
+    - cron: "10 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Run parser and validation without DB upsert"
+        required: false
+        default: "false"
+      force:
+        description: "Override anomaly guardrails"
+        required: false
+        default: "false"
+      targetMonth:
+        description: "Optional month override in YYYY-MM format"
+        required: false
+        default: ""
+
+jobs:
+  sync-rates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Trigger Supabase Edge Function
+        env:
+          FUNCTION_URL: ${{ secrets.MERALCO_SYNC_FUNCTION_URL }}
+          SYNC_SECRET: ${{ secrets.MERALCO_SYNC_SECRET }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dryRun }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
+          INPUT_TARGET_MONTH: ${{ github.event.inputs.targetMonth }}
+        run: |
+          if [ -z "$FUNCTION_URL" ]; then
+            echo "Missing secret MERALCO_SYNC_FUNCTION_URL"
+            exit 1
+          fi
+
+          if [ -z "$SYNC_SECRET" ]; then
+            echo "Missing secret MERALCO_SYNC_SECRET"
+            exit 1
+          fi
+
+          DRY_RUN="false"
+          FORCE="false"
+          TARGET_MONTH=""
+
+          if [ -n "$INPUT_DRY_RUN" ]; then
+            DRY_RUN="$INPUT_DRY_RUN"
+          fi
+
+          if [ -n "$INPUT_FORCE" ]; then
+            FORCE="$INPUT_FORCE"
+          fi
+
+          if [ -n "$INPUT_TARGET_MONTH" ]; then
+            TARGET_MONTH="$INPUT_TARGET_MONTH"
+          fi
+
+          BODY=$(cat <<JSON
+          {
+            "dryRun": $DRY_RUN,
+            "force": $FORCE,
+            "targetMonth": "$TARGET_MONTH"
+          }
+          JSON
+          )
+
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$FUNCTION_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-sync-secret: $SYNC_SECRET" \
+            --data "$BODY")
+
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "$RESPONSE_BODY"
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "Rate sync failed"
+            exit 1
+          fi
