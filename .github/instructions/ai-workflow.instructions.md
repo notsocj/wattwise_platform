@@ -9,68 +9,51 @@ applyTo: "**"
 
 **Hard constraint:** Never calculate energy cost with a single flat rate multiplier (e.g., `totalKWh * 10`). This is incorrect and academically indefensible.
 
-**Required pattern:** Always unbundle the Meralco billing components and apply VAT last:
+**Required pattern:** Always unbundle the Meralco billing components, add fixed monthly charges, then apply VAT last:
 
 ```ts
-// CORRECT — Unbundled Meralco rate structure
-const RATES = {
-  generation: 5.3727,       // PhP/kWh
-  transmission: 0.8468,     // PhP/kWh
-  systemLoss: 0.5012,       // PhP/kWh
-  distribution: 1.4798,     // PhP/kWh
-  subsidies: -0.0682,       // PhP/kWh (negative = credit)
-  governmentTaxes: 0.2563,  // PhP/kWh
-  universalCharges: 0.1754, // PhP/kWh
-};
-const VAT_RATE = 0.12;
+// CORRECT — DB-driven unbundled Meralco rate structure
+const activeRate = await getActiveMeralcoRates(supabase); // includes vat_rate + fixed monthly charges
 
-function computeMeralcoBill(kWh: number): number {
-  const subtotal = Object.values(RATES).reduce((sum, r) => sum + r, 0) * kWh;
-  return subtotal * (1 + VAT_RATE); // VAT applied at the final step only
+function computeMeralcoBill(
+  kWh: number,
+  rates: MeralcoRateComponents,
+  vatRate: number,
+  fixedChargesPhp: number
+): number {
+  const subtotalPerKWh =
+    rates.generation +
+    rates.transmission +
+    rates.systemLoss +
+    rates.distribution +
+    rates.universalCharges +
+    rates.fitAll;
+
+  const variableSubtotal = subtotalPerKWh * kWh;
+  const preVatTotal = variableSubtotal + fixedChargesPhp;
+
+  return preVatTotal * (1 + vatRate); // VAT applied at the final step only
 }
 
 // WRONG — never do this
 // const cost = kWh * 10;
 ```
 
-- Store rate constants in a single module (e.g., `lib/meralco-rates.ts`) so they can be promoted to a Supabase Edge Function without restructuring.
+- In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
+- For automated rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
+- Preferred scheduler cadence is daily around 10:00-12:00 PM PH time. In automatic mode, first check whether the current Manila month (`YYYY-MM-01`) already exists in `meralco_rates`; if present, return a no-op and skip external fetch/upsert.
+- If current month is not yet in DB, attempt current-month Summary Schedule lookup first; if not published yet, fall back to latest available summary and only write when that effective month is missing.
+- Automation must extract **base non-lifeline residential components** for `meralco_rates` and ignore lifeline-only discount/subsidy rows unless tiered billing schema is explicitly implemented.
+- In fully automatic mode (no admin approval), enforce strict parser validation: required fields present, sane numeric ranges, and month-over-month anomaly threshold checks. Abort write on validation failure; do not partially update the active rate row.
+- Prefer storing sync provenance and observability metadata when available (`source_url`, `source_pdf_url`, `fetched_at`, `auto_updated`) and writing run logs to a dedicated table for failed/success runs.
+- When `energy_logs.energy_kwh` stores cumulative meter readings, never sum all rows directly for a billing period. Compute usage from **sequential deltas** (`current - previous`) per device after minute-bucket dedupe; treat tiny negative drift as jitter (`0`) and only treat large drops as meter reset. Prefer DB RPC aggregation over client-side row scans for monthly/weekly totals.
+- The application must be DB-only: do not use in-code default rate constants, including VAT.
+- If the table query returns no rows or the query fails, surface a clear, actionable admin-visible error or warning (server-side) instructing the admin to add a `meralco_rates` entry. Do not silently fall back to hardcoded constants.
 - All cost values displayed in the UI must be derived from this calculation, never hardcoded.
 
 ---
 
-## 2. Hardware Safety Handshake (The "Safety First" Rule)
-
-**Hard constraint:** Remote relay Off commands from the Web UI must be treated as high-priority operations. Never block the UI waiting for hardware acknowledgement before showing feedback.
-
-**Required pattern — Optimistic UI with MQTT confirmation:**
-
-```ts
-// 1. Immediately update local UI state (optimistic)
-setRelayState('off');
-
-// 2. Record the pending command in Supabase
-await supabase.from('relay_commands').insert({
-  device_id: deviceId,
-  command: 'OFF',
-  status: 'pending',
-  sent_at: new Date().toISOString(),
-});
-
-// 3. Publish MQTT command (fire-and-forget from client or via API route)
-await publishRelayCommand(deviceId, 'OFF');
-
-// 4. Listen for ESP32-S3 acknowledgement (MQTT callback / Supabase realtime)
-//    On ACK → update relay_commands row to status: 'confirmed'
-//    On timeout (>5s) → show warning toast, revert optimistic state
-```
-
-- The UI button must reflect `off` immediately. Do not leave it in a loading spinner indefinitely.
-- If no MQTT ACK arrives within 5 seconds, revert the optimistic state and surface a warning to the user.
-- Always log the command to Supabase (`relay_commands` table) for audit purposes.
-
----
-
-## 3. Data Ingestion Throttling (Free Tier Guardrail)
+## 2. Data Ingestion Throttling (Free Tier Guardrail)
 
 **Hard constraint:** Never query the `energy_logs` table (or any high-volume table) without a hard row limit or a time-range filter. Fetching unbounded rows will crash the browser and time out the Supabase API.
 
@@ -98,15 +81,21 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 
 - Default to `.limit(100)` when the exact row count is unknown.
 - For chart data, prefer server-side aggregation via Supabase RPC functions over client-side array processing.
+- For billing-grade totals, use RPCs that aggregate by minute and sum cumulative deltas (`get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`) instead of raw row loops.
 - Cache fetched data using SWR or TanStack Query to avoid re-fetching on re-renders.
+- When correlating `energy_logs.device_id` to devices, normalize and support both key formats (`devices.id` and legacy `devices.mac_address`) to avoid zeroed dashboard totals during schema transition.
+- For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 5 minutes) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
+- For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
+- For Home Dashboard device cards, derive online/offline from telemetry freshness and expose live `average_watts`, `voltage_v`, and `current_a` (with safe voltage/current fallback for legacy rows) so W/V/A stays coherent with live status.
+- For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()`; pair it with a lightweight periodic refresh fallback so freshness-based online/offline state can still transition to offline when telemetry stops. This preserves RPC-based accuracy for billing while removing manual refresh requirements.
 
 ---
 
-## 4. OpenAI Integration Architecture (Trigger & Cache)
+## 3. OpenAI Integration Architecture (Trigger & Cache)
 
 These rules apply when implementing any AI-powered insight feature (e.g., Budget Alerts, Weekly Recaps).
 
-### 4a. Persona & Tone
+### 3a. Persona & Tone
 
 The OpenAI system prompt **must** define the assistant as:
 - **Role:** Friendly Filipino financial and energy advisor.
@@ -117,14 +106,14 @@ The OpenAI system prompt **must** define the assistant as:
 Example phrasing to steer toward:
 > *"Naku boss, Day 15 pa lang pero nasa PHP 1,500 na tayo sa PHP 2,000 budget mo. Medyo dahan-dahan tayo sa washing machine this week para di tayo ma-over budget."*
 
-### 4b. The Two Supported Insight Types
+### 3b. The Two Supported Insight Types
 
 | `insight_type` | Purpose | Required input data |
 |---|---|---|
 | `budget_alert` | Warns if spend trajectory will exceed monthly budget | `currentSpend`, `monthlyBudget`, `daysElapsed` |
 | `weekly_recap` | Positive reinforcement comparing week-over-week consumption | `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP` |
 
-### 4c. Trigger & Cache — Mandatory Flow
+### 3c. Trigger & Cache — Mandatory Flow
 
 **Never call `openai.chat.completions.create` on page load or from a client component.**
 
@@ -155,7 +144,7 @@ Next.js API Route (app/api/insights/route.ts)
         Return the new message string → Done
 ```
 
-### 4d. Required Supabase Schema
+### 3d. Required Supabase Schema
 
 ```sql
 CREATE TABLE ai_insights (
@@ -171,10 +160,20 @@ CREATE INDEX idx_ai_insights_user_type_date
   ON ai_insights (user_id, insight_type, created_at DESC);
 ```
 
-### 4e. OpenAI API Key Security
+### 3e. OpenAI API Key Security
 
 - Store the key in `.env.local` as `OPENAI_API_KEY` (no `NEXT_PUBLIC_` prefix — server-only).
 - The API call must only ever occur inside a Next.js API Route or Server Action; never in a client component or directly in a page file.
+
+---
+
+## 4. Home Budget Edit Scope (Single Control Point)
+
+**Hard constraint:** `profiles.monthly_budget_php` must be editable only from the Home Dashboard wallet UI.
+
+- Device Detail pages may display budget and burn-rate context, but must remain view-only.
+- Use an icon-triggered editor card/popover in Home Wallet instead of a persistent budget form block.
+- Save flow should update only the authenticated profile row (`WHERE id = auth user id`) and refresh the dashboard state after success.
 
 ---
 
@@ -183,7 +182,7 @@ CREATE INDEX idx_ai_insights_user_type_date
 | Situation | Forbidden | Required instead |
 |---|---|---|
 | Computing energy cost | `kWh * 10` | Unbundled rates + 12% VAT |
-| Turning off a relay | Wait for MQTT ACK before updating UI | Optimistic UI update first, then confirm |
 | Fetching energy data | `.from('energy_logs').select('*')` | Add `.limit(100)` or date filter |
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
+| Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
