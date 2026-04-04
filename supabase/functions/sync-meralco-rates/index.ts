@@ -164,6 +164,46 @@ function selectSummaryEntry(entries: ArchiveEntry[], targetMonth?: string): Arch
   return summaryEntries[0];
 }
 
+function normalizeTargetMonth(targetMonth?: string): string | undefined {
+  if (!targetMonth) {
+    return undefined;
+  }
+
+  const cleaned = targetMonth.trim();
+  if (!cleaned) {
+    return undefined;
+  }
+
+  const monthOnlyMatch = cleaned.match(/^(\d{4})-(\d{2})$/);
+  if (monthOnlyMatch) {
+    return cleaned;
+  }
+
+  const fullDateMatch = cleaned.match(/^(\d{4})-(\d{2})-\d{2}$/);
+  if (fullDateMatch) {
+    return `${fullDateMatch[1]}-${fullDateMatch[2]}`;
+  }
+
+  throw new Error("Invalid targetMonth format. Use YYYY-MM.");
+}
+
+function getCurrentMonthInManila(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+
+  if (!year || !month) {
+    throw new Error("Unable to resolve current month in Asia/Manila timezone.");
+  }
+
+  return `${year}-${month}`;
+}
+
 function bytesToTextFragments(bytes: Uint8Array): string {
   const raw = new TextDecoder("latin1").decode(bytes);
   const chunks = raw.match(/[A-Za-z0-9][A-Za-z0-9\s.,:%()\/+\-]{2,}/g) ?? [];
@@ -444,6 +484,16 @@ function findVatRate(text: string): number | null {
     }
   }
 
+  const otherChargesRegex = /other\s+charges[\s\S]{0,30}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
+  let otherChargesMatch: RegExpExecArray | null;
+
+  while ((otherChargesMatch = otherChargesRegex.exec(text)) !== null) {
+    const value = Number(otherChargesMatch[1]);
+    if (Number.isFinite(value) && value > 0 && value <= 100) {
+      return value / 100;
+    }
+  }
+
   return findByLabels(text, ["VAT rate", "VAT"], { min: 0.01, max: 0.3 });
 }
 
@@ -706,13 +756,51 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const dryRun = Boolean(body?.dryRun);
     const force = Boolean(body?.force);
-    const targetMonth = typeof body?.targetMonth === "string" ? body.targetMonth : undefined;
+    const requestedTargetMonth = normalizeTargetMonth(
+      typeof body?.targetMonth === "string" ? body.targetMonth : undefined
+    );
+    const currentMonthInManila = getCurrentMonthInManila();
     const ratesArchivesUrl =
       typeof body?.ratesArchivesUrl === "string" && body.ratesArchivesUrl.trim()
         ? body.ratesArchivesUrl.trim()
         : DEFAULT_RATES_ARCHIVES_URL;
 
     sourceUrlForLog = ratesArchivesUrl;
+
+    // Automatic daily mode: skip work when current month already exists.
+    if (!requestedTargetMonth) {
+      const currentMonthStart = `${currentMonthInManila}-01`;
+      const { data: existingCurrentMonthRow, error: existingCurrentMonthError } = await supabase
+        .from("meralco_rates")
+        .select("effective_month")
+        .eq("effective_month", currentMonthStart)
+        .limit(1)
+        .maybeSingle<{ effective_month: string }>();
+
+      if (existingCurrentMonthError) {
+        throw new Error(
+          `Failed to check existing current-month meralco_rates row: ${existingCurrentMonthError.message}`
+        );
+      }
+
+      if (existingCurrentMonthRow) {
+        const message = `Rate for current month ${currentMonthInManila} already exists. No sync needed.`;
+
+        await logRun(supabase, {
+          status: "success",
+          message,
+          source_url: ratesArchivesUrl,
+          effective_month: currentMonthStart,
+        });
+
+        return jsonResponse(200, {
+          ok: true,
+          mode: "noop_existing_current_month",
+          message,
+          effective_month: currentMonthStart,
+        });
+      }
+    }
 
     const archiveResponse = await fetch(ratesArchivesUrl, {
       headers: {
@@ -733,8 +821,66 @@ Deno.serve(async (req) => {
       throw new Error("No downloadable rate rows found in rates archives HTML.");
     }
 
-    const selectedSummary = selectSummaryEntry(archiveEntries, targetMonth);
+    let selectedSummary: ArchiveEntry;
+    let resolvedTargetMonth = requestedTargetMonth;
+    let usedLatestFallback = false;
+
+    if (resolvedTargetMonth) {
+      selectedSummary = selectSummaryEntry(archiveEntries, resolvedTargetMonth);
+    } else {
+      resolvedTargetMonth = currentMonthInManila;
+
+      try {
+        selectedSummary = selectSummaryEntry(archiveEntries, resolvedTargetMonth);
+      } catch {
+        // If current month schedule is not published yet, use latest available summary.
+        selectedSummary = selectSummaryEntry(archiveEntries);
+        usedLatestFallback = true;
+      }
+    }
+
     const effectiveMonth = toIsoMonthStart(selectedSummary.monthDate);
+
+    // Automatic daily mode: if selected month already exists, do nothing.
+    if (!requestedTargetMonth) {
+      const { data: existingSelectedMonthRow, error: existingSelectedMonthError } = await supabase
+        .from("meralco_rates")
+        .select("effective_month")
+        .eq("effective_month", effectiveMonth)
+        .limit(1)
+        .maybeSingle<{ effective_month: string }>();
+
+      if (existingSelectedMonthError) {
+        throw new Error(
+          `Failed to check selected-month meralco_rates row: ${existingSelectedMonthError.message}`
+        );
+      }
+
+      if (existingSelectedMonthRow) {
+        const message = usedLatestFallback
+          ? `Current month ${currentMonthInManila} is not yet published and latest available month ${effectiveMonth.slice(
+              0,
+              7
+            )} already exists. No sync needed.`
+          : `Rate for month ${effectiveMonth.slice(0, 7)} already exists. No sync needed.`;
+
+        await logRun(supabase, {
+          status: "success",
+          message,
+          source_url: ratesArchivesUrl,
+          pdf_url: selectedSummary.pdfUrl,
+          effective_month: effectiveMonth,
+        });
+
+        return jsonResponse(200, {
+          ok: true,
+          mode: "noop_existing_selected_month",
+          message,
+          effective_month: effectiveMonth,
+          selected_summary: selectedSummary,
+        });
+      }
+    }
 
     const pdfResponse = await fetch(selectedSummary.pdfUrl, {
       headers: {

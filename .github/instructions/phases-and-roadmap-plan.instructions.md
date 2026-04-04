@@ -16,7 +16,7 @@ applyTo: "**"
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
-| 2 — Billing & Control | In Progress | ~57% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; monthly Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert) |
+| 2 — Billing & Control | In Progress | ~57% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard |
 | 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
@@ -121,7 +121,7 @@ applyTo: "**"
   - [x] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function *(shared helper in `lib/meralco-rates.ts` — DB-only source)*
   - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(now driven by `devices` + `energy_logs` data and active `meralco_rates` row, with day-over-day increase/decrease trend computed from yesterday usage)*
   - [x] Add Supabase Edge Function automation scaffold to fetch latest `Summary Schedule of Rates` PDF from Meralco Rates Archives, extract base non-lifeline components, validate anomaly thresholds, and auto-upsert `meralco_rates` *(implementation at `supabase/functions/sync-meralco-rates/index.ts` + migration `supabase/migrations/009_add_meralco_rate_sync_automation.sql`)*
-  - [x] Add monthly scheduler workflow to trigger automatic rate sync without manual approval *(workflow at `.github/workflows/sync-meralco-rates.yml`)*
+  - [x] Add scheduler workflow to trigger automatic rate sync without manual approval *(workflow at `.github/workflows/sync-meralco-rates.yml`; daily ~11:00 AM PH with current-month no-op guard)*
 
 - [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; hardware diagnostics still placeholder-derived)*
   - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)

@@ -2,8 +2,8 @@ name: Sync Meralco Rates
 
 on:
   schedule:
-    # 03:10 UTC on day 1 of month (11:10 Manila, UTC+8)
-    - cron: "10 3 1 * *"
+    # 03:00 UTC daily (11:00 Manila, UTC+8)
+    - cron: "0 3 * * *"
   workflow_dispatch:
     inputs:
       dryRun:

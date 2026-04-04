@@ -40,7 +40,9 @@ function computeMeralcoBill(
 ```
 
 - In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
-- For automated monthly rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
+- For automated rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
+- Preferred scheduler cadence is daily around 10:00-12:00 PM PH time. In automatic mode, first check whether the current Manila month (`YYYY-MM-01`) already exists in `meralco_rates`; if present, return a no-op and skip external fetch/upsert.
+- If current month is not yet in DB, attempt current-month Summary Schedule lookup first; if not published yet, fall back to latest available summary and only write when that effective month is missing.
 - Automation must extract **base non-lifeline residential components** for `meralco_rates` and ignore lifeline-only discount/subsidy rows unless tiered billing schema is explicitly implemented.
 - In fully automatic mode (no admin approval), enforce strict parser validation: required fields present, sane numeric ranges, and month-over-month anomaly threshold checks. Abort write on validation failure; do not partially update the active rate row.
 - Prefer storing sync provenance and observability metadata when available (`source_url`, `source_pdf_url`, `fetched_at`, `auto_updated`) and writing run logs to a dedicated table for failed/success runs.
