@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** March 24, 2026
+> **Last Updated:** April 3, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -15,14 +15,10 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~45% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, all route placeholders scaffolded |
-| 2 — Billing & Control | Scaffolded | ~5% | Route placeholders created (`/dashboard/[deviceId]`, `/api/relay`), blocked by Phase 1 completion |
-| 3 — AI & PWA | Scaffolded | ~5% | Route placeholders created (`/insights`, `/api/insights`), blocked by Phase 2 |
-| 4 — Super Admin | In Progress | ~20% | Route guard + role-based middleware + sidebar layout done, admin RLS policies created, page scaffolds updated for sidebar layout, functional page implementations pending |
-| 1 — Foundation | In Progress | ~50% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard UI built with mock data |
-| 2 — Billing & Control | In Progress | ~15% | Device Detail UI built (gauges, wallet, relay toggle, safety thresholds, diagnostics — mock data), route placeholders for API |
-| 3 — AI & PWA | In Progress | ~25% | Insights dashboard UI built (leaderboard, coaching feed, trend chart, forecast — mock data), bottom nav done, AI tip banner done |
-| 4 — Super Admin | Scaffolded | ~5% | Route placeholders created (all 5 admin pages + layout), blocked by Phases 1–3 |
+| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
+| 2 — Billing & Control | In Progress | ~57% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard |
+| 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
+| 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
 
@@ -34,7 +30,7 @@ applyTo: "**"
 
 - [x] **Supabase Project Bootstrap**
   - [ ] Create Supabase project and configure `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` *(env vars stubbed — fill in real values from Supabase dashboard)*
-  - [x] Run SQL migrations to create all 6 tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `relay_commands`, `ai_insights` *(migration at `supabase/migrations/001_initial_schema.sql`)*
+  - [x] Run SQL migrations to create all 5 tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights` *(migration at `supabase/migrations/001_initial_schema.sql`)*
   - [x] Create all required indexes (`idx_energy_logs_device_time`, `idx_ai_insights_user_type_date`)
   - [x] Enable Row Level Security (RLS) policies on all tables
 
@@ -45,9 +41,16 @@ applyTo: "**"
   - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
   - [x] Implement auth middleware to protect `/dashboard` and other authenticated routes *(`proxy.ts` — uses Next.js 16 `proxy` convention)*
   - [x] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert *(PostgreSQL trigger `handle_new_user` in migration)*
+  - [x] **Password Reset Flow** *(fully functional with Supabase email integration)*
+    - [x] Build Forgot Password page (`app/forgot-password/page.tsx`) — prompts for email, sends reset link
+    - [x] Build Reset Password page (`app/reset-password/page.tsx`) — validates token, sets new password
+    - [x] Implement `supabase.auth.resetPasswordForEmail()` for sending recovery emails
+    - [x] Implement `supabase.auth.updateUser()` for password update with token validation
+    - [x] Add error handling for expired/invalid tokens and password validation
+    - [x] Create setup guide at `FORGOT_PASSWORD_SETUP.md` with Supabase configuration instructions
 
 - [x] **Design System Setup** *(95% complete)*
-  - [x] Load **Space Grotesk** via `next/font/google` in `app/layout.tsx`
+  - [x] Load **Space Grotesk** from local TTF files in `public/fonts` via `@font-face` in `app/globals.css`
   - [x] Configure Tailwind 4 custom tokens: `bg-base (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
   - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
@@ -55,13 +58,13 @@ applyTo: "**"
 - [ ] **Device Pairing & Registration**
   - [ ] Build "Add Appliance" UI flow — user enters device name + MAC address
   - [ ] Insert new row into `devices` table with `user_id`, `device_name`, `mac_address`
-  - [ ] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`)
+  - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
-  - [ ] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id`
-  - [ ] Display live **Power (W)** gauge on each device card
-  - [ ] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
-  - [ ] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard
+  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data, plus periodic refresh fallback for stale telemetry/offline transitions)*
+  - [x] Display live **Power (W)** gauge on each device card *(cards now show live online/offline state plus W/V/A telemetry with freshness gating)*
+  - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
+  - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
 
 - [ ] **Historical Charts (Daily View)**
   - [ ] Create Supabase RPC function `get_hourly_averages(p_user_id, p_date)` for server-side aggregation
@@ -102,84 +105,43 @@ applyTo: "**"
 
 ## Phase 2: Billing Engine & Control Logic
 
-**Objective:** Transform raw kWh into Philippine Pesos using the unbundled Meralco formula, and implement the remote 30A relay Kill Switch with the optimistic UI + MQTT safety handshake. By the end of this phase, a user can see their real-time cost and remotely control their appliance.
+**Objective:** Transform raw kWh into Philippine Pesos using the unbundled Meralco formula and deliver weekly trend analytics with projected monthly costs.
 
 ### Platform Tasks (Web)
 
 - [ ] **Unbundled Meralco Billing Module**
-  - [ ] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
+  - [x] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
     ```
-    generation: 5.3727, transmission: 0.8468, systemLoss: 0.5012,
-    distribution: 1.4798, subsidies: -0.0682, governmentTaxes: 0.2563,
-    universalCharges: 0.1754, VAT: 12%
+    vatRate: 0.12, generation: 5.3727, transmission: 0.8468, systemLoss: 0.5012,
+    distribution: 1.4798, universalCharges: 0.1754, fitAll: 0.0838
     ```
-  - [ ] Implement `computeMeralcoBill(kWh: number): number` — unbundled subtotal × (1 + 0.12)
-  - [ ] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`)
-  - [ ] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function
-  - [ ] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded
+  - [x] Implement `computeMeralcoBill(kWh, rates, vatRate, fixedChargesPhp)` — unbundled subtotal + fixed monthly charges, then VAT
+  - [x] Add FIT-All as a first-class per-kWh component (`fit_all`) in schema and runtime billing mapper *(migration at `supabase/migrations/008_add_fit_all_to_meralco_rates.sql` + helper update in `lib/meralco-rates.ts`)*
+  - [x] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`) *(dedicated migration at `supabase/migrations/004_seed_march_2026_meralco_rates.sql`)*
+  - [x] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function *(shared helper in `lib/meralco-rates.ts` — DB-only source)*
+  - [x] Display **Total Daily Cost (₱)** on the Home Dashboard derived from this calculation — never hardcoded *(now driven by `devices` + `energy_logs` data and active `meralco_rates` row, with day-over-day increase/decrease trend computed from yesterday usage)*
+  - [x] Add Supabase Edge Function automation scaffold to fetch latest `Summary Schedule of Rates` PDF from Meralco Rates Archives, extract base non-lifeline components, validate anomaly thresholds, and auto-upsert `meralco_rates` *(implementation at `supabase/functions/sync-meralco-rates/index.ts` + migration `supabase/migrations/009_add_meralco_rate_sync_automation.sql`)*
+  - [x] Add scheduler workflow to trigger automatic rate sync without manual approval *(workflow at `.github/workflows/sync-meralco-rates.yml`; daily ~11:00 AM PH with current-month no-op guard)*
 
-- [x] **Device Detail Screen** *(UI complete — mock data, no Supabase wiring yet)*
+- [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; hardware diagnostics still placeholder-derived)*
   - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
   - [x] Implement three "Liquid Glass" gauge rings: Power (W), Voltage (V), Current (A)
-  - [x] Build **Device Wallet** section:
-    - [x] Monthly Budget slider (PHP) — updates `profiles.monthly_budget_php`
+  - [x] Build **Appliance Budget/Burn** section *(view-only budget on Device Detail; editing moved to Home Wallet to keep a single budget control point)*:
+    - [x] Home budget editor (PHP) is available on Home Dashboard via icon-triggered card and updates `profiles.monthly_budget_php`
     - [x] Burn Rate progress bar — current spend vs. budget, color-coded (Bida/Naku!/Danger)
+  - [x] Add **Home Wallet** card under Daily Cost on Home Dashboard (profile budget + burn rate from bounded monthly `energy_logs`)
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
-- [ ] **Remote 30A Kill Switch (Optimistic UI)** *(UI toggle built — no MQTT/Supabase wiring yet)*
-  - [x] Build large tactile relay toggle button on Device Detail page
-  - [ ] Implement optimistic UI pattern:
-    1. [ ] Immediately update local state to `off` on user tap
-    2. [ ] INSERT into `relay_commands` table: `{ device_id, command: 'OFF', status: 'pending', origin: 'user' }`
-    3. [ ] Publish MQTT command via Next.js API route (`app/api/relay/route.ts`)
-    4. [ ] Listen for MQTT ACK via Supabase Realtime on `relay_commands` row
-    5. [ ] On ACK (< 5s) → update status to `confirmed`
-    6. [ ] On timeout (> 5s) → revert optimistic state, show warning toast
-  - [ ] Build "Slide to Power Off All" emergency control on Home Dashboard
-
-- [ ] **MQTT Broker Setup**
-  - [ ] Configure MQTT broker (HiveMQ Cloud free tier or Mosquitto)
-  - [ ] Create Next.js API route (`app/api/relay/route.ts`) as MQTT publisher (server-side only)
-  - [ ] Define topic structure: `wattwise/{device_mac}/command` (publish) and `wattwise/{device_mac}/ack` (subscribe)
-
 - [ ] **Weekly Trend Charts**
-  - [ ] Create Supabase RPC `get_daily_totals(p_user_id, p_start_date, p_end_date)`
+  - [x] Create Supabase RPC aggregation functions for accurate weekly/device usage *(implemented as `get_usage_kwh_by_device` and `get_usage_kwh_by_device_day` in `supabase/migrations/006_accuracy_usage_rpcs.sql`)*
   - [ ] Build "This Week vs. Last Week" comparison bar chart using Recharts
   - [ ] Display projected monthly bill based on current daily average
 
 ### Hardware Tasks (Firmware)
 
-- [ ] **30A Relay Driver**
-  - [ ] Wire 30A relay module to designated ESP32-S3 GPIO pin
-  - [ ] Implement `setRelay(bool state)` function with debounce protection
-  - [ ] Default relay state on boot: **ON** (fail-safe — power stays on if firmware crashes)
-
-- [ ] **MQTT Client Integration**
-  - [ ] Connect to MQTT broker using `PubSubClient` library over TLS
-  - [ ] Subscribe to `wattwise/{mac}/command` topic
-  - [ ] On `OFF` message → call `setRelay(false)`, publish ACK to `wattwise/{mac}/ack`
-  - [ ] On `ON` message → call `setRelay(true)`, publish ACK to `wattwise/{mac}/ack`
-
-- [ ] **Autonomous Over-Current Safety Trip**
-  - [ ] Implement current monitoring loop (sampled every 100ms)
-  - [ ] If current exceeds configurable threshold (default: 30A) → immediately trip relay **in firmware** (no cloud dependency)
-  - [ ] After trip: publish safety event to `wattwise/{mac}/safety` topic with `{ event: 'TRIP', amps: measured_value }`
-  - [ ] POST `relay_commands` row to Supabase REST: `{ command: 'TRIP', origin: 'system', status: 'confirmed' }`
-  - [ ] Require explicit user `ON` command to re-engage relay after safety trip (no auto-reset)
-
 - [ ] **Device Heartbeat**
   - [ ] Every 30 seconds, update `devices.is_online = true` and `last_seen_at = NOW()` via Supabase REST
   - [ ] If Wi-Fi drops, attempt reconnection with exponential backoff
-
-### Integration Points
-
-| Channel | Direction | Payload | Purpose |
-|---|---|---|---|
-| MQTT `command` topic | Next.js API → ESP32-S3 | `ON` / `OFF` | Remote relay control |
-| MQTT `ack` topic | ESP32-S3 → Next.js (via Supabase) | `{ status: 'confirmed' }` | Optimistic UI confirmation |
-| MQTT `safety` topic | ESP32-S3 → Supabase | `{ event: 'TRIP', amps }` | Safety event reporting |
-| Supabase REST | ESP32-S3 → Supabase | `relay_commands` INSERT | Audit trail for all relay events |
-| Supabase Realtime | Supabase → Next.js | `relay_commands` updates | UI state sync |
 
 ---
 
@@ -192,7 +154,7 @@ applyTo: "**"
 - [ ] **OpenAI Integration — Server-Side Only**
   - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only)
   - [ ] Install `openai` npm package
-  - [ ] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
+  - [x] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
 
 - [ ] **Trigger & Cache Flow Implementation**
   - [ ] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
@@ -215,7 +177,7 @@ applyTo: "**"
   - [ ] System prompt must compare week-over-week and provide positive reinforcement
   - [ ] Display as a **green "Bida" card** on the Insights Dashboard
 
-- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(UI complete — mock data, no backend logic yet)*
+- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(UI complete + Supabase data wired for leaderboard/trend/forecast; AI generation still pending)*
   - [x] Build **Device Performance Leaderboard** — ranked from most expensive to most efficient
   - [x] Build **Coaching Feed** (Bento layout):
     - [x] Naku! Alert card (amber/red styling)
@@ -227,7 +189,7 @@ applyTo: "**"
 - [x] **Bottom Navigation Bar**
   - [x] Implement persistent 2-tab navbar: **Home** (fleet view) and **Insights** (analytics)
   - [x] Active tab highlighted with green glow indicator
-  - [ ] Navigation bar hidden on Device Detail page (focus mode)
+  - [x] Navigation bar hidden on Device Detail page (focus mode)
 
 - [ ] **Serwist PWA Configuration**
   - [ ] Configure Serwist in `next.config.ts` for offline caching
@@ -247,11 +209,6 @@ applyTo: "**"
   - [ ] Add ESP32-S3 internal temperature reading to the payload
   - [ ] Transmit enriched payload: `{ device_id, energy_kwh, average_watts, rssi, board_temp_c, recorded_at }`
 
-- [ ] **Auto-Trip Threshold Configuration**
-  - [ ] Subscribe to MQTT topic `wattwise/{mac}/config` for runtime configuration
-  - [ ] Accept `{ trip_threshold_amps: number }` to update the over-current trip point without reflashing
-  - [ ] Store threshold in NVS (Non-Volatile Storage) so it persists across reboots
-
 - [ ] **OTA (Over-The-Air) Update Preparation**
   - [ ] Implement OTA update listener for future firmware pushes
   - [ ] Report current firmware version in heartbeat payload
@@ -262,7 +219,6 @@ applyTo: "**"
 |---|---|---|---|
 | Next.js API Route | Client → Server → OpenAI | Aggregated energy data | AI insight generation |
 | `ai_insights` table | Server → Client | Cached Taglish message | Insight delivery (cache-first) |
-| MQTT `config` topic | Next.js API → ESP32-S3 | `{ trip_threshold_amps }` | Remote threshold config |
 | Service Worker | Browser cache | Static assets + API responses | Offline PWA support |
 
 ---
@@ -283,7 +239,7 @@ applyTo: "**"
   - [x] Create super_admin RLS policies *(migration at `supabase/migrations/002_admin_rls_policies.sql` — SELECT on all tables + INSERT/UPDATE on meralco_rates)*
 
 - [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)**
-  - [ ] Build form with 7 unbundled rate fields: Generation, Transmission, System Loss, Distribution, Subsidies, Government Taxes, Universal Charges
+  - [ ] Build form with base rate fields: Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, VAT, optional Supply Charge, and Metering Charge
   - [ ] Show computed total rate and total with VAT as live preview
   - [ ] On save → INSERT new row into `meralco_rates` table with `effective_month`
   - [ ] Display history of past rate entries in a table below the form
@@ -334,12 +290,10 @@ applyTo: "**"
 - [ ] **Graceful Degradation**
   - [ ] If Supabase REST is unreachable for > 5 minutes, store telemetry locally in SPIFFS/LittleFS
   - [ ] On reconnection, flush buffered data to Supabase in batches (max 50 rows per request)
-  - [ ] Ensure relay control via MQTT remains operational even during Supabase outages
 
 - [ ] **Production Hardening**
   - [ ] Implement watchdog timer to auto-reset ESP32-S3 on firmware hang
   - [ ] Disable serial debug output in production builds (compile flag)
-  - [ ] Validate all incoming MQTT messages (reject malformed payloads)
 
 ### Integration Points
 
@@ -362,8 +316,6 @@ Phase 1 (Foundation)
                                                        ▼
 Phase 2 (Billing & Control) ◄──── Requires Phase 1 tables + auth
   ├── Meralco billing module (uses meralco_rates table)
-  ├── MQTT broker + relay control
-  └── Optimistic UI + safety trip logging
                                                        ▼
 Phase 3 (AI & PWA) ◄──── Requires Phase 2 billing data + energy_logs history
   ├── OpenAI integration (uses energy_logs + profiles + meralco_rates)
@@ -384,6 +336,6 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 | Phase | Key Platform Files | Key Firmware Files |
 |---|---|---|
 | 1 | `app/layout.tsx`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/page.tsx` | `main.cpp`, `wifi_manager.cpp`, `pzem_reader.cpp`, `supabase_client.cpp` |
-| 2 | `lib/meralco-rates.ts`, `app/api/relay/route.ts`, `app/dashboard/[deviceId]/page.tsx` | `relay_driver.cpp`, `mqtt_client.cpp`, `safety_monitor.cpp` |
+| 2 | `lib/meralco-rates.ts`, `app/dashboard/[deviceId]/page.tsx` | None |
 | 3 | `app/api/insights/route.ts`, `app/insights/page.tsx`, `manifest.json`, `sw.ts` | `config_handler.cpp`, `ota_updater.cpp` |
 | 4 | `app/admin/layout.tsx`, `app/admin/rates/page.tsx`, `app/admin/ai-costs/page.tsx`, `app/admin/health/page.tsx`, `app/admin/analytics/page.tsx` | `diagnostics.cpp`, `offline_buffer.cpp` |
