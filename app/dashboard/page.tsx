@@ -4,7 +4,6 @@ import {
   TrendingUp,
   Minus,
   ChevronRight,
-  Plus,
   Wind,
   Tv,
   Refrigerator,
@@ -13,6 +12,7 @@ import {
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
+import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -477,14 +477,7 @@ export default async function DashboardPage() {
             })}
 
             {/* Add Appliance Tile */}
-            <button className="rounded-xl border border-dashed border-white/10 p-4 flex flex-col items-center justify-center min-h-[130px] text-white/30 hover:text-white/50 hover:border-white/20 transition-colors">
-              <div className="w-10 h-10 rounded-xl border border-dashed border-current flex items-center justify-center mb-2">
-                <Plus className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-wider">
-                Add Appliance
-              </span>
-            </button>
+            <AddApplianceTile />
           </div>
         </section>
 
