@@ -211,6 +211,14 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     setError(null);
   }, []);
 
+  function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (step === 1) handleStep1Next();
+    else if (step === 2) handleStep2Next();
+    else if (step === 3) handleGetEstimate();
+    else if (step === 4) handleSaveAppliance();
+  }
+
   function handleStep1Next() {
     setError(null);
     const trimmedMac = macAddress.trim().toUpperCase();
@@ -378,6 +386,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
             </div>
 
             <div className="p-5 flex flex-col gap-4">
+              <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
               {/* ─── Step 1: MAC + Device Name ─── */}
               {step === 1 && (
                 <>
@@ -561,8 +570,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       Cancel
                     </button>
                     <button
-                      type="button"
-                      onClick={handleStep1Next}
+                      type="submit"
                       disabled={!macAddress.trim() || !deviceName.trim()}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
@@ -579,8 +587,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       Back
                     </button>
                     <button
-                      type="button"
-                      onClick={handleStep2Next}
+                      type="submit"
                       disabled={!applianceType}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
@@ -598,8 +605,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       Back
                     </button>
                     <button
-                      type="button"
-                      onClick={handleGetEstimate}
+                      type="submit"
                       disabled={isLoadingAi}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
@@ -624,8 +630,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       Back
                     </button>
                     <button
-                      type="button"
-                      onClick={handleSaveAppliance}
+                      type="submit"
                       disabled={isPending}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
@@ -641,6 +646,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                   </>
                 )}
               </div>
+              </form>
             </div>
           </>
         )}

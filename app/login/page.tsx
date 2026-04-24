@@ -18,7 +18,8 @@ export default function LoginPage() {
   );
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin() {
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
     setLoading(true);
     const supabase = createClient();
@@ -75,6 +76,7 @@ export default function LoginPage() {
           </div>
         )}
 
+        <form onSubmit={handleLogin}>
         {/* Email */}
         <div className="mb-5">
           <label className="block text-white text-base font-semibold mb-2">
@@ -121,12 +123,13 @@ export default function LoginPage() {
 
         {/* Login Button */}
         <button
-          onClick={handleLogin}
+          type="submit"
           disabled={loading}
           className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+        </form>
 
         {/* Register Link */}
         <div className="flex justify-center mt-6">
