@@ -11,7 +11,7 @@ type RealtimeRefreshBridgeProps = {
 };
 
 const DEFAULT_THROTTLE_MS = 1200;
-const DEFAULT_POLL_MS = 15000;
+const DEFAULT_POLL_MS = 0;
 
 function sanitizeChannelKey(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);

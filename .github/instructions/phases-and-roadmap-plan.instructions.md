@@ -15,7 +15,7 @@ applyTo: "**"
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
+| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry via throttled `router.refresh()` on telemetry INSERT/UPDATE events |
 | 2 — Billing & Control | In Progress | ~57% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard |
 | 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
@@ -61,7 +61,7 @@ applyTo: "**"
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
-  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data, plus periodic refresh fallback for stale telemetry/offline transitions)*
+  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data on telemetry INSERT/UPDATE events)*
   - [x] Display live **Power (W)** gauge on each device card *(cards now show live online/offline state plus W/V/A telemetry with freshness gating)*
   - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
   - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*

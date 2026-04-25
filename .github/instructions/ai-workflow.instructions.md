@@ -84,10 +84,10 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - For billing-grade totals, use RPCs that aggregate by minute and sum cumulative deltas (`get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`) instead of raw row loops.
 - Cache fetched data using SWR or TanStack Query to avoid re-fetching on re-renders.
 - When correlating `energy_logs.device_id` to devices, normalize and support both key formats (`devices.id` and legacy `devices.mac_address`) to avoid zeroed dashboard totals during schema transition.
-- For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 5 minutes) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
+- For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 1 minute for 10-second telemetry) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
 - For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
 - For Home Dashboard device cards, derive online/offline from telemetry freshness and expose live `average_watts`, `voltage_v`, and `current_a` (with safe voltage/current fallback for legacy rows) so W/V/A stays coherent with live status.
-- For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()`; pair it with a lightweight periodic refresh fallback so freshness-based online/offline state can still transition to offline when telemetry stops. This preserves RPC-based accuracy for billing while removing manual refresh requirements.
+- For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()` on `energy_logs` INSERT/UPDATE events. This preserves RPC-based billing accuracy while keeping UI telemetry live without periodic polling.
 
 ---
 

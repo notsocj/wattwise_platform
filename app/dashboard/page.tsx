@@ -60,7 +60,7 @@ type DashboardDevice = {
   icon: typeof Wind;
 };
 
-const ACTIVE_READING_WINDOW_MS = 5 * 60 * 1000;
+const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 
 function getDeviceIcon(deviceName: string) {
   const label = deviceName.toLowerCase();
