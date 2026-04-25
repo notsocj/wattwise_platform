@@ -8,12 +8,14 @@ import {
   Tv,
   Refrigerator,
   Wallet,
+  HelpCircle,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
+import RelayToggle from "@/components/ui/RelayToggle";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -28,6 +30,8 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   is_online: boolean | null;
+  appliance_type: string | null;
+  relay_state: boolean | null;
 };
 
 type LatestReadingRow = {
@@ -58,11 +62,27 @@ type DashboardDevice = {
   isOnline: boolean;
   isActive: boolean;
   icon: typeof Wind;
+  relayState: boolean;
 };
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 
-function getDeviceIcon(deviceName: string) {
+function getDeviceIcon(applianceType: string | null, deviceName: string) {
+  // Prefer appliance_type from DB (set during AI onboarding)
+  if (applianceType) {
+    switch (applianceType) {
+      case "aircon":
+        return Wind;
+      case "refrigerator":
+        return Refrigerator;
+      case "tv":
+        return Tv;
+      case "other":
+        return HelpCircle;
+    }
+  }
+
+  // Fallback: match by device name for legacy devices
   const label = deviceName.toLowerCase();
 
   if (label.includes("aircon") || label.includes("ac") || label.includes("fan")) {
@@ -113,7 +133,7 @@ export default async function DashboardPage() {
   const [{ data: devicesData }, { data: profileData }, activeRates] = await Promise.all([
     supabase
       .from("devices")
-      .select("id, device_name, mac_address, is_online")
+      .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
       .order("created_at", { ascending: true }),
     supabase
       .from("profiles")
@@ -227,7 +247,8 @@ export default async function DashboardPage() {
       dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
       isOnline: hasFreshTelemetry,
       isActive: hasFreshTelemetry && currentWatts > 0,
-      icon: getDeviceIcon(device.device_name),
+      icon: getDeviceIcon(device.appliance_type, device.device_name),
+      relayState: device.relay_state !== false,
     };
   });
 
@@ -459,6 +480,11 @@ export default async function DashboardPage() {
                     <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
                       <Icon className="w-4 h-4 text-mint" />
                     </div>
+                    <RelayToggle
+                      deviceId={device.id}
+                      initialRelayState={device.relayState}
+                      variant="compact"
+                    />
                   </div>
                   <div className="mt-3">
                     <p className="text-sm font-semibold leading-tight mb-1 line-clamp-2">

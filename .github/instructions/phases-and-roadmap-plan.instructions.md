@@ -12,12 +12,11 @@ applyTo: "**"
 ---
 
 ## Progress Summary
-
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry via throttled `router.refresh()` on telemetry INSERT/UPDATE events |
-| 2 — Billing & Control | In Progress | ~57% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard |
-| 3 — AI & PWA | In Progress | ~38% | Insights UI implemented; AI generation pending server OpenAI integration and caching |
+| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
+| 2 — Billing & Control | In Progress | ~65% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); device metadata migration (appliance_type, daily_usage_hours, relay_state) |
+| 3 — AI & PWA | In Progress | ~65% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API); OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
@@ -151,33 +150,33 @@ applyTo: "**"
 
 ### Platform Tasks (Web)
 
-- [ ] **OpenAI Integration — Server-Side Only**
-  - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only)
-  - [ ] Install `openai` npm package
+- [x] **OpenAI Integration — Server-Side Only**
+  - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only) *(env var stubbed — fill in real key)*
+  - [x] Install `openai` npm package
   - [x] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
 
-- [ ] **Trigger & Cache Flow Implementation**
-  - [ ] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
-  - [ ] If cache hit → return cached `message` immediately (no OpenAI call)
-  - [ ] If cache miss:
-    1. [ ] Aggregate user data from `energy_logs` (with `.limit()` guard and date filter)
-    2. [ ] Build system prompt defining the **Friendly Filipino Financial Advisor** persona (casual Taglish, encouraging, hyper-specific to user data)
-    3. [ ] Call `openai.chat.completions.create()` — server-side only
-    4. [ ] INSERT result into `ai_insights`: `{ user_id, insight_type, message, prompt_tokens, completion_tokens }`
-    5. [ ] Return the new message to the client
+- [x] **Trigger & Cache Flow Implementation**
+  - [x] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
+  - [x] If cache hit → return cached `message` immediately (no OpenAI call)
+  - [x] If cache miss:
+    1. [x] Aggregate user data from `energy_logs` (with `.limit()` guard and date filter)
+    2. [x] Build system prompt defining the **Friendly Filipino Financial Advisor** persona (casual Taglish, encouraging, hyper-specific to user data)
+    3. [x] Call `openai.chat.completions.create()` — server-side only
+    4. [x] INSERT result into `ai_insights`: `{ user_id, insight_type, message, prompt_tokens, completion_tokens }`
+    5. [x] Return the new message to the client
 
-- [ ] **Budget "Naku!" Alert (`budget_alert`)**
-  - [ ] Calculate inputs: `currentSpend` (sum of this month's kWh × Meralco rate), `monthlyBudget` (from `profiles.monthly_budget_php`), `daysElapsed`
-  - [ ] System prompt must reference exact ₱ amounts, appliance names, and timeframes
-  - [ ] Example output tone: *"Naku boss, Day 15 pa lang pero nasa ₱1,500 na tayo sa ₱2,000 budget mo..."*
-  - [ ] Display as an **orange/red "Naku!" card** on the Insights Dashboard
+- [x] **Budget "Naku!" Alert (`budget_alert`)**
+  - [x] Calculate inputs: `currentSpend` (sum of this month's kWh × Meralco rate), `monthlyBudget` (from `profiles.monthly_budget_php`), `daysElapsed`
+  - [x] System prompt must reference exact ₱ amounts, appliance names, and timeframes
+  - [x] Example output tone: *"Naku boss, Day 15 pa lang pero nasa ₱1,500 na tayo sa ₱2,000 budget mo..."*
+  - [x] Display as an **orange/red "Naku!" card** on the Insights Dashboard
 
-- [ ] **Weekly "Bida" Recap (`weekly_recap`)**
-  - [ ] Calculate inputs: `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP`
-  - [ ] System prompt must compare week-over-week and provide positive reinforcement
-  - [ ] Display as a **green "Bida" card** on the Insights Dashboard
+- [x] **Weekly "Bida" Recap (`weekly_recap`)**
+  - [x] Calculate inputs: `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP`
+  - [x] System prompt must compare week-over-week and provide positive reinforcement
+  - [x] Display as a **green "Bida" card** on the Insights Dashboard
 
-- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(UI complete + Supabase data wired for leaderboard/trend/forecast; AI generation still pending)*
+- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(fully wired — Appliances Overview + CoachingFeed client component fetching real AI insights via Trigger & Cache)*
   - [x] Build **Device Performance Leaderboard** — ranked from most expensive to most efficient
   - [x] Build **Coaching Feed** (Bento layout):
     - [x] Naku! Alert card (amber/red styling)
@@ -198,7 +197,7 @@ applyTo: "**"
   - [ ] Add install prompt banner for iOS/Android home screen installation
   - [ ] Test offline behavior: cached dashboard loads, graceful fallback for live data
 
-- [x] **Mascot/AI Tip Banner** *(UI complete — mock data, no backend logic yet)*
+- [x] **Mascot/AI Tip Banner** *(UI complete — mock data; CoachingFeed now fetches real AI insights)*
   - [x] Build sticky AI tip banner on Home Dashboard showing latest insight snippet
   - [x] Tapping the banner navigates to the full Insights Dashboard
 

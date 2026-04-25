@@ -1,0 +1,20 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/ai-costs/page": "/admin/ai-costs",
+  "/admin/analytics/page": "/admin/analytics",
+  "/admin/growth/page": "/admin/growth",
+  "/admin/health/page": "/admin/health",
+  "/admin/page": "/admin",
+  "/admin/rates/page": "/admin/rates",
+  "/api/insights/route": "/api/insights",
+  "/dashboard/[deviceId]/page": "/dashboard/[deviceId]",
+  "/dashboard/page": "/dashboard",
+  "/favicon.ico/route": "/favicon.ico",
+  "/forgot-password/page": "/forgot-password",
+  "/insights/page": "/insights",
+  "/login/page": "/login",
+  "/onboarding/page": "/onboarding",
+  "/page": "/",
+  "/register/page": "/register"
+}

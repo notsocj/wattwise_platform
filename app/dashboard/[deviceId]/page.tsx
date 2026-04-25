@@ -10,11 +10,13 @@ import {
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
+import RelayToggle from "@/components/ui/RelayToggle";
 
 type DeviceRow = {
   id: string;
   device_name: string;
   mac_address: string;
+  relay_state: boolean | null;
 };
 
 type ProfileRow = {
@@ -187,7 +189,7 @@ export default async function DeviceDetailPage(props: {
     await Promise.all([
       supabase
         .from("devices")
-        .select("id, device_name, mac_address")
+        .select("id, device_name, mac_address, relay_state")
         .eq("id", deviceId)
         .eq("user_id", user.id)
         .maybeSingle<DeviceRow>(),
@@ -389,6 +391,13 @@ export default async function DeviceDetailPage(props: {
             unit="AMPS"
           />
         </section>
+
+        {/* ===== Power Control (Relay) ===== */}
+        <RelayToggle
+          deviceId={device.id}
+          initialRelayState={deviceData.relay_state !== false}
+          variant="full"
+        />
 
         {/* ===== Appliance Burn Rate ===== */}
         <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
