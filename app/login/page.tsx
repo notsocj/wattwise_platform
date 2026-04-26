@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -125,9 +126,21 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <LoadingIndicator
+                size="sm"
+                label="Logging in"
+                showLabel={false}
+                spinnerClassName="border-black/30 border-t-black"
+              />
+              Logging in...
+            </span>
+          ) : (
+            "Login"
+          )}
         </button>
         </form>
 

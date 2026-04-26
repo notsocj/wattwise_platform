@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** April 3, 2026
+> **Last Updated:** April 26, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -14,8 +14,8 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~61% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions |
-| 2 — Billing & Control | In Progress | ~65% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); device metadata migration (appliance_type, daily_usage_hours, relay_state) |
+| 1 — Foundation | In Progress | ~63% | Design system done, auth UI + Supabase auth wired, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, and shared loading states are applied to splash/auth/onboarding flows |
+| 2 — Billing & Control | In Progress | ~67% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); relay and budget mutations now include inline spinners, disabled pending controls, and error toasts; device metadata migration (appliance_type, daily_usage_hours, relay_state) |
 | 3 — AI & PWA | In Progress | ~65% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API); OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
@@ -35,6 +35,7 @@ applyTo: "**"
 
 - [x] **Authentication Flow**
   - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` in `components/providers/SupabaseProvider.tsx`, session fetched server-side)*
+  - [x] Add global route-transition loading indicator in root layout using reusable `LoadingIndicator` *(implemented via `components/ui/RouteTransitionIndicator.tsx` + `app/layout.tsx` wiring)*
   - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired)*
   - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired)*
   - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
@@ -129,6 +130,7 @@ applyTo: "**"
     - [x] Home budget editor (PHP) is available on Home Dashboard via icon-triggered card and updates `profiles.monthly_budget_php`
     - [x] Burn Rate progress bar — current spend vs. budget, color-coded (Bida/Naku!/Danger)
   - [x] Add **Home Wallet** card under Daily Cost on Home Dashboard (profile budget + burn rate from bounded monthly `energy_logs`)
+  - [x] Add inline loading + error toast feedback for relay and home budget actions *(implemented in `RelayToggle` and `HomeBudgetEditor`)*
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**

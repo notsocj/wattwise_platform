@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -78,6 +79,10 @@ export default function SplashScreen() {
         >
           INTELLIGENT ENERGY
         </p>
+
+        <div className="mt-4">
+          <LoadingIndicator size="sm" label="Preparing your energy hub" />
+        </div>
       </div>
     </div>
   );

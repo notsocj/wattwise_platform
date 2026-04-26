@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 export default function OnboardingPage() {
+  const [pendingRoute, setPendingRoute] = useState<"login" | "register" | null>(null);
+
+  function startNavigation(route: "login" | "register") {
+    setPendingRoute(route);
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-base tracking-tight animate-in fade-in duration-700">
       {/* Top Header Logo */}
@@ -41,15 +49,44 @@ export default function OnboardingPage() {
 
         {/* Action Buttons */}
         <div className="w-full max-w-sm flex flex-col gap-4 mt-2">
-          <Link href="/login" className="w-full">
-            <button className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95">
-              Login
-            </button>
+          <Link
+            href="/login"
+            onClick={() => startNavigation("login")}
+            aria-disabled={pendingRoute !== null}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 aria-disabled:pointer-events-none aria-disabled:opacity-70"
+          >
+            {pendingRoute === "login" ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Opening login"
+                  showLabel={false}
+                  spinnerClassName="border-black/30 border-t-black"
+                />
+                Opening login...
+              </span>
+            ) : (
+              "Login"
+            )}
           </Link>
-          <Link href="/register" className="w-full">
-            <button className="w-full bg-transparent border border-mint text-mint text-[17px] font-bold py-4 rounded-xl transition-colors hover:bg-mint/5 active:scale-95">
-              Register
-            </button>
+          <Link
+            href="/register"
+            onClick={() => startNavigation("register")}
+            aria-disabled={pendingRoute !== null}
+            className="inline-flex w-full items-center justify-center rounded-xl border border-mint bg-transparent py-4 text-[17px] font-bold text-mint transition-colors hover:bg-mint/5 active:scale-95 aria-disabled:pointer-events-none aria-disabled:opacity-70"
+          >
+            {pendingRoute === "register" ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Opening register"
+                  showLabel={false}
+                />
+                Opening register...
+              </span>
+            ) : (
+              "Register"
+            )}
           </Link>
         </div>
       </div>
