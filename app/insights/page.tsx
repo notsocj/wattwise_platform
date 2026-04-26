@@ -35,6 +35,52 @@ type LeaderboardItem = {
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
+function hasMissingRelayStateColumnError(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message?.toLowerCase() ?? "";
+  return error.code === "42703" || message.includes("relay_state");
+}
+
+async function fetchInsightsDevices(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<DeviceRow[]> {
+  const withRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, appliance_type, relay_state, is_online")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (!withRelayState.error) {
+    return (withRelayState.data ?? []) as DeviceRow[];
+  }
+
+  if (!hasMissingRelayStateColumnError(withRelayState.error)) {
+    return [];
+  }
+
+  const withoutRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, appliance_type, is_online")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (withoutRelayState.error) {
+    return [];
+  }
+
+  return (withoutRelayState.data ?? []).map((device) => ({
+    ...device,
+    relay_state: true,
+  })) as DeviceRow[];
+}
+
 function getStartOfWeek(date: Date): Date {
   const copy = new Date(date);
   const day = copy.getDay();
@@ -78,12 +124,7 @@ export default async function InsightsPage() {
     redirect("/login");
   }
 
-  const { data: devicesData } = await supabase
-    .from("devices")
-    .select("id, device_name, appliance_type, relay_state, is_online")
-    .order("created_at", { ascending: true });
-
-  const devices = (devicesData ?? []) as DeviceRow[];
+  const devices = await fetchInsightsDevices(supabase, user.id);
   const deviceIds = devices.map((device) => device.id);
 
   const activeRates = await getActiveMeralcoRates(supabase);
@@ -347,9 +388,6 @@ export default async function InsightsPage() {
                             {device.applianceType}
                           </span>
                         )}
-                        <span className={`text-[9px] font-semibold ${device.isOnline ? "text-bida" : "text-white/30"}`}>
-                          {device.isOnline ? "Online" : "Offline"}
-                        </span>
                         <span className="flex items-center gap-0.5">
                           <Power className={`w-2.5 h-2.5 ${device.relayState ? "text-mint" : "text-white/20"}`} />
                           <span className={`text-[9px] font-semibold ${device.relayState ? "text-mint/70" : "text-white/30"}`}>

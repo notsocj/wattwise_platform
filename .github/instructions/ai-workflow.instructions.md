@@ -88,6 +88,7 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
 - For Home Dashboard device cards, derive online/offline from telemetry freshness and expose live `average_watts`, `voltage_v`, and `current_a` (with safe voltage/current fallback for legacy rows) so W/V/A stays coherent with live status.
 - For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()` on `energy_logs` INSERT/UPDATE events. This preserves RPC-based billing accuracy while keeping UI telemetry live without periodic polling.
+- During schema transitions, avoid hard-failing device lists on optional metadata columns (for example `devices.relay_state`). Use a compatibility fetch path: try full select first, then retry with a reduced column set when PostgreSQL returns undefined-column (`42703`), and map sensible defaults in the view model.
 
 ---
 

@@ -100,8 +100,8 @@ export default function RelayToggle({
           aria-label={relayState ? "Turn relay off" : "Turn relay on"}
         >
           <span
-            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-              relayState ? "translate-x-7" : "translate-x-0.5"
+            className={`absolute left-0.5 top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+              relayState ? "translate-x-[28px]" : "translate-x-0"
             }`}
           />
         </button>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   Wallet,
+  Power,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -61,6 +62,55 @@ type DeviceViewModel = {
 };
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
+
+function hasMissingRelayStateColumnError(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message?.toLowerCase() ?? "";
+  return error.code === "42703" || message.includes("relay_state");
+}
+
+async function fetchOwnedDeviceById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  deviceId: string
+): Promise<DeviceRow | null> {
+  const withRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, mac_address, relay_state")
+    .eq("id", deviceId)
+    .eq("user_id", userId)
+    .maybeSingle<DeviceRow>();
+
+  if (!withRelayState.error) {
+    return withRelayState.data ?? null;
+  }
+
+  if (!hasMissingRelayStateColumnError(withRelayState.error)) {
+    return null;
+  }
+
+  const withoutRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, mac_address")
+    .eq("id", deviceId)
+    .eq("user_id", userId)
+    .maybeSingle<Pick<DeviceRow, "id" | "device_name" | "mac_address">>();
+
+  if (withoutRelayState.error || !withoutRelayState.data) {
+    return null;
+  }
+
+  return {
+    ...withoutRelayState.data,
+    relay_state: true,
+  };
+}
 
 function toNumber(value: number | string | null): number {
   if (value === null) {
@@ -185,14 +235,9 @@ export default async function DeviceDetailPage(props: {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const [{ data: deviceData }, { data: profileData }, usageByDeviceRes, devicesCountRes, activeRates] =
+  const [deviceData, { data: profileData }, usageByDeviceRes, devicesCountRes, activeRates] =
     await Promise.all([
-      supabase
-        .from("devices")
-        .select("id, device_name, mac_address, relay_state")
-        .eq("id", deviceId)
-        .eq("user_id", user.id)
-        .maybeSingle<DeviceRow>(),
+      fetchOwnedDeviceById(supabase, user.id, deviceId),
       supabase
         .from("profiles")
         .select("monthly_budget_php")
@@ -347,7 +392,10 @@ export default async function DeviceDetailPage(props: {
             {device.name}
           </h1>
           <p className="text-[11px] text-white/60">
-            Device ID: {device.deviceCode} • {device.isActive ? "Active" : device.isOnline ? "Online (idle)" : "Offline"}
+            Device ID: {device.deviceCode} • <span className={`inline-flex items-center gap-1 ${deviceData.relay_state !== false ? "text-mint" : "text-white/60"}`}>
+              <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? "text-mint" : "text-white/30"}`} />
+              {deviceData.relay_state !== false ? "ON" : "OFF"}
+            </span>
           </p>
         </div>
         </div>

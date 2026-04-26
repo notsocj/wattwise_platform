@@ -9,6 +9,7 @@ import {
   Refrigerator,
   Wallet,
   HelpCircle,
+  Power,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
@@ -66,6 +67,52 @@ type DashboardDevice = {
 };
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
+
+function hasMissingRelayStateColumnError(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message?.toLowerCase() ?? "";
+  return error.code === "42703" || message.includes("relay_state");
+}
+
+async function fetchDashboardDevices(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<DeviceRow[]> {
+  const withRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (!withRelayState.error) {
+    return (withRelayState.data ?? []) as DeviceRow[];
+  }
+
+  if (!hasMissingRelayStateColumnError(withRelayState.error)) {
+    return [];
+  }
+
+  const withoutRelayState = await supabase
+    .from("devices")
+    .select("id, device_name, mac_address, is_online, appliance_type")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (withoutRelayState.error) {
+    return [];
+  }
+
+  return (withoutRelayState.data ?? []).map((device) => ({
+    ...device,
+    relay_state: true,
+  })) as DeviceRow[];
+}
 
 function getDeviceIcon(applianceType: string | null, deviceName: string) {
   // Prefer appliance_type from DB (set during AI onboarding)
@@ -130,11 +177,8 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [{ data: devicesData }, { data: profileData }, activeRates] = await Promise.all([
-    supabase
-      .from("devices")
-      .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
-      .order("created_at", { ascending: true }),
+  const [devicesRows, { data: profileData }, activeRates] = await Promise.all([
+    fetchDashboardDevices(supabase, user.id),
     supabase
       .from("profiles")
       .select("monthly_budget_php")
@@ -142,8 +186,6 @@ export default async function DashboardPage() {
       .maybeSingle<ProfileRow>(),
     getActiveMeralcoRates(supabase),
   ]);
-
-  const devicesRows = (devicesData ?? []) as DeviceRow[];
   const deviceIds = devicesRows.map((device) => device.id);
   const realtimeDeviceKeys = Array.from(
     new Set(
@@ -491,11 +533,12 @@ export default async function DashboardPage() {
                       {device.name}
                     </p>
                     <div className="text-[11px]">
-                      <p
-                        className={device.isOnline ? "text-bida" : "text-white/40"}
-                      >
-                        {device.isOnline ? "Online" : "Offline"}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <Power className={`w-3 h-3 ${device.relayState ? "text-mint" : "text-white/30"}`} />
+                        <span className={`${device.relayState ? "text-mint font-semibold" : "text-white/40"}`}>
+                          {device.relayState ? "ON" : "OFF"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Link>
