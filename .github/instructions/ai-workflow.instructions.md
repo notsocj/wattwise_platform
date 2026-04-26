@@ -183,6 +183,7 @@ CREATE INDEX idx_ai_insights_user_type_date
 When implementing route or mutation feedback in the app shell and interactive controls, use the shared loading primitives and consistent pending/error behavior.
 
 - Reuse `components/ui/LoadingIndicator.tsx` for all inline spinners (buttons, compact control states, and app-level route indicators).
+- For slow server-rendered routes, add per-route `loading.tsx` files and compose skeleton layout blocks with `LoadingSkeleton` / `LoadingSkeletonText` to match page structure.
 - For API mutations (for example relay toggles and home budget saves), always disable actionable controls while the request is in-flight.
 - For mutation failures, surface a visible toast-style error near the bottom safe area and auto-dismiss it after a short interval.
 - Keep feedback local to the control context: inline spinner for pending state, toast for recoverable errors, and preserve optimistic UI rollback when the mutation fails.
