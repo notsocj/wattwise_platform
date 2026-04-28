@@ -17,6 +17,7 @@ import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -384,7 +385,10 @@ export default async function DashboardPage() {
               Watt<span className="text-mint">Wise</span>
             </h1>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 

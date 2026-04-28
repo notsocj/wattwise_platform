@@ -20,7 +20,7 @@ export default async function RootLayout({
   } = await supabase.auth.getSession();
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
       <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
           <MobileViewport>{children}</MobileViewport>

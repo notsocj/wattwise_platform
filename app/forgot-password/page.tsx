@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -37,7 +38,10 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-base text-white flex flex-col items-center justify-center px-6">
+      <div className="relative min-h-screen bg-base text-white flex flex-col items-center justify-center px-6">
+        <div className="absolute right-6 top-6">
+          <ThemeToggle />
+        </div>
         <div className="w-16 h-16 rounded-full bg-bida/10 flex items-center justify-center mb-6">
           <KeyRound className="w-8 h-8 text-bida" />
         </div>
@@ -60,7 +64,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
       {/* Top Section — Logo & Branding */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
         {/* Mascot */}

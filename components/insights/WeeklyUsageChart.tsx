@@ -27,7 +27,7 @@ export default function WeeklyUsageChart({ data }: WeeklyUsageChartProps) {
           dataKey="day"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+          tick={{ fontSize: 10, fill: "var(--chart-axis)" }}
         />
         <YAxis hide />
         <Bar dataKey="thisWk" radius={[4, 4, 0, 0]} maxBarSize={16}>
@@ -37,7 +37,7 @@ export default function WeeklyUsageChart({ data }: WeeklyUsageChartProps) {
         </Bar>
         <Bar dataKey="lastWk" radius={[4, 4, 0, 0]} maxBarSize={16}>
           {data.map((point) => (
-            <Cell key={`last-${point.day}`} fill="rgba(255,255,255,0.12)" />
+            <Cell key={`last-${point.day}`} fill="var(--chart-muted-bar)" />
           ))}
         </Bar>
       </BarChart>
