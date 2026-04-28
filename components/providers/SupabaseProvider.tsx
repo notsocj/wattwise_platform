@@ -21,12 +21,14 @@ export function useSupabase() {
 export default function SupabaseProvider({
   children,
   session: initialSession,
+  user: initialUser,
 }: {
   children: React.ReactNode;
-  session: Session | null;
+  session?: Session | null;
+  user?: User | null;
 }) {
-  const [session, setSession] = useState<Session | null>(initialSession);
-  const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
+  const [session, setSession] = useState<Session | null>(initialSession ?? null);
+  const [user, setUser] = useState<User | null>(initialUser ?? initialSession?.user ?? null);
   const supabase = createClient();
 
   useEffect(() => {

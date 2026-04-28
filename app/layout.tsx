@@ -3,6 +3,7 @@ import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import MobileViewport from "@/components/ui/MobileViewport";
+import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
 
 export const metadata: Metadata = {
   title: "Wattwise",
@@ -23,6 +24,7 @@ export default async function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
+          <RouteTransitionIndicator />
           <MobileViewport>{children}</MobileViewport>
         </SupabaseProvider>
       </body>
