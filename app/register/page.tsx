@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -43,7 +44,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
       {/* Top Section — Logo & Branding */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
         {/* Mascot */}
