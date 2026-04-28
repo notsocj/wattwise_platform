@@ -3,11 +3,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { type Session, type User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-
-type SupabaseContextType = {
-  user: User | null;
-  session: Session | null;
-};
+import type {
+  SupabaseContextType,
+  SupabaseProviderProps,
+} from "@/components/providers/SupabaseProvider.types";
 
 const SupabaseContext = createContext<SupabaseContextType>({
   user: null,
@@ -21,10 +20,7 @@ export function useSupabase() {
 export default function SupabaseProvider({
   children,
   session: initialSession,
-}: {
-  children: React.ReactNode;
-  session: Session | null;
-}) {
+}: SupabaseProviderProps) {
   const [session, setSession] = useState<Session | null>(initialSession);
   const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
   const supabase = createClient();

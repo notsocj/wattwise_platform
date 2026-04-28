@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { Power } from "lucide-react";
-
-interface RelayToggleProps {
-  deviceId: string;
-  initialRelayState: boolean;
-  variant?: "compact" | "full";
-}
+import type { RelayToggleProps } from "@/components/ui/RelayToggle.types";
 
 export default function RelayToggle({
   deviceId,

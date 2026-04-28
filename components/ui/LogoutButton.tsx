@@ -4,11 +4,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
-type LogoutButtonProps = {
-  className?: string;
-  label?: string;
-};
+import type { LogoutButtonProps } from "@/components/ui/LogoutButton.types";
 
 export default function LogoutButton({
   className,

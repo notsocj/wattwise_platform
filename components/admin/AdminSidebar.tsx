@@ -13,6 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { AdminSidebarProps } from "@/components/admin/AdminSidebar.types";
 
 const NAV_ITEMS = [
   { label: "Overview", path: "/admin", icon: Shield },
@@ -22,11 +23,6 @@ const NAV_ITEMS = [
   { label: "System Health", path: "/admin/health", icon: HeartPulse },
   { label: "Global Analytics", path: "/admin/analytics", icon: Globe },
 ];
-
-interface AdminSidebarProps {
-  adminName: string | null;
-  adminEmail: string;
-}
 
 export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
   const pathname = usePathname();

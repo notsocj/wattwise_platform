@@ -2,17 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Trophy, Leaf, Search, Zap } from "lucide-react";
-
-type InsightResult = {
-  message: string;
-  insight_type: string;
-};
-
-type InsightState = {
-  loading: boolean;
-  message: string | null;
-  error: string | null;
-};
+import type {
+  InsightResult,
+  InsightState,
+  InsightType,
+} from "@/components/insights/CoachingFeed.types";
 
 const INSIGHT_TYPES = [
   "budget_alert",
@@ -20,8 +14,6 @@ const INSIGHT_TYPES = [
   "anomaly_alert",
   "cost_optimizer",
 ] as const;
-
-type InsightType = (typeof INSIGHT_TYPES)[number];
 
 function SkeletonCard() {
   return (

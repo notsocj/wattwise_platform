@@ -2,36 +2,17 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import WeeklyUsageChart, {
-  type WeeklyUsagePoint,
-} from "@/components/insights/WeeklyUsageChart";
+import WeeklyUsageChart from "@/components/insights/WeeklyUsageChart";
+import type { WeeklyUsagePoint } from "@/components/insights/WeeklyUsageChart.types";
 import LogoutButton from "@/components/ui/LogoutButton";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  appliance_type: string | null;
-  relay_state: boolean | null;
-  is_online: boolean | null;
-};
-
-type UsageByDeviceDayRow = {
-  device_id: string;
-  day_key: string;
-  usage_kwh: number | string;
-};
-
-type LeaderboardItem = {
-  rank: number;
-  name: string;
-  usageKWh: number;
-  cost: number;
-  tag: "HIGH COST" | "MODERATE" | "EFFICIENT";
-  tagColor: "text-danger" | "text-naku" | "text-bida";
-};
+import type {
+  DeviceRow,
+  UsageByDeviceDayRow,
+  LeaderboardItem,
+} from "@/app/insights/InsightsPage.types";
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 

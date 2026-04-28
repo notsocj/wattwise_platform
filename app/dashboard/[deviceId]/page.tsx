@@ -12,54 +12,14 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  mac_address: string;
-  relay_state: boolean | null;
-};
-
-type ProfileRow = {
-  monthly_budget_php: number | string | null;
-};
-
-type EnergyLogRow = {
-  energy_kwh: number | string;
-  average_watts: number | string | null;
-  voltage_v: number | string | null;
-  current_a: number | string | null;
-  recorded_at: string | null;
-};
-
-type LegacyEnergyLogRow = {
-  energy_kwh: number | string;
-  average_watts: number | string | null;
-  recorded_at: string | null;
-};
-
-type UsageByDeviceRow = {
-  device_id: string;
-  usage_kwh: number | string;
-};
-
-type DeviceViewModel = {
-  id: string;
-  name: string;
-  deviceCode: string;
-  watts: number;
-  isOnline: boolean;
-  isActive: boolean;
-  maxWatts: number;
-  volts: number;
-  maxVolts: number;
-  amps: number;
-  maxAmps: number;
-  monthlyBudget: number;
-  variableSpendPhp: number;
-  estimatedBillPhp: number;
-  fixedFeeSharePhp: number;
-};
+import type {
+  DeviceRow,
+  ProfileRow,
+  EnergyLogRow,
+  LegacyEnergyLogRow,
+  UsageByDeviceRow,
+  DeviceViewModel,
+} from "@/app/dashboard/DeviceDetailPage.types";
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 

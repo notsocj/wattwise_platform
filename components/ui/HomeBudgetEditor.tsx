@@ -4,10 +4,7 @@ import { PencilLine, X } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-
-type HomeBudgetEditorProps = {
-  initialBudget: number;
-};
+import type { HomeBudgetEditorProps } from "@/components/ui/HomeBudgetEditor.types";
 
 function formatBudget(value: number): string {
   return value.toLocaleString("en-PH", {
