@@ -70,6 +70,8 @@ applyTo: "**"
   - [ ] Build daily bar chart using **Recharts** `BarChart` with responsive container
   - [ ] Cache chart data using SWR or TanStack Query to prevent re-fetches on re-render
 
+- [x] Refactored inline types -> exported per-file (3A-G05-W003) — files: app/dashboard/*, app/insights/page.tsx, components/ui/*, components/insights/*, components/providers/SupabaseProvider.tsx, components/realtime/RealtimeRefreshBridge.tsx, components/admin/AdminSidebar.tsx
+
 ### Hardware Tasks (Firmware)
 
 - [ ] **ESP32-S3 PlatformIO Project Setup**

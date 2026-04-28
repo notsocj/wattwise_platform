@@ -23,48 +23,15 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import type {
+  DeviceRow,
+  LatestReadingRow,
+  UsageByDeviceRow,
+  ProfileRow,
+  DashboardDevice,
+} from "@/app/dashboard/DashboardPage.types";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  mac_address: string;
-  is_online: boolean | null;
-  appliance_type: string | null;
-  relay_state: boolean | null;
-};
-
-type LatestReadingRow = {
-  device_id: string;
-  average_watts: number | string | null;
-  voltage_v: number | string | null;
-  current_a: number | string | null;
-  energy_kwh: number | string | null;
-  recorded_at: string | null;
-};
-
-type UsageByDeviceRow = {
-  device_id: string;
-  usage_kwh: number | string;
-};
-
-type ProfileRow = {
-  monthly_budget_php: number | string | null;
-};
-
-type DashboardDevice = {
-  id: string;
-  name: string;
-  watts: number;
-  volts: number;
-  amps: number;
-  dailyKWh: number;
-  isOnline: boolean;
-  isActive: boolean;
-  icon: typeof Wind;
-  relayState: boolean;
-};
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 

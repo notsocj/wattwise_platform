@@ -1,11 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-
-type MobileViewportProps = {
-  children: ReactNode;
-};
+import type { MobileViewportProps } from "@/components/ui/MobileViewport.types";
 
 export default function MobileViewport({ children }: MobileViewportProps) {
   const pathname = usePathname();

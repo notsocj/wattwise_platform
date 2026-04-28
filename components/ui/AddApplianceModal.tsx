@@ -15,20 +15,11 @@ import {
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-
-interface AddApplianceModalProps {
-  onClose: () => void;
-  onSuccess: (deviceName: string) => void;
-}
-
-type ApplianceType = "refrigerator" | "aircon" | "tv" | "other";
-
-type AiRecommendation = {
-  message: string;
-  estimated_monthly_kwh: number;
-  estimated_monthly_cost: number;
-  suggested_budget: number;
-};
+import type {
+  AddApplianceModalProps,
+  ApplianceType,
+  AiRecommendation,
+} from "@/components/ui/AddApplianceModal.types";
 
 const APPLIANCE_OPTIONS: {
   type: ApplianceType;

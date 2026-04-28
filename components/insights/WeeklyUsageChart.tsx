@@ -8,16 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-
-export type WeeklyUsagePoint = {
-  day: string;
-  thisWk: number;
-  lastWk: number;
-};
-
-type WeeklyUsageChartProps = {
-  data: WeeklyUsagePoint[];
-};
+import type { WeeklyUsageChartProps } from "@/components/insights/WeeklyUsageChart.types";
 
 export default function WeeklyUsageChart({ data }: WeeklyUsageChartProps) {
   return (
