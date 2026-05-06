@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {

@@ -211,7 +211,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     setError(null);
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent) {
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (step === 1) handleStep1Next();
     else if (step === 2) handleStep2Next();
