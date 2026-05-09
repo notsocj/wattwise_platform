@@ -16,7 +16,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleRegister() {
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
@@ -79,6 +80,7 @@ export default function RegisterPage() {
           </div>
         )}
 
+        <form onSubmit={handleRegister}>
         {/* Home Name */}
         <div className="mb-5">
           <label className="block text-white text-base font-semibold mb-2">
@@ -135,12 +137,13 @@ export default function RegisterPage() {
 
         {/* Sign Up Button */}
         <button
-          onClick={handleRegister}
+          type="submit"
           disabled={loading}
           className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>
+        </form>
 
         {/* Login Link */}
         <div className="flex justify-center mt-6">

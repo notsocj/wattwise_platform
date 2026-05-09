@@ -38,7 +38,8 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setErrorMessage(null);
   }
 
-  async function saveBudget() {
+  async function saveBudget(e: React.FormEvent) {
+    e.preventDefault();
     if (isSaving) {
       return;
     }
@@ -125,6 +126,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
             </button>
           </div>
 
+          <form onSubmit={saveBudget}>
           <label
             htmlFor="home-budget-input"
             className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
@@ -156,14 +158,14 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               Cancel
             </button>
             <button
-              type="button"
-              onClick={saveBudget}
+              type="submit"
               disabled={isSaving}
               className="rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-mint transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
+          </form>
         </div>
       ) : null}
     </div>

@@ -12,7 +12,8 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  async function handleResetRequest() {
+  async function handleResetRequest(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
     setLoading(true);
 
@@ -91,6 +92,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
+        <form onSubmit={handleResetRequest}>
         {/* Email Input */}
         <div className="mb-6">
           <label className="block text-white text-base font-semibold mb-2">
@@ -110,12 +112,13 @@ export default function ForgotPasswordPage() {
 
         {/* Submit Button */}
         <button
-          onClick={handleResetRequest}
+          type="submit"
           disabled={loading || !email}
           className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
         >
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
+        </form>
 
         {/* Back to Login Link */}
         <div className="flex justify-center">
