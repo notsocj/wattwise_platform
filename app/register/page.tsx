@@ -6,6 +6,12 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  normalizeNameValue,
+  validateEmail,
+  validateLettersAndSpaces,
+  validatePassword,
+} from "@/lib/validation";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,17 +25,34 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+
+    const normalizedHomeName = normalizeNameValue(fullName);
+    const homeNameError = validateLettersAndSpaces(normalizedHomeName, "Home name");
+    if (homeNameError) {
+      setError(homeNameError);
       return;
     }
+
+    const normalizedEmail = email.trim();
+    const emailError = validateEmail(normalizedEmail);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
     setLoading(true);
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: normalizedHomeName },
       },
     });
     setLoading(false);
@@ -90,7 +113,12 @@ export default function RegisterPage() {
             type="text"
             placeholder="e.g., Santos Residence"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(e) => {
+              setFullName(e.target.value);
+              setError(null);
+            }}
+            required
+            autoComplete="organization"
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -104,7 +132,12 @@ export default function RegisterPage() {
             type="email"
             placeholder="your@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+            required
+            autoComplete="email"
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -119,7 +152,13 @@ export default function RegisterPage() {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null);
+              }}
+              required
+              minLength={8}
+              autoComplete="new-password"
               className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
             />
             <button
@@ -138,7 +177,7 @@ export default function RegisterPage() {
         {/* Sign Up Button */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !fullName.trim() || !email.trim() || !password}
           className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Creating Account..." : "Sign Up"}

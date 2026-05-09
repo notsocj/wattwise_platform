@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { validateEmail } from "@/lib/validation";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -15,17 +16,26 @@ export default function ForgotPasswordPage() {
   async function handleResetRequest(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const normalizedEmail = email.trim();
+    const emailError = validateEmail(normalizedEmail);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const supabase = createClient();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (resetError) {
         setError(resetError.message);
       } else {
+        setEmail(normalizedEmail);
         setSuccess(true);
       }
     } catch (err) {
@@ -102,7 +112,12 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+            required
+            autoComplete="email"
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
           <p className="text-white/40 text-sm mt-2">
@@ -113,7 +128,7 @@ export default function ForgotPasswordPage() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !email}
+          disabled={loading || !email.trim()}
           className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
         >
           {loading ? "Sending..." : "Send Reset Link"}

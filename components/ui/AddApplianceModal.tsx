@@ -15,6 +15,12 @@ import {
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  MAC_ADDRESS_PATTERN,
+  normalizeNameValue,
+  validateDailyHours,
+  validateLettersAndSpaces,
+} from "@/lib/validation";
 
 interface AddApplianceModalProps {
   onClose: () => void;
@@ -42,7 +48,6 @@ const APPLIANCE_OPTIONS: {
 ];
 
 // Accepts colon-separated (E0:72:A1:D5:0B:68) or hyphen-separated formats
-const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 const MAC_IN_TEXT = /([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}/;
 
 // ─── QR Scanner view (mounts/unmounts html5-qrcode on demand) ─────────────────
@@ -222,20 +227,21 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
   function handleStep1Next() {
     setError(null);
     const trimmedMac = macAddress.trim().toUpperCase();
-    const trimmedName = deviceName.trim();
+    const normalizedName = normalizeNameValue(deviceName);
 
-    if (!MAC_REGEX.test(trimmedMac)) {
+    if (!MAC_ADDRESS_PATTERN.test(trimmedMac)) {
       setError("Invalid MAC address. Expected format: E0:72:A1:D5:0B:68");
       return;
     }
 
-    if (!trimmedName) {
-      setError("Please enter a name for your appliance.");
+    const nameError = validateLettersAndSpaces(normalizedName, "Appliance name");
+    if (nameError) {
+      setError(nameError);
       return;
     }
 
     setMacAddress(trimmedMac);
-    setDeviceName(trimmedName);
+    setDeviceName(normalizedName);
     setStep(2);
   }
 
@@ -250,6 +256,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
   async function handleGetEstimate() {
     if (!applianceType) return;
+
+    const dailyHoursError = validateDailyHours(dailyHours);
+    if (dailyHoursError) {
+      setError(dailyHoursError);
+      return;
+    }
 
     setError(null);
     setIsLoadingAi(true);
@@ -291,6 +303,23 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
   function handleSaveAppliance() {
     setError(null);
+
+    if (!MAC_ADDRESS_PATTERN.test(macAddress)) {
+      setError("Invalid MAC address. Expected format: E0:72:A1:D5:0B:68");
+      return;
+    }
+
+    const nameError = validateLettersAndSpaces(deviceName, "Appliance name");
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
+
+    const dailyHoursError = validateDailyHours(dailyHours);
+    if (dailyHoursError) {
+      setError(dailyHoursError);
+      return;
+    }
 
     startTransition(async () => {
       const supabase = createClient();
@@ -398,12 +427,16 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <input
                         type="text"
                         value={macAddress}
-                        onChange={(e) => setMacAddress(e.target.value)}
+                        onChange={(e) => {
+                          setMacAddress(e.target.value);
+                          setError(null);
+                        }}
                         placeholder="E0:72:A1:D5:0B:68"
                         autoCapitalize="characters"
                         autoCorrect="off"
                         autoComplete="off"
                         spellCheck={false}
+                        required
                         className="flex-1 rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 font-mono focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
                       />
                       <button
@@ -424,8 +457,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     <input
                       type="text"
                       value={deviceName}
-                      onChange={(e) => setDeviceName(e.target.value)}
+                      onChange={(e) => {
+                        setDeviceName(e.target.value);
+                        setError(null);
+                      }}
                       placeholder="e.g. Living Room Aircon"
+                      required
                       className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
                     />
                   </div>
@@ -492,7 +529,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       max={24}
                       step={1}
                       value={dailyHours}
-                      onChange={(e) => setDailyHours(Number(e.target.value))}
+                      onChange={(e) => {
+                        setDailyHours(Number(e.target.value));
+                        setError(null);
+                      }}
                       className="w-full accent-mint"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400">

@@ -5,6 +5,7 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import { validateDailyHours } from "@/lib/validation";
 
 const TYPICAL_WATTS: Record<string, number> = {
   refrigerator: 150,
@@ -24,7 +25,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    );
+  }
+
   const {
     appliance_type,
     daily_hours,
@@ -39,9 +47,9 @@ export async function POST(request: NextRequest) {
     !appliance_type ||
     !TYPICAL_WATTS[appliance_type] ||
     typeof daily_hours !== "number" ||
-    daily_hours < 1 ||
-    daily_hours > 24 ||
+    validateDailyHours(daily_hours) ||
     typeof home_budget !== "number" ||
+    !Number.isFinite(home_budget) ||
     home_budget <= 0
   ) {
     return NextResponse.json(

@@ -4,6 +4,7 @@ import { PencilLine, X } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { validateCurrencyAmount } from "@/lib/validation";
 
 type HomeBudgetEditorProps = {
   initialBudget: number;
@@ -44,15 +45,9 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const parsedBudget = Number(inputValue.replace(/,/g, "").trim());
-
-    if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
-      setErrorMessage("Enter a valid budget greater than 0.");
-      return;
-    }
-
-    if (parsedBudget > 9_999_999.99) {
-      setErrorMessage("Budget cannot exceed 9,999,999.99.");
+    const budgetValidation = validateCurrencyAmount(inputValue, "Monthly budget");
+    if (budgetValidation.error || budgetValidation.value === undefined) {
+      setErrorMessage(budgetValidation.error ?? "Enter a valid budget greater than 0.");
       return;
     }
 
@@ -71,7 +66,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const nextBudget = Number(parsedBudget.toFixed(2));
+    const nextBudget = budgetValidation.value;
     const { error } = await supabase
       .from("profiles")
       .update({ monthly_budget_php: nextBudget })
@@ -135,12 +130,14 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
           </label>
           <input
             id="home-budget-input"
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="1"
-            step="0.01"
             value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
+            onChange={(event) => {
+              setInputValue(event.target.value);
+              setErrorMessage(null);
+            }}
+            required
             className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-mint/40"
           />
 
