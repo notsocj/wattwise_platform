@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef, useCallback } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback, type SubmitEvent } from "react";
 import {
   X,
   QrCode,
@@ -211,7 +211,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     setError(null);
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleFormSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (step === 1) handleStep1Next();
     else if (step === 2) handleStep2Next();

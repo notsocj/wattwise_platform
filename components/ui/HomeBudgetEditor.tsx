@@ -1,7 +1,7 @@
 "use client";
 
 import { PencilLine, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -38,7 +38,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setErrorMessage(null);
   }
 
-  async function saveBudget(e: FormEvent<HTMLFormElement>) {
+  async function saveBudget(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isSaving) {
       return;
