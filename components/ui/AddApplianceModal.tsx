@@ -15,13 +15,12 @@ import {
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ApplianceType } from "@/lib/constants";
 
 interface AddApplianceModalProps {
   onClose: () => void;
   onSuccess: (deviceName: string) => void;
 }
-
-type ApplianceType = "refrigerator" | "aircon" | "tv" | "other";
 
 type AiRecommendation = {
   message: string;
@@ -35,10 +34,10 @@ const APPLIANCE_OPTIONS: {
   label: string;
   icon: typeof Refrigerator;
 }[] = [
-  { type: "refrigerator", label: "Fridge", icon: Refrigerator },
-  { type: "aircon", label: "Aircon", icon: Wind },
-  { type: "tv", label: "TV", icon: Tv },
-  { type: "other", label: "Other", icon: HelpCircle },
+  { type: ApplianceType.Refrigerator, label: "Fridge", icon: Refrigerator },
+  { type: ApplianceType.Aircon, label: "Aircon", icon: Wind },
+  { type: ApplianceType.Tv, label: "TV", icon: Tv },
+  { type: ApplianceType.Other, label: "Other", icon: HelpCircle },
 ];
 
 // Accepts colon-separated (E0:72:A1:D5:0B:68) or hyphen-separated formats
