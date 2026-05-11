@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Power } from "lucide-react";
+import SuccessToast from "@/components/ui/SuccessToast";
 
 interface RelayToggleProps {
   deviceId: string;
@@ -16,6 +17,7 @@ export default function RelayToggle({
 }: RelayToggleProps) {
   const [relayState, setRelayState] = useState(initialRelayState);
   const [isPending, setIsPending] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   async function handleToggle(e: React.MouseEvent) {
     // Prevent parent Link navigation when clicking the toggle
@@ -27,6 +29,7 @@ export default function RelayToggle({
     // Optimistic update
     setRelayState(newState);
     setIsPending(true);
+    setSuccessMessage(null);
 
     try {
       const res = await fetch(`/api/devices/${deviceId}/relay`, {
@@ -38,6 +41,8 @@ export default function RelayToggle({
       if (!res.ok) {
         // Revert on error
         setRelayState(!newState);
+      } else {
+        setSuccessMessage(`Device turned ${newState ? "on" : "off"}.`);
       }
     } catch {
       // Revert on network error
@@ -49,6 +54,7 @@ export default function RelayToggle({
 
   if (variant === "compact") {
     return (
+      <>
       <button
         type="button"
         onClick={handleToggle}
@@ -62,11 +68,17 @@ export default function RelayToggle({
       >
         <Power className="w-3.5 h-3.5" />
       </button>
+      <SuccessToast
+        message={successMessage}
+        onDismiss={() => setSuccessMessage(null)}
+      />
+      </>
     );
   }
 
   // Full variant for Device Detail
   return (
+    <>
     <div className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -111,5 +123,10 @@ export default function RelayToggle({
         Pag naka-off, titigil ang data collection at power sa appliance.
       </p>
     </div>
+    <SuccessToast
+      message={successMessage}
+      onDismiss={() => setSuccessMessage(null)}
+    />
+    </>
   );
 }

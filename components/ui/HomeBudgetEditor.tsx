@@ -4,6 +4,7 @@ import { PencilLine, X } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SuccessToast from "@/components/ui/SuccessToast";
 
 type HomeBudgetEditorProps = {
   initialBudget: number;
@@ -22,6 +23,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   function openEditor() {
     setInputValue(initialBudget.toFixed(2));
@@ -86,10 +88,12 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setInputValue(nextBudget.toFixed(2));
     setIsOpen(false);
     setIsSaving(false);
+    setSuccessMessage("Home budget updated.");
     router.refresh();
   }
 
   return (
+    <>
     <div className="mb-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-white/70">Home Budget</span>
@@ -169,5 +173,10 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
         </div>
       ) : null}
     </div>
+    <SuccessToast
+      message={successMessage}
+      onDismiss={() => setSuccessMessage(null)}
+    />
+    </>
   );
 }
