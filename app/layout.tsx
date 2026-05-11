@@ -5,7 +5,11 @@ import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import MobileViewport from "@/components/ui/MobileViewport";
 
 export const metadata: Metadata = {
-  title: "Wattwise",
+  title: {
+    default: "WattWise",
+    template: "%s | WattWise",
+  },
+  applicationName: "WattWise",
   description: "Smart Energy. Real Savings.",
 };
 
