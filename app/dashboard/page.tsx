@@ -14,6 +14,7 @@ import {
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
+import AccountDeletionCard from "@/components/ui/AccountDeletionCard";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
@@ -548,6 +549,13 @@ export default async function DashboardPage() {
             {/* Add Appliance Tile */}
             <AddApplianceTile />
           </div>
+        </section>
+
+        <section className="mt-2">
+          <h2 className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-3">
+            Account & Data
+          </h2>
+          <AccountDeletionCard />
         </section>
 
       </div>
