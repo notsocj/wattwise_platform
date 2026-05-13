@@ -30,6 +30,13 @@ type AiRecommendation = {
   suggested_budget: number;
 };
 
+type AddApplianceFieldErrors = Partial<{
+  macAddress: string;
+  deviceName: string;
+  applianceType: string;
+  dailyHours: string;
+}>;
+
 const APPLIANCE_OPTIONS: {
   type: ApplianceType;
   label: string;
@@ -44,6 +51,31 @@ const APPLIANCE_OPTIONS: {
 // Accepts colon-separated (E0:72:A1:D5:0B:68) or hyphen-separated formats
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 const MAC_IN_TEXT = /([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}/;
+
+function getSetupRecommendationError(message: string | undefined): string {
+  const normalizedMessage = message?.toLowerCase() ?? "";
+
+  if (normalizedMessage.includes("unauthorized")) {
+    return "Your session expired. Log in again before adding an appliance.";
+  }
+
+  if (normalizedMessage.includes("invalid input")) {
+    return "Review the appliance type and daily usage hours, then try again.";
+  }
+
+  if (normalizedMessage.includes("openai api key")) {
+    return "AI setup is temporarily unavailable. Try again after setup is completed.";
+  }
+
+  if (
+    normalizedMessage.includes("meralco") ||
+    normalizedMessage.includes("rates")
+  ) {
+    return "Energy rates are not ready yet, so WattWise cannot estimate this appliance right now.";
+  }
+
+  return "We could not estimate this appliance right now. Check your connection and try again.";
+}
 
 // ─── QR Scanner view (mounts/unmounts html5-qrcode on demand) ─────────────────
 function QrScannerView({
@@ -202,13 +234,56 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
   // Shared state
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<AddApplianceFieldErrors>({});
   const [isPending, startTransition] = useTransition();
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+
+  function validateMacAddress(value = macAddress): string | null {
+    const trimmedMac = value.trim().toUpperCase();
+
+    if (!trimmedMac) {
+      return "Enter the MAC address printed on your WattWise device, or scan its QR code.";
+    }
+
+    if (!MAC_REGEX.test(trimmedMac)) {
+      return "Use 6 pairs of letters or numbers separated by colons, e.g. E0:72:A1:D5:0B:68.";
+    }
+
+    return null;
+  }
+
+  function validateDeviceName(value = deviceName): string | null {
+    if (!value.trim()) {
+      return "Give this appliance a name so it is easy to recognize.";
+    }
+
+    return null;
+  }
+
+  function validateDailyHours(value = dailyHours): string | null {
+    if (!Number.isFinite(value) || value < 1 || value > 24) {
+      return "Choose daily usage between 1 and 24 hours.";
+    }
+
+    return null;
+  }
+
+  function clearFieldError(field: keyof AddApplianceFieldErrors) {
+    setError(null);
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      [field]: undefined,
+    }));
+  }
 
   const handleScan = useCallback((mac: string) => {
     setMacAddress(mac);
     setShowScanner(false);
     setError(null);
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      macAddress: undefined,
+    }));
   }, []);
 
   function handleFormSubmit(e: React.FormEvent) {
@@ -223,14 +298,16 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     setError(null);
     const trimmedMac = macAddress.trim().toUpperCase();
     const trimmedName = deviceName.trim();
+    const nextErrors: AddApplianceFieldErrors = {};
+    const macError = validateMacAddress(trimmedMac);
+    const nameError = validateDeviceName(trimmedName);
 
-    if (!MAC_REGEX.test(trimmedMac)) {
-      setError("Invalid MAC address. Expected format: E0:72:A1:D5:0B:68");
-      return;
-    }
+    if (macError) nextErrors.macAddress = macError;
+    if (nameError) nextErrors.deviceName = nameError;
+    setFieldErrors(nextErrors);
 
-    if (!trimmedName) {
-      setError("Please enter a name for your appliance.");
+    if (Object.keys(nextErrors).length > 0) {
+      setError("Please fix the highlighted fields before continuing.");
       return;
     }
 
@@ -241,17 +318,47 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
   function handleStep2Next() {
     if (!applianceType) {
-      setError("Please select an appliance type.");
+      setFieldErrors((currentErrors) => ({
+        ...currentErrors,
+        applianceType: "Choose the appliance type that best matches this device.",
+      }));
+      setError("Please choose an appliance type before continuing.");
       return;
     }
     setError(null);
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      applianceType: undefined,
+    }));
     setStep(3);
   }
 
   async function handleGetEstimate() {
-    if (!applianceType) return;
+    const dailyHoursError = validateDailyHours();
+
+    if (!applianceType) {
+      setFieldErrors((currentErrors) => ({
+        ...currentErrors,
+        applianceType: "Choose the appliance type that best matches this device.",
+      }));
+      setError("Please choose an appliance type before getting an estimate.");
+      return;
+    }
+
+    if (dailyHoursError) {
+      setFieldErrors((currentErrors) => ({
+        ...currentErrors,
+        dailyHours: dailyHoursError,
+      }));
+      setError("Please fix the daily usage hours before getting an estimate.");
+      return;
+    }
 
     setError(null);
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      dailyHours: undefined,
+    }));
     setIsLoadingAi(true);
 
     try {
@@ -275,7 +382,11 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        setError(errData.error ?? "Failed to get AI recommendation.");
+        setError(
+          getSetupRecommendationError(
+            typeof errData.error === "string" ? errData.error : undefined
+          )
+        );
         return;
       }
 
@@ -283,7 +394,9 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       setRecommendation(data);
       setStep(4);
     } catch {
-      setError("Network error. Please try again.");
+      setError(
+        "We could not reach WattWise right now. Check your connection and try again."
+      );
     } finally {
       setIsLoadingAi(false);
     }
@@ -301,7 +414,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       } = await supabase.auth.getUser();
 
       if (authError || !user) {
-        setError("Authentication error. Please log in again.");
+        setError("Your session expired. Log in again before saving this appliance.");
         return;
       }
 
@@ -317,7 +430,9 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
         if (insertError.code === "23505") {
           setError("This MAC address is already registered to a device.");
         } else {
-          setError(insertError.message);
+          setError(
+            "We could not save this appliance. Review the details and try again."
+          );
         }
         return;
       }
@@ -386,25 +501,45 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
             </div>
 
             <div className="p-5 flex flex-col gap-4">
-              <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
+              <form onSubmit={handleFormSubmit} className="flex flex-col gap-4" noValidate>
               {/* ─── Step 1: MAC + Device Name ─── */}
               {step === 1 && (
                 <>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                    <label
+                      htmlFor="appliance-mac-address"
+                      className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase"
+                    >
                       MAC Address
                     </label>
                     <div className="flex gap-2">
                       <input
+                        id="appliance-mac-address"
                         type="text"
                         value={macAddress}
-                        onChange={(e) => setMacAddress(e.target.value)}
+                        onChange={(e) => {
+                          setMacAddress(e.target.value);
+                          clearFieldError("macAddress");
+                        }}
+                        onBlur={() =>
+                          setFieldErrors((currentErrors) => ({
+                            ...currentErrors,
+                            macAddress: validateMacAddress() ?? undefined,
+                          }))
+                        }
                         placeholder="E0:72:A1:D5:0B:68"
                         autoCapitalize="characters"
                         autoCorrect="off"
                         autoComplete="off"
                         spellCheck={false}
-                        className="flex-1 rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 font-mono focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
+                        required
+                        aria-invalid={Boolean(fieldErrors.macAddress)}
+                        aria-describedby="appliance-mac-address-message"
+                        className={`flex-1 rounded-xl bg-gray-50 border px-4 py-3 text-sm text-gray-900 placeholder-gray-300 font-mono focus:outline-none focus:ring-1 transition-colors ${
+                          fieldErrors.macAddress
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                            : "border-gray-200 focus:border-mint focus:ring-mint/30"
+                        }`}
                       />
                       <button
                         type="button"
@@ -415,59 +550,114 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                         <QrCode className="w-4 h-4" />
                       </button>
                     </div>
+                    <p
+                      id="appliance-mac-address-message"
+                      className={`text-[11px] leading-snug ${
+                        fieldErrors.macAddress ? "text-red-600" : "text-gray-400"
+                      }`}
+                    >
+                      {fieldErrors.macAddress ??
+                        "Find this on the device label, or use the QR scanner."}
+                    </p>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
+                    <label
+                      htmlFor="appliance-device-name"
+                      className="text-[11px] font-semibold tracking-wider text-gray-500 uppercase"
+                    >
                       Appliance Name
                     </label>
                     <input
+                      id="appliance-device-name"
                       type="text"
                       value={deviceName}
-                      onChange={(e) => setDeviceName(e.target.value)}
+                      onChange={(e) => {
+                        setDeviceName(e.target.value);
+                        clearFieldError("deviceName");
+                      }}
+                      onBlur={() =>
+                        setFieldErrors((currentErrors) => ({
+                          ...currentErrors,
+                          deviceName: validateDeviceName() ?? undefined,
+                        }))
+                      }
                       placeholder="e.g. Living Room Aircon"
-                      className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
+                      required
+                      aria-invalid={Boolean(fieldErrors.deviceName)}
+                      aria-describedby="appliance-device-name-message"
+                      className={`rounded-xl bg-gray-50 border px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-1 transition-colors ${
+                        fieldErrors.deviceName
+                          ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                          : "border-gray-200 focus:border-mint focus:ring-mint/30"
+                      }`}
                     />
+                    <p
+                      id="appliance-device-name-message"
+                      className={`text-[11px] leading-snug ${
+                        fieldErrors.deviceName ? "text-red-600" : "text-gray-400"
+                      }`}
+                    >
+                      {fieldErrors.deviceName ??
+                        "Use a name you will recognize on the dashboard."}
+                    </p>
                   </div>
                 </>
               )}
 
               {/* ─── Step 2: Appliance Type Selector ─── */}
               {step === 2 && (
-                <div className="grid grid-cols-2 gap-3">
-                  {APPLIANCE_OPTIONS.map((option) => {
-                    const Icon = option.icon;
-                    const isSelected = applianceType === option.type;
-                    return (
-                      <button
-                        key={option.type}
-                        type="button"
-                        onClick={() => {
-                          setApplianceType(option.type);
-                          setError(null);
-                        }}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 transition-all ${
-                          isSelected
-                            ? "border-mint bg-mint/5"
-                            : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                        }`}
-                      >
-                        <Icon
-                          className={`w-8 h-8 ${
-                            isSelected ? "text-mint" : "text-gray-400"
-                          }`}
-                        />
-                        <span
-                          className={`text-sm font-semibold ${
-                            isSelected ? "text-gray-900" : "text-gray-500"
+                <>
+                  <div
+                    className="grid grid-cols-2 gap-3"
+                    aria-describedby="appliance-type-message"
+                  >
+                    {APPLIANCE_OPTIONS.map((option) => {
+                      const Icon = option.icon;
+                      const isSelected = applianceType === option.type;
+                      return (
+                        <button
+                          key={option.type}
+                          type="button"
+                          onClick={() => {
+                            setApplianceType(option.type);
+                            clearFieldError("applianceType");
+                          }}
+                          aria-pressed={isSelected}
+                          className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 transition-all ${
+                            isSelected
+                              ? "border-mint bg-mint/5"
+                              : fieldErrors.applianceType
+                                ? "border-red-200 bg-red-50 hover:border-red-300"
+                                : "border-gray-200 bg-gray-50 hover:border-gray-300"
                           }`}
                         >
-                          {option.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                          <Icon
+                            className={`w-8 h-8 ${
+                              isSelected ? "text-mint" : "text-gray-400"
+                            }`}
+                          />
+                          <span
+                            className={`text-sm font-semibold ${
+                              isSelected ? "text-gray-900" : "text-gray-500"
+                            }`}
+                          >
+                            {option.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p
+                    id="appliance-type-message"
+                    className={`text-[11px] leading-snug ${
+                      fieldErrors.applianceType ? "text-red-600" : "text-gray-400"
+                    }`}
+                  >
+                    {fieldErrors.applianceType ??
+                      "This helps WattWise choose a realistic setup estimate."}
+                  </p>
+                </>
               )}
 
               {/* ─── Step 3: Daily Usage Hours ─── */}
@@ -492,7 +682,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       max={24}
                       step={1}
                       value={dailyHours}
-                      onChange={(e) => setDailyHours(Number(e.target.value))}
+                      onChange={(e) => {
+                        setDailyHours(Number(e.target.value));
+                        clearFieldError("dailyHours");
+                      }}
+                      aria-invalid={Boolean(fieldErrors.dailyHours)}
+                      aria-describedby="daily-hours-message"
                       className="w-full accent-mint"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400">
@@ -500,6 +695,15 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <span>12h</span>
                       <span>24h</span>
                     </div>
+                    <p
+                      id="daily-hours-message"
+                      className={`text-[11px] leading-snug ${
+                        fieldErrors.dailyHours ? "text-red-600" : "text-gray-400"
+                      }`}
+                    >
+                      {fieldErrors.dailyHours ??
+                        "Estimate the usual daily runtime for a better budget suggestion."}
+                    </p>
                   </div>
                 </>
               )}
@@ -552,7 +756,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
               {/* Error banner */}
               {error && (
-                <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-3.5 py-3">
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-3.5 py-3"
+                >
                   <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-600 leading-snug">{error}</p>
                 </div>
@@ -571,7 +778,6 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     </button>
                     <button
                       type="submit"
-                      disabled={!macAddress.trim() || !deviceName.trim()}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Next
@@ -588,7 +794,6 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     </button>
                     <button
                       type="submit"
-                      disabled={!applianceType}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Next

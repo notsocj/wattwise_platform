@@ -178,6 +178,18 @@ CREATE INDEX idx_ai_insights_user_type_date
 
 ---
 
+## 5. User Form Message Pattern
+
+User-side forms must show helpful inline validation before submit and friendly recovery messages after submit.
+
+- Add `noValidate` to custom-styled forms and handle required/format checks in React so empty submissions surface field-specific messages instead of browser popups or vague alerts.
+- Keep submit buttons enabled unless an async submit is already running; disabled empty-form buttons hide the reason the user cannot continue.
+- Use `aria-invalid`, `aria-describedby`, and `role="alert"` on visible error summaries.
+- Normalize auth email input before Supabase calls, and map Supabase/Auth/API failures to user-facing guidance. Do not display raw database or provider error strings in user forms.
+- User form helpers live in `lib/user-form-messages.ts`; dashboard-specific forms may keep local validators when the rules are tightly scoped.
+
+---
+
 ## Quick Reference — What NOT to Do
 
 | Situation | Forbidden | Required instead |
@@ -187,3 +199,4 @@ CREATE INDEX idx_ai_insights_user_type_date
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
 | Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
+| User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
