@@ -6,6 +6,7 @@ import WeeklyUsageChart, {
   type WeeklyUsagePoint,
 } from "@/components/insights/WeeklyUsageChart";
 import LogoutButton from "@/components/ui/LogoutButton";
+import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
@@ -285,7 +286,10 @@ export default async function InsightsPage() {
               Watt<span className="text-mint">Wise</span>
             </h1>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <UpdatePasswordLink />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
