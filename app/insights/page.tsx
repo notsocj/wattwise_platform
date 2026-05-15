@@ -7,6 +7,7 @@ import WeeklyUsageChart, {
 } from "@/components/insights/WeeklyUsageChart";
 import LogoutButton from "@/components/ui/LogoutButton";
 import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
@@ -287,6 +288,7 @@ export default async function InsightsPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <UpdatePasswordLink />
             <LogoutButton />
           </div>
@@ -430,7 +432,10 @@ export default async function InsightsPage() {
                 This Wk
               </span>
               <span className="flex items-center gap-1.5 text-white/40">
-                <span className="w-2 h-2 rounded-full bg-white/20" />
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: "var(--chart-muted-bar)" }}
+                />
                 Last Wk
               </span>
             </div>

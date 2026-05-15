@@ -18,6 +18,7 @@ import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -386,6 +387,7 @@ export default async function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <UpdatePasswordLink />
             <LogoutButton />
           </div>

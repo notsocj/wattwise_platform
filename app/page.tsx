@@ -11,6 +11,10 @@ export default function SplashScreen() {
   const [animationStep, setAnimationStep] = useState(0);
 
   useEffect(() => {
+    document.documentElement.dataset.theme = "dark";
+  }, []);
+
+  useEffect(() => {
     const showMascotTimer = setTimeout(() => {
       setAnimationStep(1);
     }, 120);
@@ -38,7 +42,10 @@ export default function SplashScreen() {
   }, [router, session]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-base tracking-tight transition-opacity duration-500">
+    <div
+      data-theme="dark"
+      className="relative min-h-screen overflow-hidden bg-base tracking-tight transition-opacity duration-500"
+    >
       {/* Mascot */}
       <div
         className={`absolute left-1/2 transition-all duration-700 ease-out ${
