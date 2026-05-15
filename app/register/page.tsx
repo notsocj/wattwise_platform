@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -115,7 +116,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
+
       <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image

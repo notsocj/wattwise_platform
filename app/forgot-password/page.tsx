@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -88,7 +89,11 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
+        <div className="absolute right-6 top-6">
+          <ThemeToggle />
+        </div>
+
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <KeyRound className="h-8 w-8 text-bida" />
         </div>
@@ -114,7 +119,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
+
       <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="mb-3 flex h-24 w-24 items-center justify-center">
           <Image
