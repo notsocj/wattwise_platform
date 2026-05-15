@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from "lucide-react";
@@ -10,6 +11,10 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
+
+export const metadata: Metadata = {
+  title: 'Insights',
+};
 
 type DeviceRow = {
   id: string;
