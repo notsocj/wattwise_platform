@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function OnboardingPage() {
   const [pendingRoute, setPendingRoute] = useState<"login" | "register" | null>(null);
@@ -13,7 +14,10 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight animate-in fade-in duration-700">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight animate-in fade-in duration-700">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
       {/* Top Header Logo */}
         <div className="flex items-center justify-center pt-12 pb-3">
           <h2 className="text-xl font-bold text-white flex items-center">

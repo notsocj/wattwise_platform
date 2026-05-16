@@ -50,10 +50,45 @@
   --color-danger: #EF4444;
 }
 
+:root,
+[data-theme="dark"] {
+  --color-base: #121212;
+  --color-surface: #1E1E1E;
+  --color-text: #ffffff;
+  --chart-axis: rgba(255, 255, 255, 0.4);
+  --chart-muted-bar: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] {
+  --color-base: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-text: #0f1115;
+  --chart-axis: rgba(15, 17, 21, 0.45);
+  --chart-muted-bar: #393939;
+}
+
 body {
   background: var(--color-base);
-  color: #ffffff;
+  color: var(--color-text);
   font-family: var(--font-sans);
+}
+
+html[data-theme],
+html[data-theme] * {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    fill 200ms ease,
+    stroke 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme],
+  html[data-theme] * {
+    transition: none !important;
+  }
 }
 
 .shadow-mint-glow {
@@ -64,4 +99,100 @@ body {
 .text-mint-glow {
   /* glow removed globally */
   text-shadow: none !important;
+}
+
+[data-theme="light"] .text-white {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .text-white\/20 {
+  color: rgba(15, 17, 21, 0.2);
+}
+
+[data-theme="light"] .text-white\/30 {
+  color: rgba(15, 17, 21, 0.3);
+}
+
+[data-theme="light"] .text-white\/40 {
+  color: rgba(15, 17, 21, 0.4);
+}
+
+[data-theme="light"] .text-white\/50 {
+  color: rgba(15, 17, 21, 0.5);
+}
+
+[data-theme="light"] .text-white\/60 {
+  color: rgba(15, 17, 21, 0.6);
+}
+
+[data-theme="light"] .text-white\/70 {
+  color: rgba(15, 17, 21, 0.7);
+}
+
+[data-theme="light"] .text-white\/80 {
+  color: rgba(15, 17, 21, 0.8);
+}
+
+[data-theme="light"] .hover\:text-white:hover {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .hover\:text-white\/50:hover {
+  color: rgba(15, 17, 21, 0.5);
+}
+
+[data-theme="light"] .hover\:text-white\/60:hover {
+  color: rgba(15, 17, 21, 0.6);
+}
+
+[data-theme="light"] .placeholder-white\/30::placeholder {
+  color: rgba(15, 17, 21, 0.3);
+}
+
+[data-theme="dark"] .text-white {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .text-white\/20 {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .text-white\/30 {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .text-white\/40 {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] .text-white\/50 {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .text-white\/60 {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .text-white\/70 {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .text-white\/80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="dark"] .hover\:text-white:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .hover\:text-white\/50:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .hover\:text-white\/60:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .placeholder-white\/30::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }

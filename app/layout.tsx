@@ -6,7 +6,11 @@ import MobileViewport from "@/components/ui/MobileViewport";
 import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
 
 export const metadata: Metadata = {
-  title: "Wattwise",
+  title: {
+    default: "WattWise",
+    template: "%s | WattWise",
+  },
+  applicationName: "WattWise",
   description: "Smart Energy. Real Savings.",
 };
 
@@ -21,7 +25,7 @@ export default async function RootLayout({
   } = await supabase.auth.getSession();
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
       <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
           <RouteTransitionIndicator />
