@@ -12,6 +12,7 @@ import {
   validateLettersAndSpaces,
   validatePassword,
 } from "@/lib/validation";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function RegisterPage() {
@@ -182,9 +183,21 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading || !fullName.trim() || !email.trim() || !password}
-          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {loading ? "Creating Account..." : "Sign Up"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <LoadingIndicator
+                size="sm"
+                label="Creating account"
+                showLabel={false}
+                spinnerClassName="border-black/30 border-t-black"
+              />
+              Creating account...
+            </span>
+          ) : (
+            "Sign Up"
+          )}
         </button>
         </form>
 

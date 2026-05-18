@@ -6,6 +6,7 @@ import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { validateEmail } from "@/lib/validation";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function ForgotPasswordPage() {
@@ -136,9 +137,21 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading || !email.trim()}
-          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
         >
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <LoadingIndicator
+                size="sm"
+                label="Sending reset link"
+                showLabel={false}
+                spinnerClassName="border-black/30 border-t-black"
+              />
+              Sending...
+            </span>
+          ) : (
+            "Send Reset Link"
+          )}
         </button>
         </form>
 
