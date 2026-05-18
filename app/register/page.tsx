@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -290,9 +291,21 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Creating Account..." : "Sign Up"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Creating account"
+                  showLabel={false}
+                  spinnerClassName="border-black/30 border-t-black"
+                />
+                Creating account...
+              </span>
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
 

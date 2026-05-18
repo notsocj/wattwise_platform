@@ -1,8 +1,9 @@
 "use client";
 
-import { PencilLine, X } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, PencilLine, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { createClient } from "@/lib/supabase/client";
 
 type HomeBudgetEditorProps = {
@@ -46,6 +47,19 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [apiToastMessage, setApiToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!apiToastMessage) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setApiToastMessage(null);
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [apiToastMessage]);
 
   function openEditor() {
     setInputValue(initialBudget.toFixed(2));
@@ -86,7 +100,9 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      setErrorMessage("Session expired. Please log in again.");
+      const message = "Session expired. Please log in again.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -98,9 +114,10 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       .eq("id", user.id);
 
     if (error) {
-      setErrorMessage(
-        "We could not save your budget right now. Your current budget is unchanged."
-      );
+      const message =
+        "We could not save your budget right now. Your current budget is unchanged.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -118,14 +135,15 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
 
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold">
-            <span className="text-white/50 text-sm mr-0.5">₱</span>
+            <span className="text-white/50 text-sm mr-0.5">â‚±</span>
             {formatBudget(initialBudget)}
           </span>
           <button
             type="button"
             onClick={openEditor}
+            disabled={isSaving}
             aria-label="Edit home budget"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-mint/30 hover:text-mint"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PencilLine className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -141,69 +159,87 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
             <button
               type="button"
               onClick={closeEditor}
+              disabled={isSaving}
               aria-label="Close budget editor"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
 
           <form onSubmit={saveBudget} noValidate>
-          <label
-            htmlFor="home-budget-input"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
-          >
-            Monthly Budget (PHP)
-          </label>
-          <input
-            id="home-budget-input"
-            type="text"
-            inputMode="decimal"
-            value={inputValue}
-            onChange={(event) => {
-              setInputValue(event.target.value);
-              if (errorMessage) {
-                setErrorMessage(null);
-              }
-            }}
-            onBlur={() => setErrorMessage(validateBudgetInput(inputValue))}
-            aria-invalid={Boolean(errorMessage)}
-            aria-describedby="home-budget-message"
-            className={`w-full rounded-lg border bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors ${
-              errorMessage
-                ? "border-danger/70 focus:border-danger"
-                : "border-white/10 focus:border-mint/40"
-            }`}
-          />
-
-          {errorMessage ? (
-            <p id="home-budget-message" className="mt-2 text-xs text-danger">
-              {errorMessage}
-            </p>
-          ) : (
-            <p id="home-budget-message" className="mt-2 text-xs text-white/40">
-              Enter your expected monthly bill limit, e.g. PHP 2,500.
-            </p>
-          )}
-
-          <div className="mt-3 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={closeEditor}
-              disabled={isSaving}
-              className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            <label
+              htmlFor="home-budget-input"
+              className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
+              Monthly Budget (PHP)
+            </label>
+            <input
+              id="home-budget-input"
+              type="text"
+              inputMode="decimal"
+              value={inputValue}
               disabled={isSaving}
-              className="rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-mint transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-          </div>
+              onChange={(event) => {
+                setInputValue(event.target.value);
+                if (errorMessage) {
+                  setErrorMessage(null);
+                }
+              }}
+              onBlur={() => setErrorMessage(validateBudgetInput(inputValue))}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby="home-budget-message"
+              className={`w-full rounded-lg border bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                errorMessage
+                  ? "border-danger/70 focus:border-danger"
+                  : "border-white/10 focus:border-mint/40"
+              }`}
+            />
+
+            {errorMessage ? (
+              <p id="home-budget-message" className="mt-2 text-xs text-danger">
+                {errorMessage}
+              </p>
+            ) : (
+              <p id="home-budget-message" className="mt-2 text-xs text-white/40">
+                Enter your expected monthly bill limit, e.g. PHP 2,500.
+              </p>
+            )}
+
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEditor}
+                disabled={isSaving}
+                className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-mint transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSaving ? (
+                  <>
+                    <LoadingIndicator size="sm" label="Saving budget" showLabel={false} />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
           </form>
+        </div>
+      ) : null}
+
+      {apiToastMessage ? (
+        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
+            <p className="text-sm font-semibold text-danger">{apiToastMessage}</p>
+          </div>
         </div>
       ) : null}
     </div>
