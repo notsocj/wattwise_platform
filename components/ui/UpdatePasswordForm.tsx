@@ -10,9 +10,9 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 type UpdatePasswordFormProps = {
   mode?: "update" | "reset";
@@ -108,6 +108,15 @@ export default function UpdatePasswordForm({
       setPassword("");
       setConfirmPassword("");
       setSuccess(true);
+
+      if (mode === "reset") {
+        await supabase.auth.signOut();
+        setTimeout(() => {
+          router.replace("/login");
+        }, 1800);
+        return;
+      }
+
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred.");
@@ -119,9 +128,8 @@ export default function UpdatePasswordForm({
   if (sessionState === "checking") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-base px-6 text-white">
-        <div className="flex flex-col items-center gap-4 text-white/70">
-          <Loader2 className="h-8 w-8 animate-spin text-mint" />
-          <p className="text-sm font-medium">Preparing secure session...</p>
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4">
+          <LoadingIndicator size="md" label="Preparing secure session" />
         </div>
       </div>
     );
@@ -135,14 +143,20 @@ export default function UpdatePasswordForm({
         </div>
         <h1 className="mb-2 text-2xl font-bold">Password Updated</h1>
         <p className="mb-8 max-w-sm text-center text-sm leading-6 text-white/50">
-          Your WattWise account password has been changed successfully.
+          {mode === "reset"
+            ? "Your password has been updated successfully. Redirecting to login..."
+            : "Your WattWise account password has been changed successfully."}
         </p>
-        <Link
-          href={backHref}
-          className="inline-flex w-full max-w-sm items-center justify-center rounded-xl bg-mint px-4 py-4 text-[17px] font-bold text-black transition-transform active:scale-95"
-        >
-          Continue
-        </Link>
+        {mode === "reset" ? (
+          <LoadingIndicator size="sm" label="Redirecting" />
+        ) : (
+          <Link
+            href={backHref}
+            className="inline-flex w-full max-w-sm items-center justify-center rounded-xl bg-mint px-4 py-4 text-[17px] font-bold text-black transition-transform active:scale-95"
+          >
+            Continue
+          </Link>
+        )}
       </div>
     );
   }
@@ -267,9 +281,21 @@ export default function UpdatePasswordForm({
           <button
             type="submit"
             disabled={loading || !password || !confirmPassword}
-            className="w-full rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Updating..." : "Update Password"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Updating password"
+                  showLabel={false}
+                  spinnerClassName="border-black/30 border-t-black"
+                />
+                Updating...
+              </span>
+            ) : (
+              "Update Password"
+            )}
           </button>
         </form>
 
