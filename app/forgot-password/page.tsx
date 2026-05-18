@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -37,7 +39,10 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-base text-white flex flex-col items-center justify-center px-6">
+      <div className="relative min-h-screen bg-base text-white flex flex-col items-center justify-center px-6">
+        <div className="absolute right-6 top-6">
+          <ThemeToggle />
+        </div>
         <div className="w-16 h-16 rounded-full bg-bida/10 flex items-center justify-center mb-6">
           <KeyRound className="w-8 h-8 text-bida" />
         </div>
@@ -60,7 +65,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
       {/* Top Section — Logo & Branding */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
         {/* Mascot */}
@@ -114,9 +122,21 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading || !email}
-          className="w-full bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
         >
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <LoadingIndicator
+                size="sm"
+                label="Sending reset link"
+                showLabel={false}
+                spinnerClassName="border-black/30 border-t-black"
+              />
+              Sending...
+            </span>
+          ) : (
+            "Send Reset Link"
+          )}
         </button>
         </form>
 

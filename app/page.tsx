@@ -4,11 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 export default function SplashScreen() {
   const router = useRouter();
   const { session } = useSupabase();
   const [animationStep, setAnimationStep] = useState(0);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = "dark";
+  }, []);
 
   useEffect(() => {
     const showMascotTimer = setTimeout(() => {
@@ -38,7 +43,10 @@ export default function SplashScreen() {
   }, [router, session]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-base tracking-tight transition-opacity duration-500">
+    <div
+      data-theme="dark"
+      className="relative min-h-screen overflow-hidden bg-base tracking-tight transition-opacity duration-500"
+    >
       {/* Mascot */}
       <div
         className={`absolute left-1/2 transition-all duration-700 ease-out ${
@@ -46,7 +54,7 @@ export default function SplashScreen() {
             ? "top-1/2 -translate-x-1/2 -translate-y-1/2 scale-95 opacity-0"
             : animationStep === 1
               ? "top-1/2 -translate-x-1/2 -translate-y-1/2 scale-100 opacity-100"
-              : "top-[46%] -translate-x-1/2 -translate-y-1/2 scale-100 opacity-100"
+              : "top-[42%] -translate-x-1/2 -translate-y-1/2 scale-100 opacity-100"
         }`}
       >
         <Image
@@ -60,9 +68,9 @@ export default function SplashScreen() {
       </div>
 
       {/* Brand Name + Subtitle */}
-      <div className="absolute inset-x-0 top-[60%] flex -translate-y-1/2 flex-col items-center">
+      <div className="absolute inset-x-0 top-[60%] flex -translate-y-1/2 flex-col items-center px-6">
         <h1
-          className={`mb-2 flex items-center text-5xl font-bold text-white transition-all duration-500 ${
+          className={`mb-1.5 flex items-center text-5xl font-bold text-white transition-all duration-500 ${
             animationStep >= 2
               ? "translate-y-0 opacity-100"
               : "translate-y-4 opacity-0"
@@ -78,6 +86,10 @@ export default function SplashScreen() {
         >
           INTELLIGENT ENERGY
         </p>
+
+        <div className="mt-5">
+          <LoadingIndicator size="sm" label="Preparing your energy hub" />
+        </div>
       </div>
     </div>
   );
