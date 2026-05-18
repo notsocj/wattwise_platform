@@ -48,8 +48,16 @@ export async function PATCH(
     .eq("id", deviceId);
 
   if (updateError) {
+    const message = updateError.message?.toLowerCase() ?? "";
+    const missingRelayStateColumn =
+      updateError.code === "42703" || message.includes("relay_state");
+
     return NextResponse.json(
-      { error: "Failed to update relay state" },
+      {
+        error: missingRelayStateColumn
+          ? "Relay control requires devices.relay_state. Run migration 010_add_device_metadata.sql."
+          : "Failed to update relay state",
+      },
       { status: 500 }
     );
   }
