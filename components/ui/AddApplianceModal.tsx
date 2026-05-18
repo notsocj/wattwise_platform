@@ -235,8 +235,8 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     setError(null);
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (step === 1) handleStep1Next();
     else if (step === 2) handleStep2Next();
     else if (step === 3) handleGetEstimate();
@@ -357,12 +357,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     // pb-20 keeps the card clear of the ~64px bottom nav bar
     <div
       className="fixed inset-0 z-50 flex items-end justify-center px-4 pt-4 pb-20 bg-black/60 backdrop-blur-sm"
-      onClick={(e) => {
+      onClick={(event: React.MouseEvent<HTMLDivElement>) => {
         if (isBusy) {
           return;
         }
 
-        if (e.target === e.currentTarget) onClose();
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div className="w-full max-w-107.5 rounded-2xl bg-white overflow-hidden shadow-2xl max-h-[85vh] overflow-y-auto">
@@ -428,7 +428,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                         type="text"
                         value={macAddress}
                         disabled={isBusy}
-                        onChange={(e) => setMacAddress(e.target.value)}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMacAddress(event.target.value)}
                         placeholder="E0:72:A1:D5:0B:68"
                         autoCapitalize="characters"
                         autoCorrect="off"
@@ -456,7 +456,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       type="text"
                       value={deviceName}
                       disabled={isBusy}
-                      onChange={(e) => setDeviceName(e.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDeviceName(event.target.value)}
                       placeholder="e.g. Living Room Aircon"
                       className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
                     />
@@ -526,7 +526,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       step={1}
                       value={dailyHours}
                       disabled={isLoadingAi}
-                      onChange={(e) => setDailyHours(Number(e.target.value))}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDailyHours(Number(event.target.value))}
                       className="w-full accent-mint"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400">

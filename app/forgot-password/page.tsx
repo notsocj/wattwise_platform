@@ -14,8 +14,8 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  async function handleResetRequest(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleResetRequest(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
     setLoading(true);
 
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
           <p className="text-white/40 text-sm mt-2">

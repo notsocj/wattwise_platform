@@ -52,8 +52,8 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setErrorMessage(null);
   }
 
-  async function saveBudget(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveBudget(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (isSaving) {
       return;
     }

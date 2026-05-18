@@ -18,8 +18,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleRegister(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
@@ -95,7 +95,7 @@ export default function RegisterPage() {
             type="text"
             placeholder="e.g., Santos Residence"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFullName(event.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -109,7 +109,7 @@ export default function RegisterPage() {
             type="email"
             placeholder="your@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
             className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
           />
         </div>
@@ -124,7 +124,7 @@ export default function RegisterPage() {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
               className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
             />
             <button

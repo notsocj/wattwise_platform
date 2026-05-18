@@ -64,8 +64,8 @@ export default function ResetPasswordPage() {
     };
   }, []);
 
-  async function handlePasswordReset(e: React.FormEvent) {
-    e.preventDefault();
+  async function handlePasswordReset(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (loading) {
       return;
     }
@@ -186,7 +186,7 @@ export default function ResetPasswordPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter new password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
                 className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
               />
               <button
@@ -208,7 +208,7 @@ export default function ResetPasswordPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm new password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(event.target.value)}
                 className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
               />
               <button

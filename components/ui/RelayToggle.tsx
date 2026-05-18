@@ -31,10 +31,10 @@ export default function RelayToggle({
     return () => clearTimeout(timer);
   }, [errorToast]);
 
-  async function handleToggle(e: React.MouseEvent) {
+  async function handleToggle(event: React.MouseEvent<HTMLButtonElement>) {
     // Prevent parent Link navigation when clicking the toggle
-    e.preventDefault();
-    e.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
 
     const newState = !relayState;
 
