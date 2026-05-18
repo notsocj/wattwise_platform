@@ -12,6 +12,7 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 type DeviceRow = {
   id: string;
@@ -399,7 +400,7 @@ export default async function DeviceDetailPage(props: {
           </p>
         </div>
         </div>
-        {/* Logout intentionally omitted on Device Detail page */}
+        <ThemeToggle />
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
