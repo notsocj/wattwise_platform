@@ -4,8 +4,8 @@ import { useState, useTransition, useEffect, useRef, useCallback } from "react";
 import {
   X,
   QrCode,
-  Loader2,
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Camera,
   Refrigerator,
@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type {
   AddApplianceModalProps,
   ApplianceType,
@@ -149,7 +150,11 @@ function QrScannerView({
           <div className="relative rounded-xl overflow-hidden bg-black">
             {isStarting && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10 aspect-square">
-                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                <LoadingIndicator
+                  size="md"
+                  label="Starting camera"
+                  spinnerClassName="border-gray-300 border-t-gray-500"
+                />
               </div>
             )}
             {/* html5-qrcode mounts its <video> element here */}
@@ -195,6 +200,25 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [apiToastMessage, setApiToastMessage] = useState<string | null>(null);
+  const isBusy = isPending || isLoadingAi;
+
+  useEffect(() => {
+    if (!apiToastMessage) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setApiToastMessage(null);
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [apiToastMessage]);
+
+  function setApiError(message: string) {
+    setError(message);
+    setApiToastMessage(message);
+  }
 
   const handleScan = useCallback((mac: string) => {
     setMacAddress(mac);
@@ -266,7 +290,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        setError(errData.error ?? "Failed to get AI recommendation.");
+        setApiError(errData.error ?? "Failed to get AI recommendation.");
         return;
       }
 
@@ -274,7 +298,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       setRecommendation(data);
       setStep(4);
     } catch {
-      setError("Network error. Please try again.");
+      setApiError("Network error. Please try again.");
     } finally {
       setIsLoadingAi(false);
     }
@@ -292,7 +316,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       } = await supabase.auth.getUser();
 
       if (authError || !user) {
-        setError("Authentication error. Please log in again.");
+        setApiError("Authentication error. Please log in again.");
         return;
       }
 
@@ -306,9 +330,9 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
 
       if (insertError) {
         if (insertError.code === "23505") {
-          setError("This MAC address is already registered to a device.");
+          setApiError("This MAC address is already registered to a device.");
         } else {
-          setError(insertError.message);
+          setApiError(insertError.message);
         }
         return;
       }
@@ -325,6 +349,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     <div
       className="fixed inset-0 z-50 flex items-end justify-center px-4 pt-4 pb-20 bg-black/60 backdrop-blur-sm"
       onClick={(e) => {
+        if (isBusy) {
+          return;
+        }
+
         if (e.target === e.currentTarget) onClose();
       }}
     >
@@ -349,7 +377,8 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors"
+                disabled={isBusy}
+                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
@@ -389,6 +418,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <input
                         type="text"
                         value={macAddress}
+                        disabled={isBusy}
                         onChange={(e) => setMacAddress(e.target.value)}
                         placeholder="E0:72:A1:D5:0B:68"
                         autoCapitalize="characters"
@@ -399,9 +429,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       />
                       <button
                         type="button"
+                        disabled={isBusy}
                         onClick={() => setShowScanner(true)}
                         title="Scan QR Code"
-                        className="w-12 shrink-0 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-mint hover:border-mint/40 hover:bg-mint/5 transition-colors"
+                        className="w-12 shrink-0 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-mint hover:border-mint/40 hover:bg-mint/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <QrCode className="w-4 h-4" />
                       </button>
@@ -415,6 +446,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     <input
                       type="text"
                       value={deviceName}
+                      disabled={isBusy}
                       onChange={(e) => setDeviceName(e.target.value)}
                       placeholder="e.g. Living Room Aircon"
                       className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint/30 transition-colors"
@@ -433,11 +465,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <button
                         key={option.type}
                         type="button"
+                        disabled={isBusy}
                         onClick={() => {
                           setApplianceType(option.type);
                           setError(null);
                         }}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 transition-all ${
+                        className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           isSelected
                             ? "border-mint bg-mint/5"
                             : "border-gray-200 bg-gray-50 hover:border-gray-300"
@@ -483,6 +516,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       max={24}
                       step={1}
                       value={dailyHours}
+                      disabled={isLoadingAi}
                       onChange={(e) => setDailyHours(Number(e.target.value))}
                       className="w-full accent-mint"
                     />
@@ -517,7 +551,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <p className="text-[10px] text-gray-400 font-semibold uppercase">
                         Est. kWh/mo
                       </p>
-                      <p className="text-base font-bold text-gray-900 mt-0.5">
+                      <p className="font-bold text-gray-900 mt-0.5">
                         {recommendation.estimated_monthly_kwh.toFixed(1)}
                       </p>
                     </div>
@@ -525,7 +559,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <p className="text-[10px] text-gray-400 font-semibold uppercase">
                         Est. Cost
                       </p>
-                      <p className="text-base font-bold text-gray-900 mt-0.5">
+                      <p className="font-bold text-gray-900 mt-0.5">
                         ₱{recommendation.estimated_monthly_cost.toFixed(0)}
                       </p>
                     </div>
@@ -533,7 +567,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                       <p className="text-[10px] text-green-700 font-semibold uppercase">
                         Suggested
                       </p>
-                      <p className="text-base font-bold text-green-700 mt-0.5">
+                      <p className="font-bold text-green-700 mt-0.5">
                         ₱{recommendation.suggested_budget.toLocaleString()}
                       </p>
                     </div>
@@ -556,13 +590,14 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     <button
                       type="button"
                       onClick={onClose}
+                      disabled={isBusy}
                       className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={!macAddress.trim() || !deviceName.trim()}
+                      disabled={isBusy || !macAddress.trim() || !deviceName.trim()}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Next
@@ -573,13 +608,14 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                      disabled={isBusy}
+                      className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
-                      disabled={!applianceType}
+                      disabled={isBusy || !applianceType}
                       className="flex-1 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base hover:bg-mint/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Next
@@ -602,7 +638,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     >
                       {isLoadingAi ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <LoadingIndicator
+                            size="sm"
+                            label="Analyzing"
+                            showLabel={false}
+                            spinnerClassName="border-black/30 border-t-black"
+                          />
                           Analyzing...
                         </>
                       ) : (
@@ -627,7 +668,12 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
                     >
                       {isPending ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <LoadingIndicator
+                            size="sm"
+                            label="Saving"
+                            showLabel={false}
+                            spinnerClassName="border-black/30 border-t-black"
+                          />
                           Saving...
                         </>
                       ) : (
@@ -642,6 +688,15 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
           </>
         )}
       </div>
+
+      {apiToastMessage ? (
+        <div className="fixed bottom-24 left-1/2 z-60 w-[calc(100%-2rem)] max-w-107.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
+            <p className="text-sm font-semibold text-danger">{apiToastMessage}</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

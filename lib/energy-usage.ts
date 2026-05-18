@@ -1,15 +1,4 @@
-type NumericLike = number | string | null | undefined;
-
-type MinMax = {
-  min: number;
-  max: number;
-};
-
-type TimedReading = {
-  energyKwh: number;
-  timestampMs: number;
-  dayKey: string;
-};
+import type { NumericLike, MinMax, TimedReading } from "@/lib/energy-usage.types";
 
 const DEFAULT_JITTER_TOLERANCE_KWH = 0.01;
 const DEFAULT_RESET_DROP_THRESHOLD_KWH = 0.2;

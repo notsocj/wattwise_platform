@@ -5,22 +5,11 @@ import {
   getActiveMeralcoRates,
   computeMeralcoBill,
 } from "@/lib/meralco-rates";
-
-const VALID_INSIGHT_TYPES = [
-  "budget_alert",
-  "weekly_recap",
-  "anomaly_alert",
-  "cost_optimizer",
-] as const;
-
-type InsightType = (typeof VALID_INSIGHT_TYPES)[number];
-
-const CACHE_WINDOW_DAYS: Record<InsightType, number> = {
-  budget_alert: 1,
-  weekly_recap: 7,
-  anomaly_alert: 1,
-  cost_optimizer: 7,
-};
+import type { InsightType } from "@/app/api/insights/route.types";
+import {
+  VALID_INSIGHT_TYPES as VALID_TYPES,
+  CACHE_WINDOW_DAYS as CACHE_DAYS,
+} from "@/app/api/insights/route.types";
 
 const SYSTEM_PROMPT = `You are a friendly Filipino financial and energy advisor called "WattWise Tipid Advisor".
 Language: Casual conversational Taglish (Tagalog-English mix).
@@ -35,11 +24,11 @@ export async function POST(request: NextRequest) {
 
     if (
       !insightType ||
-      !VALID_INSIGHT_TYPES.includes(insightType as InsightType)
+      !VALID_TYPES.includes(insightType as InsightType)
     ) {
       return NextResponse.json(
         {
-          error: `Invalid insight_type. Must be one of: ${VALID_INSIGHT_TYPES.join(", ")}`,
+          error: `Invalid insight_type. Must be one of: ${VALID_TYPES.join(", ")}`,
         },
         { status: 400 }
       );
@@ -57,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Cache check ---
-    const cacheDays = CACHE_WINDOW_DAYS[typedInsightType];
+    const cacheDays = CACHE_DAYS[typedInsightType];
     const cacheStart = new Date();
     cacheStart.setDate(cacheStart.getDate() - cacheDays);
 

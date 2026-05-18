@@ -12,6 +12,7 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import type {
   DeviceRow,
   ProfileRow,
@@ -127,7 +128,7 @@ function CircularGauge({
 
   return (
     <div className="flex flex-col items-center px-1">
-      <div className="relative aspect-square w-full max-w-[108px]">
+      <div className="relative aspect-square w-full max-w-27">
         <svg
           viewBox="0 0 100 100"
           className="h-full w-full -rotate-90"
@@ -359,12 +360,12 @@ export default async function DeviceDetailPage(props: {
           </p>
         </div>
         </div>
-        {/* Logout intentionally omitted on Device Detail page */}
+        <ThemeToggle />
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
         {/* ===== AI Tip ===== */}
-        <div className="flex items-start gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
+        <div className="flex items-start gap-3 rounded-xl bg-white/3 border border-white/6 px-4 py-3">
           <div className="w-9 h-9 rounded-full bg-mint/15 flex items-center justify-center shrink-0 mt-0.5">
             <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
           </div>
@@ -379,7 +380,7 @@ export default async function DeviceDetailPage(props: {
         </div>
 
         {/* ===== Metrology Gauges ===== */}
-        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] px-2 py-8">
+        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/6 bg-white/2 px-2 py-8">
           <CircularGauge
             value={device.watts}
             max={device.maxWatts}
@@ -408,7 +409,7 @@ export default async function DeviceDetailPage(props: {
         />
 
         {/* ===== Appliance Burn Rate ===== */}
-        <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
+        <section className="rounded-xl bg-white/3 backdrop-blur border border-white/6 p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-mint" />
@@ -440,7 +441,7 @@ export default async function DeviceDetailPage(props: {
                 ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
               </span>
             </div>
-            <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
+            <div className="w-full h-2.5 rounded-full bg-white/6">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${burnColor}`}
                 style={{ width: `${burnPercent}%` }}

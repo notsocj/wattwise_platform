@@ -1,48 +1,10 @@
-type ArchiveEntry = {
-  monthLabel: string;
-  monthDate: Date;
-  title: string;
-  pdfUrl: string;
-};
-
-type ParsedRates = {
-  generation: number | null;
-  transmission: number | null;
-  system_loss: number | null;
-  distribution: number | null;
-  universal_charges: number | null;
-  fit_all: number | null;
-  vat_rate: number | null;
-  metering_charge: number | null;
-  supply_charge: number | null;
-};
-
-type CompleteRates = {
-  generation: number;
-  transmission: number;
-  system_loss: number;
-  distribution: number;
-  universal_charges: number;
-  fit_all: number;
-  vat_rate: number;
-  metering_charge: number;
-  supply_charge: number;
-};
-
-type SyncRunStatus = "success" | "failed" | "dry_run";
-
-type ExistingRateRow = {
-  effective_month: string;
-  vat_rate: number;
-  generation: number;
-  transmission: number;
-  system_loss: number;
-  distribution: number;
-  universal_charges: number;
-  fit_all: number;
-  metering_charge: number;
-  supply_charge: number;
-};
+import type {
+  ArchiveEntry,
+  ParsedRates,
+  CompleteRates,
+  SyncRunStatus,
+  ExistingRateRow,
+} from "./types.ts";
 
 const DEFAULT_RATES_ARCHIVES_URL =
   "https://company.meralco.com.ph/news-and-advisories/rates-archives";

@@ -17,13 +17,13 @@ const INSIGHT_TYPES = [
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl bg-surface border border-white/[0.06] p-4 animate-pulse">
+    <div className="rounded-xl bg-surface border border-white/6 p-4 animate-pulse">
       <div className="h-3 w-20 bg-white/10 rounded mb-3" />
       <div className="h-4 w-32 bg-white/10 rounded mb-2" />
       <div className="space-y-1.5">
-        <div className="h-3 w-full bg-white/[0.06] rounded" />
-        <div className="h-3 w-4/5 bg-white/[0.06] rounded" />
-        <div className="h-3 w-3/5 bg-white/[0.06] rounded" />
+        <div className="h-3 w-full bg-white/6 rounded" />
+        <div className="h-3 w-4/5 bg-white/6 rounded" />
+        <div className="h-3 w-3/5 bg-white/6 rounded" />
       </div>
     </div>
   );
@@ -109,7 +109,7 @@ export default function CoachingFeed() {
           </p>
         </div>
       ) : budget.error ? (
-        <div className="rounded-xl bg-surface border border-white/[0.06] p-4 mb-3">
+        <div className="rounded-xl bg-surface border border-white/6 p-4 mb-3">
           <p className="text-xs text-white/40">{budget.error}</p>
         </div>
       ) : null}
@@ -131,7 +131,7 @@ export default function CoachingFeed() {
           </p>
         </div>
       ) : anomaly.error ? (
-        <div className="rounded-xl bg-surface border border-white/[0.06] p-4 mb-3">
+        <div className="rounded-xl bg-surface border border-white/6 p-4 mb-3">
           <p className="text-xs text-white/40">{anomaly.error}</p>
         </div>
       ) : null}
@@ -142,7 +142,7 @@ export default function CoachingFeed() {
         {recap.loading ? (
           <SkeletonCard />
         ) : recap.message ? (
-          <div className="rounded-xl bg-bida/10 border border-bida/20 p-4 flex flex-col justify-between min-h-[140px]">
+          <div className="rounded-xl bg-bida/10 border border-bida/20 p-4 flex flex-col justify-between min-h-35">
             <div>
               <span className="text-[10px] font-bold tracking-wider text-bida uppercase">
                 Bida Recap
@@ -157,7 +157,7 @@ export default function CoachingFeed() {
             <Trophy className="w-5 h-5 text-bida mt-2" />
           </div>
         ) : recap.error ? (
-          <div className="rounded-xl bg-surface border border-white/[0.06] p-4 min-h-[140px]">
+          <div className="rounded-xl bg-surface border border-white/6 p-4 min-h-35">
             <p className="text-xs text-white/40">{recap.error}</p>
           </div>
         ) : null}
@@ -166,7 +166,7 @@ export default function CoachingFeed() {
         {optimizer.loading ? (
           <SkeletonCard />
         ) : optimizer.message ? (
-          <div className="rounded-xl bg-surface border border-white/[0.06] p-4 flex flex-col justify-between min-h-[140px]">
+          <div className="rounded-xl bg-surface border border-white/6 p-4 flex flex-col justify-between min-h-35">
             <div>
               <span className="text-[10px] font-bold tracking-wider text-mint/60 uppercase">
                 Tipid Tip
@@ -178,7 +178,7 @@ export default function CoachingFeed() {
             <Leaf className="w-5 h-5 text-bida mt-2" />
           </div>
         ) : optimizer.error ? (
-          <div className="rounded-xl bg-surface border border-white/[0.06] p-4 min-h-[140px]">
+          <div className="rounded-xl bg-surface border border-white/6 p-4 min-h-35">
             <p className="text-xs text-white/40">{optimizer.error}</p>
           </div>
         ) : null}

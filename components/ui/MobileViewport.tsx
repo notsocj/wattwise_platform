@@ -11,7 +11,7 @@ export default function MobileViewport({ children }: MobileViewportProps) {
   }
 
   return (
-    <div className="mx-auto min-h-dvh w-full max-w-[430px] overflow-x-hidden sm:min-h-screen">
+    <div className="mx-auto min-h-dvh w-full max-w-107.5 overflow-x-hidden sm:min-h-screen">
       {children}
     </div>
   );
