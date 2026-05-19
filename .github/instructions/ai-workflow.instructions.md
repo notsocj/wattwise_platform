@@ -178,6 +178,14 @@ CREATE INDEX idx_ai_insights_user_type_date
 
 ---
 
+## 5. Account Deletion (Hard Delete Only)
+
+**Hard constraint:** Never soft-delete user accounts. Account deletion must permanently remove user data.
+
+- Use a server-side API route with the Supabase service role key; never delete auth users from a client component.
+- Delete `energy_logs` by both device UUIDs and legacy `mac_address` keys before removing the profile to avoid orphan telemetry.
+- Delete the auth user to revoke sessions and trigger cascading deletes from `profiles` to `devices` and `ai_insights`.
+- The UI must show a clear, explicit data deletion policy explaining what is removed immediately and what may persist in managed backups.
 ## 5. User Form Message Pattern
 
 User-side forms must show helpful inline validation before submit and friendly recovery messages after submit.
@@ -211,5 +219,6 @@ When implementing route or mutation feedback in the app shell and interactive co
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
 | Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
+| Deleting accounts | Soft delete or client-side auth deletion | Server-side hard delete of auth user + data cleanup |
 | User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
 | API mutation feedback | Keep controls active and silent on errors | Disable pending controls, show inline `LoadingIndicator`, and display auto-dismiss error toast |
