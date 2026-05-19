@@ -3,9 +3,9 @@
 import { AlertTriangle, PencilLine, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
+import { createClient } from "@/lib/supabase/client";
 
 type HomeBudgetEditorProps = {
   initialBudget: number;
@@ -16,6 +16,30 @@ function formatBudget(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function parseBudgetInput(value: string): number {
+  return Number(value.replace(/,/g, "").trim());
+}
+
+function validateBudgetInput(value: string): string | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "Enter your monthly budget amount in pesos.";
+  }
+
+  const parsedBudget = parseBudgetInput(trimmedValue);
+
+  if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
+    return "Use a budget greater than 0, like 2500 or 2500.50.";
+  }
+
+  if (parsedBudget > 9_999_999.99) {
+    return "Budget cannot exceed PHP 9,999,999.99.";
+  }
+
+  return null;
 }
 
 export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProps) {
@@ -60,18 +84,14 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const parsedBudget = Number(inputValue.replace(/,/g, "").trim());
+    const validationMessage = validateBudgetInput(inputValue);
 
-    if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
-      setErrorMessage("Enter a valid budget greater than 0.");
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
       return;
     }
 
-    if (parsedBudget > 9_999_999.99) {
-      setErrorMessage("Budget cannot exceed 9,999,999.99.");
-      return;
-    }
-
+    const parsedBudget = parseBudgetInput(inputValue);
     setIsSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -84,8 +104,9 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      setErrorMessage("Session expired. Please log in again.");
-      setApiToastMessage("Session expired. Please log in again.");
+      const message = "Session expired. Please log in again.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -97,8 +118,10 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       .eq("id", user.id);
 
     if (error) {
-      setErrorMessage("Unable to save budget right now. Try again.");
-      setApiToastMessage("Unable to save budget right now. Try again.");
+      const message =
+        "We could not save your budget right now. Your current budget is unchanged.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -150,28 +173,44 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               </button>
             </div>
 
-            <form onSubmit={saveBudget}>
-              <label
-                htmlFor="home-budget-input"
-                className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
-              >
-                Monthly Budget (PHP)
-              </label>
-              <input
-                id="home-budget-input"
-                type="number"
-                inputMode="decimal"
-                min="1"
-                step="0.01"
-                value={inputValue}
-                disabled={isSaving}
-                onChange={(event) => setInputValue(event.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
-              />
+          <form onSubmit={saveBudget} noValidate>
+            <label
+              htmlFor="home-budget-input"
+              className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
+            >
+              Monthly Budget (PHP)
+            </label>
+            <input
+              id="home-budget-input"
+              type="text"
+              inputMode="decimal"
+              value={inputValue}
+              disabled={isSaving}
+              onChange={(event) => {
+                setInputValue(event.target.value);
+                if (errorMessage) {
+                  setErrorMessage(null);
+                }
+              }}
+              onBlur={() => setErrorMessage(validateBudgetInput(inputValue))}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby="home-budget-message"
+              className={`w-full rounded-lg border bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                errorMessage
+                  ? "border-danger/70 focus:border-danger"
+                  : "border-white/10 focus:border-mint/40"
+              }`}
+            />
 
-              {errorMessage ? (
-                <p className="mt-2 text-xs text-danger">{errorMessage}</p>
-              ) : null}
+            {errorMessage ? (
+              <p id="home-budget-message" className="mt-2 text-xs text-danger">
+                {errorMessage}
+              </p>
+            ) : (
+              <p id="home-budget-message" className="mt-2 text-xs text-white/40">
+                Enter your expected monthly bill limit, e.g. PHP 2,500.
+              </p>
+            )}
 
               <div className="mt-3 flex items-center justify-end gap-2">
                 <button
@@ -224,3 +263,4 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     </>
   );
 }
+

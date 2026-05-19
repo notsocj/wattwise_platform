@@ -16,10 +16,6 @@ function getStoredTheme(): ThemeMode {
   return stored === "light" || stored === "dark" ? stored : "dark";
 }
 
-type ThemeToggleProps = {
-  className?: string;
-};
-
 function subscribeToThemeChanges(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
   window.addEventListener("wattwise-theme-change", onStoreChange);
@@ -29,6 +25,10 @@ function subscribeToThemeChanges(onStoreChange: () => void) {
     window.removeEventListener("wattwise-theme-change", onStoreChange);
   };
 }
+
+type ThemeToggleProps = {
+  className?: string;
+};
 
 export default function ThemeToggle({ className }: ThemeToggleProps) {
   const theme = useSyncExternalStore(
