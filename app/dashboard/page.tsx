@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
+import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
@@ -24,6 +25,7 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import { ApplianceType } from "@/lib/constants";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 
@@ -119,13 +121,13 @@ function getDeviceIcon(applianceType: string | null, deviceName: string) {
   // Prefer appliance_type from DB (set during AI onboarding)
   if (applianceType) {
     switch (applianceType) {
-      case "aircon":
+      case ApplianceType.Aircon:
         return Wind;
-      case "refrigerator":
+      case ApplianceType.Refrigerator:
         return Refrigerator;
-      case "tv":
+      case ApplianceType.Tv:
         return Tv;
-      case "other":
+      case ApplianceType.Other:
         return HelpCircle;
     }
   }
@@ -387,6 +389,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <UpdatePasswordLink />
             <LogoutButton />
           </div>
         </div>

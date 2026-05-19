@@ -5,15 +5,35 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import {
-  normalizeNameValue,
-  validateEmail,
-  validateLettersAndSpaces,
-  validatePassword,
-} from "@/lib/validation";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import { createClient } from "@/lib/supabase/client";
+import {
+  getFriendlyAuthError,
+  normalizeEmail,
+  validateEmailAddress,
+} from "@/lib/user-form-messages";
+import {
+  normalizeNameValue,
+  validateLettersAndSpaces,
+} from "@/lib/validation";
+
+type RegisterFieldErrors = Partial<{
+  fullName: string;
+  email: string;
+  password: string;
+}>;
+
+const inputBaseClass =
+  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+
+function getInputClass(hasError: boolean, extraClass = ""): string {
+  const stateClass = hasError
+    ? "border border-danger/70 focus:border-danger"
+    : "border border-mint/40 focus:border-mint";
+
+  return `${inputBaseClass} ${stateClass} ${extraClass}`;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,48 +41,80 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [loading, setLoading] = useState(false);
+
+  function validateFullName(value = fullName): string | null {
+    const normalizedValue = normalizeNameValue(value);
+    return validateLettersAndSpaces(normalizedValue, "Home name");
+  }
+
+  function validatePassword(value = password): string | null {
+    if (!value) {
+      return "Create a password with at least 8 characters.";
+    }
+
+    if (value.length < 8) {
+      return "Password must be at least 8 characters long.";
+    }
+
+    return null;
+  }
+
+  function validateForm(): RegisterFieldErrors {
+    const nextErrors: RegisterFieldErrors = {};
+    const fullNameError = validateFullName();
+    const emailError = validateEmailAddress(
+      email,
+      "Enter the email address you will use to log in."
+    );
+    const passwordError = validatePassword();
+
+    if (fullNameError) nextErrors.fullName = fullNameError;
+    if (emailError) nextErrors.email = emailError;
+    if (passwordError) nextErrors.password = passwordError;
+
+    return nextErrors;
+  }
+
+  function clearFieldError(field: keyof RegisterFieldErrors) {
+    setSubmitError(null);
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      [field]: undefined,
+    }));
+  }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setSubmitError(null);
 
-    const normalizedHomeName = normalizeNameValue(fullName);
-    const homeNameError = validateLettersAndSpaces(normalizedHomeName, "Home name");
-    if (homeNameError) {
-      setError(homeNameError);
-      return;
-    }
+    const nextErrors = validateForm();
+    setFieldErrors(nextErrors);
 
-    const normalizedEmail = email.trim();
-    const emailError = validateEmail(normalizedEmail);
-    if (emailError) {
-      setError(emailError);
-      return;
-    }
-
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setError(passwordError);
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitError("Please fix the highlighted fields before signing up.");
       return;
     }
 
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: normalizedEmail,
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: normalizeEmail(email),
       password,
       options: {
-        data: { full_name: normalizedHomeName },
+        data: { full_name: normalizeNameValue(fullName) },
       },
     });
     setLoading(false);
-    if (error) {
-      setError(error.message);
+
+    if (signUpError) {
+      setSubmitError(getFriendlyAuthError(signUpError.message, "register"));
       return;
     }
-    // Profile row is auto-created by Supabase trigger (handle_new_user)
+
+    // Profile row is auto-created by Supabase trigger (handle_new_user).
     router.push("/dashboard");
     router.refresh();
   }
@@ -72,9 +124,8 @@ export default function RegisterPage() {
       <div className="absolute right-6 top-6">
         <ThemeToggle />
       </div>
-      {/* Top Section — Logo & Branding */}
-      <div className="flex flex-col items-center pt-16 pb-6 px-6">
-        {/* Mascot */}
+
+      <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image
             src="/wattwise_mascot.png"
@@ -85,127 +136,189 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Brand Name */}
         <h1 className="text-3xl font-bold text-white">
           Watt<span className="text-mint">Wise</span>
         </h1>
 
-        {/* Subtitle */}
         <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
           INTELLIGENT ENERGY
         </p>
       </div>
 
-      {/* Form Section */}
-      <div className="flex flex-col flex-1 px-6 pt-2">
-        {/* Create Account Heading */}
-        <h2 className="text-xl font-bold text-white mb-6">Create Account</h2>
+      <div className="flex flex-1 flex-col px-6 pt-2">
+        <h2 className="mb-6 text-xl font-bold text-white">Create Account</h2>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {error}
+        {submitError && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+          >
+            {submitError}
           </div>
         )}
 
-        <form onSubmit={handleRegister}>
-        {/* Home Name */}
-        <div className="mb-5">
-          <label className="block text-white text-base font-semibold mb-2">
-            Home Name
-          </label>
-          <input
-            type="text"
-            placeholder="e.g., Santos Residence"
-            value={fullName}
-            onChange={(e) => {
-              setFullName(e.target.value);
-              setError(null);
-            }}
-            required
-            autoComplete="organization"
-            className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
-          />
-        </div>
-
-        {/* Email Address */}
-        <div className="mb-5">
-          <label className="block text-white text-base font-semibold mb-2">
-            Email Address
-          </label>
-          <input
-            type="email"
-            placeholder="your@email.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError(null);
-            }}
-            required
-            autoComplete="email"
-            className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
-          />
-        </div>
-
-        {/* Password */}
-        <div className="mb-2">
-          <label className="block text-white text-base font-semibold mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 hover:text-mint transition-colors"
+        <form onSubmit={handleRegister} noValidate>
+          <div className="mb-5">
+            <label
+              htmlFor="register-full-name"
+              className="mb-2 block text-base font-semibold text-white"
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
+              Home Name
+            </label>
+            <input
+              id="register-full-name"
+              type="text"
+              placeholder="e.g., Santos Residence"
+              value={fullName}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                clearFieldError("fullName");
+              }}
+              onBlur={() =>
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  fullName: validateFullName() ?? undefined,
+                }))
+              }
+              required
+              aria-invalid={Boolean(fieldErrors.fullName)}
+              aria-describedby="register-full-name-message"
+              className={getInputClass(Boolean(fieldErrors.fullName))}
+            />
+            <p
+              id="register-full-name-message"
+              className={`mt-2 text-xs ${
+                fieldErrors.fullName ? "text-danger" : "text-white/40"
+              }`}
+            >
+              {fieldErrors.fullName ?? "Example: Santos Residence or Unit 4B."}
+            </p>
           </div>
-        </div>
 
-        {/* Password Hint */}
-        <p className="text-white/40 text-xs mb-8">Must be at least 8 characters long.</p>
+          <div className="mb-5">
+            <label
+              htmlFor="register-email"
+              className="mb-2 block text-base font-semibold text-white"
+            >
+              Email Address
+            </label>
+            <input
+              id="register-email"
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
+              onBlur={() =>
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  email:
+                    validateEmailAddress(
+                      email,
+                      "Enter the email address you will use to log in."
+                    ) ?? undefined,
+                }))
+              }
+              autoComplete="email"
+              required
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby="register-email-message"
+              className={getInputClass(Boolean(fieldErrors.email))}
+            />
+            <p
+              id="register-email-message"
+              className={`mt-2 text-xs ${
+                fieldErrors.email ? "text-danger" : "text-white/40"
+              }`}
+            >
+              {fieldErrors.email ??
+                "We will use this for login and account recovery."}
+            </p>
+          </div>
 
-        {/* Sign Up Button */}
-        <button
-          type="submit"
-          disabled={loading || !fullName.trim() || !email.trim() || !password}
-          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <LoadingIndicator
-                size="sm"
-                label="Creating account"
-                showLabel={false}
-                spinnerClassName="border-black/30 border-t-black"
+          <div className="mb-2">
+            <label
+              htmlFor="register-password"
+              className="mb-2 block text-base font-semibold text-white"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="register-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                }}
+                onBlur={() =>
+                  setFieldErrors((currentErrors) => ({
+                    ...currentErrors,
+                    password: validatePassword() ?? undefined,
+                  }))
+                }
+                autoComplete="new-password"
+                required
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby="register-password-message"
+                className={getInputClass(Boolean(fieldErrors.password), "pr-12")}
               />
-              Creating account...
-            </span>
-          ) : (
-            "Sign Up"
-          )}
-        </button>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <p
+            id="register-password-message"
+            className={`mb-8 text-xs ${
+              fieldErrors.password ? "text-danger" : "text-white/40"
+            }`}
+          >
+            {fieldErrors.password ?? "Must be at least 8 characters long."}
+          </p>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Creating account"
+                  showLabel={false}
+                  spinnerClassName="border-black/30 border-t-black"
+                />
+                Creating account...
+              </span>
+            ) : (
+              "Sign Up"
+            )}
+          </button>
         </form>
 
-        {/* Login Link */}
-        <div className="flex justify-center mt-6">
-          <p className="text-white/50 text-sm">
+        <div className="mt-6 flex justify-center">
+          <p className="text-sm text-white/50">
             Already have an account?{" "}
-            <Link href="/login" className="text-mint font-bold hover:text-mint/80 transition-colors">
+            <Link
+              href="/login"
+              className="font-bold text-mint transition-colors hover:text-mint/80"
+            >
               Log In
             </Link>
           </p>

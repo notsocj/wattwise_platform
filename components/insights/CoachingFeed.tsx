@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Trophy, Leaf, Search, Zap } from "lucide-react";
+import { InsightType } from "@/lib/constants";
 
 type InsightResult = {
   message: string;
@@ -13,15 +14,6 @@ type InsightState = {
   message: string | null;
   error: string | null;
 };
-
-const INSIGHT_TYPES = [
-  "budget_alert",
-  "weekly_recap",
-  "anomaly_alert",
-  "cost_optimizer",
-] as const;
-
-type InsightType = (typeof INSIGHT_TYPES)[number];
 
 function SkeletonCard() {
   return (
@@ -41,7 +33,7 @@ export default function CoachingFeed() {
   const [insights, setInsights] = useState<Record<InsightType, InsightState>>(
     () => {
       const initial = {} as Record<InsightType, InsightState>;
-      for (const type of INSIGHT_TYPES) {
+      for (const type of Object.values(InsightType) as InsightType[]) {
         initial[type] = { loading: true, message: null, error: null };
       }
       return initial;
@@ -86,15 +78,15 @@ export default function CoachingFeed() {
   }, []);
 
   useEffect(() => {
-    for (const type of INSIGHT_TYPES) {
+    for (const type of Object.values(InsightType) as InsightType[]) {
       fetchInsight(type);
     }
   }, [fetchInsight]);
 
-  const budget = insights.budget_alert;
-  const recap = insights.weekly_recap;
-  const anomaly = insights.anomaly_alert;
-  const optimizer = insights.cost_optimizer;
+  const budget = insights[InsightType.BudgetAlert];
+  const recap = insights[InsightType.WeeklyRecap];
+  const anomaly = insights[InsightType.AnomalyAlert];
+  const optimizer = insights[InsightType.CostOptimizer];
 
   return (
     <section>
