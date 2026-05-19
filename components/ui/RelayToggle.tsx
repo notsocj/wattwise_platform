@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Power } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import SuccessToast from "@/components/ui/SuccessToast";
 
 interface RelayToggleProps {
   deviceId: string;
@@ -17,6 +18,7 @@ export default function RelayToggle({
 }: RelayToggleProps) {
   const [relayState, setRelayState] = useState(initialRelayState);
   const [isPending, setIsPending] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,15 +34,15 @@ export default function RelayToggle({
   }, [errorToast]);
 
   async function handleToggle(e: React.MouseEvent) {
-    // Prevent parent Link navigation when clicking the toggle
     e.preventDefault();
     e.stopPropagation();
 
     const newState = !relayState;
 
-    // Optimistic update
     setRelayState(newState);
     setIsPending(true);
+    setSuccessMessage(null);
+    setErrorToast(null);
 
     try {
       const res = await fetch(`/api/devices/${deviceId}/relay`, {
@@ -61,12 +63,12 @@ export default function RelayToggle({
           // Ignore parse errors and use fallback copy.
         }
 
-        // Revert on error
         setRelayState(!newState);
         setErrorToast(errorMessage);
+      } else {
+        setSuccessMessage(`Device turned ${newState ? "on" : "off"}.`);
       }
     } catch {
-      // Revert on network error
       setRelayState(!newState);
       setErrorToast("Network error while updating relay. Check connection and retry.");
     } finally {
@@ -74,7 +76,7 @@ export default function RelayToggle({
     }
   }
 
-  const toast = errorToast ? (
+  const errorToastElement = errorToast ? (
     <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
       <div className="flex items-center gap-2.5">
         <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
@@ -82,6 +84,13 @@ export default function RelayToggle({
       </div>
     </div>
   ) : null;
+
+  const successToastElement = (
+    <SuccessToast
+      message={successMessage}
+      onDismiss={() => setSuccessMessage(null)}
+    />
+  );
 
   if (variant === "compact") {
     return (
@@ -112,12 +121,12 @@ export default function RelayToggle({
             <Power className="w-3.5 h-3.5" />
           )}
         </button>
-        {toast}
+        {errorToastElement}
+        {successToastElement}
       </>
     );
   }
 
-  // Full variant for Device Detail
   return (
     <>
       <div className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
@@ -156,7 +165,6 @@ export default function RelayToggle({
             </div>
           </div>
 
-          {/* Toggle switch */}
           <button
             type="button"
             onClick={handleToggle}
@@ -178,7 +186,8 @@ export default function RelayToggle({
           Pag naka-off, titigil ang data collection at power sa appliance.
         </p>
       </div>
-      {toast}
+      {errorToastElement}
+      {successToastElement}
     </>
   );
 }

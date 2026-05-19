@@ -16,13 +16,13 @@ function getStoredTheme(): ThemeMode {
   return stored === "light" || stored === "dark" ? stored : "dark";
 }
 
-function subscribeToThemeChanges(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("wattwise-theme-change", callback);
+function subscribeToThemeChanges(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("wattwise-theme-change", onStoreChange);
 
   return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("wattwise-theme-change", callback);
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("wattwise-theme-change", onStoreChange);
   };
 }
 
