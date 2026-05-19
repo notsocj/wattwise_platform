@@ -178,7 +178,18 @@ CREATE INDEX idx_ai_insights_user_type_date
 
 ---
 
-## 5. User Form Message Pattern
+## 5. Form Validation Pattern
+
+**Hard constraint:** Validate all form inputs before client submit handlers call Supabase or API routes, and validate API JSON payloads before server-side processing.
+
+- Reuse `lib/validation.ts` for shared field rules instead of duplicating ad hoc regexes.
+- Trim and normalize user-entered names before persistence; name-style labels such as Home Name and Appliance Name must reject numbers and special characters.
+- Validate email format, password presence/length, MAC address format, daily usage hour range, and PHP currency precision before writes or requests.
+- API routes that accept JSON should return `400` for invalid bodies or malformed field values instead of falling through to processing.
+
+---
+
+## 6. User Form Message Pattern
 
 User-side forms must show helpful inline validation before submit and friendly recovery messages after submit.
 
@@ -211,5 +222,6 @@ When implementing route or mutation feedback in the app shell and interactive co
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
 | Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
+| Submitting forms | Send raw, unvalidated input to Supabase/API routes | Reuse `lib/validation.ts` and block invalid submissions |
 | User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
 | API mutation feedback | Keep controls active and silent on errors | Disable pending controls, show inline `LoadingIndicator`, and display auto-dismiss error toast |

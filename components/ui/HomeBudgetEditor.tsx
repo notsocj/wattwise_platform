@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
 import { createClient } from "@/lib/supabase/client";
+import { validateCurrencyAmount } from "@/lib/validation";
 
 type HomeBudgetEditorProps = {
   initialBudget: number;
@@ -18,28 +19,9 @@ function formatBudget(value: number): string {
   });
 }
 
-function parseBudgetInput(value: string): number {
-  return Number(value.replace(/,/g, "").trim());
-}
-
 function validateBudgetInput(value: string): string | null {
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    return "Enter your monthly budget amount in pesos.";
-  }
-
-  const parsedBudget = parseBudgetInput(trimmedValue);
-
-  if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
-    return "Use a budget greater than 0, like 2500 or 2500.50.";
-  }
-
-  if (parsedBudget > 9_999_999.99) {
-    return "Budget cannot exceed PHP 9,999,999.99.";
-  }
-
-  return null;
+  const validation = validateCurrencyAmount(value, "Monthly budget");
+  return validation.error ?? null;
 }
 
 export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProps) {
@@ -84,14 +66,14 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const validationMessage = validateBudgetInput(inputValue);
+    const budgetValidation = validateCurrencyAmount(inputValue, "Monthly budget");
+    const validationMessage = budgetValidation.error ?? null;
 
-    if (validationMessage) {
+    if (validationMessage || budgetValidation.value === undefined) {
       setErrorMessage(validationMessage);
       return;
     }
 
-    const parsedBudget = parseBudgetInput(inputValue);
     setIsSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -111,7 +93,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const nextBudget = Number(parsedBudget.toFixed(2));
+    const nextBudget = budgetValidation.value;
     const { error } = await supabase
       .from("profiles")
       .update({ monthly_budget_php: nextBudget })

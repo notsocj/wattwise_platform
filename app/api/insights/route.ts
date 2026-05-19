@@ -24,7 +24,14 @@ Keep responses concise (2-4 sentences max). Use peso sign ₱ for amounts.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 }
+      );
+    }
+
     const insightType = body.insight_type as string;
 
     if (

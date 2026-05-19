@@ -14,9 +14,9 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~64% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, shared loading states are applied to splash/auth/onboarding flows, and route-level loading skeletons now exist for app/dashboard/insights/device detail; light/dark theme toggle now supported (splash stays dark) |
+| 1 — Foundation | In Progress | ~64% | Design system done, auth UI + Supabase auth wired with client validation and helpful inline messages, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; Add Appliance validates MAC/name/usage before writes; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, shared loading states are applied to splash/auth/onboarding flows, and route-level loading skeletons now exist for app/dashboard/insights/device detail; light/dark theme toggle now supported (splash stays dark) |
 | 2 — Billing & Control | In Progress | ~67% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); relay and budget mutations now include inline spinners, disabled pending controls, and error toasts; device metadata migration (appliance_type, daily_usage_hours, relay_state) |
-| 3 — AI & PWA | In Progress | ~66% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API) now includes helpful inline validation, inline loading states, disabled pending controls, and API error toast feedback; OpenAI package installed; PWA still pending |
+| 3 — AI & PWA | In Progress | ~66% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API) now includes helpful inline validation, strict value checks, inline loading states, disabled pending controls, and API error toast feedback; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
@@ -36,13 +36,13 @@ applyTo: "**"
 - [x] **Authentication Flow**
   - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` in `components/providers/SupabaseProvider.tsx`, session fetched server-side)*
   - [x] Add global route-transition loading indicator in root layout using reusable `LoadingIndicator` *(implemented via `components/ui/RouteTransitionIndicator.tsx` + `app/layout.tsx` wiring)*
-  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired)*
-  - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired)*
+  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired + shared validation)*
+  - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired + shared validation)*
   - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
   - [x] Implement auth middleware to protect `/dashboard` and other authenticated routes *(`proxy.ts` — uses Next.js 16 `proxy` convention)*
   - [x] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert *(PostgreSQL trigger `handle_new_user` in migration)*
   - [x] **Password Reset Flow** *(fully functional with Supabase email integration)*
-    - [x] Build Forgot Password page (`app/forgot-password/page.tsx`) — prompts for email, sends reset link
+    - [x] Build Forgot Password page (`app/forgot-password/page.tsx`) — prompts for email, sends reset link *(shared email validation)*
     - [x] Build Reset Password page (`app/reset-password/page.tsx`) — validates token, sets new password
     - [x] Implement `supabase.auth.resetPasswordForEmail()` for sending recovery emails
     - [x] Implement `supabase.auth.updateUser()` for password update with token validation
@@ -57,8 +57,8 @@ applyTo: "**"
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
 
 - [ ] **Device Pairing & Registration**
-  - [ ] Build "Add Appliance" UI flow — user enters device name + MAC address
-  - [ ] Insert new row into `devices` table with `user_id`, `device_name`, `mac_address`
+  - [x] Build "Add Appliance" UI flow — user enters device name + MAC address *(4-step modal with MAC, name, usage-hour validation)*
+  - [x] Insert new row into `devices` table with `user_id`, `device_name`, `mac_address` *(client validates before insert; unique MAC errors surfaced)*
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**

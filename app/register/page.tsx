@@ -13,6 +13,10 @@ import {
   normalizeEmail,
   validateEmailAddress,
 } from "@/lib/user-form-messages";
+import {
+  normalizeNameValue,
+  validateLettersAndSpaces,
+} from "@/lib/validation";
 
 type RegisterFieldErrors = Partial<{
   fullName: string;
@@ -42,9 +46,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   function validateFullName(value = fullName): string | null {
-    return value.trim()
-      ? null
-      : "Enter a home name so your dashboard feels personal.";
+    const normalizedValue = normalizeNameValue(value);
+    return validateLettersAndSpaces(normalizedValue, "Home name");
   }
 
   function validatePassword(value = password): string | null {
@@ -101,7 +104,7 @@ export default function RegisterPage() {
       email: normalizeEmail(email),
       password,
       options: {
-        data: { full_name: fullName.trim() },
+        data: { full_name: normalizeNameValue(fullName) },
       },
     });
     setLoading(false);

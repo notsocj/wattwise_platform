@@ -17,6 +17,11 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { ApplianceType } from "@/lib/constants";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import {
+  MAC_ADDRESS_PATTERN,
+  normalizeNameValue,
+  validateLettersAndSpaces,
+} from "@/lib/validation";
 
 interface AddApplianceModalProps {
   onClose: () => void;
@@ -49,7 +54,6 @@ const APPLIANCE_OPTIONS: {
 ];
 
 // Accepts colon-separated (E0:72:A1:D5:0B:68) or hyphen-separated formats
-const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 const MAC_IN_TEXT = /([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}/;
 
 function getSetupRecommendationError(message: string | undefined): string {
@@ -251,7 +255,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       return "Enter the MAC address printed on your WattWise device, or scan its QR code.";
     }
 
-    if (!MAC_REGEX.test(trimmedMac)) {
+    if (!MAC_ADDRESS_PATTERN.test(trimmedMac)) {
       return "Use 6 pairs of letters or numbers separated by colons, e.g. E0:72:A1:D5:0B:68.";
     }
 
@@ -259,11 +263,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
   }
 
   function validateDeviceName(value = deviceName): string | null {
-    if (!value.trim()) {
-      return "Give this appliance a name so it is easy to recognize.";
-    }
-
-    return null;
+    return validateLettersAndSpaces(
+      normalizeNameValue(value),
+      "Appliance name"
+    );
   }
 
   function validateDailyHours(value = dailyHours): string | null {
@@ -307,10 +310,10 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
   function handleStep1Next() {
     setError(null);
     const trimmedMac = macAddress.trim().toUpperCase();
-    const trimmedName = deviceName.trim();
+    const normalizedName = normalizeNameValue(deviceName);
     const nextErrors: AddApplianceFieldErrors = {};
     const macError = validateMacAddress(trimmedMac);
-    const nameError = validateDeviceName(trimmedName);
+    const nameError = validateDeviceName(normalizedName);
 
     if (macError) nextErrors.macAddress = macError;
     if (nameError) nextErrors.deviceName = nameError;
@@ -322,7 +325,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     }
 
     setMacAddress(trimmedMac);
-    setDeviceName(trimmedName);
+    setDeviceName(normalizedName);
     setStep(2);
   }
 
