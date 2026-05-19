@@ -5,12 +5,13 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import { ApplianceType } from "@/lib/constants";
 
-const TYPICAL_WATTS: Record<string, number> = {
-  refrigerator: 150,
-  aircon: 950,
-  tv: 120,
-  other: 200,
+const TYPICAL_WATTS: Record<ApplianceType, number> = {
+  [ApplianceType.Refrigerator]: 150,
+  [ApplianceType.Aircon]: 950,
+  [ApplianceType.Tv]: 120,
+  [ApplianceType.Other]: 200,
 };
 
 export async function POST(request: NextRequest) {
@@ -30,14 +31,14 @@ export async function POST(request: NextRequest) {
     daily_hours,
     home_budget,
   } = body as {
-    appliance_type: string;
+    appliance_type: ApplianceType;
     daily_hours: number;
     home_budget: number;
   };
 
   if (
     !appliance_type ||
-    !TYPICAL_WATTS[appliance_type] ||
+    !Object.values(ApplianceType).includes(appliance_type) ||
     typeof daily_hours !== "number" ||
     daily_hours < 1 ||
     daily_hours > 24 ||
@@ -80,11 +81,11 @@ export async function POST(request: NextRequest) {
   );
 
   const applianceLabel =
-    appliance_type === "refrigerator"
+    appliance_type === ApplianceType.Refrigerator
       ? "Refrigerator"
-      : appliance_type === "aircon"
+      : appliance_type === ApplianceType.Aircon
         ? "Aircon"
-        : appliance_type === "tv"
+        : appliance_type === ApplianceType.Tv
           ? "TV"
           : "Appliance";
 

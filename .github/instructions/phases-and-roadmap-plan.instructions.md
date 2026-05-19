@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** April 26, 2026
+> **Last Updated:** May 11, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
