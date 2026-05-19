@@ -1,21 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { MeralcoRatesRow } from "@/lib/meralco-rates.types";
+import type { MeralcoRateComponents } from "@/lib/interfaces/MeralcoRateComponents";
+import type { MeralcoFixedCharges } from "@/lib/interfaces/MeralcoFixedCharges";
+import type { MeralcoRatesRow } from "@/lib/interfaces/MeralcoRatesRow";
 
-export type MeralcoRateComponents = {
-  generation: number;
-  transmission: number;
-  systemLoss: number;
-  distribution: number;
-  universalCharges: number;
-  fitAll: number;
-};
-
-export type MeralcoFixedCharges = {
-  meteringCharge: number;
-  supplyCharge: number;
-};
-
-export type { MeralcoRatesRow };
+export type { MeralcoRateComponents } from "@/lib/interfaces/MeralcoRateComponents";
+export type { MeralcoFixedCharges } from "@/lib/interfaces/MeralcoFixedCharges";
+export type { MeralcoRatesRow } from "@/lib/interfaces/MeralcoRatesRow";
 
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);

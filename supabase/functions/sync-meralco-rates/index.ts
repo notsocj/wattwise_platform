@@ -1,10 +1,8 @@
-import type {
-  ArchiveEntry,
-  ParsedRates,
-  CompleteRates,
-  SyncRunStatus,
-  ExistingRateRow,
-} from "./types.ts";
+import type { ArchiveEntry } from "../../../lib/interfaces/ArchiveEntry.ts";
+import type { ParsedRates } from "../../../lib/interfaces/ParsedRates.ts";
+import type { CompleteRates } from "../../../lib/interfaces/CompleteRates.ts";
+import type { SyncRunStatus } from "../../../lib/interfaces/SyncRunStatus.ts";
+import type { ExistingRateRow } from "../../../lib/interfaces/ExistingRateRow.ts";
 
 const DEFAULT_RATES_ARCHIVES_URL =
   "https://company.meralco.com.ph/news-and-advisories/rates-archives";

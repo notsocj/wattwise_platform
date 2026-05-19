@@ -1,8 +1,4 @@
-export type WeeklyUsagePoint = {
-  day: string;
-  thisWk: number;
-  lastWk: number;
-};
+import type { WeeklyUsagePoint } from "@/lib/interfaces/WeeklyUsagePoint";
 
 export type WeeklyUsageChartProps = {
   data: WeeklyUsagePoint[];

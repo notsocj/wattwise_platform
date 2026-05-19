@@ -3,18 +3,16 @@ import Link from "next/link";
 import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import WeeklyUsageChart from "@/components/insights/WeeklyUsageChart";
-import type { WeeklyUsagePoint } from "@/components/insights/WeeklyUsageChart.types";
+import type { WeeklyUsagePoint } from "@/lib/interfaces/WeeklyUsagePoint";
 import LogoutButton from "@/components/ui/LogoutButton";
 import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
-import type {
-  DeviceRow,
-  UsageByDeviceDayRow,
-  LeaderboardItem,
-} from "@/app/insights/InsightsPage.types";
+import type { InsightsDeviceRow } from "@/lib/interfaces/InsightsDeviceRow";
+import type { UsageByDeviceDayRow } from "@/lib/interfaces/UsageByDeviceDayRow";
+import type { LeaderboardItem } from "@/lib/interfaces/LeaderboardItem";
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -33,7 +31,7 @@ function hasMissingRelayStateColumnError(error: {
 async function fetchInsightsDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<DeviceRow[]> {
+): Promise<InsightsDeviceRow[]> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, appliance_type, relay_state, is_online")
@@ -41,7 +39,7 @@ async function fetchInsightsDevices(
     .order("created_at", { ascending: true });
 
   if (!withRelayState.error) {
-    return (withRelayState.data ?? []) as DeviceRow[];
+    return (withRelayState.data ?? []) as InsightsDeviceRow[];
   }
 
   if (!hasMissingRelayStateColumnError(withRelayState.error)) {
@@ -61,7 +59,7 @@ async function fetchInsightsDevices(
   return (withoutRelayState.data ?? []).map((device) => ({
     ...device,
     relay_state: true,
-  })) as DeviceRow[];
+  })) as InsightsDeviceRow[];
 }
 
 function getStartOfWeek(date: Date): Date {

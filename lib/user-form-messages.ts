@@ -1,6 +1,8 @@
+import type { AuthFormContext } from "@/lib/interfaces/AuthFormContext";
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type AuthFormContext = "login" | "register" | "reset";
+export type { AuthFormContext } from "@/lib/interfaces/AuthFormContext";
 
 export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();

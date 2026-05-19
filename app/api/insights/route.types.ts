@@ -1,4 +1,6 @@
-export type InsightType = "budget_alert" | "weekly_recap" | "anomaly_alert" | "cost_optimizer";
+import type { InsightType } from "@/lib/interfaces/InsightType";
+
+export type { InsightType };
 
 export const VALID_INSIGHT_TYPES = [
   "budget_alert",

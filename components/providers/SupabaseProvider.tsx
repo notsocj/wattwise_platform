@@ -3,10 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { type Session, type User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import type {
-  SupabaseContextType,
-  SupabaseProviderProps,
-} from "@/components/providers/SupabaseProvider.types";
+import type { SupabaseContextType } from "@/lib/interfaces/SupabaseContextType";
+import type { SupabaseProviderProps } from "@/components/providers/SupabaseProvider.types";
 
 const SupabaseContext = createContext<SupabaseContextType>({
   user: null,

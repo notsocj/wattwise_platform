@@ -13,14 +13,12 @@ import {
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import type {
-  DeviceRow,
-  ProfileRow,
-  EnergyLogRow,
-  LegacyEnergyLogRow,
-  UsageByDeviceRow,
-  DeviceViewModel,
-} from "@/app/dashboard/DeviceDetailPage.types";
+import type { DeviceDetailDeviceRow } from "@/lib/interfaces/DeviceDetailDeviceRow";
+import type { ProfileRow } from "@/lib/interfaces/ProfileRow";
+import type { EnergyLogRow } from "@/lib/interfaces/EnergyLogRow";
+import type { LegacyEnergyLogRow } from "@/lib/interfaces/LegacyEnergyLogRow";
+import type { UsageByDeviceRow } from "@/lib/interfaces/UsageByDeviceRow";
+import type { DeviceViewModel } from "@/lib/interfaces/DeviceViewModel";
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 
@@ -40,13 +38,13 @@ async function fetchOwnedDeviceById(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   deviceId: string
-): Promise<DeviceRow | null> {
+): Promise<DeviceDetailDeviceRow | null> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, mac_address, relay_state")
     .eq("id", deviceId)
     .eq("user_id", userId)
-    .maybeSingle<DeviceRow>();
+    .maybeSingle<DeviceDetailDeviceRow>();
 
   if (!withRelayState.error) {
     return withRelayState.data ?? null;
@@ -61,7 +59,7 @@ async function fetchOwnedDeviceById(
     .select("id, device_name, mac_address")
     .eq("id", deviceId)
     .eq("user_id", userId)
-    .maybeSingle<Pick<DeviceRow, "id" | "device_name" | "mac_address">>();
+    .maybeSingle<Pick<DeviceDetailDeviceRow, "id" | "device_name" | "mac_address">>();
 
   if (withoutRelayState.error || !withoutRelayState.data) {
     return null;

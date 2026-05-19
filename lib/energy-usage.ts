@@ -1,4 +1,6 @@
-import type { NumericLike, MinMax, TimedReading } from "@/lib/energy-usage.types";
+import type { NumericLike } from "@/lib/interfaces/NumericLike";
+import type { MinMax } from "@/lib/interfaces/MinMax";
+import type { TimedReading } from "@/lib/interfaces/TimedReading";
 
 const DEFAULT_JITTER_TOLERANCE_KWH = 0.01;
 const DEFAULT_RESET_DROP_THRESHOLD_KWH = 0.2;

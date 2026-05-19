@@ -25,13 +25,11 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
-import type {
-  DeviceRow,
-  LatestReadingRow,
-  UsageByDeviceRow,
-  ProfileRow,
-  DashboardDevice,
-} from "@/app/dashboard/DashboardPage.types";
+import type { DashboardDeviceRow } from "@/lib/interfaces/DashboardDeviceRow";
+import type { LatestReadingRow } from "@/lib/interfaces/LatestReadingRow";
+import type { UsageByDeviceRow } from "@/lib/interfaces/UsageByDeviceRow";
+import type { ProfileRow } from "@/lib/interfaces/ProfileRow";
+import type { DashboardDevice } from "@/lib/interfaces/DashboardDevice";
 import { ApplianceType } from "@/lib/constants";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
@@ -53,7 +51,7 @@ function hasMissingRelayStateColumnError(error: {
 async function fetchDashboardDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<DeviceRow[]> {
+): Promise<DashboardDeviceRow[]> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
@@ -61,7 +59,7 @@ async function fetchDashboardDevices(
     .order("created_at", { ascending: true });
 
   if (!withRelayState.error) {
-    return (withRelayState.data ?? []) as DeviceRow[];
+    return (withRelayState.data ?? []) as DashboardDeviceRow[];
   }
 
   if (!hasMissingRelayStateColumnError(withRelayState.error)) {
@@ -81,7 +79,7 @@ async function fetchDashboardDevices(
   return (withoutRelayState.data ?? []).map((device) => ({
     ...device,
     relay_state: true,
-  })) as DeviceRow[];
+  })) as DashboardDeviceRow[];
 }
 
 function getDeviceIcon(applianceType: string | null, deviceName: string) {

@@ -19,8 +19,8 @@ import { ApplianceType } from "@/lib/constants";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type {
   AddApplianceModalProps,
-  AiRecommendation,
 } from "@/components/ui/AddApplianceModal.types";
+import type { AiRecommendation } from "@/lib/interfaces/AiRecommendation";
 
 type AddApplianceFieldErrors = Partial<{
   macAddress: string;

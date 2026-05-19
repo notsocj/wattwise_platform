@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Trophy, Leaf, Search } from "lucide-react";
-import type {
-  InsightResult,
-  InsightState,
-  InsightType,
-} from "@/components/insights/CoachingFeed.types";
+import type { InsightResult } from "@/lib/interfaces/InsightResult";
+import type { InsightState } from "@/lib/interfaces/InsightState";
+import type { InsightType } from "@/lib/interfaces/InsightType";
 
 const INSIGHT_TYPES: InsightType[] = [
   "budget_alert",
