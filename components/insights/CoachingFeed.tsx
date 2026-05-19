@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Trophy, Leaf, Search, Zap } from "lucide-react";
+import { AlertTriangle, Trophy, Leaf, Search } from "lucide-react";
 import type {
   InsightResult,
   InsightState,
   InsightType,
 } from "@/components/insights/CoachingFeed.types";
 
-const INSIGHT_TYPES = [
+const INSIGHT_TYPES: InsightType[] = [
   "budget_alert",
   "weekly_recap",
   "anomaly_alert",
   "cost_optimizer",
-] as const;
-
+];
 function SkeletonCard() {
   return (
     <div className="rounded-xl bg-surface border border-white/6 p-4 animate-pulse">
@@ -83,10 +82,10 @@ export default function CoachingFeed() {
     }
   }, [fetchInsight]);
 
-  const budget = insights.budget_alert;
-  const recap = insights.weekly_recap;
-  const anomaly = insights.anomaly_alert;
-  const optimizer = insights.cost_optimizer;
+  const budget = insights["budget_alert"];
+  const recap = insights["weekly_recap"];
+  const anomaly = insights["anomaly_alert"];
+  const optimizer = insights["cost_optimizer"];
 
   return (
     <section>

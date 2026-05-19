@@ -1,7 +1,7 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 type ThemeMode = "dark" | "light";
 
@@ -16,32 +16,38 @@ function getStoredTheme(): ThemeMode {
   return stored === "light" || stored === "dark" ? stored : "dark";
 }
 
+function subscribeToThemeChanges(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("wattwise-theme-change", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("wattwise-theme-change", onStoreChange);
+  };
+}
+
 type ThemeToggleProps = {
   className?: string;
 };
 
 export default function ThemeToggle({ className }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
-  const [isReady, setIsReady] = useState(false);
+  const theme = useSyncExternalStore(
+    subscribeToThemeChanges,
+    getStoredTheme,
+    () => "dark"
+  );
 
   useEffect(() => {
-    const stored = getStoredTheme();
-    document.documentElement.dataset.theme = stored;
-    setTheme(stored);
-    setIsReady(true);
-  }, []);
-
-  if (!isReady) {
-    return null;
-  }
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   const nextTheme: ThemeMode = theme === "dark" ? "light" : "dark";
 
   function handleToggle() {
     const updatedTheme: ThemeMode = theme === "dark" ? "light" : "dark";
-    setTheme(updatedTheme);
     document.documentElement.dataset.theme = updatedTheme;
     window.localStorage.setItem(STORAGE_KEY, updatedTheme);
+    window.dispatchEvent(new Event("wattwise-theme-change"));
   }
 
   return (

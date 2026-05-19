@@ -5,11 +5,16 @@ import {
   getActiveMeralcoRates,
   computeMeralcoBill,
 } from "@/lib/meralco-rates";
-import type { InsightType } from "@/app/api/insights/route.types";
-import {
-  VALID_INSIGHT_TYPES as VALID_TYPES,
-  CACHE_WINDOW_DAYS as CACHE_DAYS,
-} from "@/app/api/insights/route.types";
+import { InsightType } from "@/lib/constants";
+
+const VALID_TYPES = Object.values(InsightType);
+
+const CACHE_DAYS: Record<InsightType, number> = {
+  [InsightType.BudgetAlert]: 1,
+  [InsightType.WeeklyRecap]: 7,
+  [InsightType.AnomalyAlert]: 1,
+  [InsightType.CostOptimizer]: 7,
+};
 
 const SYSTEM_PROMPT = `You are a friendly Filipino financial and energy advisor called "WattWise Tipid Advisor".
 Language: Casual conversational Taglish (Tagalog-English mix).
@@ -235,7 +240,7 @@ export async function POST(request: NextRequest) {
     let userPrompt = "";
 
     switch (typedInsightType) {
-      case "budget_alert":
+      case InsightType.BudgetAlert:
         userPrompt = `User's monthly budget: ₱${monthlyBudget.toFixed(2)}.
 Current month spend so far: ₱${monthCostPhp.toFixed(2)} (${daysElapsed} days elapsed).
 Projected monthly total: ₱${projectedMonthly.toFixed(2)}.
@@ -244,7 +249,7 @@ Top consuming devices this month: ${topDevicesStr || "No data yet"}.
 Give a budget alert. If they're on track, be encouraging. If they're trending over budget, warn them with specific device advice. Use "Naku!" for over-budget, "Bida ka!" for under-budget.`;
         break;
 
-      case "weekly_recap":
+      case InsightType.WeeklyRecap:
         userPrompt = `This week's total usage: ${thisWeek.totalKwh.toFixed(2)} kWh (₱${thisWeekCost.toFixed(2)}).
 Last week's total usage: ${lastWeek.totalKwh.toFixed(2)} kWh (₱${lastWeekCost.toFixed(2)}).
 Week-over-week change: ${((thisWeek.totalKwh - lastWeek.totalKwh) / Math.max(0.01, lastWeek.totalKwh) * 100).toFixed(1)}%.
@@ -253,7 +258,7 @@ Top devices this week: ${topDevicesStr || "No data yet"}.
 Give an encouraging weekly recap comparing this week vs last week. Highlight wins or areas to improve. Be specific about which devices and amounts.`;
         break;
 
-      case "anomaly_alert":
+      case InsightType.AnomalyAlert:
         userPrompt = `This week's usage: ${thisWeek.totalKwh.toFixed(2)} kWh (₱${thisWeekCost.toFixed(2)}).
 Last week's usage: ${lastWeek.totalKwh.toFixed(2)} kWh (₱${lastWeekCost.toFixed(2)}).
 Top consuming devices: ${topDevicesStr || "No data yet"}.
@@ -262,7 +267,7 @@ Number of devices: ${devices.length}.
 Check if there are any anomalies — unusual spikes in usage, a single device consuming disproportionately, or significant week-over-week jumps. If everything looks normal, say so briefly. If anomalous, explain what stands out and recommend action.`;
         break;
 
-      case "cost_optimizer":
+      case InsightType.CostOptimizer:
         userPrompt = `Monthly budget: ₱${monthlyBudget.toFixed(2)}.
 Current month spend: ₱${monthCostPhp.toFixed(2)} (Day ${daysElapsed}).
 Projected monthly: ₱${projectedMonthly.toFixed(2)}.

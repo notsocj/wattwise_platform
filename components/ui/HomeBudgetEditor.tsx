@@ -3,8 +3,9 @@
 import { AlertTriangle, PencilLine, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import SuccessToast from "@/components/ui/SuccessToast";
+import { createClient } from "@/lib/supabase/client";
 import type { HomeBudgetEditorProps } from "@/components/ui/HomeBudgetEditor.types";
 
 function formatBudget(value: number): string {
@@ -14,12 +15,37 @@ function formatBudget(value: number): string {
   });
 }
 
+function parseBudgetInput(value: string): number {
+  return Number(value.replace(/,/g, "").trim());
+}
+
+function validateBudgetInput(value: string): string | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "Enter your monthly budget amount in pesos.";
+  }
+
+  const parsedBudget = parseBudgetInput(trimmedValue);
+
+  if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
+    return "Use a budget greater than 0, like 2500 or 2500.50.";
+  }
+
+  if (parsedBudget > 9_999_999.99) {
+    return "Budget cannot exceed PHP 9,999,999.99.";
+  }
+
+  return null;
+}
+
 export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProps) {
   const router = useRouter();
   const [inputValue, setInputValue] = useState(initialBudget.toFixed(2));
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [apiToastMessage, setApiToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,20 +81,18 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       return;
     }
 
-    const parsedBudget = Number(inputValue.replace(/,/g, "").trim());
+    const validationMessage = validateBudgetInput(inputValue);
 
-    if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
-      setErrorMessage("Enter a valid budget greater than 0.");
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
       return;
     }
 
-    if (parsedBudget > 9_999_999.99) {
-      setErrorMessage("Budget cannot exceed 9,999,999.99.");
-      return;
-    }
-
+    const parsedBudget = parseBudgetInput(inputValue);
     setIsSaving(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
+    setApiToastMessage(null);
 
     const supabase = createClient();
     const {
@@ -77,8 +101,9 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      setErrorMessage("Session expired. Please log in again.");
-      setApiToastMessage("Session expired. Please log in again.");
+      const message = "Session expired. Please log in again.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -90,8 +115,10 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       .eq("id", user.id);
 
     if (error) {
-      setErrorMessage("Unable to save budget right now. Try again.");
-      setApiToastMessage("Unable to save budget right now. Try again.");
+      const message =
+        "We could not save your budget right now. Your current budget is unchanged.";
+      setErrorMessage(message);
+      setApiToastMessage(message);
       setIsSaving(false);
       return;
     }
@@ -99,33 +126,35 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setInputValue(nextBudget.toFixed(2));
     setIsOpen(false);
     setIsSaving(false);
+    setSuccessMessage("Home budget updated.");
     router.refresh();
   }
 
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-white/70">Home Budget</span>
-
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">
-            <span className="text-white/50 text-sm mr-0.5">₱</span>
-            {formatBudget(initialBudget)}
-          </span>
-          <button
-            type="button"
-            onClick={openEditor}
-            disabled={isSaving}
-            aria-label="Edit home budget"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/3 text-white/70 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <PencilLine className="h-4 w-4" aria-hidden="true" />
-          </button>
+    <>
+      <div className="mb-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-white/70">Home Budget</span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold">
+              <span className="text-white/50 text-sm mr-0.5">₱</span>
+              {formatBudget(initialBudget)}
+            </span>
+            <button
+              type="button"
+              onClick={openEditor}
+              disabled={isSaving}
+              aria-label="Edit home budget"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <PencilLine className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
 
       {isOpen ? (
-        <div className="mt-3 rounded-xl border border-white/8 bg-white/3 p-4">
+        <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
               Set Home Budget
@@ -135,13 +164,13 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               onClick={closeEditor}
               disabled={isSaving}
               aria-label="Close budget editor"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/3 text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
 
-          <form onSubmit={saveBudget}>
+          <form onSubmit={saveBudget} noValidate>
             <label
               htmlFor="home-budget-input"
               className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50"
@@ -150,26 +179,42 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
             </label>
             <input
               id="home-budget-input"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="1"
-              step="0.01"
               value={inputValue}
               disabled={isSaving}
-              onChange={(event) => setInputValue(event.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              onChange={(event) => {
+                setInputValue(event.target.value);
+                if (errorMessage) {
+                  setErrorMessage(null);
+                }
+              }}
+              onBlur={() => setErrorMessage(validateBudgetInput(inputValue))}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby="home-budget-message"
+              className={`w-full rounded-lg border bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                errorMessage
+                  ? "border-danger/70 focus:border-danger"
+                  : "border-white/10 focus:border-mint/40"
+              }`}
             />
 
             {errorMessage ? (
-              <p className="mt-2 text-xs text-danger">{errorMessage}</p>
-            ) : null}
+              <p id="home-budget-message" className="mt-2 text-xs text-danger">
+                {errorMessage}
+              </p>
+            ) : (
+              <p id="home-budget-message" className="mt-2 text-xs text-white/40">
+                Enter your expected monthly bill limit, e.g. PHP 2,500.
+              </p>
+            )}
 
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={closeEditor}
                 disabled={isSaving}
-                className="rounded-lg border border-white/10 bg-white/3 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -180,7 +225,11 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               >
                 {isSaving ? (
                   <>
-                    <LoadingIndicator size="sm" label="Saving budget" showLabel={false} />
+                    <LoadingIndicator
+                      size="sm"
+                      label="Saving budget"
+                      showLabel={false}
+                    />
                     Saving...
                   </>
                 ) : (
@@ -200,6 +249,11 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
           </div>
         </div>
       ) : null}
-    </div>
+
+      <SuccessToast
+        message={successMessage}
+        onDismiss={() => setSuccessMessage(null)}
+      />
+    </>
   );
 }
