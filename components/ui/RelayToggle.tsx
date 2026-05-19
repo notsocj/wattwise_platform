@@ -3,13 +3,8 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Power } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import type { RelayToggleProps } from "@/components/ui/RelayToggle.types";
 import SuccessToast from "@/components/ui/SuccessToast";
-
-interface RelayToggleProps {
-  deviceId: string;
-  initialRelayState: boolean;
-  variant?: "compact" | "full";
-}
 
 export default function RelayToggle({
   deviceId,
@@ -102,7 +97,7 @@ export default function RelayToggle({
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
             relayState
               ? "bg-mint/15 text-mint hover:bg-mint/25"
-              : "bg-white/[0.06] text-white/30 hover:bg-white/10"
+              : "bg-white/6 text-white/30 hover:bg-white/10"
           } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
           title={relayState ? "Relay ON - tap to turn off" : "Relay OFF - tap to turn on"}
         >
@@ -129,12 +124,12 @@ export default function RelayToggle({
 
   return (
     <>
-      <div className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
+      <div className="rounded-xl bg-white/3 backdrop-blur border border-white/6 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                relayState ? "bg-mint/15" : "bg-white/[0.06]"
+                relayState ? "bg-mint/15" : "bg-white/6"
               }`}
             >
               <Power
@@ -176,7 +171,7 @@ export default function RelayToggle({
           >
             <span
               className={`absolute left-0.5 top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                relayState ? "translate-x-[28px]" : "translate-x-0"
+                relayState ? "translate-x-7" : "translate-x-0"
               }`}
             />
           </button>

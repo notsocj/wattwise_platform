@@ -13,54 +13,12 @@ import {
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  mac_address: string;
-  relay_state: boolean | null;
-};
-
-type ProfileRow = {
-  monthly_budget_php: number | string | null;
-};
-
-type EnergyLogRow = {
-  energy_kwh: number | string;
-  average_watts: number | string | null;
-  voltage_v: number | string | null;
-  current_a: number | string | null;
-  recorded_at: string | null;
-};
-
-type LegacyEnergyLogRow = {
-  energy_kwh: number | string;
-  average_watts: number | string | null;
-  recorded_at: string | null;
-};
-
-type UsageByDeviceRow = {
-  device_id: string;
-  usage_kwh: number | string;
-};
-
-type DeviceViewModel = {
-  id: string;
-  name: string;
-  deviceCode: string;
-  watts: number;
-  isOnline: boolean;
-  isActive: boolean;
-  maxWatts: number;
-  volts: number;
-  maxVolts: number;
-  amps: number;
-  maxAmps: number;
-  monthlyBudget: number;
-  variableSpendPhp: number;
-  estimatedBillPhp: number;
-  fixedFeeSharePhp: number;
-};
+import type { DeviceDetailDeviceRow } from "@/lib/interfaces/DeviceDetailDeviceRow";
+import type { ProfileRow } from "@/lib/interfaces/ProfileRow";
+import type { EnergyLogRow } from "@/lib/interfaces/EnergyLogRow";
+import type { LegacyEnergyLogRow } from "@/lib/interfaces/LegacyEnergyLogRow";
+import type { UsageByDeviceRow } from "@/lib/interfaces/UsageByDeviceRow";
+import type { DeviceViewModel } from "@/lib/interfaces/DeviceViewModel";
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 
@@ -80,13 +38,13 @@ async function fetchOwnedDeviceById(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   deviceId: string
-): Promise<DeviceRow | null> {
+): Promise<DeviceDetailDeviceRow | null> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, mac_address, relay_state")
     .eq("id", deviceId)
     .eq("user_id", userId)
-    .maybeSingle<DeviceRow>();
+    .maybeSingle<DeviceDetailDeviceRow>();
 
   if (!withRelayState.error) {
     return withRelayState.data ?? null;
@@ -101,7 +59,7 @@ async function fetchOwnedDeviceById(
     .select("id, device_name, mac_address")
     .eq("id", deviceId)
     .eq("user_id", userId)
-    .maybeSingle<Pick<DeviceRow, "id" | "device_name" | "mac_address">>();
+    .maybeSingle<Pick<DeviceDetailDeviceRow, "id" | "device_name" | "mac_address">>();
 
   if (withoutRelayState.error || !withoutRelayState.data) {
     return null;
@@ -168,7 +126,7 @@ function CircularGauge({
 
   return (
     <div className="flex flex-col items-center px-1">
-      <div className="relative aspect-square w-full max-w-[108px]">
+      <div className="relative aspect-square w-full max-w-27">
         <svg
           viewBox="0 0 100 100"
           className="h-full w-full -rotate-90"
@@ -405,7 +363,7 @@ export default async function DeviceDetailPage(props: {
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
         {/* ===== AI Tip ===== */}
-        <div className="flex items-start gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
+        <div className="flex items-start gap-3 rounded-xl bg-white/3 border border-white/6 px-4 py-3">
           <div className="w-9 h-9 rounded-full bg-mint/15 flex items-center justify-center shrink-0 mt-0.5">
             <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
           </div>
@@ -420,7 +378,7 @@ export default async function DeviceDetailPage(props: {
         </div>
 
         {/* ===== Metrology Gauges ===== */}
-        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] px-2 py-8">
+        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/6 bg-white/2 px-2 py-8">
           <CircularGauge
             value={device.watts}
             max={device.maxWatts}
@@ -449,7 +407,7 @@ export default async function DeviceDetailPage(props: {
         />
 
         {/* ===== Appliance Burn Rate ===== */}
-        <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
+        <section className="rounded-xl bg-white/3 backdrop-blur border border-white/6 p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-mint" />
@@ -481,7 +439,7 @@ export default async function DeviceDetailPage(props: {
                 ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
               </span>
             </div>
-            <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
+            <div className="w-full h-2.5 rounded-full bg-white/6">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${burnColor}`}
                 style={{ width: `${burnPercent}%` }}

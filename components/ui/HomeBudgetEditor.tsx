@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
 import { createClient } from "@/lib/supabase/client";
-
-type HomeBudgetEditorProps = {
-  initialBudget: number;
-};
+import type { HomeBudgetEditorProps } from "@/components/ui/HomeBudgetEditor.types";
 
 function formatBudget(value: number): string {
   return value.toLocaleString("en-PH", {
@@ -138,7 +135,6 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
       <div className="mb-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-white/70">Home Budget</span>
-
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold">
               <span className="text-white/50 text-sm mr-0.5">₱</span>
@@ -155,23 +151,24 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
             </button>
           </div>
         </div>
+      </div>
 
-        {isOpen ? (
-          <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
-                Set Home Budget
-              </p>
-              <button
-                type="button"
-                onClick={closeEditor}
-                disabled={isSaving}
-                aria-label="Close budget editor"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
+      {isOpen ? (
+        <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+              Set Home Budget
+            </p>
+            <button
+              type="button"
+              onClick={closeEditor}
+              disabled={isSaving}
+              aria-label="Close budget editor"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
 
           <form onSubmit={saveBudget} noValidate>
             <label
@@ -212,49 +209,46 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               </p>
             )}
 
-              <div className="mt-3 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={closeEditor}
-                  disabled={isSaving}
-                  className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-mint transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSaving ? (
-                    <>
-                      <LoadingIndicator
-                        size="sm"
-                        label="Saving budget"
-                        showLabel={false}
-                      />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : null}
-
-        {apiToastMessage ? (
-          <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2.5">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
-              <p className="text-sm font-semibold text-danger">
-                {apiToastMessage}
-              </p>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEditor}
+                disabled={isSaving}
+                className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-mint transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSaving ? (
+                  <>
+                    <LoadingIndicator
+                      size="sm"
+                      label="Saving budget"
+                      showLabel={false}
+                    />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </button>
             </div>
+          </form>
+        </div>
+      ) : null}
+
+      {apiToastMessage ? (
+        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
+            <p className="text-sm font-semibold text-danger">{apiToastMessage}</p>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <SuccessToast
         message={successMessage}
@@ -263,4 +257,3 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     </>
   );
 }
-

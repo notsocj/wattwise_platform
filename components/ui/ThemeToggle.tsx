@@ -58,7 +58,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
       title={`Switch to ${nextTheme} mode`}
       className={
         className ??
-        "inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] p-2 text-white/70 transition-colors hover:border-white/20 hover:text-white"
+        "inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/3 p-2 text-white/70 transition-colors hover:border-white/20 hover:text-white"
       }
     >
       {theme === "dark" ? (

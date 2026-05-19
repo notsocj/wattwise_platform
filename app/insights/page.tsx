@@ -2,38 +2,17 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import WeeklyUsageChart, {
-  type WeeklyUsagePoint,
-} from "@/components/insights/WeeklyUsageChart";
+import WeeklyUsageChart from "@/components/insights/WeeklyUsageChart";
+import type { WeeklyUsagePoint } from "@/lib/interfaces/WeeklyUsagePoint";
 import LogoutButton from "@/components/ui/LogoutButton";
 import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 import CoachingFeed from "@/components/insights/CoachingFeed";
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  appliance_type: string | null;
-  relay_state: boolean | null;
-  is_online: boolean | null;
-};
-
-type UsageByDeviceDayRow = {
-  device_id: string;
-  day_key: string;
-  usage_kwh: number | string;
-};
-
-type LeaderboardItem = {
-  rank: number;
-  name: string;
-  usageKWh: number;
-  cost: number;
-  tag: "HIGH COST" | "MODERATE" | "EFFICIENT";
-  tagColor: "text-danger" | "text-naku" | "text-bida";
-};
+import type { InsightsDeviceRow } from "@/lib/interfaces/InsightsDeviceRow";
+import type { UsageByDeviceDayRow } from "@/lib/interfaces/UsageByDeviceDayRow";
+import type { LeaderboardItem } from "@/lib/interfaces/LeaderboardItem";
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -52,7 +31,7 @@ function hasMissingRelayStateColumnError(error: {
 async function fetchInsightsDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<DeviceRow[]> {
+): Promise<InsightsDeviceRow[]> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, appliance_type, relay_state, is_online")
@@ -60,7 +39,7 @@ async function fetchInsightsDevices(
     .order("created_at", { ascending: true });
 
   if (!withRelayState.error) {
-    return (withRelayState.data ?? []) as DeviceRow[];
+    return (withRelayState.data ?? []) as InsightsDeviceRow[];
   }
 
   if (!hasMissingRelayStateColumnError(withRelayState.error)) {
@@ -80,7 +59,7 @@ async function fetchInsightsDevices(
   return (withoutRelayState.data ?? []).map((device) => ({
     ...device,
     relay_state: true,
-  })) as DeviceRow[];
+  })) as InsightsDeviceRow[];
 }
 
 function getStartOfWeek(date: Date): Date {
@@ -280,7 +259,7 @@ export default async function InsightsPage() {
   return (
     <div className="min-h-screen bg-base text-white pb-24">
       {/* ===== Header ===== */}
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-107.5 -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold tracking-tight">
@@ -295,7 +274,7 @@ export default async function InsightsPage() {
         </div>
       </header>
 
-      <div className="px-5 pt-[84px] flex flex-col gap-5">
+      <div className="px-5 pt-21 flex flex-col gap-5">
         {/* ===== Device Performance Leaderboard ===== */}
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -308,20 +287,20 @@ export default async function InsightsPage() {
           </div>
           <div className="flex flex-col gap-2.5">
             {leaderboard.length === 0 ? (
-              <div className="rounded-xl bg-surface border border-white/[0.06] px-4 py-4 text-sm text-white/60">
+              <div className="rounded-xl bg-surface border border-white/6 px-4 py-4 text-sm text-white/60">
                 No device usage logs yet for this week.
               </div>
             ) : (
               leaderboard.map((device) => (
               <div
                 key={device.rank}
-                className="relative rounded-xl bg-surface border border-white/[0.06] px-4 py-3.5 flex items-center gap-3 overflow-hidden"
+                className="relative rounded-xl bg-surface border border-white/6 px-4 py-3.5 flex items-center gap-3 overflow-hidden"
               >
                 {/* Left accent bar */}
                 <div className="absolute left-0 inset-y-0 w-1 bg-mint/50 rounded-r-full" />
 
                 {/* Rank badge */}
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex flex-col items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/4 flex flex-col items-center justify-center shrink-0">
                   <span className="text-[9px] text-white/40 font-semibold uppercase leading-none">
                     Rank
                   </span>
@@ -359,7 +338,7 @@ export default async function InsightsPage() {
         <section>
           <h2 className="text-[15px] font-bold mb-3">Appliances Overview</h2>
           {allDeviceSummaries.length === 0 ? (
-            <div className="rounded-xl bg-surface border border-white/[0.06] px-4 py-6 text-center">
+            <div className="rounded-xl bg-surface border border-white/6 px-4 py-6 text-center">
               <p className="text-sm text-white/60 mb-2">No appliances paired yet.</p>
               <Link href="/dashboard" className="text-sm text-mint font-semibold hover:underline">
                 Go to Dashboard to add one
@@ -378,11 +357,11 @@ export default async function InsightsPage() {
                   <Link
                     key={device.id}
                     href={`/dashboard/${device.id}`}
-                    className="relative rounded-xl bg-surface border border-white/[0.06] px-4 py-3 flex items-center gap-3 overflow-hidden hover:border-mint/20 transition-colors"
+                    className="relative rounded-xl bg-surface border border-white/6 px-4 py-3 flex items-center gap-3 overflow-hidden hover:border-mint/20 transition-colors"
                   >
                     <div className="absolute left-0 inset-y-0 w-1 bg-mint/50 rounded-r-full" />
 
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-white/4 flex items-center justify-center shrink-0">
                       <IconComponent className="w-4 h-4 text-mint" />
                     </div>
 
@@ -390,7 +369,7 @@ export default async function InsightsPage() {
                       <p className="text-sm font-semibold truncate">{device.name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {device.applianceType && (
-                          <span className="text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-white/[0.06] text-white/50">
+                          <span className="text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-white/6 text-white/50">
                             {device.applianceType}
                           </span>
                         )}
@@ -441,14 +420,14 @@ export default async function InsightsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-surface border border-white/[0.06] p-4 overflow-hidden">
+          <div className="rounded-xl bg-surface border border-white/6 p-4 overflow-hidden">
             <WeeklyUsageChart data={weeklyData} />
           </div>
         </section>
 
         {/* ===== Financial Forecast / Strategy Impact ===== */}
         <section className="mb-2">
-          <div className="relative rounded-xl bg-surface border border-white/[0.06] p-5 overflow-hidden">
+          <div className="relative rounded-xl bg-surface border border-white/6 p-5 overflow-hidden">
             <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
             <p className="text-[11px] font-semibold tracking-widest text-white/40 uppercase mb-1">
               Strategy Impact

@@ -202,6 +202,13 @@ When implementing route or mutation feedback in the app shell and interactive co
 
 ---
 
+## 7. Shared Interface Location (Type Hygiene)
+
+- Non-prop interfaces/types live in `lib/interfaces`, one per file.
+- Component prop types may remain in component `*.types.ts` files.
+
+---
+
 ## Quick Reference — What NOT to Do
 
 | Situation | Forbidden | Required instead |

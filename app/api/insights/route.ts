@@ -7,9 +7,9 @@ import {
 } from "@/lib/meralco-rates";
 import { InsightType } from "@/lib/constants";
 
-const VALID_INSIGHT_TYPES = Object.values(InsightType);
+const VALID_TYPES = Object.values(InsightType);
 
-const CACHE_WINDOW_DAYS: Record<InsightType, number> = {
+const CACHE_DAYS: Record<InsightType, number> = {
   [InsightType.BudgetAlert]: 1,
   [InsightType.WeeklyRecap]: 7,
   [InsightType.AnomalyAlert]: 1,
@@ -29,11 +29,11 @@ export async function POST(request: NextRequest) {
 
     if (
       !insightType ||
-      !VALID_INSIGHT_TYPES.includes(insightType as InsightType)
+      !VALID_TYPES.includes(insightType as InsightType)
     ) {
       return NextResponse.json(
         {
-          error: `Invalid insight_type. Must be one of: ${VALID_INSIGHT_TYPES.join(", ")}`,
+          error: `Invalid insight_type. Must be one of: ${VALID_TYPES.join(", ")}`,
         },
         { status: 400 }
       );
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Cache check ---
-    const cacheDays = CACHE_WINDOW_DAYS[typedInsightType];
+    const cacheDays = CACHE_DAYS[typedInsightType];
     const cacheStart = new Date();
     cacheStart.setDate(cacheStart.getDate() - cacheDays);
 

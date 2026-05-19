@@ -22,7 +22,7 @@ export default function AppLoading() {
         <p className="mt-2 text-[10px] font-semibold tracking-[0.4em] text-mint/70 sm:text-xs">
           INTELLIGENT ENERGY
         </p>
-        <div className="mt-6 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">
+        <div className="mt-6 rounded-full border border-white/10 bg-white/3 px-4 py-2">
           <LoadingIndicator size="sm" label="Preparing your energy hub" />
         </div>
       </div>

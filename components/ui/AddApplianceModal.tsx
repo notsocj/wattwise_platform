@@ -17,18 +17,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { ApplianceType } from "@/lib/constants";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
-
-interface AddApplianceModalProps {
-  onClose: () => void;
-  onSuccess: (deviceName: string) => void;
-}
-
-type AiRecommendation = {
-  message: string;
-  estimated_monthly_kwh: number;
-  estimated_monthly_cost: number;
-  suggested_budget: number;
-};
+import type {
+  AddApplianceModalProps,
+} from "@/components/ui/AddApplianceModal.types";
+import type { AiRecommendation } from "@/lib/interfaces/AiRecommendation";
 
 type AddApplianceFieldErrors = Partial<{
   macAddress: string;
@@ -880,7 +872,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
       </div>
 
       {apiToastMessage ? (
-        <div className="fixed bottom-24 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-107.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
+        <div className="fixed bottom-24 left-1/2 z-60 w-[calc(100%-2rem)] max-w-107.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
             <p className="text-sm font-semibold text-danger">{apiToastMessage}</p>

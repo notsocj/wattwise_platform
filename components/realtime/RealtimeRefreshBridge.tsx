@@ -3,12 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-
-type RealtimeRefreshBridgeProps = {
-  deviceKeys: string[];
-  throttleMs?: number;
-  pollMs?: number;
-};
+import type { RealtimeRefreshBridgeProps } from "@/components/realtime/RealtimeRefreshBridge.types";
 
 const DEFAULT_THROTTLE_MS = 1200;
 const DEFAULT_POLL_MS = 0;

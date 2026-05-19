@@ -25,49 +25,14 @@ import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import type { DashboardDeviceRow } from "@/lib/interfaces/DashboardDeviceRow";
+import type { LatestReadingRow } from "@/lib/interfaces/LatestReadingRow";
+import type { UsageByDeviceRow } from "@/lib/interfaces/UsageByDeviceRow";
+import type { ProfileRow } from "@/lib/interfaces/ProfileRow";
+import type { DashboardDevice } from "@/lib/interfaces/DashboardDevice";
 import { ApplianceType } from "@/lib/constants";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  mac_address: string;
-  is_online: boolean | null;
-  appliance_type: string | null;
-  relay_state: boolean | null;
-};
-
-type LatestReadingRow = {
-  device_id: string;
-  average_watts: number | string | null;
-  voltage_v: number | string | null;
-  current_a: number | string | null;
-  energy_kwh: number | string | null;
-  recorded_at: string | null;
-};
-
-type UsageByDeviceRow = {
-  device_id: string;
-  usage_kwh: number | string;
-};
-
-type ProfileRow = {
-  monthly_budget_php: number | string | null;
-};
-
-type DashboardDevice = {
-  id: string;
-  name: string;
-  watts: number;
-  volts: number;
-  amps: number;
-  dailyKWh: number;
-  isOnline: boolean;
-  isActive: boolean;
-  icon: typeof Wind;
-  relayState: boolean;
-};
 
 const ACTIVE_READING_WINDOW_MS = 15 * 1000;
 
@@ -86,7 +51,7 @@ function hasMissingRelayStateColumnError(error: {
 async function fetchDashboardDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<DeviceRow[]> {
+): Promise<DashboardDeviceRow[]> {
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
@@ -94,7 +59,7 @@ async function fetchDashboardDevices(
     .order("created_at", { ascending: true });
 
   if (!withRelayState.error) {
-    return (withRelayState.data ?? []) as DeviceRow[];
+    return (withRelayState.data ?? []) as DashboardDeviceRow[];
   }
 
   if (!hasMissingRelayStateColumnError(withRelayState.error)) {
@@ -114,7 +79,7 @@ async function fetchDashboardDevices(
   return (withoutRelayState.data ?? []).map((device) => ({
     ...device,
     relay_state: true,
-  })) as DeviceRow[];
+  })) as DashboardDeviceRow[];
 }
 
 function getDeviceIcon(applianceType: string | null, deviceName: string) {
@@ -380,7 +345,7 @@ export default async function DashboardPage() {
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
 
       {/* ===== Header ===== */}
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-107.5 -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold tracking-tight">
@@ -395,7 +360,7 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <div className="px-5 pt-[84px] flex flex-col gap-4">
+      <div className="px-5 pt-21 flex flex-col gap-4">
         {/* ===== Total Live Wattage Card ===== */}
         <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
           {/* Mint left accent */}
@@ -443,7 +408,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* ===== Home Wallet Card ===== */}
-        <div className="relative rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5 overflow-hidden">
+        <div className="relative rounded-xl bg-white/3 backdrop-blur border border-white/6 p-5 overflow-hidden">
           <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
 
           <div className="flex items-center justify-between mb-4">
@@ -467,7 +432,7 @@ export default async function DashboardPage() {
                 ₱ {homeMonthlyEstimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} est. bill (incl fixed fees)
               </span>
             </div>
-            <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
+            <div className="w-full h-2.5 rounded-full bg-white/6">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${homeBurnColor}`}
                 style={{ width: `${homeBurnPercent}%` }}
@@ -521,7 +486,7 @@ export default async function DashboardPage() {
                 <Link
                   key={device.id}
                   href={`/dashboard/${device.id}`}
-                  className="relative rounded-xl bg-surface border border-white/5 p-4 flex flex-col justify-between min-h-[130px] transition-colors hover:border-mint/20 overflow-hidden"
+                  className="relative rounded-xl bg-surface border border-white/5 p-4 flex flex-col justify-between min-h-32.5 transition-colors hover:border-mint/20 overflow-hidden"
                 >
                   {/* Mint left accent */}
                   <div className="absolute left-0 inset-y-0 w-1 bg-mint/50 rounded-r-full" />

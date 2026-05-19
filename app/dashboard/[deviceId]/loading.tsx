@@ -18,12 +18,12 @@ export default function DeviceDetailLoading() {
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
-        <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
+        <div className="flex items-start gap-3 rounded-xl border border-white/6 bg-white/3 px-4 py-3">
           <LoadingSkeleton className="mt-0.5 h-9 w-9 rounded-full" />
           <LoadingSkeletonText lines={3} className="flex-1" />
         </div>
 
-        <section className="grid flex-1 grid-cols-3 items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-2 py-8">
+        <section className="grid flex-1 grid-cols-3 items-center gap-2 rounded-2xl border border-white/6 bg-white/2 px-2 py-8">
           <div className="flex flex-col items-center gap-2">
             <LoadingSkeleton className="h-24 w-24 rounded-full" />
             <LoadingSkeleton className="h-3 w-14 rounded" />
@@ -38,7 +38,7 @@ export default function DeviceDetailLoading() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
+        <section className="rounded-xl border border-white/6 bg-white/3 p-5">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <LoadingSkeleton className="h-10 w-10 rounded-lg" />
@@ -49,7 +49,7 @@ export default function DeviceDetailLoading() {
           <LoadingSkeleton className="h-3 w-3/4 rounded" />
         </section>
 
-        <section className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
+        <section className="rounded-xl border border-white/6 bg-white/3 p-5">
           <div className="mb-4 flex items-center justify-between">
             <LoadingSkeleton className="h-5 w-32 rounded" />
             <LoadingSkeleton className="h-3 w-20 rounded" />
