@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
+import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
@@ -388,6 +389,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <UpdatePasswordLink />
             <LogoutButton />
           </div>
         </div>
