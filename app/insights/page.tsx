@@ -6,6 +6,7 @@ import WeeklyUsageChart, {
   type WeeklyUsagePoint,
 } from "@/components/insights/WeeklyUsageChart";
 import LogoutButton from "@/components/ui/LogoutButton";
+import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
@@ -288,6 +289,7 @@ export default async function InsightsPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <UpdatePasswordLink />
             <LogoutButton />
           </div>
         </div>
