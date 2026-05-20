@@ -4,34 +4,85 @@ import { useState, type SubmitEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import { createClient } from "@/lib/supabase/client";
+import {
+  getFriendlyAuthError,
+  normalizeEmail,
+  validateEmailAddress,
+} from "@/lib/user-form-messages";
+
+type ResetFieldErrors = Partial<{
+  email: string;
+}>;
+
+const inputBaseClass =
+  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+
+function getInputClass(hasError: boolean): string {
+  const stateClass = hasError
+    ? "border border-danger/70 focus:border-danger"
+    : "border border-mint/40 focus:border-mint";
+
+  return `${inputBaseClass} ${stateClass}`;
+}
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ResetFieldErrors>({});
   const [success, setSuccess] = useState(false);
+
+  function validateForm(): ResetFieldErrors {
+    const emailError = validateEmailAddress(
+      email,
+      "Enter the email address linked to your WattWise account."
+    );
+
+    return emailError ? { email: emailError } : {};
+  }
+
+  function clearEmailError() {
+    setSubmitError(null);
+    setFieldErrors({});
+  }
 
   async function handleResetRequest(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
+    setSubmitError(null);
+
+    const nextErrors = validateForm();
+    setFieldErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitError("Please fix the highlighted email field before continuing.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const normalizedEmail = normalizeEmail(email);
       const supabase = createClient();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        normalizedEmail,
+        {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }
+      );
 
       if (resetError) {
-        setError(resetError.message);
+        setSubmitError(getFriendlyAuthError(resetError.message, "reset"));
       } else {
+        setEmail(normalizedEmail);
         setSuccess(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setSubmitError(
+        getFriendlyAuthError(err instanceof Error ? err.message : undefined, "reset")
+      );
     } finally {
       setLoading(false);
     }
@@ -39,25 +90,29 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="relative min-h-screen bg-base text-white flex flex-col items-center justify-center px-6">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
         <div className="absolute right-6 top-6">
           <ThemeToggle />
         </div>
-        <div className="w-16 h-16 rounded-full bg-bida/10 flex items-center justify-center mb-6">
-          <KeyRound className="w-8 h-8 text-bida" />
+
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
+          <KeyRound className="h-8 w-8 text-bida" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Check Your Email</h1>
-        <p className="text-white/50 text-center mb-8 max-w-sm">
-          We&apos;ve sent a password reset link to <span className="text-mint font-semibold">{email}</span>. Click the link to set a new password.
+        <h1 className="mb-2 text-2xl font-bold">Check Your Email</h1>
+        <p className="mb-8 max-w-sm text-center text-white/50">
+          We&apos;ve sent a password reset link to{" "}
+          <span className="font-semibold text-mint">{email}</span>. Click the
+          link to set a new password.
         </p>
-        <p className="text-white/40 text-sm text-center mb-8 max-w-sm">
-          The link will expire in 24 hours. If you don&apos;t receive it, check your spam folder.
+        <p className="mb-8 max-w-sm text-center text-sm text-white/40">
+          The link will expire in 24 hours. If you don&apos;t receive it, check
+          your spam folder.
         </p>
         <Link
           href="/login"
-          className="text-mint hover:text-mint/80 transition-colors text-sm font-semibold flex items-center gap-2"
+          className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Back to Login
         </Link>
       </div>
@@ -69,9 +124,8 @@ export default function ForgotPasswordPage() {
       <div className="absolute right-6 top-6">
         <ThemeToggle />
       </div>
-      {/* Top Section — Logo & Branding */}
-      <div className="flex flex-col items-center pt-16 pb-6 px-6">
-        {/* Mascot */}
+
+      <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="mb-3 flex h-24 w-24 items-center justify-center">
           <Image
             src="/wattwise_mascot.png"
@@ -82,71 +136,95 @@ export default function ForgotPasswordPage() {
           />
         </div>
 
-        {/* Brand Name */}
-        <h1 className="text-3xl font-bold text-white mb-0">
+        <h1 className="mb-0 text-3xl font-bold text-white">
           Watt<span className="text-mint">Wise</span>
         </h1>
 
-        {/* Subtitle */}
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">RESET YOUR PASSWORD</p>
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
+          RESET YOUR PASSWORD
+        </p>
       </div>
 
-      {/* Form Section */}
-      <div className="flex flex-col flex-1 px-6 pt-6">
-        {/* Error Message */}
-        {error && (
-          <div className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {error}
+      <div className="flex flex-1 flex-col px-6 pt-6">
+        {submitError && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+          >
+            {submitError}
           </div>
         )}
 
-        <form onSubmit={handleResetRequest}>
-        {/* Email Input */}
-        <div className="mb-6">
-          <label className="block text-white text-base font-semibold mb-2">
-            Email Address
-          </label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-transparent border border-mint/40 rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none focus:border-mint transition-colors"
-          />
-          <p className="text-white/40 text-sm mt-2">
-            We&apos;ll send you a link to reset your password.
-          </p>
-        </div>
+        <form onSubmit={handleResetRequest} noValidate>
+          <div className="mb-6">
+            <label
+              htmlFor="reset-email"
+              className="mb-2 block text-base font-semibold text-white"
+            >
+              Email Address
+            </label>
+            <input
+              id="reset-email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearEmailError();
+              }}
+              onBlur={() =>
+                setFieldErrors({
+                  email:
+                    validateEmailAddress(
+                      email,
+                      "Enter the email address linked to your WattWise account."
+                    ) ?? undefined,
+                })
+              }
+              autoComplete="email"
+              required
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby="reset-email-message"
+              className={getInputClass(Boolean(fieldErrors.email))}
+            />
+            <p
+              id="reset-email-message"
+              className={`mt-2 text-sm ${
+                fieldErrors.email ? "text-danger" : "text-white/40"
+              }`}
+            >
+              {fieldErrors.email ??
+                "We will send you a link to reset your password."}
+            </p>
+          </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading || !email}
-          className="inline-flex w-full items-center justify-center bg-mint text-black text-[17px] font-bold py-4 rounded-xl transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <LoadingIndicator
-                size="sm"
-                label="Sending reset link"
-                showLabel={false}
-                spinnerClassName="border-black/30 border-t-black"
-              />
-              Sending...
-            </span>
-          ) : (
-            "Send Reset Link"
-          )}
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="mb-4 inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingIndicator
+                  size="sm"
+                  label="Sending reset link"
+                  showLabel={false}
+                  spinnerClassName="border-black/30 border-t-black"
+                />
+                Sending...
+              </span>
+            ) : (
+              "Send Reset Link"
+            )}
+          </button>
         </form>
 
-        {/* Back to Login Link */}
         <div className="flex justify-center">
           <Link
             href="/login"
-            className="text-mint text-sm font-semibold hover:text-mint/80 transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="h-4 w-4" />
             Back to Login
           </Link>
         </div>
