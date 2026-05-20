@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { KeyRound } from "lucide-react";
+import Link from 'next/link';
+import { KeyRound } from 'lucide-react';
 
 type UpdatePasswordLinkProps = {
   className?: string;
@@ -10,7 +10,7 @@ type UpdatePasswordLinkProps = {
 
 export default function UpdatePasswordLink({
   className,
-  label = "Update Password",
+  label = 'Update Password',
 }: UpdatePasswordLinkProps) {
   return (
     <Link
@@ -19,7 +19,7 @@ export default function UpdatePasswordLink({
       title={label}
       className={
         className ??
-        "inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] p-2 text-white/70 transition-colors hover:border-white/20 hover:text-white"
+        'inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] p-2 text-white/70 transition-colors hover:border-white/20 hover:text-white'
       }
     >
       <KeyRound className="h-4 w-4" aria-hidden="true" />

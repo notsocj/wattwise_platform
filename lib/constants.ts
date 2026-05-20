@@ -9,10 +9,10 @@
  * the /api/insights API route.
  */
 export enum InsightType {
-  BudgetAlert = "budget_alert",
-  WeeklyRecap = "weekly_recap",
-  AnomalyAlert = "anomaly_alert",
-  CostOptimizer = "cost_optimizer",
+  BudgetAlert = 'budget_alert',
+  WeeklyRecap = 'weekly_recap',
+  AnomalyAlert = 'anomaly_alert',
+  CostOptimizer = 'cost_optimizer',
 }
 
 /**
@@ -20,8 +20,8 @@ export enum InsightType {
  * the AI setup-recommendation flow and device icon selection.
  */
 export enum ApplianceType {
-  Refrigerator = "refrigerator",
-  Aircon = "aircon",
-  Tv = "tv",
-  Other = "other",
+  Refrigerator = 'refrigerator',
+  Aircon = 'aircon',
+  Tv = 'tv',
+  Other = 'other',
 }

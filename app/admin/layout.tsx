@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export default async function AdminLayout({
   children,
@@ -13,18 +13,18 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // Defense-in-depth: verify super_admin role even though middleware checks too
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, email, full_name")
-    .eq("id", user.id)
+    .from('profiles')
+    .select('role, email, full_name')
+    .eq('id', user.id)
     .single();
 
-  if (profile?.role !== "super_admin") {
-    redirect("/dashboard");
+  if (profile?.role !== 'super_admin') {
+    redirect('/dashboard');
   }
 
   return (

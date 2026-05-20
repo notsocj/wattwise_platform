@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
 
 type UpdatePasswordFormProps = {
-  mode?: "update" | "reset";
+  mode?: 'update' | 'reset';
   backHref?: string;
 };
 
-type SessionState = "checking" | "ready" | "missing";
+type SessionState = 'checking' | 'ready' | 'missing';
 
 export default function UpdatePasswordForm({
-  mode = "update",
-  backHref = "/dashboard",
+  mode = 'update',
+  backHref = '/dashboard',
 }: UpdatePasswordFormProps) {
   const router = useRouter();
-  const [sessionState, setSessionState] = useState<SessionState>("checking");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [sessionState, setSessionState] = useState<SessionState>('checking');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function UpdatePasswordForm({
     const supabase = createClient();
 
     async function prepareSession() {
-      const code = new URLSearchParams(window.location.search).get("code");
+      const code = new URLSearchParams(window.location.search).get('code');
 
       if (code) {
         const { error: exchangeError } =
@@ -58,7 +58,7 @@ export default function UpdatePasswordForm({
       } = await supabase.auth.getSession();
 
       if (isMounted) {
-        setSessionState(session ? "ready" : "missing");
+        setSessionState(session ? 'ready' : 'missing');
       }
     }
 
@@ -67,8 +67,8 @@ export default function UpdatePasswordForm({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setSessionState("ready");
+      if (event === 'PASSWORD_RECOVERY' || session) {
+        setSessionState('ready');
       }
     });
 
@@ -83,12 +83,12 @@ export default function UpdatePasswordForm({
     setError(null);
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError('Passwords do not match.');
       return;
     }
 
@@ -105,27 +105,27 @@ export default function UpdatePasswordForm({
         return;
       }
 
-      setPassword("");
-      setConfirmPassword("");
+      setPassword('');
+      setConfirmPassword('');
       setSuccess(true);
 
-      if (mode === "reset") {
+      if (mode === 'reset') {
         await supabase.auth.signOut();
         setTimeout(() => {
-          router.replace("/login");
+          router.replace('/login');
         }, 1800);
         return;
       }
 
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred.");
+      setError(err instanceof Error ? err.message : 'An error occurred.');
     } finally {
       setLoading(false);
     }
   }
 
-  if (sessionState === "checking") {
+  if (sessionState === 'checking') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-base px-6 text-white">
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4">
@@ -143,11 +143,11 @@ export default function UpdatePasswordForm({
         </div>
         <h1 className="mb-2 text-2xl font-bold">Password Updated</h1>
         <p className="mb-8 max-w-sm text-center text-sm leading-6 text-white/50">
-          {mode === "reset"
-            ? "Your password has been updated successfully. Redirecting to login..."
-            : "Your WattWise account password has been changed successfully."}
+          {mode === 'reset'
+            ? 'Your password has been updated successfully. Redirecting to login...'
+            : 'Your WattWise account password has been changed successfully.'}
         </p>
-        {mode === "reset" ? (
+        {mode === 'reset' ? (
           <LoadingIndicator size="sm" label="Redirecting" />
         ) : (
           <Link
@@ -161,7 +161,7 @@ export default function UpdatePasswordForm({
     );
   }
 
-  if (sessionState === "missing") {
+  if (sessionState === 'missing') {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10">
@@ -207,7 +207,7 @@ export default function UpdatePasswordForm({
           Watt<span className="text-mint">Wise</span>
         </h1>
         <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
-          {mode === "reset" ? "RESET PASSWORD" : "UPDATE PASSWORD"}
+          {mode === 'reset' ? 'RESET PASSWORD' : 'UPDATE PASSWORD'}
         </p>
       </div>
 
@@ -225,7 +225,7 @@ export default function UpdatePasswordForm({
             </label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -234,7 +234,7 @@ export default function UpdatePasswordForm({
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
               >
                 {showPassword ? (
@@ -255,7 +255,7 @@ export default function UpdatePasswordForm({
             </label>
             <div className="relative">
               <input
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -265,7 +265,7 @@ export default function UpdatePasswordForm({
                 type="button"
                 onClick={() => setShowConfirmPassword((value) => !value)}
                 aria-label={
-                  showConfirmPassword ? "Hide confirmation" : "Show confirmation"
+                  showConfirmPassword ? 'Hide confirmation' : 'Show confirmation'
                 }
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
               >
@@ -294,7 +294,7 @@ export default function UpdatePasswordForm({
                 Updating...
               </span>
             ) : (
-              "Update Password"
+              'Update Password'
             )}
           </button>
         </form>

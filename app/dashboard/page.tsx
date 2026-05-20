@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 import {
   TrendingDown,
   TrendingUp,
@@ -10,22 +10,22 @@ import {
   Wallet,
   HelpCircle,
   Power,
-} from "lucide-react";
-import BottomNav from "@/components/ui/BottomNav";
-import LogoutButton from "@/components/ui/LogoutButton";
-import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
-import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
-import AddApplianceTile from "@/components/ui/AddApplianceTile";
-import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
-import RelayToggle from "@/components/ui/RelayToggle";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+} from 'lucide-react';
+import BottomNav from '@/components/ui/BottomNav';
+import LogoutButton from '@/components/ui/LogoutButton';
+import UpdatePasswordLink from '@/components/ui/UpdatePasswordLink';
+import HomeBudgetEditor from '@/components/ui/HomeBudgetEditor';
+import AddApplianceTile from '@/components/ui/AddApplianceTile';
+import RealtimeRefreshBridge from '@/components/realtime/RealtimeRefreshBridge';
+import RelayToggle from '@/components/ui/RelayToggle';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import {
   computeMeralcoBill,
   getActiveMeralcoRates,
-} from "@/lib/meralco-rates";
-import { ApplianceType } from "@/lib/constants";
+} from '@/lib/meralco-rates';
+import { ApplianceType } from '@/lib/constants';
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 
@@ -79,8 +79,8 @@ function hasMissingRelayStateColumnError(error: {
     return false;
   }
 
-  const message = error.message?.toLowerCase() ?? "";
-  return error.code === "42703" || message.includes("relay_state");
+  const message = error.message?.toLowerCase() ?? '';
+  return error.code === '42703' || message.includes('relay_state');
 }
 
 async function fetchDashboardDevices(
@@ -88,10 +88,10 @@ async function fetchDashboardDevices(
   userId: string
 ): Promise<DeviceRow[]> {
   const withRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .from('devices')
+    .select('id, device_name, mac_address, is_online, appliance_type, relay_state')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
 
   if (!withRelayState.error) {
     return (withRelayState.data ?? []) as DeviceRow[];
@@ -102,10 +102,10 @@ async function fetchDashboardDevices(
   }
 
   const withoutRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .from('devices')
+    .select('id, device_name, mac_address, is_online, appliance_type')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
 
   if (withoutRelayState.error) {
     return [];
@@ -135,11 +135,11 @@ function getDeviceIcon(applianceType: string | null, deviceName: string) {
   // Fallback: match by device name for legacy devices
   const label = deviceName.toLowerCase();
 
-  if (label.includes("aircon") || label.includes("ac") || label.includes("fan")) {
+  if (label.includes('aircon') || label.includes('ac') || label.includes('fan')) {
     return Wind;
   }
 
-  if (label.includes("fridge") || label.includes("freezer") || label.includes("ref")) {
+  if (label.includes('fridge') || label.includes('freezer') || label.includes('ref')) {
     return Refrigerator;
   }
 
@@ -151,7 +151,7 @@ function toNumber(value: number | string | null): number {
     return 0;
   }
 
-  const numericValue = typeof value === "number" ? value : Number(value);
+  const numericValue = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
@@ -177,15 +177,15 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const [devicesRows, { data: profileData }, activeRates] = await Promise.all([
     fetchDashboardDevices(supabase, user.id),
     supabase
-      .from("profiles")
-      .select("monthly_budget_php")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('monthly_budget_php')
+      .eq('id', user.id)
       .maybeSingle<ProfileRow>(),
     getActiveMeralcoRates(supabase),
   ]);
@@ -213,20 +213,20 @@ export default async function DashboardPage() {
 
   const [latestReadingsRes, dailyUsageRes, yesterdayUsageRes, monthlyUsageRes] = deviceIds.length
     ? await Promise.all([
-        supabase.rpc("get_latest_device_readings", {
+        supabase.rpc('get_latest_device_readings', {
           p_user_id: user.id,
         }),
-        supabase.rpc("get_usage_kwh_by_device", {
+        supabase.rpc('get_usage_kwh_by_device', {
           p_user_id: user.id,
           p_start: startOfDay.toISOString(),
           p_end: now.toISOString(),
         }),
-        supabase.rpc("get_usage_kwh_by_device", {
+        supabase.rpc('get_usage_kwh_by_device', {
           p_user_id: user.id,
           p_start: startOfYesterday.toISOString(),
           p_end: endOfYesterday.toISOString(),
         }),
-        supabase.rpc("get_usage_kwh_by_device", {
+        supabase.rpc('get_usage_kwh_by_device', {
           p_user_id: user.id,
           p_start: startOfMonth.toISOString(),
           p_end: now.toISOString(),
@@ -322,8 +322,8 @@ export default async function DashboardPage() {
   const showDailyTrend = !hasNoDailyCostYet;
 
   let TrendIcon = Minus;
-  let trendClassName = "text-white/50";
-  let trendCopy = "No change from yesterday";
+  let trendClassName = 'text-white/50';
+  let trendCopy = 'No change from yesterday';
 
   if (!hasNoDailyCostYet && !hasSameSpend && totalYesterdayCostPhp > 0) {
     const dayOverDayPercent = Math.abs(
@@ -332,17 +332,17 @@ export default async function DashboardPage() {
 
     if (dayOverDayDeltaPhp > 0) {
       TrendIcon = TrendingUp;
-      trendClassName = "text-naku";
+      trendClassName = 'text-naku';
       trendCopy = `${dayOverDayPercent.toFixed(1)}% increase from yesterday`;
     } else {
       TrendIcon = TrendingDown;
-      trendClassName = "text-bida";
+      trendClassName = 'text-bida';
       trendCopy = `${dayOverDayPercent.toFixed(1)}% decrease from yesterday`;
     }
   } else if (!hasNoDailyCostYet && !hasSameSpend && totalYesterdayCostPhp === 0) {
     TrendIcon = TrendingUp;
-    trendClassName = "text-naku";
-    trendCopy = "New spend today (no usage yesterday)";
+    trendClassName = 'text-naku';
+    trendCopy = 'New spend today (no usage yesterday)';
   }
 
   const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
@@ -370,10 +370,10 @@ export default async function DashboardPage() {
   );
   const homeBurnColor =
     homeBurnPercent >= 90
-      ? "bg-danger"
+      ? 'bg-danger'
       : homeBurnPercent >= 70
-        ? "bg-naku"
-        : "bg-mint";
+        ? 'bg-naku'
+        : 'bg-mint';
 
   return (
     <div className="min-h-screen bg-base text-white pb-24">
@@ -427,7 +427,7 @@ export default async function DashboardPage() {
             <span className="text-3xl font-semibold text-white/50 mr-0.5">
               ₱
             </span>
-            {totalDailyCostPhp.toLocaleString("en-PH", {
+            {totalDailyCostPhp.toLocaleString('en-PH', {
               minimumFractionDigits: 2,
             })}
           </p>
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-white/40">Home Burn Rate</span>
               <span className="text-xs text-white/50">
-                ₱ {homeMonthlyEstimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} est. bill (incl fixed fees)
+                ₱ {homeMonthlyEstimatedBillPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} est. bill (incl fixed fees)
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
@@ -474,15 +474,15 @@ export default async function DashboardPage() {
               />
             </div>
             <p className="text-[10px] text-white/40 mt-1.5">
-              Variable energy spend: ₱ {homeMonthlyVariableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed monthly fees)
+              Variable energy spend: ₱ {homeMonthlyVariableSpendPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed monthly fees)
             </p>
             <p
               className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
                 homeBurnPercent >= 90
-                  ? "text-danger"
+                  ? 'text-danger'
                   : homeBurnPercent >= 70
-                    ? "text-naku"
-                    : "text-bida"
+                    ? 'text-naku'
+                    : 'text-bida'
               }`}
             >
               {homeBurnPercent.toFixed(1)}% of home budget consumed
@@ -541,9 +541,9 @@ export default async function DashboardPage() {
                     </p>
                     <div className="text-[11px]">
                       <div className="flex items-center gap-1">
-                        <Power className={`w-3 h-3 ${device.relayState ? "text-mint" : "text-white/30"}`} />
-                        <span className={`${device.relayState ? "text-mint font-semibold" : "text-white/40"}`}>
-                          {device.relayState ? "ON" : "OFF"}
+                        <Power className={`w-3 h-3 ${device.relayState ? 'text-mint' : 'text-white/30'}`} />
+                        <span className={`${device.relayState ? 'text-mint font-semibold' : 'text-white/40'}`}>
+                          {device.relayState ? 'ON' : 'OFF'}
                         </span>
                       </div>
                     </div>

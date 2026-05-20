@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { createClient } from '@/lib/supabase/server';
 import {
   getActiveMeralcoRates,
   computeMeralcoBill,
-} from "@/lib/meralco-rates";
-import { InsightType } from "@/lib/constants";
+} from '@/lib/meralco-rates';
+import { InsightType } from '@/lib/constants';
 
 const VALID_INSIGHT_TYPES = Object.values(InsightType);
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error: `Invalid insight_type. Must be one of: ${VALID_INSIGHT_TYPES.join(", ")}`,
+          error: `Invalid insight_type. Must be one of: ${VALID_INSIGHT_TYPES.join(', ')}`,
         },
         { status: 400 }
       );
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // --- Cache check ---
@@ -56,12 +56,12 @@ export async function POST(request: NextRequest) {
     cacheStart.setDate(cacheStart.getDate() - cacheDays);
 
     const { data: cached } = await supabase
-      .from("ai_insights")
-      .select("message")
-      .eq("user_id", user.id)
-      .eq("insight_type", typedInsightType)
-      .gte("created_at", cacheStart.toISOString())
-      .order("created_at", { ascending: false })
+      .from('ai_insights')
+      .select('message')
+      .eq('user_id', user.id)
+      .eq('insight_type', typedInsightType)
+      .gte('created_at', cacheStart.toISOString())
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -77,30 +77,30 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured" },
+        { error: 'OpenAI API key not configured' },
         { status: 500 }
       );
     }
 
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("monthly_budget_php, full_name")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('monthly_budget_php, full_name')
+      .eq('id', user.id)
       .maybeSingle();
 
     const monthlyBudget = Number(profile?.monthly_budget_php ?? 2000);
 
     // Get user devices
     const { data: devices } = await supabase
-      .from("devices")
-      .select("id, device_name, mac_address, appliance_type")
-      .eq("user_id", user.id)
+      .from('devices')
+      .select('id, device_name, mac_address, appliance_type')
+      .eq('user_id', user.id)
       .limit(50);
 
     if (!devices?.length) {
       return NextResponse.json({
         message:
-          "Wala ka pang naka-pair na appliance, boss! Mag-add muna sa Dashboard para ma-track natin yung usage mo.",
+          'Wala ka pang naka-pair na appliance, boss! Mag-add muna sa Dashboard para ma-track natin yung usage mo.',
         insight_type: typedInsightType,
         cached: false,
       });
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       meralcoData = await getActiveMeralcoRates(supabase);
     } catch {
       return NextResponse.json(
-        { error: "No active Meralco rates found. Please contact admin." },
+        { error: 'No active Meralco rates found. Please contact admin.' },
         { status: 500 }
       );
     }
@@ -131,28 +131,28 @@ export async function POST(request: NextRequest) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const { data: thisWeekLogs } = await supabase
-      .from("energy_logs")
-      .select("device_id, energy_kwh, recorded_at")
-      .in("device_id", deviceIds)
-      .gte("recorded_at", thisWeekStart.toISOString())
-      .order("recorded_at", { ascending: true })
+      .from('energy_logs')
+      .select('device_id, energy_kwh, recorded_at')
+      .in('device_id', deviceIds)
+      .gte('recorded_at', thisWeekStart.toISOString())
+      .order('recorded_at', { ascending: true })
       .limit(5000);
 
     const { data: lastWeekLogs } = await supabase
-      .from("energy_logs")
-      .select("device_id, energy_kwh, recorded_at")
-      .in("device_id", deviceIds)
-      .gte("recorded_at", lastWeekStart.toISOString())
-      .lt("recorded_at", thisWeekStart.toISOString())
-      .order("recorded_at", { ascending: true })
+      .from('energy_logs')
+      .select('device_id, energy_kwh, recorded_at')
+      .in('device_id', deviceIds)
+      .gte('recorded_at', lastWeekStart.toISOString())
+      .lt('recorded_at', thisWeekStart.toISOString())
+      .order('recorded_at', { ascending: true })
       .limit(5000);
 
     const { data: monthLogs } = await supabase
-      .from("energy_logs")
-      .select("device_id, energy_kwh, recorded_at")
-      .in("device_id", deviceIds)
-      .gte("recorded_at", monthStart.toISOString())
-      .order("recorded_at", { ascending: true })
+      .from('energy_logs')
+      .select('device_id, energy_kwh, recorded_at')
+      .in('device_id', deviceIds)
+      .gte('recorded_at', monthStart.toISOString())
+      .order('recorded_at', { ascending: true })
       .limit(5000);
 
     // Compute usage per device (sequential deltas using min/max per bucket)
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
 
     const topDevicesStr = topDevices
       .map((d) => `${d.name}: ${d.kwh.toFixed(2)} kWh (₱${d.cost.toFixed(2)})`)
-      .join(", ");
+      .join(', ');
 
     const thisWeekCost = computeMeralcoBill(
       thisWeek.totalKwh,
@@ -237,14 +237,14 @@ export async function POST(request: NextRequest) {
     );
 
     // --- Build type-specific prompt ---
-    let userPrompt = "";
+    let userPrompt = '';
 
     switch (typedInsightType) {
       case InsightType.BudgetAlert:
         userPrompt = `User's monthly budget: ₱${monthlyBudget.toFixed(2)}.
 Current month spend so far: ₱${monthCostPhp.toFixed(2)} (${daysElapsed} days elapsed).
 Projected monthly total: ₱${projectedMonthly.toFixed(2)}.
-Top consuming devices this month: ${topDevicesStr || "No data yet"}.
+Top consuming devices this month: ${topDevicesStr || 'No data yet'}.
 
 Give a budget alert. If they're on track, be encouraging. If they're trending over budget, warn them with specific device advice. Use "Naku!" for over-budget, "Bida ka!" for under-budget.`;
         break;
@@ -253,7 +253,7 @@ Give a budget alert. If they're on track, be encouraging. If they're trending ov
         userPrompt = `This week's total usage: ${thisWeek.totalKwh.toFixed(2)} kWh (₱${thisWeekCost.toFixed(2)}).
 Last week's total usage: ${lastWeek.totalKwh.toFixed(2)} kWh (₱${lastWeekCost.toFixed(2)}).
 Week-over-week change: ${((thisWeek.totalKwh - lastWeek.totalKwh) / Math.max(0.01, lastWeek.totalKwh) * 100).toFixed(1)}%.
-Top devices this week: ${topDevicesStr || "No data yet"}.
+Top devices this week: ${topDevicesStr || 'No data yet'}.
 
 Give an encouraging weekly recap comparing this week vs last week. Highlight wins or areas to improve. Be specific about which devices and amounts.`;
         break;
@@ -261,7 +261,7 @@ Give an encouraging weekly recap comparing this week vs last week. Highlight win
       case InsightType.AnomalyAlert:
         userPrompt = `This week's usage: ${thisWeek.totalKwh.toFixed(2)} kWh (₱${thisWeekCost.toFixed(2)}).
 Last week's usage: ${lastWeek.totalKwh.toFixed(2)} kWh (₱${lastWeekCost.toFixed(2)}).
-Top consuming devices: ${topDevicesStr || "No data yet"}.
+Top consuming devices: ${topDevicesStr || 'No data yet'}.
 Number of devices: ${devices.length}.
 
 Check if there are any anomalies — unusual spikes in usage, a single device consuming disproportionately, or significant week-over-week jumps. If everything looks normal, say so briefly. If anomalous, explain what stands out and recommend action.`;
@@ -271,8 +271,8 @@ Check if there are any anomalies — unusual spikes in usage, a single device co
         userPrompt = `Monthly budget: ₱${monthlyBudget.toFixed(2)}.
 Current month spend: ₱${monthCostPhp.toFixed(2)} (Day ${daysElapsed}).
 Projected monthly: ₱${projectedMonthly.toFixed(2)}.
-Top devices by cost: ${topDevicesStr || "No data yet"}.
-User has ${devices.length} appliance(s): ${devices.map((d) => d.device_name).join(", ")}.
+Top devices by cost: ${topDevicesStr || 'No data yet'}.
+User has ${devices.length} appliance(s): ${devices.map((d) => d.device_name).join(', ')}.
 
 Give one specific, actionable cost-saving tip. Recommend which device to adjust, by how much (hours or schedule), and the estimated savings. Be concrete with ₱ amounts.`;
         break;
@@ -282,10 +282,10 @@ Give one specific, actionable cost-saving tip. Recommend which device to adjust,
     const openai = new OpenAI({ apiKey });
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini',
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
       ],
       max_tokens: 200,
       temperature: 0.7,
@@ -293,13 +293,13 @@ Give one specific, actionable cost-saving tip. Recommend which device to adjust,
 
     const message =
       completion.choices[0]?.message?.content?.trim() ??
-      "Hindi ko ma-generate ang insight ngayon, boss. Try again later!";
+      'Hindi ko ma-generate ang insight ngayon, boss. Try again later!';
 
     const promptTokens = completion.usage?.prompt_tokens ?? 0;
     const completionTokens = completion.usage?.completion_tokens ?? 0;
 
     // --- Cache result ---
-    await supabase.from("ai_insights").insert({
+    await supabase.from('ai_insights').insert({
       user_id: user.id,
       insight_type: typedInsightType,
       message,
@@ -313,11 +313,11 @@ Give one specific, actionable cost-saving tip. Recommend which device to adjust,
       cached: false,
     });
   } catch (err) {
-    console.error("Insights API error:", err);
+    console.error('Insights API error:', err);
     return NextResponse.json(
       {
         error:
-          err instanceof Error ? err.message : "Failed to generate insight",
+          err instanceof Error ? err.message : 'Failed to generate insight',
       },
       { status: 500 }
     );

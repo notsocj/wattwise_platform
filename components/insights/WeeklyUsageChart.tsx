@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BarChart,
@@ -7,7 +7,7 @@ import {
   YAxis,
   ResponsiveContainer,
   Cell,
-} from "recharts";
+} from 'recharts';
 
 export type WeeklyUsagePoint = {
   day: string;
@@ -27,7 +27,7 @@ export default function WeeklyUsageChart({ data }: WeeklyUsageChartProps) {
           dataKey="day"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 10, fill: "var(--chart-axis)" }}
+          tick={{ fontSize: 10, fill: 'var(--chart-axis)' }}
         />
         <YAxis hide />
         <Bar dataKey="thisWk" radius={[4, 4, 0, 0]} maxBarSize={16}>

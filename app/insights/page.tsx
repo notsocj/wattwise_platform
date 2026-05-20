@@ -1,16 +1,16 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from "lucide-react";
-import BottomNav from "@/components/ui/BottomNav";
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { TrendingDown, Wind, Refrigerator, Tv, HelpCircle, Power } from 'lucide-react';
+import BottomNav from '@/components/ui/BottomNav';
 import WeeklyUsageChart, {
   type WeeklyUsagePoint,
-} from "@/components/insights/WeeklyUsageChart";
-import LogoutButton from "@/components/ui/LogoutButton";
-import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import { createClient } from "@/lib/supabase/server";
-import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
-import CoachingFeed from "@/components/insights/CoachingFeed";
+} from '@/components/insights/WeeklyUsageChart';
+import LogoutButton from '@/components/ui/LogoutButton';
+import UpdatePasswordLink from '@/components/ui/UpdatePasswordLink';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { createClient } from '@/lib/supabase/server';
+import { computeMeralcoBill, getActiveMeralcoRates } from '@/lib/meralco-rates';
+import CoachingFeed from '@/components/insights/CoachingFeed';
 
 type DeviceRow = {
   id: string;
@@ -31,11 +31,11 @@ type LeaderboardItem = {
   name: string;
   usageKWh: number;
   cost: number;
-  tag: "HIGH COST" | "MODERATE" | "EFFICIENT";
-  tagColor: "text-danger" | "text-naku" | "text-bida";
+  tag: 'HIGH COST' | 'MODERATE' | 'EFFICIENT';
+  tagColor: 'text-danger' | 'text-naku' | 'text-bida';
 };
 
-const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const WEEKDAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
 function hasMissingRelayStateColumnError(error: {
   code?: string;
@@ -45,8 +45,8 @@ function hasMissingRelayStateColumnError(error: {
     return false;
   }
 
-  const message = error.message?.toLowerCase() ?? "";
-  return error.code === "42703" || message.includes("relay_state");
+  const message = error.message?.toLowerCase() ?? '';
+  return error.code === '42703' || message.includes('relay_state');
 }
 
 async function fetchInsightsDevices(
@@ -54,10 +54,10 @@ async function fetchInsightsDevices(
   userId: string
 ): Promise<DeviceRow[]> {
   const withRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, appliance_type, relay_state, is_online")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .from('devices')
+    .select('id, device_name, appliance_type, relay_state, is_online')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
 
   if (!withRelayState.error) {
     return (withRelayState.data ?? []) as DeviceRow[];
@@ -68,10 +68,10 @@ async function fetchInsightsDevices(
   }
 
   const withoutRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, appliance_type, is_online")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .from('devices')
+    .select('id, device_name, appliance_type, is_online')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
 
   if (withoutRelayState.error) {
     return [];
@@ -97,22 +97,22 @@ function getMondayBasedIndex(date: Date): number {
 }
 
 function getTagForCost(cost: number, averageCost: number): {
-  tag: LeaderboardItem["tag"];
-  tagColor: LeaderboardItem["tagColor"];
+  tag: LeaderboardItem['tag'];
+  tagColor: LeaderboardItem['tagColor'];
 } {
   if (averageCost <= 0) {
-    return { tag: "MODERATE", tagColor: "text-naku" };
+    return { tag: 'MODERATE', tagColor: 'text-naku' };
   }
 
   if (cost >= averageCost * 1.2) {
-    return { tag: "HIGH COST", tagColor: "text-danger" };
+    return { tag: 'HIGH COST', tagColor: 'text-danger' };
   }
 
   if (cost <= averageCost * 0.8) {
-    return { tag: "EFFICIENT", tagColor: "text-bida" };
+    return { tag: 'EFFICIENT', tagColor: 'text-bida' };
   }
 
-  return { tag: "MODERATE", tagColor: "text-naku" };
+  return { tag: 'MODERATE', tagColor: 'text-naku' };
 }
 
 export default async function InsightsPage() {
@@ -123,7 +123,7 @@ export default async function InsightsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const devices = await fetchInsightsDevices(supabase, user.id);
@@ -141,7 +141,7 @@ export default async function InsightsPage() {
 
   const { data: usageByDeviceDayData } = deviceIds.length
     ? await supabase
-        .rpc("get_usage_kwh_by_device_day", {
+        .rpc('get_usage_kwh_by_device_day', {
           p_user_id: user.id,
           p_start: startOfLastWeek.toISOString(),
           p_end: endOfToday.toISOString(),
@@ -158,7 +158,7 @@ export default async function InsightsPage() {
   let lastWeekKWhTotal = 0;
 
   for (const row of usageByDeviceDayRows) {
-    const [yearPart, monthPart, dayPart] = row.day_key.split("-").map(Number);
+    const [yearPart, monthPart, dayPart] = row.day_key.split('-').map(Number);
 
     if (!yearPart || !monthPart || !dayPart) {
       continue;
@@ -369,10 +369,10 @@ export default async function InsightsPage() {
             <div className="flex flex-col gap-2">
               {allDeviceSummaries.map((device) => {
                 const IconComponent =
-                  device.applianceType === "aircon" ? Wind
-                  : device.applianceType === "refrigerator" ? Refrigerator
-                  : device.applianceType === "tv" ? Tv
-                  : device.applianceType === "other" ? HelpCircle
+                  device.applianceType === 'aircon' ? Wind
+                  : device.applianceType === 'refrigerator' ? Refrigerator
+                  : device.applianceType === 'tv' ? Tv
+                  : device.applianceType === 'other' ? HelpCircle
                   : Tv;
                 return (
                   <Link
@@ -395,9 +395,9 @@ export default async function InsightsPage() {
                           </span>
                         )}
                         <span className="flex items-center gap-0.5">
-                          <Power className={`w-2.5 h-2.5 ${device.relayState ? "text-mint" : "text-white/20"}`} />
-                          <span className={`text-[9px] font-semibold ${device.relayState ? "text-mint/70" : "text-white/30"}`}>
-                            {device.relayState ? "ON" : "OFF"}
+                          <Power className={`w-2.5 h-2.5 ${device.relayState ? 'text-mint' : 'text-white/20'}`} />
+                          <span className={`text-[9px] font-semibold ${device.relayState ? 'text-mint/70' : 'text-white/30'}`}>
+                            {device.relayState ? 'ON' : 'OFF'}
                           </span>
                         </span>
                       </div>
@@ -434,7 +434,7 @@ export default async function InsightsPage() {
               <span className="flex items-center gap-1.5 text-white/40">
                 <span
                   className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: "var(--chart-muted-bar)" }}
+                  style={{ backgroundColor: 'var(--chart-muted-bar)' }}
                 />
                 Last Wk
               </span>
@@ -457,7 +457,7 @@ export default async function InsightsPage() {
               <div>
                 <p className="text-4xl font-bold text-mint tracking-tight">
                   <span className="text-2xl text-white/50 mr-0.5">₱</span>
-                  {projectedMonthlyBill.toLocaleString("en-PH", {
+                  {projectedMonthlyBill.toLocaleString('en-PH', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -470,7 +470,7 @@ export default async function InsightsPage() {
                 <div className="flex items-center gap-1 justify-end">
                   <TrendingDown className="w-3.5 h-3.5 text-bida" />
                   <span className="text-lg font-bold text-bida">
-                    {savingsPercent > 0 ? "-" : ""}
+                    {savingsPercent > 0 ? '-' : ''}
                     {Math.abs(savingsPercent).toFixed(1)}%
                   </span>
                 </div>

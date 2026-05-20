@@ -1,18 +1,18 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import {
   ArrowLeft,
   Wallet,
   Power,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 import {
   computeMeralcoBill,
   getActiveMeralcoRates,
-} from "@/lib/meralco-rates";
-import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
-import RelayToggle from "@/components/ui/RelayToggle";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+} from '@/lib/meralco-rates';
+import RealtimeRefreshBridge from '@/components/realtime/RealtimeRefreshBridge';
+import RelayToggle from '@/components/ui/RelayToggle';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 type DeviceRow = {
   id: string;
@@ -72,8 +72,8 @@ function hasMissingRelayStateColumnError(error: {
     return false;
   }
 
-  const message = error.message?.toLowerCase() ?? "";
-  return error.code === "42703" || message.includes("relay_state");
+  const message = error.message?.toLowerCase() ?? '';
+  return error.code === '42703' || message.includes('relay_state');
 }
 
 async function fetchOwnedDeviceById(
@@ -82,10 +82,10 @@ async function fetchOwnedDeviceById(
   deviceId: string
 ): Promise<DeviceRow | null> {
   const withRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address, relay_state")
-    .eq("id", deviceId)
-    .eq("user_id", userId)
+    .from('devices')
+    .select('id, device_name, mac_address, relay_state')
+    .eq('id', deviceId)
+    .eq('user_id', userId)
     .maybeSingle<DeviceRow>();
 
   if (!withRelayState.error) {
@@ -97,11 +97,11 @@ async function fetchOwnedDeviceById(
   }
 
   const withoutRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address")
-    .eq("id", deviceId)
-    .eq("user_id", userId)
-    .maybeSingle<Pick<DeviceRow, "id" | "device_name" | "mac_address">>();
+    .from('devices')
+    .select('id, device_name, mac_address')
+    .eq('id', deviceId)
+    .eq('user_id', userId)
+    .maybeSingle<Pick<DeviceRow, 'id' | 'device_name' | 'mac_address'>>();
 
   if (withoutRelayState.error || !withoutRelayState.data) {
     return null;
@@ -118,7 +118,7 @@ function toNumber(value: number | string | null): number {
     return 0;
   }
 
-  const numericValue = typeof value === "number" ? value : Number(value);
+  const numericValue = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
@@ -127,7 +127,7 @@ function toFiniteNumber(value: number | string | null): number | null {
     return null;
   }
 
-  const numericValue = typeof value === "number" ? value : Number(value);
+  const numericValue = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
@@ -151,7 +151,7 @@ function CircularGauge({
   max,
   label,
   unit,
-  color = "#00E66F",
+  color = '#00E66F',
 }: {
   value: number;
   max: number;
@@ -195,7 +195,7 @@ function CircularGauge({
             strokeDashoffset={dashOffset}
             style={{
               filter: `drop-shadow(0 0 6px ${color}60)`,
-              transition: "stroke-dashoffset 0.6s ease",
+              transition: 'stroke-dashoffset 0.6s ease',
             }}
           />
         </svg>
@@ -226,7 +226,7 @@ export default async function DeviceDetailPage(props: {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const startOfMonth = new Date();
@@ -240,31 +240,31 @@ export default async function DeviceDetailPage(props: {
     await Promise.all([
       fetchOwnedDeviceById(supabase, user.id, deviceId),
       supabase
-        .from("profiles")
-        .select("monthly_budget_php")
-        .eq("id", user.id)
+        .from('profiles')
+        .select('monthly_budget_php')
+        .eq('id', user.id)
         .maybeSingle<ProfileRow>(),
-      supabase.rpc("get_usage_kwh_by_device", {
+      supabase.rpc('get_usage_kwh_by_device', {
         p_user_id: user.id,
         p_start: startOfMonth.toISOString(),
         p_end: endOfToday.toISOString(),
       }),
       supabase
-        .from("devices")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id),
+        .from('devices')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id),
       getActiveMeralcoRates(supabase),
     ]);
 
   if (!deviceData) {
-    redirect("/dashboard");
+    redirect('/dashboard');
   }
 
   const latestTelemetryResult = await supabase
-    .from("energy_logs")
-    .select("energy_kwh, average_watts, voltage_v, current_a, recorded_at")
-    .in("device_id", [deviceData.id, deviceData.mac_address])
-    .order("recorded_at", { ascending: false })
+    .from('energy_logs')
+    .select('energy_kwh, average_watts, voltage_v, current_a, recorded_at')
+    .in('device_id', [deviceData.id, deviceData.mac_address])
+    .order('recorded_at', { ascending: false })
     .limit(1)
     .maybeSingle<EnergyLogRow>();
 
@@ -272,10 +272,10 @@ export default async function DeviceDetailPage(props: {
 
   if (latestTelemetryResult.error) {
     const { data: legacyLogData } = await supabase
-      .from("energy_logs")
-      .select("energy_kwh, average_watts, recorded_at")
-      .in("device_id", [deviceData.id, deviceData.mac_address])
-      .order("recorded_at", { ascending: false })
+      .from('energy_logs')
+      .select('energy_kwh, average_watts, recorded_at')
+      .in('device_id', [deviceData.id, deviceData.mac_address])
+      .order('recorded_at', { ascending: false })
       .limit(1)
       .maybeSingle<LegacyEnergyLogRow>();
 
@@ -369,10 +369,10 @@ export default async function DeviceDetailPage(props: {
   );
   const burnColor =
     burnPercent >= 90
-      ? "bg-danger"
+      ? 'bg-danger'
       : burnPercent >= 70
-        ? "bg-naku"
-        : "bg-mint";
+        ? 'bg-naku'
+        : 'bg-mint';
 
   return (
     <div className="min-h-screen bg-base text-white pb-8">
@@ -393,9 +393,9 @@ export default async function DeviceDetailPage(props: {
             {device.name}
           </h1>
           <p className="text-[11px] text-white/60">
-            Device ID: {device.deviceCode} • <span className={`inline-flex items-center gap-1 ${deviceData.relay_state !== false ? "text-mint" : "text-white/60"}`}>
-              <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? "text-mint" : "text-white/30"}`} />
-              {deviceData.relay_state !== false ? "ON" : "OFF"}
+            Device ID: {device.deviceCode} • <span className={`inline-flex items-center gap-1 ${deviceData.relay_state !== false ? 'text-mint' : 'text-white/60'}`}>
+              <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? 'text-mint' : 'text-white/30'}`} />
+              {deviceData.relay_state !== false ? 'ON' : 'OFF'}
             </span>
           </p>
         </div>
@@ -411,11 +411,11 @@ export default async function DeviceDetailPage(props: {
           </div>
           <p className="text-sm text-white/70 leading-relaxed">
             <span className="text-naku font-bold">Naku!</span> Variable spend is
-            {" "}₱{device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}and estimated appliance bill is
-            {" "}₱{device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}out of a ₱{device.monthlyBudget.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}home monthly budget.
+            {' '}₱{device.variableSpendPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {' '}and estimated appliance bill is
+            {' '}₱{device.estimatedBillPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {' '}out of a ₱{device.monthlyBudget.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {' '}home monthly budget.
           </p>
         </div>
 
@@ -478,7 +478,7 @@ export default async function DeviceDetailPage(props: {
                 Estimated Appliance Bill
               </span>
               <span className="text-xs text-white/50">
-                ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
+                ₱ {device.estimatedBillPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
@@ -488,15 +488,15 @@ export default async function DeviceDetailPage(props: {
               />
             </div>
             <p className="text-[10px] text-white/40 mt-1.5">
-              Variable spend: ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              Variable spend: ₱ {device.variableSpendPhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p
               className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
                 burnPercent >= 90
-                  ? "text-danger"
+                  ? 'text-danger'
                   : burnPercent >= 70
-                    ? "text-naku"
-                    : "text-bida"
+                    ? 'text-naku'
+                    : 'text-bida'
               }`}
             >
               {burnPercent.toFixed(1)}% of budget consumed

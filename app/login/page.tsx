@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { createClient } from '@/lib/supabase/client';
 import {
   getFriendlyAuthError,
   normalizeEmail,
   validateEmailAddress,
-} from "@/lib/user-form-messages";
+} from '@/lib/user-form-messages';
 
 type LoginFieldErrors = Partial<{
   email: string;
@@ -20,12 +20,12 @@ type LoginFieldErrors = Partial<{
 }>;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  'w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors';
 
-function getInputClass(hasError: boolean, extraClass = ""): string {
+function getInputClass(hasError: boolean, extraClass = ''): string {
   const stateClass = hasError
-    ? "border border-danger/70 focus:border-danger"
-    : "border border-mint/40 focus:border-mint";
+    ? 'border border-danger/70 focus:border-danger'
+    : 'border border-mint/40 focus:border-mint';
 
   return `${inputBaseClass} ${stateClass} ${extraClass}`;
 }
@@ -33,26 +33,26 @@ function getInputClass(hasError: boolean, extraClass = ""): string {
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(
-    searchParams.get("error") === "unauthorized"
-      ? "You do not have permission to access that page."
+    searchParams.get('error') === 'unauthorized'
+      ? 'You do not have permission to access that page.'
       : null
   );
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   function validatePassword(value = password): string | null {
-    return value ? null : "Enter your password.";
+    return value ? null : 'Enter your password.';
   }
 
   function validateForm(): LoginFieldErrors {
     const nextErrors: LoginFieldErrors = {};
     const emailError = validateEmailAddress(
       email,
-      "Enter your email address to log in."
+      'Enter your email address to log in.'
     );
     const passwordError = validatePassword();
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
     setFieldErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitError("Please fix the highlighted fields before logging in.");
+      setSubmitError('Please fix the highlighted fields before logging in.');
       return;
     }
 
@@ -90,18 +90,18 @@ export default function LoginPage() {
     });
 
     if (signInError) {
-      setSubmitError(getFriendlyAuthError(signInError.message, "login"));
+      setSubmitError(getFriendlyAuthError(signInError.message, 'login'));
       setLoading(false);
       return;
     }
 
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
       .single();
 
-    const destination = profile?.role === "super_admin" ? "/admin" : "/dashboard";
+    const destination = profile?.role === 'super_admin' ? '/admin' : '/dashboard';
     setLoading(false);
     router.push(destination);
     router.refresh();
@@ -158,7 +158,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                clearFieldError("email");
+                clearFieldError('email');
               }}
               onBlur={() =>
                 setFieldErrors((currentErrors) => ({
@@ -166,7 +166,7 @@ export default function LoginPage() {
                   email:
                     validateEmailAddress(
                       email,
-                      "Enter your email address to log in."
+                      'Enter your email address to log in.'
                     ) ?? undefined,
                 }))
               }
@@ -179,10 +179,10 @@ export default function LoginPage() {
             <p
               id="login-email-message"
               className={`mt-2 text-xs ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? 'text-danger' : 'text-white/40'
               }`}
             >
-              {fieldErrors.email ?? "Use the email you registered with WattWise."}
+              {fieldErrors.email ?? 'Use the email you registered with WattWise.'}
             </p>
           </div>
 
@@ -196,12 +196,12 @@ export default function LoginPage() {
             <div className="relative">
               <input
                 id="login-password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  clearFieldError("password");
+                  clearFieldError('password');
                 }}
                 onBlur={() =>
                   setFieldErrors((currentErrors) => ({
@@ -213,13 +213,13 @@ export default function LoginPage() {
                 required
                 aria-invalid={Boolean(fieldErrors.password)}
                 aria-describedby="login-password-message"
-                className={getInputClass(Boolean(fieldErrors.password), "pr-12")}
+                className={getInputClass(Boolean(fieldErrors.password), 'pr-12')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -264,14 +264,14 @@ export default function LoginPage() {
                 Logging in...
               </span>
             ) : (
-              "Login"
+              'Login'
             )}
           </button>
         </form>
 
         <div className="mt-6 flex justify-center">
           <p className="text-sm text-white/50">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link
               href="/register"
               className="font-bold text-mint transition-colors hover:text-mint/80"

@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, Power } from "lucide-react";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import SuccessToast from "@/components/ui/SuccessToast";
+import { useEffect, useState } from 'react';
+import { AlertTriangle, Power } from 'lucide-react';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
+import SuccessToast from '@/components/ui/SuccessToast';
 
 interface RelayToggleProps {
   deviceId: string;
   initialRelayState: boolean;
-  variant?: "compact" | "full";
+  variant?: 'compact' | 'full';
 }
 
 export default function RelayToggle({
   deviceId,
   initialRelayState,
-  variant = "compact",
+  variant = 'compact',
 }: RelayToggleProps) {
   const [relayState, setRelayState] = useState(initialRelayState);
   const [isPending, setIsPending] = useState(false);
@@ -46,17 +46,17 @@ export default function RelayToggle({
 
     try {
       const res = await fetch(`/api/devices/${deviceId}/relay`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ relay_state: newState }),
       });
 
       if (!res.ok) {
-        let errorMessage = "Unable to update relay right now. Try again.";
+        let errorMessage = 'Unable to update relay right now. Try again.';
 
         try {
           const payload = (await res.json()) as { error?: string };
-          if (typeof payload.error === "string" && payload.error.trim().length > 0) {
+          if (typeof payload.error === 'string' && payload.error.trim().length > 0) {
             errorMessage = payload.error;
           }
         } catch {
@@ -66,11 +66,11 @@ export default function RelayToggle({
         setRelayState(!newState);
         setErrorToast(errorMessage);
       } else {
-        setSuccessMessage(`Device turned ${newState ? "on" : "off"}.`);
+        setSuccessMessage(`Device turned ${newState ? 'on' : 'off'}.`);
       }
     } catch {
       setRelayState(!newState);
-      setErrorToast("Network error while updating relay. Check connection and retry.");
+      setErrorToast('Network error while updating relay. Check connection and retry.');
     } finally {
       setIsPending(false);
     }
@@ -92,7 +92,7 @@ export default function RelayToggle({
     />
   );
 
-  if (variant === "compact") {
+  if (variant === 'compact') {
     return (
       <>
         <button
@@ -101,10 +101,10 @@ export default function RelayToggle({
           disabled={isPending}
           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
             relayState
-              ? "bg-mint/15 text-mint hover:bg-mint/25"
-              : "bg-white/[0.06] text-white/30 hover:bg-white/10"
-          } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
-          title={relayState ? "Relay ON - tap to turn off" : "Relay OFF - tap to turn on"}
+              ? 'bg-mint/15 text-mint hover:bg-mint/25'
+              : 'bg-white/[0.06] text-white/30 hover:bg-white/10'
+          } ${isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
+          title={relayState ? 'Relay ON - tap to turn off' : 'Relay OFF - tap to turn on'}
         >
           {isPending ? (
             <LoadingIndicator
@@ -113,8 +113,8 @@ export default function RelayToggle({
               showLabel={false}
               spinnerClassName={
                 relayState
-                  ? "border-mint/35 border-t-mint"
-                  : "border-white/35 border-t-white"
+                  ? 'border-mint/35 border-t-mint'
+                  : 'border-white/35 border-t-white'
               }
             />
           ) : (
@@ -134,11 +134,11 @@ export default function RelayToggle({
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                relayState ? "bg-mint/15" : "bg-white/[0.06]"
+                relayState ? 'bg-mint/15' : 'bg-white/[0.06]'
               }`}
             >
               <Power
-                className={`w-5 h-5 ${relayState ? "text-mint" : "text-white/30"}`}
+                className={`w-5 h-5 ${relayState ? 'text-mint' : 'text-white/30'}`}
               />
             </div>
             <div>
@@ -157,9 +157,9 @@ export default function RelayToggle({
                     Updating relay...
                   </span>
                 ) : relayState ? (
-                  "Relay is ON"
+                  'Relay is ON'
                 ) : (
-                  "Relay is OFF"
+                  'Relay is OFF'
                 )}
               </p>
             </div>
@@ -170,13 +170,13 @@ export default function RelayToggle({
             onClick={handleToggle}
             disabled={isPending}
             className={`relative w-14 h-7 rounded-full transition-colors ${
-              relayState ? "bg-mint" : "bg-white/10"
-            } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-            aria-label={relayState ? "Turn relay off" : "Turn relay on"}
+              relayState ? 'bg-mint' : 'bg-white/10'
+            } ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label={relayState ? 'Turn relay off' : 'Turn relay on'}
           >
             <span
               className={`absolute left-0.5 top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                relayState ? "translate-x-[28px]" : "translate-x-0"
+                relayState ? 'translate-x-[28px]' : 'translate-x-0'
               }`}
             />
           </button>
