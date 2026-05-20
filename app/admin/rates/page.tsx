@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { DollarSign } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Rate Editor',
+};
 
 export default function AdminRatesPage() {
   return (

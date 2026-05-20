@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { HeartPulse } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'System Health',
+};
 
 export default function AdminHealthPage() {
   return (
