@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
@@ -83,7 +83,7 @@ export default function RegisterPage() {
     }));
   }
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitError(null);
 

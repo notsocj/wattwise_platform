@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef, useCallback } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback, type SubmitEvent } from "react";
 import {
   X,
   QrCode,
@@ -292,7 +292,7 @@ export default function AddApplianceModal({ onClose, onSuccess }: AddApplianceMo
     }));
   }, []);
 
-  function handleFormSubmit(e: React.FormEvent) {
+  function handleFormSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isBusy) {
       return;

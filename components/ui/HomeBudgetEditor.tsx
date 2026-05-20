@@ -1,5 +1,7 @@
 "use client";
 
+import { PencilLine, X } from "lucide-react";
+import { useState, type SubmitEvent } from "react";
 import { AlertTriangle, PencilLine, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -78,7 +80,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     setErrorMessage(null);
   }
 
-  async function saveBudget(e: React.FormEvent) {
+  async function saveBudget(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isSaving) {
       return;

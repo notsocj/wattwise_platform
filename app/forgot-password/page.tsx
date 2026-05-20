@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
     setFieldErrors({});
   }
 
-  async function handleResetRequest(e: React.FormEvent) {
+  async function handleResetRequest(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitError(null);
 

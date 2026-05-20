@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
@@ -70,7 +70,7 @@ export default function LoginPage() {
     }));
   }
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitError(null);
 
