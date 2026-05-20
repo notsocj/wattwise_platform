@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { CheckCircle2 } from "lucide-react";
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { CheckCircle2 } from 'lucide-react';
 
-type SuccessToastPosition = "bottom-center" | "top-right";
+type SuccessToastPosition = 'bottom-center' | 'top-right';
 
 type SuccessToastProps = {
   message: string | null;
@@ -14,15 +14,15 @@ type SuccessToastProps = {
 };
 
 const positionClasses: Record<SuccessToastPosition, string> = {
-  "bottom-center":
-    "bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-97.5",
-  "top-right": "top-6 right-6 w-[calc(100%-2rem)] max-w-sm",
+  'bottom-center':
+    'bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-97.5',
+  'top-right': 'top-6 right-6 w-[calc(100%-2rem)] max-w-sm',
 };
 
 export default function SuccessToast({
   message,
   durationMs = 3500,
-  position = "bottom-center",
+  position = 'bottom-center',
   onDismiss,
 }: SuccessToastProps) {
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function SuccessToast({
     return () => clearTimeout(timer);
   }, [durationMs, message, onDismiss]);
 
-  if (!message || typeof document === "undefined") return null;
+  if (!message || typeof document === 'undefined') return null;
 
   return createPortal(
     <div

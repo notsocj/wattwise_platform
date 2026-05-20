@@ -1,5 +1,5 @@
-import Image from "next/image";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import Image from 'next/image';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
 
 export default function AppLoading() {
   return (

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function OnboardingPage() {
-  const [pendingRoute, setPendingRoute] = useState<"login" | "register" | null>(null);
+  const [pendingRoute, setPendingRoute] = useState<'login' | 'register' | null>(null);
 
-  function startNavigation(route: "login" | "register") {
+  function startNavigation(route: 'login' | 'register') {
     setPendingRoute(route);
   }
 
@@ -55,11 +55,11 @@ export default function OnboardingPage() {
         <div className="w-full max-w-sm flex flex-col gap-3.5 mt-1.5">
           <Link
             href="/login"
-            onClick={() => startNavigation("login")}
+            onClick={() => startNavigation('login')}
             aria-disabled={pendingRoute !== null}
             className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 aria-disabled:pointer-events-none aria-disabled:opacity-70"
           >
-            {pendingRoute === "login" ? (
+            {pendingRoute === 'login' ? (
               <span className="inline-flex items-center gap-2">
                 <LoadingIndicator
                   size="sm"
@@ -70,16 +70,16 @@ export default function OnboardingPage() {
                 Opening login...
               </span>
             ) : (
-              "Login"
+              'Login'
             )}
           </Link>
           <Link
             href="/register"
-            onClick={() => startNavigation("register")}
+            onClick={() => startNavigation('register')}
             aria-disabled={pendingRoute !== null}
             className="inline-flex w-full items-center justify-center rounded-xl border border-mint bg-transparent py-4 text-[17px] font-bold text-mint transition-colors hover:bg-mint/5 active:scale-95 aria-disabled:pointer-events-none aria-disabled:opacity-70"
           >
-            {pendingRoute === "register" ? (
+            {pendingRoute === 'register' ? (
               <span className="inline-flex items-center gap-2">
                 <LoadingIndicator
                   size="sm"
@@ -89,7 +89,7 @@ export default function OnboardingPage() {
                 Opening register...
               </span>
             ) : (
-              "Register"
+              'Register'
             )}
           </Link>
         </div>
