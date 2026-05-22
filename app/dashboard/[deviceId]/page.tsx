@@ -62,7 +62,7 @@ type DeviceViewModel = {
   fixedFeeSharePhp: number;
 };
 
-const ACTIVE_READING_WINDOW_MS = 15 * 1000;
+const ACTIVE_READING_WINDOW_MS = 20 * 1000; // 4 missed 5-second hardware cycles before offline
 
 function hasMissingRelayStateColumnError(error: {
   code?: string;

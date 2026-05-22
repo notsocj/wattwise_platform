@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** May 11, 2026
+> **Last Updated:** May 14, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -14,7 +14,7 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~64% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, shared loading states are applied to splash/auth/onboarding flows, and route-level loading skeletons now exist for app/dashboard/insights/device detail; light/dark theme toggle now supported (splash stays dark) |
+| 1 — Foundation | In Progress | ~70% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, shared loading states are applied to splash/auth/onboarding flows, and route-level loading skeletons now exist for app/dashboard/insights/device detail; light/dark theme toggle now supported (splash stays dark); all 11 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added (migration 011); offline freshness window updated to 20 s (4 missed 5-second cycles) |
 | 2 — Billing & Control | In Progress | ~67% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); relay and budget mutations now include inline spinners, disabled pending controls, and error toasts; device metadata migration (appliance_type, daily_usage_hours, relay_state) |
 | 3 — AI & PWA | In Progress | ~66% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API) now includes helpful inline validation, inline loading states, disabled pending controls, and API error toast feedback; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
@@ -68,7 +68,7 @@ applyTo: "**"
   - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
 
 - [ ] **Historical Charts (Daily View)**
-  - [ ] Create Supabase RPC function `get_hourly_averages(p_user_id, p_date)` for server-side aggregation
+  - [x] Create Supabase RPC function `get_hourly_averages(p_user_id, p_date)` for server-side aggregation *(migration at `supabase/migrations/007_get_hourly_averages.sql` — Asia/Manila timezone, avg_watts per hour-of-day)*
   - [ ] Build daily bar chart using **Recharts** `BarChart` with responsive container
   - [ ] Cache chart data using SWR or TanStack Query to prevent re-fetches on re-render
 
@@ -92,7 +92,8 @@ applyTo: "**"
 - [ ] **Supabase REST Ingestion**
   - [ ] POST aggregated payload to Supabase REST API (`/rest/v1/energy_logs`) using `HTTPClient`
   - [ ] Include `apikey` and `Authorization: Bearer <anon_key>` headers
-  - [ ] Handle HTTP errors gracefully (retry once, then skip and log locally)
+  - [x] Handle HTTP errors gracefully (retry once, then skip and log locally)
+  - [x] RLS policies allow anon INSERT to `energy_logs` (MAC-address gated) and anon SELECT on `devices` (relay polling) *(migration 011)*
 
 ### Integration Points
 
