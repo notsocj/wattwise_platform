@@ -48,7 +48,7 @@ export default function AdminTable({
                 <th
                   key={column.key}
                   scope="col"
-                  className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40 ${
+                  className={`whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40 ${
                     alignStyles[column.align ?? "left"]
                   } ${column.className ?? ""}`}
                 >
@@ -59,7 +59,10 @@ export default function AdminTable({
           </thead>
           <tbody className="divide-y divide-white/10 bg-surface">
             {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="transition-colors hover:bg-white/[0.02]">
+              <tr
+                key={rowIndex}
+                className="transition-colors hover:bg-white/[0.02]"
+              >
                 {columns.map((column) => (
                   <td
                     key={column.key}

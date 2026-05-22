@@ -26,7 +26,7 @@ export default function AdminStatusBadge({
 }: AdminStatusBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${toneStyles[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${toneStyles[tone]}`}
     >
       {children}
     </span>

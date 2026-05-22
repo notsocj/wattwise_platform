@@ -16,7 +16,7 @@ export default function AdminChartCard({
   actions,
 }: AdminChartCardProps) {
   return (
-    <section className="rounded-lg border border-white/10 bg-surface p-6">
+    <section className="min-w-0 rounded-lg border border-white/10 bg-surface p-4 sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-base font-bold text-white">{title}</h2>
@@ -28,7 +28,7 @@ export default function AdminChartCard({
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
-      <div style={{ height }} className="min-w-0">
+      <div style={{ height }} className="min-w-0 overflow-hidden">
         {children}
       </div>
     </section>

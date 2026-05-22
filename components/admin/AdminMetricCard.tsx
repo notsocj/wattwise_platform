@@ -29,13 +29,13 @@ export default function AdminMetricCard({
   tone = "default",
 }: AdminMetricCardProps) {
   return (
-    <div className="rounded-lg border border-white/10 bg-surface p-5">
+    <div className="min-w-0 rounded-lg border border-white/10 bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
             {label}
           </p>
-          <div className="mt-2 text-2xl font-bold tracking-tight text-white">
+          <div className="mt-2 break-words text-2xl font-bold tracking-tight text-white">
             {value}
           </div>
         </div>
@@ -47,8 +47,8 @@ export default function AdminMetricCard({
           </div>
         ) : null}
       </div>
-      <div className="flex min-h-5 items-center justify-between gap-3 text-xs">
-        {helper ? <p className="text-white/50">{helper}</p> : <span />}
+      <div className="flex min-h-5 flex-wrap items-center justify-between gap-2 text-xs">
+        {helper ? <p className="min-w-0 text-white/50">{helper}</p> : <span />}
         {trend ? (
           <div className="shrink-0 font-semibold text-mint">{trend}</div>
         ) : null}

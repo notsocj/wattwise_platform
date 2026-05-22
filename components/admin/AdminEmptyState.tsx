@@ -15,7 +15,7 @@ export default function AdminEmptyState({
   actions,
 }: AdminEmptyStateProps) {
   return (
-    <div className="flex min-h-48 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-6 py-10 text-center">
+    <div className="flex min-h-48 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-4 py-10 text-center sm:px-6">
       {Icon ? (
         <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-mint">
           <Icon className="h-5 w-5" />

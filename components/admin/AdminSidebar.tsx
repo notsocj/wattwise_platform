@@ -40,53 +40,59 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
   }
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-surface border-r border-white/10 flex flex-col">
-      {/* Brand Header */}
-      <div className="px-5 py-6 border-b border-white/10">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-bold text-white">
-            Watt<span className="text-mint">Wise</span>
-          </span>
+    <aside className="border-b border-white/10 bg-surface lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r">
+      <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 lg:block lg:px-5 lg:py-6">
+        <div>
+          <div className="mb-2 flex items-center gap-2 lg:mb-3">
+            <span className="text-lg font-bold text-white">
+              Watt<span className="text-mint">Wise</span>
+            </span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-mint/60">
+            Mission Control
+          </p>
         </div>
-        <p className="text-xs font-semibold tracking-widest text-mint/60 uppercase">
-          Mission Control
-        </p>
+
+        <button
+          onClick={handleSignOut}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-danger/30 hover:bg-danger/10 hover:text-danger lg:hidden"
+          aria-label="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Admin Profile */}
-      <div className="px-5 py-4 border-b border-white/10">
-        <p className="text-sm font-semibold text-white truncate">
+      <div className="border-b border-white/10 px-4 py-3 lg:px-5 lg:py-4">
+        <p className="truncate text-sm font-semibold text-white">
           {adminName || "Super Admin"}
         </p>
-        <p className="text-xs text-white/40 truncate">{adminEmail}</p>
+        <p className="truncate text-xs text-white/40">{adminEmail}</p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex gap-1 overflow-x-auto px-3 py-3 lg:flex-1 lg:flex-col lg:space-y-1 lg:overflow-y-auto lg:px-3 lg:py-4">
         {NAV_ITEMS.map(({ label, path, icon: Icon }) => {
           const isActive = pathname === path;
           return (
             <Link
               key={path}
               href={path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:gap-3 ${
                 isActive
                   ? "bg-mint/10 text-mint"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
+                  : "text-white/60 hover:bg-white/5 hover:text-white"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              <span className="whitespace-nowrap">{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Sign Out */}
-      <div className="px-3 py-4 border-t border-white/10">
+      <div className="hidden border-t border-white/10 px-3 py-4 lg:block">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-danger hover:bg-danger/10 transition-colors w-full"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-danger/10 hover:text-danger"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign Out

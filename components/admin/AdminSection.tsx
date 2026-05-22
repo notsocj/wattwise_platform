@@ -17,7 +17,7 @@ export default function AdminSection({
 }: AdminSectionProps) {
   return (
     <section
-      className={`rounded-lg border border-white/10 bg-surface p-6 ${className}`}
+      className={`min-w-0 rounded-lg border border-white/10 bg-surface p-4 sm:p-6 ${className}`}
     >
       {title || description || actions ? (
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

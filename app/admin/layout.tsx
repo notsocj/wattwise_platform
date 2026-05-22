@@ -33,7 +33,9 @@ export default async function AdminLayout({
         adminName={profile.full_name}
         adminEmail={profile.email}
       />
-      <main className="ml-64 min-h-screen p-8">{children}</main>
+      <main className="min-h-screen p-4 sm:p-6 lg:ml-64 lg:p-8">
+        <div className="mx-auto w-full max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }
