@@ -202,6 +202,13 @@ When implementing route or mutation feedback in the app shell and interactive co
 
 ---
 
+## 7. Root Agent Context File
+
+- Keep the root `AGENTS.md` aligned with the current repo architecture, commands, and non-negotiable workflow constraints.
+- When a repo-wide workflow rule changes materially, update `AGENTS.md` alongside this file instead of letting the two drift.
+
+---
+
 ## Quick Reference — What NOT to Do
 
 | Situation | Forbidden | Required instead |
