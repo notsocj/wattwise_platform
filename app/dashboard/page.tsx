@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Power,
 } from 'lucide-react';
+import AccountDeletionCard from '@/components/ui/AccountDeletionCard';
 import BottomNav from '@/components/ui/BottomNav';
 import LogoutButton from '@/components/ui/LogoutButton';
 import UpdatePasswordLink from '@/components/ui/UpdatePasswordLink';
@@ -560,6 +561,13 @@ export default async function DashboardPage() {
             {/* Add Appliance Tile */}
             <AddApplianceTile />
           </div>
+        </section>
+
+        <section className="mt-2">
+          <h2 className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-3">
+            Account & Data
+          </h2>
+          <AccountDeletionCard />
         </section>
 
       </div>
