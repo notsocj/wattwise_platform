@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { createClient } from '@/lib/supabase/client';
 import {
   getFriendlyAuthError,
   normalizeEmail,
   validateEmailAddress,
-} from "@/lib/user-form-messages";
+} from '@/lib/user-form-messages';
 
 type RegisterFieldErrors = Partial<{
   fullName: string;
@@ -21,21 +21,21 @@ type RegisterFieldErrors = Partial<{
 }>;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  'w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors';
 
-function getInputClass(hasError: boolean, extraClass = ""): string {
+function getInputClass(hasError: boolean, extraClass = ''): string {
   const stateClass = hasError
-    ? "border border-danger/70 focus:border-danger"
-    : "border border-mint/40 focus:border-mint";
+    ? 'border border-danger/70 focus:border-danger'
+    : 'border border-mint/40 focus:border-mint';
 
   return `${inputBaseClass} ${stateClass} ${extraClass}`;
 }
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -44,16 +44,16 @@ export default function RegisterPage() {
   function validateFullName(value = fullName): string | null {
     return value.trim()
       ? null
-      : "Enter a home name so your dashboard feels personal.";
+      : 'Enter a home name so your dashboard feels personal.';
   }
 
   function validatePassword(value = password): string | null {
     if (!value) {
-      return "Create a password with at least 8 characters.";
+      return 'Create a password with at least 8 characters.';
     }
 
     if (value.length < 8) {
-      return "Password must be at least 8 characters long.";
+      return 'Password must be at least 8 characters long.';
     }
 
     return null;
@@ -64,7 +64,7 @@ export default function RegisterPage() {
     const fullNameError = validateFullName();
     const emailError = validateEmailAddress(
       email,
-      "Enter the email address you will use to log in."
+      'Enter the email address you will use to log in.'
     );
     const passwordError = validatePassword();
 
@@ -91,7 +91,7 @@ export default function RegisterPage() {
     setFieldErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitError("Please fix the highlighted fields before signing up.");
+      setSubmitError('Please fix the highlighted fields before signing up.');
       return;
     }
 
@@ -107,12 +107,12 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (signUpError) {
-      setSubmitError(getFriendlyAuthError(signUpError.message, "register"));
+      setSubmitError(getFriendlyAuthError(signUpError.message, 'register'));
       return;
     }
 
     // Profile row is auto-created by Supabase trigger (handle_new_user).
-    router.push("/dashboard");
+    router.push('/dashboard');
     router.refresh();
   }
 
@@ -169,7 +169,7 @@ export default function RegisterPage() {
               value={fullName}
               onChange={(e) => {
                 setFullName(e.target.value);
-                clearFieldError("fullName");
+                clearFieldError('fullName');
               }}
               onBlur={() =>
                 setFieldErrors((currentErrors) => ({
@@ -185,10 +185,10 @@ export default function RegisterPage() {
             <p
               id="register-full-name-message"
               className={`mt-2 text-xs ${
-                fieldErrors.fullName ? "text-danger" : "text-white/40"
+                fieldErrors.fullName ? 'text-danger' : 'text-white/40'
               }`}
             >
-              {fieldErrors.fullName ?? "Example: Santos Residence or Unit 4B."}
+              {fieldErrors.fullName ?? 'Example: Santos Residence or Unit 4B.'}
             </p>
           </div>
 
@@ -206,7 +206,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                clearFieldError("email");
+                clearFieldError('email');
               }}
               onBlur={() =>
                 setFieldErrors((currentErrors) => ({
@@ -214,7 +214,7 @@ export default function RegisterPage() {
                   email:
                     validateEmailAddress(
                       email,
-                      "Enter the email address you will use to log in."
+                      'Enter the email address you will use to log in.'
                     ) ?? undefined,
                 }))
               }
@@ -227,11 +227,11 @@ export default function RegisterPage() {
             <p
               id="register-email-message"
               className={`mt-2 text-xs ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? 'text-danger' : 'text-white/40'
               }`}
             >
               {fieldErrors.email ??
-                "We will use this for login and account recovery."}
+                'We will use this for login and account recovery.'}
             </p>
           </div>
 
@@ -245,12 +245,12 @@ export default function RegisterPage() {
             <div className="relative">
               <input
                 id="register-password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  clearFieldError("password");
+                  clearFieldError('password');
                 }}
                 onBlur={() =>
                   setFieldErrors((currentErrors) => ({
@@ -262,13 +262,13 @@ export default function RegisterPage() {
                 required
                 aria-invalid={Boolean(fieldErrors.password)}
                 aria-describedby="register-password-message"
-                className={getInputClass(Boolean(fieldErrors.password), "pr-12")}
+                className={getInputClass(Boolean(fieldErrors.password), 'pr-12')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -282,10 +282,10 @@ export default function RegisterPage() {
           <p
             id="register-password-message"
             className={`mb-8 text-xs ${
-              fieldErrors.password ? "text-danger" : "text-white/40"
+              fieldErrors.password ? 'text-danger' : 'text-white/40'
             }`}
           >
-            {fieldErrors.password ?? "Must be at least 8 characters long."}
+            {fieldErrors.password ?? 'Must be at least 8 characters long.'}
           </p>
 
           <button
@@ -304,14 +304,14 @@ export default function RegisterPage() {
                 Creating account...
               </span>
             ) : (
-              "Sign Up"
+              'Sign Up'
             )}
           </button>
         </form>
 
         <div className="mt-6 flex justify-center">
           <p className="text-sm text-white/50">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <Link
               href="/login"
               className="font-bold text-mint transition-colors hover:text-mint/80"

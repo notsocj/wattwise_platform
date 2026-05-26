@@ -29,7 +29,7 @@ type CompleteRates = {
   supply_charge: number;
 };
 
-type SyncRunStatus = "success" | "failed" | "dry_run";
+type SyncRunStatus = 'success' | 'failed' | 'dry_run';
 
 type ExistingRateRow = {
   effective_month: string;
@@ -45,7 +45,7 @@ type ExistingRateRow = {
 };
 
 const DEFAULT_RATES_ARCHIVES_URL =
-  "https://company.meralco.com.ph/news-and-advisories/rates-archives";
+  'https://company.meralco.com.ph/news-and-advisories/rates-archives';
 
 const MONTHS: Record<string, number> = {
   january: 0,
@@ -63,15 +63,15 @@ const MONTHS: Record<string, number> = {
 };
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-sync-secret",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-sync-secret',
 };
 
 function jsonResponse(status: number, payload: unknown): Response {
   return new Response(JSON.stringify(payload, null, 2), {
     status,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...CORS_HEADERS,
     },
   });
@@ -79,12 +79,12 @@ function jsonResponse(status: number, payload: unknown): Response {
 
 function toIsoMonthStart(date: Date): string {
   const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
   return `${yyyy}-${mm}-01`;
 }
 
 function parseMonthLabel(monthLabel: string): Date | null {
-  const cleaned = monthLabel.replace(/\s+/g, " ").trim();
+  const cleaned = monthLabel.replace(/\s+/g, ' ').trim();
   const match = cleaned.match(/^([A-Za-z]+)\s+(\d{4})$/);
 
   if (!match) {
@@ -102,7 +102,7 @@ function parseMonthLabel(monthLabel: string): Date | null {
 }
 
 function normalizeWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 function isSummaryTitle(title: string): boolean {
@@ -184,30 +184,30 @@ function normalizeTargetMonth(targetMonth?: string): string | undefined {
     return `${fullDateMatch[1]}-${fullDateMatch[2]}`;
   }
 
-  throw new Error("Invalid targetMonth format. Use YYYY-MM.");
+  throw new Error('Invalid targetMonth format. Use YYYY-MM.');
 }
 
 function getCurrentMonthInManila(): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
   }).formatToParts(new Date());
 
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
 
   if (!year || !month) {
-    throw new Error("Unable to resolve current month in Asia/Manila timezone.");
+    throw new Error('Unable to resolve current month in Asia/Manila timezone.');
   }
 
   return `${year}-${month}`;
 }
 
 function bytesToTextFragments(bytes: Uint8Array): string {
-  const raw = new TextDecoder("latin1").decode(bytes);
+  const raw = new TextDecoder('latin1').decode(bytes);
   const chunks = raw.match(/[A-Za-z0-9][A-Za-z0-9\s.,:%()\/+\-]{2,}/g) ?? [];
-  return chunks.join("\n");
+  return chunks.join('\n');
 }
 
 async function extractPdfTextWithPdfJs(pdfBytes: Uint8Array): Promise<string | null> {
@@ -227,15 +227,15 @@ async function extractPdfTextWithPdfJs(pdfBytes: Uint8Array): Promise<string | n
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
       const pageText = (textContent.items as Array<{ str?: string }>)
-        .map((item) => item.str ?? "")
-        .join(" ");
+        .map((item) => item.str ?? '')
+        .join(' ');
 
       if (pageText.trim()) {
         pageTexts.push(pageText);
       }
     }
 
-    const combined = pageTexts.join("\n").trim();
+    const combined = pageTexts.join('\n').trim();
     return combined.length >= 120 ? combined : null;
   } catch (_error) {
     return null;
@@ -243,21 +243,21 @@ async function extractPdfTextWithPdfJs(pdfBytes: Uint8Array): Promise<string | n
 }
 
 async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<string> {
-  const externalParserUrl = Deno.env.get("PDF_TEXT_EXTRACTOR_URL")?.trim();
+  const externalParserUrl = Deno.env.get('PDF_TEXT_EXTRACTOR_URL')?.trim();
 
   if (externalParserUrl) {
     const headers: HeadersInit = {
-      "Content-Type": "application/pdf",
-      "x-source-url": pdfUrl,
+      'Content-Type': 'application/pdf',
+      'x-source-url': pdfUrl,
     };
 
-    const parserSecret = Deno.env.get("PDF_TEXT_EXTRACTOR_SECRET")?.trim();
+    const parserSecret = Deno.env.get('PDF_TEXT_EXTRACTOR_SECRET')?.trim();
     if (parserSecret) {
-      headers["Authorization"] = `Bearer ${parserSecret}`;
+      headers['Authorization'] = `Bearer ${parserSecret}`;
     }
 
     const parserResponse = await fetch(externalParserUrl, {
-      method: "POST",
+      method: 'POST',
       headers,
       body: pdfBytes,
     });
@@ -268,17 +268,17 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
       );
     }
 
-    const parserContentType = parserResponse.headers.get("content-type") || "";
-    if (parserContentType.includes("application/json")) {
+    const parserContentType = parserResponse.headers.get('content-type') || '';
+    if (parserContentType.includes('application/json')) {
       const json = await parserResponse.json();
       const text =
-        (typeof json.text === "string" && json.text) ||
-        (typeof json.content === "string" && json.content) ||
-        (typeof json.plainText === "string" && json.plainText) ||
-        "";
+        (typeof json.text === 'string' && json.text) ||
+        (typeof json.content === 'string' && json.content) ||
+        (typeof json.plainText === 'string' && json.plainText) ||
+        '';
 
       if (!text.trim()) {
-        throw new Error("External PDF parser returned no text.");
+        throw new Error('External PDF parser returned no text.');
       }
 
       return text;
@@ -286,7 +286,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
 
     const text = await parserResponse.text();
     if (!text.trim()) {
-      throw new Error("External PDF parser returned empty response body.");
+      throw new Error('External PDF parser returned empty response body.');
     }
 
     return text;
@@ -299,7 +299,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
 
   // Zero-config fallback: use jina.ai's PDF-to-text proxy if available.
   // This preserves full automation when no dedicated parser service is configured.
-  const strippedPdfUrl = pdfUrl.replace(/^https?:\/\//, "");
+  const strippedPdfUrl = pdfUrl.replace(/^https?:\/\//, '');
   const jinaProxyUrls = [
     `https://r.jina.ai/http://${strippedPdfUrl}`,
     `https://r.jina.ai/https://${strippedPdfUrl}`,
@@ -309,7 +309,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
     try {
       const jinaResponse = await fetch(jinaProxyUrl, {
         headers: {
-          "User-Agent": "WattWise-MeralcoRateSync/1.0",
+          'User-Agent': 'WattWise-MeralcoRateSync/1.0',
         },
       });
 
@@ -320,16 +320,16 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
       const jinaText = await jinaResponse.text();
       const normalizedJina = jinaText.toLowerCase();
       const looksLikeProxyError =
-        normalizedJina.includes("title: error") ||
-        normalizedJina.includes("returned error") ||
-        normalizedJina.includes("forbidden") ||
-        normalizedJina.includes("cached snapshot");
+        normalizedJina.includes('title: error') ||
+        normalizedJina.includes('returned error') ||
+        normalizedJina.includes('forbidden') ||
+        normalizedJina.includes('cached snapshot');
 
       const hasRateSignals =
-        normalizedJina.includes("summary schedule of rates") ||
-        normalizedJina.includes("for non-lifeline") ||
-        normalizedJina.includes("residential") ||
-        normalizedJina.includes("fit-all");
+        normalizedJina.includes('summary schedule of rates') ||
+        normalizedJina.includes('for non-lifeline') ||
+        normalizedJina.includes('residential') ||
+        normalizedJina.includes('fit-all');
 
       if (!looksLikeProxyError && hasRateSignals && jinaText.trim().length >= 200) {
         return jinaText;
@@ -342,7 +342,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
   const localText = bytesToTextFragments(pdfBytes);
   if (localText.length < 600) {
     throw new Error(
-      "PDF text extraction was too short for reliable parsing. Configure PDF_TEXT_EXTRACTOR_URL for robust extraction."
+      'PDF text extraction was too short for reliable parsing. Configure PDF_TEXT_EXTRACTOR_URL for robust extraction.'
     );
   }
 
@@ -350,11 +350,11 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
 }
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function toNumber(raw: string): number | null {
-  const normalized = raw.replace(/,/g, "").trim();
+  const normalized = raw.replace(/,/g, '').trim();
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -362,7 +362,7 @@ function toNumber(raw: string): number | null {
 function parseSignedNumberToken(raw: string): number | null {
   const trimmed = raw.trim();
   const normalized =
-    trimmed.startsWith("(") && trimmed.endsWith(")")
+    trimmed.startsWith('(') && trimmed.endsWith(')')
       ? `-${trimmed.slice(1, -1)}`
       : trimmed;
   return toNumber(normalized);
@@ -370,9 +370,9 @@ function parseSignedNumberToken(raw: string): number | null {
 
 function parseResidentialBaseRowValues(text: string): number[] | null {
   const rowAnchors = [
-    "101 TO 200 KWH",
-    "201 TO 300 KWH",
-    "0 TO 20 KWH",
+    '101 TO 200 KWH',
+    '201 TO 300 KWH',
+    '0 TO 20 KWH',
   ];
 
   for (const anchor of rowAnchors) {
@@ -448,14 +448,14 @@ function findByLabels(
   const window = options?.window ?? 120;
   const requireDecimal = options?.requireDecimal ?? false;
   const numberPattern = requireDecimal
-    ? "-?\\d{1,4}(?:,\\d{3})*\\.\\d{1,4}"
-    : "-?\\d{1,4}(?:,\\d{3})*(?:\\.\\d{1,4})?";
+    ? '-?\\d{1,4}(?:,\\d{3})*\\.\\d{1,4}'
+    : '-?\\d{1,4}(?:,\\d{3})*(?:\\.\\d{1,4})?';
 
   for (const label of labels) {
     const escaped = escapeRegExp(label);
     const regex = new RegExp(
       `${escaped}[\\s\\S]{0,${window}}?(${numberPattern})`,
-      "gi"
+      'gi'
     );
 
     let match: RegExpExecArray | null;
@@ -494,13 +494,13 @@ function findVatRate(text: string): number | null {
     }
   }
 
-  return findByLabels(text, ["VAT rate", "VAT"], { min: 0.01, max: 0.3 });
+  return findByLabels(text, ['VAT rate', 'VAT'], { min: 0.01, max: 0.3 });
 }
 
 function parseRatesFromText(text: string): ParsedRates {
   const normalizedText = text
-    .replace(/\u00A0/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/\u00A0/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 
   const residentialBaseRow = parseResidentialBaseRowValues(normalizedText);
@@ -548,28 +548,28 @@ function parseRatesFromText(text: string): ParsedRates {
   return {
     generation:
       rowFallbackGeneration ??
-      findByLabels(normalizedText, ["Generation Charge", "Generation"], {
+      findByLabels(normalizedText, ['Generation Charge', 'Generation'], {
         min: 0.1,
         max: 20,
         requireDecimal: true,
       }),
     transmission:
       rowFallbackTransmission ??
-      findByLabels(normalizedText, ["Transmission Charge", "Transmission"], {
+      findByLabels(normalizedText, ['Transmission Charge', 'Transmission'], {
         min: 0.05,
         max: 10,
         requireDecimal: true,
       }),
     system_loss:
       rowFallbackSystemLoss ??
-      findByLabels(normalizedText, ["System Loss Charge", "System Loss", "System-Loss"], {
+      findByLabels(normalizedText, ['System Loss Charge', 'System Loss', 'System-Loss'], {
         min: 0.01,
         max: 10,
         requireDecimal: true,
       }),
     distribution:
       rowFallbackDistribution ??
-      findByLabels(normalizedText, ["Distribution Charge", "Distribution"], {
+      findByLabels(normalizedText, ['Distribution Charge', 'Distribution'], {
         min: 0.01,
         max: 10,
         requireDecimal: true,
@@ -578,12 +578,12 @@ function parseRatesFromText(text: string): ParsedRates {
       rowFallbackUniversal ??
       findByLabels(
         normalizedText,
-        ["Universal Charge", "Universal Charges", "Universal Charge FIT-All"],
+        ['Universal Charge', 'Universal Charges', 'Universal Charge FIT-All'],
         { min: 0.001, max: 10, window: 1200, requireDecimal: true }
       ),
     fit_all:
       rowFallbackFitAll ??
-      findByLabels(normalizedText, ["FIT-All", "FIT All", "FITALL"], {
+      findByLabels(normalizedText, ['FIT-All', 'FIT All', 'FITALL'], {
         min: 0.0001,
         max: 3,
         requireDecimal: true,
@@ -591,14 +591,14 @@ function parseRatesFromText(text: string): ParsedRates {
     vat_rate: findVatRate(normalizedText),
     metering_charge:
       rowFallbackMeteringCharge ??
-      findByLabels(normalizedText, ["Metering Charge", "Metering Cust Charge"], {
+      findByLabels(normalizedText, ['Metering Charge', 'Metering Cust Charge'], {
         min: 0,
         max: 100,
         requireDecimal: true,
       }),
     supply_charge:
       rowFallbackSupplyCharge ??
-      findByLabels(normalizedText, ["Supply Charge", "Supply Cust Charge"], {
+      findByLabels(normalizedText, ['Supply Charge', 'Supply Cust Charge'], {
         min: 0,
         max: 100,
         requireDecimal: true,
@@ -616,15 +616,15 @@ function requireNumber(field: keyof CompleteRates, value: number | null): number
 
 function validateRanges(rates: CompleteRates): void {
   const checks: Array<{ key: keyof CompleteRates; min: number; max: number }> = [
-    { key: "generation", min: 0.1, max: 20 },
-    { key: "transmission", min: 0.05, max: 10 },
-    { key: "system_loss", min: 0.01, max: 10 },
-    { key: "distribution", min: 0.01, max: 10 },
-    { key: "universal_charges", min: 0.001, max: 10 },
-    { key: "fit_all", min: 0, max: 3 },
-    { key: "vat_rate", min: 0.01, max: 0.3 },
-    { key: "metering_charge", min: 0, max: 100 },
-    { key: "supply_charge", min: 0, max: 100 },
+    { key: 'generation', min: 0.1, max: 20 },
+    { key: 'transmission', min: 0.05, max: 10 },
+    { key: 'system_loss', min: 0.01, max: 10 },
+    { key: 'distribution', min: 0.01, max: 10 },
+    { key: 'universal_charges', min: 0.001, max: 10 },
+    { key: 'fit_all', min: 0, max: 3 },
+    { key: 'vat_rate', min: 0.01, max: 0.3 },
+    { key: 'metering_charge', min: 0, max: 100 },
+    { key: 'supply_charge', min: 0, max: 100 },
   ];
 
   for (const check of checks) {
@@ -649,19 +649,19 @@ function validateAgainstPrevious(
   }
 
   const maxRelativeChange = Number(
-    Deno.env.get("MERALCO_MAX_RELATIVE_CHANGE") ?? "0.5"
+    Deno.env.get('MERALCO_MAX_RELATIVE_CHANGE') ?? '0.5'
   );
 
   const fields: Array<keyof CompleteRates> = [
-    "generation",
-    "transmission",
-    "system_loss",
-    "distribution",
-    "universal_charges",
-    "fit_all",
-    "vat_rate",
-    "metering_charge",
-    "supply_charge",
+    'generation',
+    'transmission',
+    'system_loss',
+    'distribution',
+    'universal_charges',
+    'fit_all',
+    'vat_rate',
+    'metering_charge',
+    'supply_charge',
   ];
 
   for (const field of fields) {
@@ -681,7 +681,7 @@ function validateAgainstPrevious(
 
   if (warnings.length > 0 && !force) {
     throw new Error(
-      `Anomaly validation failed. Set force=true to override. Details: ${warnings.join(" | ")}`
+      `Anomaly validation failed. Set force=true to override. Details: ${warnings.join(' | ')}`
     );
   }
 
@@ -700,7 +700,7 @@ async function logRun(
     warnings?: string[];
   }
 ): Promise<void> {
-  const { error } = await supabase.from("meralco_rate_sync_runs").insert({
+  const { error } = await supabase.from('meralco_rate_sync_runs').insert({
     status: payload.status,
     message: payload.message,
     source_url: payload.source_url,
@@ -713,7 +713,7 @@ async function logRun(
 
   if (error) {
     // Do not fail the main pipeline if log table is unavailable.
-    console.warn("meralco_rate_sync_runs insert skipped:", error.message);
+    console.warn('meralco_rate_sync_runs insert skipped:', error.message);
   }
 }
 
@@ -725,31 +725,31 @@ function getRequiredEnv(name: string): string {
   return value;
 }
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.10.38/legacy/build/pdf.mjs";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@4.10.38/legacy/build/pdf.mjs';
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS });
   }
 
-  if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed. Use POST." });
+  if (req.method !== 'POST') {
+    return jsonResponse(405, { error: 'Method not allowed. Use POST.' });
   }
 
   let supabase: ReturnType<typeof createClient> | null = null;
   let sourceUrlForLog = DEFAULT_RATES_ARCHIVES_URL;
 
   try {
-    const requiredSecret = getRequiredEnv("MERALCO_SYNC_SECRET");
-    const incomingSecret = req.headers.get("x-sync-secret")?.trim();
+    const requiredSecret = getRequiredEnv('MERALCO_SYNC_SECRET');
+    const incomingSecret = req.headers.get('x-sync-secret')?.trim();
 
     if (!incomingSecret || incomingSecret !== requiredSecret) {
-      return jsonResponse(401, { error: "Unauthorized." });
+      return jsonResponse(401, { error: 'Unauthorized.' });
     }
 
-    const supabaseUrl = getRequiredEnv("SUPABASE_URL");
-    const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = getRequiredEnv('SUPABASE_URL');
+    const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
 
     supabase = createClient(supabaseUrl, serviceRoleKey);
 
@@ -757,11 +757,11 @@ Deno.serve(async (req) => {
     const dryRun = Boolean(body?.dryRun);
     const force = Boolean(body?.force);
     const requestedTargetMonth = normalizeTargetMonth(
-      typeof body?.targetMonth === "string" ? body.targetMonth : undefined
+      typeof body?.targetMonth === 'string' ? body.targetMonth : undefined
     );
     const currentMonthInManila = getCurrentMonthInManila();
     const ratesArchivesUrl =
-      typeof body?.ratesArchivesUrl === "string" && body.ratesArchivesUrl.trim()
+      typeof body?.ratesArchivesUrl === 'string' && body.ratesArchivesUrl.trim()
         ? body.ratesArchivesUrl.trim()
         : DEFAULT_RATES_ARCHIVES_URL;
 
@@ -771,9 +771,9 @@ Deno.serve(async (req) => {
     if (!requestedTargetMonth) {
       const currentMonthStart = `${currentMonthInManila}-01`;
       const { data: existingCurrentMonthRow, error: existingCurrentMonthError } = await supabase
-        .from("meralco_rates")
-        .select("effective_month")
-        .eq("effective_month", currentMonthStart)
+        .from('meralco_rates')
+        .select('effective_month')
+        .eq('effective_month', currentMonthStart)
         .limit(1)
         .maybeSingle<{ effective_month: string }>();
 
@@ -787,7 +787,7 @@ Deno.serve(async (req) => {
         const message = `Rate for current month ${currentMonthInManila} already exists. No sync needed.`;
 
         await logRun(supabase, {
-          status: "success",
+          status: 'success',
           message,
           source_url: ratesArchivesUrl,
           effective_month: currentMonthStart,
@@ -795,7 +795,7 @@ Deno.serve(async (req) => {
 
         return jsonResponse(200, {
           ok: true,
-          mode: "noop_existing_current_month",
+          mode: 'noop_existing_current_month',
           message,
           effective_month: currentMonthStart,
         });
@@ -804,7 +804,7 @@ Deno.serve(async (req) => {
 
     const archiveResponse = await fetch(ratesArchivesUrl, {
       headers: {
-        "User-Agent": "WattWise-MeralcoRateSync/1.0",
+        'User-Agent': 'WattWise-MeralcoRateSync/1.0',
       },
     });
 
@@ -818,7 +818,7 @@ Deno.serve(async (req) => {
     const archiveEntries = parseArchiveEntries(archiveHtml);
 
     if (archiveEntries.length === 0) {
-      throw new Error("No downloadable rate rows found in rates archives HTML.");
+      throw new Error('No downloadable rate rows found in rates archives HTML.');
     }
 
     let selectedSummary: ArchiveEntry;
@@ -844,9 +844,9 @@ Deno.serve(async (req) => {
     // Automatic daily mode: if selected month already exists, do nothing.
     if (!requestedTargetMonth) {
       const { data: existingSelectedMonthRow, error: existingSelectedMonthError } = await supabase
-        .from("meralco_rates")
-        .select("effective_month")
-        .eq("effective_month", effectiveMonth)
+        .from('meralco_rates')
+        .select('effective_month')
+        .eq('effective_month', effectiveMonth)
         .limit(1)
         .maybeSingle<{ effective_month: string }>();
 
@@ -865,7 +865,7 @@ Deno.serve(async (req) => {
           : `Rate for month ${effectiveMonth.slice(0, 7)} already exists. No sync needed.`;
 
         await logRun(supabase, {
-          status: "success",
+          status: 'success',
           message,
           source_url: ratesArchivesUrl,
           pdf_url: selectedSummary.pdfUrl,
@@ -874,7 +874,7 @@ Deno.serve(async (req) => {
 
         return jsonResponse(200, {
           ok: true,
-          mode: "noop_existing_selected_month",
+          mode: 'noop_existing_selected_month',
           message,
           effective_month: effectiveMonth,
           selected_summary: selectedSummary,
@@ -884,7 +884,7 @@ Deno.serve(async (req) => {
 
     const pdfResponse = await fetch(selectedSummary.pdfUrl, {
       headers: {
-        "User-Agent": "WattWise-MeralcoRateSync/1.0",
+        'User-Agent': 'WattWise-MeralcoRateSync/1.0',
       },
     });
 
@@ -897,11 +897,11 @@ Deno.serve(async (req) => {
     const parsed = parseRatesFromText(extractedText);
 
     const { data: previousRow, error: previousError } = await supabase
-      .from("meralco_rates")
+      .from('meralco_rates')
       .select(
-        "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
+        'effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge'
       )
-      .order("effective_month", { ascending: false })
+      .order('effective_month', { ascending: false })
       .limit(1)
       .maybeSingle<ExistingRateRow>();
 
@@ -910,21 +910,21 @@ Deno.serve(async (req) => {
     }
 
     const completeRates: CompleteRates = {
-      generation: requireNumber("generation", parsed.generation),
-      transmission: requireNumber("transmission", parsed.transmission),
-      system_loss: requireNumber("system_loss", parsed.system_loss),
-      distribution: requireNumber("distribution", parsed.distribution),
-      universal_charges: requireNumber("universal_charges", parsed.universal_charges),
-      fit_all: requireNumber("fit_all", parsed.fit_all),
+      generation: requireNumber('generation', parsed.generation),
+      transmission: requireNumber('transmission', parsed.transmission),
+      system_loss: requireNumber('system_loss', parsed.system_loss),
+      distribution: requireNumber('distribution', parsed.distribution),
+      universal_charges: requireNumber('universal_charges', parsed.universal_charges),
+      fit_all: requireNumber('fit_all', parsed.fit_all),
       vat_rate: parsed.vat_rate ?? previousRow?.vat_rate ?? (() => {
-        throw new Error("Missing vat_rate in parsed data and no previous row fallback available.");
+        throw new Error('Missing vat_rate in parsed data and no previous row fallback available.');
       })(),
       metering_charge:
         parsed.metering_charge ??
         previousRow?.metering_charge ??
         (() => {
           throw new Error(
-            "Missing metering_charge in parsed data and no previous row fallback available."
+            'Missing metering_charge in parsed data and no previous row fallback available.'
           );
         })(),
       supply_charge:
@@ -932,7 +932,7 @@ Deno.serve(async (req) => {
         previousRow?.supply_charge ??
         (() => {
           throw new Error(
-            "Missing supply_charge in parsed data and no previous row fallback available."
+            'Missing supply_charge in parsed data and no previous row fallback available.'
           );
         })(),
     };
@@ -942,8 +942,8 @@ Deno.serve(async (req) => {
 
     if (dryRun) {
       await logRun(supabase, {
-        status: "dry_run",
-        message: "Dry run completed successfully.",
+        status: 'dry_run',
+        message: 'Dry run completed successfully.',
         source_url: ratesArchivesUrl,
         pdf_url: selectedSummary.pdfUrl,
         effective_month: effectiveMonth,
@@ -953,7 +953,7 @@ Deno.serve(async (req) => {
 
       return jsonResponse(200, {
         ok: true,
-        mode: "dry_run",
+        mode: 'dry_run',
         source_url: ratesArchivesUrl,
         selected_summary: selectedSummary,
         effective_month: effectiveMonth,
@@ -984,19 +984,19 @@ Deno.serve(async (req) => {
     };
 
     let upsertResponse = await supabase
-      .from("meralco_rates")
-      .upsert(metadataPayload, { onConflict: "effective_month" })
+      .from('meralco_rates')
+      .upsert(metadataPayload, { onConflict: 'effective_month' })
       .select()
       .maybeSingle();
 
     if (upsertResponse.error && /column .* does not exist/i.test(upsertResponse.error.message)) {
       upsertResponse = await supabase
-        .from("meralco_rates")
-        .upsert(basePayload, { onConflict: "effective_month" })
+        .from('meralco_rates')
+        .upsert(basePayload, { onConflict: 'effective_month' })
         .select()
         .maybeSingle();
       warnings.push(
-        "Metadata columns are not present yet. Applied base upsert without source/fetched metadata."
+        'Metadata columns are not present yet. Applied base upsert without source/fetched metadata.'
       );
     }
 
@@ -1005,8 +1005,8 @@ Deno.serve(async (req) => {
     }
 
     await logRun(supabase, {
-      status: "success",
-      message: "Automatic Meralco rate sync completed.",
+      status: 'success',
+      message: 'Automatic Meralco rate sync completed.',
       source_url: ratesArchivesUrl,
       pdf_url: selectedSummary.pdfUrl,
       effective_month: effectiveMonth,
@@ -1016,7 +1016,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse(200, {
       ok: true,
-      mode: "upsert",
+      mode: 'upsert',
       source_url: ratesArchivesUrl,
       selected_summary: selectedSummary,
       effective_month: effectiveMonth,
@@ -1024,11 +1024,11 @@ Deno.serve(async (req) => {
       warnings,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
 
     if (supabase) {
       await logRun(supabase, {
-        status: "failed",
+        status: 'failed',
         message,
         source_url: sourceUrlForLog,
       });

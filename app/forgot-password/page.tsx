@@ -1,35 +1,35 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { KeyRound, ArrowLeft } from "lucide-react";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { KeyRound, ArrowLeft } from 'lucide-react';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { createClient } from '@/lib/supabase/client';
 import {
   getFriendlyAuthError,
   normalizeEmail,
   validateEmailAddress,
-} from "@/lib/user-form-messages";
+} from '@/lib/user-form-messages';
 
 type ResetFieldErrors = Partial<{
   email: string;
 }>;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  'w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors';
 
 function getInputClass(hasError: boolean): string {
   const stateClass = hasError
-    ? "border border-danger/70 focus:border-danger"
-    : "border border-mint/40 focus:border-mint";
+    ? 'border border-danger/70 focus:border-danger'
+    : 'border border-mint/40 focus:border-mint';
 
   return `${inputBaseClass} ${stateClass}`;
 }
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ResetFieldErrors>({});
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
   function validateForm(): ResetFieldErrors {
     const emailError = validateEmailAddress(
       email,
-      "Enter the email address linked to your WattWise account."
+      'Enter the email address linked to your WattWise account.'
     );
 
     return emailError ? { email: emailError } : {};
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
     setFieldErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitError("Please fix the highlighted email field before continuing.");
+      setSubmitError('Please fix the highlighted email field before continuing.');
       return;
     }
 
@@ -74,14 +74,14 @@ export default function ForgotPasswordPage() {
       );
 
       if (resetError) {
-        setSubmitError(getFriendlyAuthError(resetError.message, "reset"));
+        setSubmitError(getFriendlyAuthError(resetError.message, 'reset'));
       } else {
         setEmail(normalizedEmail);
         setSuccess(true);
       }
     } catch (err) {
       setSubmitError(
-        getFriendlyAuthError(err instanceof Error ? err.message : undefined, "reset")
+        getFriendlyAuthError(err instanceof Error ? err.message : undefined, 'reset')
       );
     } finally {
       setLoading(false);
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
         </div>
         <h1 className="mb-2 text-2xl font-bold">Check Your Email</h1>
         <p className="mb-8 max-w-sm text-center text-white/50">
-          We&apos;ve sent a password reset link to{" "}
+          We&apos;ve sent a password reset link to{' '}
           <span className="font-semibold text-mint">{email}</span>. Click the
           link to set a new password.
         </p>
@@ -177,7 +177,7 @@ export default function ForgotPasswordPage() {
                   email:
                     validateEmailAddress(
                       email,
-                      "Enter the email address linked to your WattWise account."
+                      'Enter the email address linked to your WattWise account.'
                     ) ?? undefined,
                 })
               }
@@ -190,11 +190,11 @@ export default function ForgotPasswordPage() {
             <p
               id="reset-email-message"
               className={`mt-2 text-sm ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? 'text-danger' : 'text-white/40'
               }`}
             >
               {fieldErrors.email ??
-                "We will send you a link to reset your password."}
+                'We will send you a link to reset your password.'}
             </p>
           </div>
 
@@ -214,7 +214,7 @@ export default function ForgotPasswordPage() {
                 Sending...
               </span>
             ) : (
-              "Send Reset Link"
+              'Send Reset Link'
             )}
           </button>
         </form>

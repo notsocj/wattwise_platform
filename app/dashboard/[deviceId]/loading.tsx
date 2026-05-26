@@ -1,7 +1,7 @@
 import LoadingIndicator, {
   LoadingSkeleton,
   LoadingSkeletonText,
-} from "@/components/ui/LoadingIndicator";
+} from '@/components/ui/LoadingIndicator';
 
 export default function DeviceDetailLoading() {
   return (

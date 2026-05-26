@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import AddApplianceModal from "@/components/ui/AddApplianceModal";
-import SuccessToast from "@/components/ui/SuccessToast";
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import AddApplianceModal from '@/components/ui/AddApplianceModal';
+import SuccessToast from '@/components/ui/SuccessToast';
 
 export default function AddApplianceTile() {
   const router = useRouter();
