@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { Globe } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Global Analytics',
+};
 
 export default function AdminAnalyticsPage() {
   return (
