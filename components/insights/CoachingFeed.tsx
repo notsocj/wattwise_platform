@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Trophy, Leaf, Search, Zap } from "lucide-react";
-import { InsightType } from "@/lib/constants";
+import { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, Trophy, Leaf, Search, Zap } from 'lucide-react';
+import { InsightType } from '@/lib/constants';
 
 type InsightResult = {
   message: string;
@@ -42,9 +42,9 @@ export default function CoachingFeed() {
 
   const fetchInsight = useCallback(async (insightType: InsightType) => {
     try {
-      const res = await fetch("/api/insights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ insight_type: insightType }),
       });
 
@@ -71,7 +71,7 @@ export default function CoachingFeed() {
         [insightType]: {
           loading: false,
           message: null,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         },
       }));
     }

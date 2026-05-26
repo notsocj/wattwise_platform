@@ -1,5 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,47 +33,47 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protected routes — redirect unauthenticated users to login
-  const protectedRoutes = ["/dashboard", "/insights", "/admin", "/update-password"];
+  const protectedRoutes = ['/dashboard', '/insights', '/admin', '/update-password'];
   const isProtected = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
 
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
+    loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 
   // Admin routes — require super_admin role
-  if (pathname.startsWith("/admin") && user) {
+  if (pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
       .single();
 
-    if (profile?.role !== "super_admin") {
+    if (profile?.role !== 'super_admin') {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/login";
-      loginUrl.searchParams.set("error", "unauthorized");
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('error', 'unauthorized');
       return NextResponse.redirect(loginUrl);
     }
   }
 
   // Auth routes — redirect authenticated users away from login/register
-  const authRoutes = ["/login", "/register", "/onboarding"];
+  const authRoutes = ['/login', '/register', '/onboarding'];
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   if (isAuthRoute && user) {
     // Route super_admins to /admin, regular users to /dashboard
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
       .single();
 
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = profile?.role === "super_admin" ? "/admin" : "/dashboard";
+    redirectUrl.pathname = profile?.role === 'super_admin' ? '/admin' : '/dashboard';
     return NextResponse.redirect(redirectUrl);
   }
 

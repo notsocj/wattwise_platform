@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import LoadingIndicator from '@/components/ui/LoadingIndicator';
 
 const MIN_VISIBLE_MS = 220;
 const MAX_VISIBLE_MS = 5000;
@@ -66,17 +66,17 @@ export default function RouteTransitionIndicator() {
         return;
       }
 
-      const anchor = clickTarget.closest("a");
+      const anchor = clickTarget.closest('a');
       if (!(anchor instanceof HTMLAnchorElement)) {
         return;
       }
 
-      if (anchor.target === "_blank" || anchor.hasAttribute("download")) {
+      if (anchor.target === '_blank' || anchor.hasAttribute('download')) {
         return;
       }
 
-      const href = anchor.getAttribute("href");
-      if (!href || href.startsWith("#")) {
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#')) {
         return;
       }
 
@@ -99,12 +99,12 @@ export default function RouteTransitionIndicator() {
       beginTransition();
     }
 
-    document.addEventListener("click", onDocumentClick, true);
-    window.addEventListener("popstate", onPopState);
+    document.addEventListener('click', onDocumentClick, true);
+    window.addEventListener('popstate', onPopState);
 
     return () => {
-      document.removeEventListener("click", onDocumentClick, true);
-      window.removeEventListener("popstate", onPopState);
+      document.removeEventListener('click', onDocumentClick, true);
+      window.removeEventListener('popstate', onPopState);
       clearTimers();
     };
   }, [beginTransition, clearTimers]);

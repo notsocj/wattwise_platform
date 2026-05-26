@@ -1,6 +1,6 @@
 import LoadingIndicator, {
   LoadingSkeleton,
-} from "@/components/ui/LoadingIndicator";
+} from '@/components/ui/LoadingIndicator';
 
 function StatCardSkeleton() {
   return (

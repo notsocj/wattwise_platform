@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 type RealtimeRefreshBridgeProps = {
   deviceKeys: string[];
@@ -14,7 +14,7 @@ const DEFAULT_THROTTLE_MS = 1200;
 const DEFAULT_POLL_MS = 0;
 
 function sanitizeChannelKey(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);
+  return value.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
 }
 
 export default function RealtimeRefreshBridge({
@@ -82,16 +82,16 @@ export default function RealtimeRefreshBridge({
 
       return supabase
         .channel(channelName)
-        .on("postgres_changes", {
-          event: "INSERT",
-          schema: "public",
-          table: "energy_logs",
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'energy_logs',
           filter: `device_id=eq.${key}`,
         }, scheduleRefresh)
-        .on("postgres_changes", {
-          event: "UPDATE",
-          schema: "public",
-          table: "energy_logs",
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'energy_logs',
           filter: `device_id=eq.${key}`,
         }, scheduleRefresh)
         .subscribe();

@@ -1,6 +1,6 @@
 export default function WattwiseMascot({
-  className = "",
-  title = "WattWise Mascot",
+  className = '',
+  title = 'WattWise Mascot',
 }: {
   className?: string;
   title?: string;

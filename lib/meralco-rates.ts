@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type MeralcoRateComponents = {
   generation: number;
@@ -28,7 +28,7 @@ type MeralcoRatesRow = {
 };
 
 function toNumber(value: number | string): number {
-  return typeof value === "number" ? value : Number(value);
+  return typeof value === 'number' ? value : Number(value);
 }
 
 export function mapMeralcoRatesRowToComponents(
@@ -50,27 +50,27 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   fixedMonthlyChargesPhp: number;
   vatRate: number;
   effectiveMonth: string;
-  source: "table";
+  source: 'table';
 }> {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   const { data, error } = await supabase
-    .from("meralco_rates")
+    .from('meralco_rates')
     .select(
-      "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
+      'effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge'
     )
-    .lte("effective_month", todayIso)
-    .order("effective_month", { ascending: false })
+    .lte('effective_month', todayIso)
+    .order('effective_month', { ascending: false })
     .limit(1)
     .maybeSingle<MeralcoRatesRow>();
 
   if (error) {
-    throw new Error(`Failed to fetch meralco_rates: ${error.message || "unknown error"}`);
+    throw new Error(`Failed to fetch meralco_rates: ${error.message || 'unknown error'}`);
   }
 
   if (!data) {
     throw new Error(
-      "No active meralco_rates row found in the database. Please add a row in the admin Rate Editor or run the seed migration."
+      'No active meralco_rates row found in the database. Please add a row in the admin Rate Editor or run the seed migration.'
     );
   }
 
@@ -84,7 +84,7 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
       toNumber(data.metering_charge) + toNumber(data.supply_charge),
     vatRate: toNumber(data.vat_rate),
     effectiveMonth: data.effective_month,
-    source: "table",
+    source: 'table',
   };
 }
 

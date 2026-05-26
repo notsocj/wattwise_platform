@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, BarChart3 } from "lucide-react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, BarChart3 } from 'lucide-react';
 
 const tabs = [
-  { href: "/dashboard", label: "HOME", icon: Home },
-  { href: "/insights", label: "INSIGHTS", icon: BarChart3 },
+  { href: '/dashboard', label: 'HOME', icon: Home },
+  { href: '/insights', label: 'INSIGHTS', icon: BarChart3 },
 ] as const;
 
 export default function BottomNav() {
@@ -16,13 +16,13 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-white/5 bg-base/95 backdrop-blur-sm">
       <div className="flex items-center justify-around px-4 py-3">
         {tabs.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + "/");
+          const isActive = pathname === href || pathname.startsWith(href + '/');
           return (
             <Link
               key={href}
               href={href}
               className={`flex flex-col items-center gap-1 transition-colors ${
-                isActive ? "text-mint" : "text-white/40 hover:text-white/60"
+                isActive ? 'text-mint' : 'text-white/40 hover:text-white/60'
               }`}
             >
               <div className="relative">

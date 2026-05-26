@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import type { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 type MobileViewportProps = {
   children: ReactNode;
@@ -10,7 +10,7 @@ type MobileViewportProps = {
 export default function MobileViewport({ children }: MobileViewportProps) {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith('/admin')) {
     return <>{children}</>;
   }
 

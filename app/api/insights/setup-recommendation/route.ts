@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { createClient } from '@/lib/supabase/server';
 import {
   computeMeralcoBill,
   getActiveMeralcoRates,
-} from "@/lib/meralco-rates";
-import { ApplianceType } from "@/lib/constants";
+} from '@/lib/meralco-rates';
+import { ApplianceType } from '@/lib/constants';
 
 const TYPICAL_WATTS: Record<ApplianceType, number> = {
   [ApplianceType.Refrigerator]: 150,
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await request.json();
@@ -39,14 +39,14 @@ export async function POST(request: NextRequest) {
   if (
     !appliance_type ||
     !Object.values(ApplianceType).includes(appliance_type) ||
-    typeof daily_hours !== "number" ||
+    typeof daily_hours !== 'number' ||
     daily_hours < 1 ||
     daily_hours > 24 ||
-    typeof home_budget !== "number" ||
+    typeof home_budget !== 'number' ||
     home_budget <= 0
   ) {
     return NextResponse.json(
-      { error: "Invalid input. Provide appliance_type, daily_hours (1-24), and home_budget (> 0)." },
+      { error: 'Invalid input. Provide appliance_type, daily_hours (1-24), and home_budget (> 0).' },
       { status: 400 }
     );
   }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "OpenAI API key not configured. Add OPENAI_API_KEY to .env.local." },
+      { error: 'OpenAI API key not configured. Add OPENAI_API_KEY to .env.local.' },
       { status: 500 }
     );
   }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     activeRates = await getActiveMeralcoRates(supabase);
   } catch {
     return NextResponse.json(
-      { error: "No active Meralco rates found. Admin must seed the meralco_rates table." },
+      { error: 'No active Meralco rates found. Admin must seed the meralco_rates table.' },
       { status: 500 }
     );
   }
@@ -82,26 +82,26 @@ export async function POST(request: NextRequest) {
 
   const applianceLabel =
     appliance_type === ApplianceType.Refrigerator
-      ? "Refrigerator"
+      ? 'Refrigerator'
       : appliance_type === ApplianceType.Aircon
-        ? "Aircon"
+        ? 'Aircon'
         : appliance_type === ApplianceType.Tv
-          ? "TV"
-          : "Appliance";
+          ? 'TV'
+          : 'Appliance';
 
   const openai = new OpenAI({ apiKey });
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: 'gpt-4o-mini',
     max_tokens: 250,
     temperature: 0.7,
     messages: [
       {
-        role: "system",
+        role: 'system',
         content: `You are a friendly Filipino financial and energy advisor. Speak in casual Taglish (Tagalog-English mix). Be encouraging, practical, and hyper-specific to the user's data. Always reference exact PHP amounts, appliance names, and timeframes. Keep your response to 2-3 sentences max. Do not use emojis.`,
       },
       {
-        role: "user",
+        role: 'user',
         content: `I'm setting up a new ${applianceLabel} that I plan to use ${daily_hours} hours per day. Based on current Meralco rates, the estimated monthly cost is PHP ${estimatedMonthlyCost.toFixed(2)} (about ${estimatedMonthlyKWh.toFixed(1)} kWh/month). My total home budget is PHP ${home_budget.toLocaleString()}. What budget limit would you recommend for this ${applianceLabel}?`,
       },
     ],

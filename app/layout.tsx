@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { createClient } from "@/lib/supabase/server";
-import SupabaseProvider from "@/components/providers/SupabaseProvider";
-import MobileViewport from "@/components/ui/MobileViewport";
-import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
+import type { Metadata } from 'next';
+import './globals.css';
+import { createClient } from '@/lib/supabase/server';
+import SupabaseProvider from '@/components/providers/SupabaseProvider';
+import MobileViewport from '@/components/ui/MobileViewport';
+import RouteTransitionIndicator from '@/components/ui/RouteTransitionIndicator';
 
 export const metadata: Metadata = {
   title: {
-    default: "WattWise",
-    template: "%s | WattWise",
+    default: 'WattWise',
+    template: '%s | WattWise',
   },
-  applicationName: "WattWise",
-  description: "Smart Energy. Real Savings.",
+  applicationName: 'WattWise',
+  description: 'Smart Energy. Real Savings.',
 };
 
 export default async function RootLayout({
