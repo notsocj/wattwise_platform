@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { TrendingUp } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Revenue & Growth',
+};
 
 export default function AdminGrowthPage() {
   return (

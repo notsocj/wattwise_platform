@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   TrendingDown,
@@ -28,6 +29,10 @@ import {
 import { ApplianceType } from "@/lib/constants";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+};
 
 type DeviceRow = {
   id: string;

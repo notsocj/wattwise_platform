@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -13,6 +14,23 @@ import {
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+
+export async function generateMetadata(props: {
+  params: Promise<{ deviceId: string }>;
+}): Promise<Metadata> {
+  const { deviceId } = await props.params;
+  const supabase = await createClient();
+
+  const { data: device } = await supabase
+    .from("devices")
+    .select("device_name")
+    .eq("id", deviceId)
+    .maybeSingle<{ device_name: string }>();
+
+  return {
+    title: device?.device_name ?? "Device Detail",
+  };
+}
 
 type DeviceRow = {
   id: string;

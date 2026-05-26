@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { Shield } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Admin Overview',
+};
 
 export default function AdminPage() {
   return (
