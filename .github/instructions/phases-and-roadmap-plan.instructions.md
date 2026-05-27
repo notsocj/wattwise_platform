@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** May 25, 2026
+> **Last Updated:** May 27, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -16,7 +16,7 @@ applyTo: "**"
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~75% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; all 12 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
 | 2 — Billing & Control | In Progress | ~78% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, monthly usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff |
-| 3 — AI & PWA | In Progress | ~74% | Insights UI implemented with Appliances Overview + CoachingFeed; AI insights API route implemented with Trigger & Cache; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; OpenAI package installed; PWA still pending |
+| 3 — AI & PWA | In Progress | ~77% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
@@ -175,26 +175,31 @@ applyTo: "**"
   - [x] Calculate inputs: `currentSpend` (sum of this month's kWh × Meralco rate), `monthlyBudget` (from `profiles.monthly_budget_php`), `daysElapsed`
   - [x] System prompt must reference exact ₱ amounts, appliance names, and timeframes
   - [x] Example output tone: *"Naku boss, Day 15 pa lang pero nasa ₱1,500 na tayo sa ₱2,000 budget mo..."*
-  - [x] Display as an **orange/red "Naku!" card** on the Insights Dashboard
+  - [x] Display as a dismissible contextual card on the Home Dashboard when the payload is actionable or urgent
 
 - [x] **Weekly "Bida" Recap (`weekly_recap`)**
   - [x] Calculate inputs: `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP`
   - [x] System prompt must compare week-over-week and provide positive reinforcement
-  - [x] Display as a **green "Bida" card** on the Insights Dashboard
+  - [x] Keep available through `app/api/insights/route.ts`, but do not force-render it when the UX would become noisy
 
-- [x] **Insights Dashboard (`app/insights/page.tsx`)** *(fully wired — Appliances Overview + CoachingFeed client component fetching real AI insights via Trigger & Cache)*
-  - [x] Build **Device Performance Leaderboard** — ranked from most expensive to most efficient
-  - [x] Build **Coaching Feed** (Bento layout):
-    - [x] Naku! Alert card (amber/red styling)
-    - [x] Bida Recap card (green styling)
-    - [x] Strategy Tip card (actionable advice)
-  - [x] Build **Trend Comparison** — "This Wk" vs. "Last Wk" interactive bar chart
-  - [x] Build **Financial Forecast** — predicted monthly bill + projected savings %
+- [x] **Event-Driven Contextual Insight UX**
+  - [x] Deprecate the dedicated `/insights` route and remove it from the bottom navigation
+  - [x] Break AI insights into dismissible contextual cards: `BudgetAlertCard`, `AnomalyAlertCard`, and `TipidTipCard`
+  - [x] Inject cards into existing workflows: Home budget summary, Burn analytics, and Device Detail
+  - [x] Hide cards when the AI payload is empty, generic, or not actionable
 
 - [x] **Predictive Burn-Rate Analytics (`app/analytics/page.tsx`)**
   - [x] Use bounded usage RPCs for the past 7 days and month-to-date usage
   - [x] Use active unbundled Meralco rates for projected PHP cost
   - [x] Render 7-day financial velocity and projected calendar-month bill
+  - [x] Render anomaly AI context above the burn-rate chart only when actionable
+
+- [x] **Calendar Analytics (`app/dashboard/calendar/page.tsx`)**
+  - [x] Add a compact 7-day summary widget on the Home Dashboard with an expand affordance
+  - [x] Build a current-month calendar grid that displays per-day kWh and variable cost
+  - [x] Color-code day cells subtly by consumption intensity
+  - [x] Add `POST /api/insights/calendar` for Taglish calendar habit analysis
+  - [x] Render the AI readout in a dismissible slide-up panel using `LoadingIndicator`
 
 - [x] **Advanced Settings (`app/settings/page.tsx`)**
   - [x] Add global theme controls through `ThemeProvider`
@@ -202,7 +207,7 @@ applyTo: "**"
   - [x] Add per-device `require_approval_on_expiry` safety override toggles
 
 - [x] **Bottom Navigation Bar**
-  - [x] Implement persistent navbar: **Home**, **Insights**, **Burn**, and **Settings**
+  - [x] Implement persistent navbar: **Home**, **Burn**, and **Settings**
   - [x] Active tab highlighted with green glow indicator
   - [x] Navigation bar hidden on Device Detail page (focus mode)
 
@@ -213,9 +218,9 @@ applyTo: "**"
   - [ ] Add install prompt banner for iOS/Android home screen installation
   - [ ] Test offline behavior: cached dashboard loads, graceful fallback for live data
 
-- [x] **Mascot/AI Tip Banner** *(UI complete — mock data; CoachingFeed now fetches real AI insights)*
-  - [x] Build sticky AI tip banner on Home Dashboard showing latest insight snippet
-  - [x] Tapping the banner navigates to the full Insights Dashboard
+- [x] **Contextual Tipid Tips**
+  - [x] Replace the old mascot banner with a dismissible `TipidTipCard` in the device-detail flow
+  - [x] Keep the card hidden when the AI response is generic or non-actionable
 
 ### Hardware Tasks (Firmware)
 
@@ -352,5 +357,5 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 |---|---|---|
 | 1 | `app/layout.tsx`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/page.tsx` | `main.cpp`, `wifi_manager.cpp`, `pzem_reader.cpp`, `supabase_client.cpp` |
 | 2 | `lib/meralco-rates.ts`, `app/dashboard/[deviceId]/page.tsx` | None |
-| 3 | `app/api/insights/route.ts`, `app/insights/page.tsx`, `manifest.json`, `sw.ts` | `config_handler.cpp`, `ota_updater.cpp` |
+| 3 | `app/api/insights/route.ts`, `app/api/insights/calendar/route.ts`, `components/insights/ContextualInsightCard.tsx`, `app/dashboard/page.tsx`, `app/dashboard/calendar/page.tsx`, `app/analytics/page.tsx`, `app/dashboard/[deviceId]/page.tsx`, `manifest.json`, `sw.ts` | `config_handler.cpp`, `ota_updater.cpp` |
 | 4 | `app/admin/layout.tsx`, `app/admin/rates/page.tsx`, `app/admin/ai-costs/page.tsx`, `app/admin/health/page.tsx`, `app/admin/analytics/page.tsx` | `diagnostics.cpp`, `offline_buffer.cpp` |

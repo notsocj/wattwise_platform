@@ -120,12 +120,24 @@ The OpenAI system prompt **must** define the assistant as:
 Example phrasing to steer toward:
 > *"Naku boss, Day 15 pa lang pero nasa PHP 1,500 na tayo sa PHP 2,000 budget mo. Medyo dahan-dahan tayo sa washing machine this week para di tayo ma-over budget."*
 
-### 3b. The Two Supported Insight Types
+### 3b. Supported Insight Types
 
 | `insight_type` | Purpose | Required input data |
 |---|---|---|
 | `budget_alert` | Warns if spend trajectory will exceed monthly budget | `currentSpend`, `monthlyBudget`, `daysElapsed` |
 | `weekly_recap` | Positive reinforcement comparing week-over-week consumption | `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP` |
+| `anomaly_alert` | Flags unusual spikes or one-device outliers | `thisWeekKWh`, `lastWeekKWh`, top-device usage/cost |
+| `cost_optimizer` | Gives one concrete savings action | `monthlyBudget`, `projectedMonthly`, top-device usage/cost |
+
+### 3b.1 Contextual Insight UX
+
+- The dedicated `/insights` page is deprecated. Prefer small contextual cards injected into existing workflows instead of a single long AI feed.
+- `budget_alert` belongs below the Home budget summary, `anomaly_alert` belongs near Burn analytics, and `cost_optimizer` belongs in device-level or device-list contexts.
+- Contextual AI cards must be dismissible on the client and should remember the dismissal per insight type and message so stale repeats stay hidden.
+- `app/api/insights/route.ts` must return structured JSON booleans for these cards. `budget.is_at_risk`, `anomaly.is_detected`, and `tipid_tip.has_tip` are the source of truth for rendering, not message heuristics.
+- If a boolean is false, its message must be an empty string. Do not return filler text like "everything looks normal."
+- If an insight payload is non-actionable, render `null` instead of a card. Clean dashboards beat mandatory AI chrome.
+- Calendar habit analysis belongs in `app/api/insights/calendar/route.ts`. It should accept bounded grouped daily rows from the month calendar, keep the same Taglish persona, and return a structured JSON analysis payload suitable for a modal or side panel.
 
 ### 3c. Trigger & Cache — Mandatory Flow
 

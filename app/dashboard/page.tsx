@@ -1,9 +1,7 @@
-import Link from "next/link";
 import {
   TrendingDown,
   TrendingUp,
   Minus,
-  ChevronRight,
   Wallet,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
@@ -13,14 +11,19 @@ import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
+import BudgetAlertCard from "@/components/insights/BudgetAlertCard";
+import WeekSummaryWidget from "@/components/calendar/WeekSummaryWidget";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
-
-const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
+import {
+  aggregateUsageByDay,
+  buildWeekSummaries,
+  type UsageByDeviceDayRow,
+} from "@/lib/calendar-analytics";
 
 type DeviceRow = {
   id: string;
@@ -45,7 +48,6 @@ type UsageByDeviceRow = {
   device_id: string;
   usage_kwh: number | string;
 };
-
 type ProfileRow = {
   monthly_budget_php: number | string | null;
 };
@@ -178,9 +180,15 @@ export default async function DashboardPage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const now = new Date();
+  const startOfSevenDayWindow = new Date();
+  startOfSevenDayWindow.setDate(startOfSevenDayWindow.getDate() - 6);
+  startOfSevenDayWindow.setHours(0, 0, 0, 0);
 
-  const [latestReadingsRes, dailyUsageRes, yesterdayUsageRes, monthlyUsageRes] = deviceIds.length
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const [latestReadingsRes, dailyUsageRes, yesterdayUsageRes, monthlyUsageRes, sevenDayUsageRes] = deviceIds.length
     ? await Promise.all([
         supabase.rpc("get_latest_device_readings", {
           p_user_id: user.id,
@@ -200,18 +208,25 @@ export default async function DashboardPage() {
           p_start: startOfMonth.toISOString(),
           p_end: now.toISOString(),
         }),
+        supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: startOfSevenDayWindow.toISOString(),
+          p_end: endOfToday.toISOString(),
+        }),
       ])
     : [
         { data: [] as LatestReadingRow[] },
         { data: [] as UsageByDeviceRow[] },
         { data: [] as UsageByDeviceRow[] },
         { data: [] as UsageByDeviceRow[] },
+        { data: [] as UsageByDeviceDayRow[] },
       ];
 
   const latestReadings = (latestReadingsRes.data ?? []) as LatestReadingRow[];
   const dailyUsageRows = (dailyUsageRes.data ?? []) as UsageByDeviceRow[];
   const yesterdayUsageRows = (yesterdayUsageRes.data ?? []) as UsageByDeviceRow[];
   const monthlyUsageRows = (monthlyUsageRes.data ?? []) as UsageByDeviceRow[];
+  const sevenDayUsageRows = (sevenDayUsageRes.data ?? []) as UsageByDeviceDayRow[];
 
   const latestWattsByDevice = new Map<string, number>();
   const latestVoltsByDevice = new Map<string, number>();
@@ -343,6 +358,12 @@ export default async function DashboardPage() {
       : homeBurnPercent >= 70
         ? "bg-naku"
         : "bg-mint";
+  const weekSummaries = buildWeekSummaries({
+    usageByDay: aggregateUsageByDay(sevenDayUsageRows),
+    rates: activeRates.rates,
+    vatRate: activeRates.vatRate,
+    endDate: now,
+  });
 
   return (
     <div className="min-h-screen bg-base text-white pb-24">
@@ -441,24 +462,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ===== AI Tip Banner ===== */}
-        <Link
-          href="/insights"
-          className="flex items-center gap-3 rounded-xl bg-mint/10 border border-mint/20 px-4 py-3 group transition-colors hover:bg-mint/15"
-        >
-          <div className="w-9 h-9 flex items-center justify-center shrink-0">
-            <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold tracking-wider text-mint/70 uppercase">
-              Bubolt Tip
-            </p>
-            <p className="text-sm text-white/80 leading-snug truncate">
-              &ldquo;{MOCK_AI_TIP}&rdquo;
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-mint/50 group-hover:text-mint transition-colors shrink-0" />
-        </Link>
+        <WeekSummaryWidget days={weekSummaries} />
+        <BudgetAlertCard />
         </DashboardLiveTelemetry>
 
       </div>

@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import BurnRateChart, {
   type BurnRatePoint,
 } from "@/components/analytics/BurnRateChart";
+import AnomalyAlertCard from "@/components/insights/AnomalyAlertCard";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 
@@ -174,6 +175,8 @@ export default async function AnalyticsPage() {
             Based on the last 7 days, with {remainingDays} day(s) left this month.
           </p>
         </section>
+
+        <AnomalyAlertCard />
 
         <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
           <div className="mb-4 flex items-center justify-between gap-3">

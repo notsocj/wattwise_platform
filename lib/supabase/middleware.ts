@@ -35,7 +35,6 @@ export async function updateSession(request: NextRequest) {
   // Protected routes — redirect unauthenticated users to login
   const protectedRoutes = [
     "/dashboard",
-    "/insights",
     "/analytics",
     "/settings",
     "/admin",

@@ -13,6 +13,7 @@ import {
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import TipidTipCard from "@/components/insights/TipidTipCard";
 
 type DeviceRow = {
   id: string;
@@ -404,20 +405,7 @@ export default async function DeviceDetailPage(props: {
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">
-        {/* ===== AI Tip ===== */}
-        <div className="flex items-start gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
-          <div className="w-9 h-9 rounded-full bg-mint/15 flex items-center justify-center shrink-0 mt-0.5">
-            <img src="/wattwise_mascot.png" alt="Bubolt" className="w-5 h-5 object-contain" />
-          </div>
-          <p className="text-sm text-white/70 leading-relaxed">
-            <span className="text-naku font-bold">Naku!</span> Variable spend is
-            {" "}₱{device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}and estimated appliance bill is
-            {" "}₱{device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}out of a ₱{device.monthlyBudget.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {" "}home monthly budget.
-          </p>
-        </div>
+        <TipidTipCard />
 
         {/* ===== Metrology Gauges ===== */}
         <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] px-2 py-8">
