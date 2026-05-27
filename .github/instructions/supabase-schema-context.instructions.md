@@ -1,52 +1,53 @@
 ---
-description: Supabase database schema reference for Wattwise platform. Required context when building features that interact with profiles, devices, energy data, Meralco rates, or AI insights. Apply when writing queries, API routes, or database migrations.
+description: Canonical Supabase schema context for Wattwise. Use this when writing queries, migrations, API routes, RPC consumers, telemetry flows, or Smart Control logic so implementation stays aligned with the real migration history.
 applyTo: "**"
 ---
 
 # Wattwise Platform — Supabase Schema Context
 
-## Complete Database Schema
+This file reflects the current database shape defined by `supabase/migrations/001` through `012`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
 
-This document defines the complete Supabase PostgreSQL schema for the Wattwise energy monitoring platform. All tables and their relationships are documented below.
+## Current Schema Summary
 
-### Schema Setup
+Wattwise currently relies on these core database objects:
 
-```sql
--- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-```
+- Tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights`
+- Smart Control tables: `device_month_usage`, `device_budget_events`
+- Admin/sync table: `meralco_rate_sync_runs`
+- RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_hourly_averages`
+- Triggers/functions: `handle_new_user`, `handle_energy_log_smart_budget`
 
----
+## Core Tables
 
-## Table Definitions
+### `profiles`
 
-### 1. PROFILES (Extends Supabase Auth)
-
-Stores extended user information beyond Supabase's built-in `auth.users` table.
+Extends Supabase Auth with Wattwise-specific user metadata.
 
 ```sql
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
-  role VARCHAR(20) DEFAULT 'user', -- 'user' or 'super_admin'
+  role VARCHAR(20) DEFAULT 'user',
   monthly_budget_php NUMERIC(10, 2) DEFAULT 2000.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-**Purpose:** User profiles linked to Supabase Authentication, with role-based access control and monthly energy budget.
+Notes:
 
----
+- `role` is currently used for `user` and `super_admin`
+- `monthly_budget_php` is the home-level wallet budget edited from the Home dashboard flow only
+- `handle_new_user()` auto-creates a `profiles` row after `auth.users` insert
 
-### 2. MERALCO RATES (Global Pricing Engine for Admin to edit)
+### `meralco_rates`
 
-Stores unbundled Meralco billing rates that update monthly.
+Stores the billing-grade Meralco rate components. This is the only valid source for cost math.
 
 ```sql
 CREATE TABLE meralco_rates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  effective_month DATE NOT NULL UNIQUE, -- e.g., '2026-03-01'
+  effective_month DATE NOT NULL UNIQUE,
   vat_rate NUMERIC(6, 4) NOT NULL,
   generation NUMERIC(10, 4) NOT NULL,
   transmission NUMERIC(10, 4) NOT NULL,
@@ -60,19 +61,21 @@ CREATE TABLE meralco_rates (
 );
 ```
 
-**Purpose:** Single source of truth for Meralco billing components, fixed monthly fees, and VAT. Super Admin edits this to update cost calculations across all users.
+Notes:
 
----
+- `fit_all` is a first-class column as of migration `008`
+- application cost logic must use unbundled components plus fixed charges, then apply VAT last
+- do not fall back to hardcoded runtime rates when a row is missing
 
-### 3. DEVICES (ESP32-S3 Fleet Management)
+### `devices`
 
-Tracks all IoT devices paired to user accounts.
+Represents paired ESP32-S3 devices plus appliance-profile and Smart Control metadata.
 
 ```sql
 CREATE TABLE devices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  device_name TEXT NOT NULL, -- e.g., 'Living Room Aircon'
+  device_name TEXT NOT NULL,
   mac_address TEXT UNIQUE NOT NULL,
   is_online BOOLEAN DEFAULT false,
   last_seen_at TIMESTAMP WITH TIME ZONE,
@@ -81,8 +84,8 @@ CREATE TABLE devices (
   daily_usage_hours NUMERIC(4, 1),
   suggested_monthly_limit_php NUMERIC(10, 2),
   user_approved_limit_php NUMERIC(10, 2),
-  require_approval_on_expiry BOOLEAN DEFAULT false,
-  budget_status TEXT DEFAULT 'ok',
+  require_approval_on_expiry BOOLEAN NOT NULL DEFAULT false,
+  budget_status TEXT NOT NULL DEFAULT 'ok',
   budget_breached_at TIMESTAMP WITH TIME ZONE,
   relay_auto_disabled_at TIMESTAMP WITH TIME ZONE,
   profiled_baseline_watts NUMERIC(10, 2),
@@ -93,61 +96,83 @@ CREATE TABLE devices (
 );
 ```
 
-**Purpose:** Represents each ESP32-S3 device pair-bonded to a user, tracking online status, relay state, AI profiling metadata, and per-device Smart Control budget limits.
+Constraints from migrations:
 
----
+- `appliance_type` check:
+  - `refrigerator`
+  - `aircon`
+  - `tv`
+  - `other`
+- `budget_status` check:
+  - `ok`
+  - `approval_required`
+  - `auto_cutoff`
+- positive-value checks:
+  - `user_approved_limit_php IS NULL OR user_approved_limit_php > 0`
+  - `suggested_monthly_limit_php IS NULL OR suggested_monthly_limit_php > 0`
 
-### 4. ENERGY LOGS (Optimized for Free Tier Throttling)
+Important behavior:
 
-High-volume table storing aggregated telemetry from ESP32-S3 devices.
+- `relay_state` is polled by hardware every 5 seconds
+- `daily_usage_hours` is the current appliance-profiler hours field; do not add a duplicate `estimated_daily_hours` column
+- Add Appliance registers the device first so the ESP32 can post MAC-based telemetry before AI profiling completes
+
+### `energy_logs`
+
+High-volume telemetry table for cumulative kWh and live metrology.
 
 ```sql
 CREATE TABLE energy_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  device_id TEXT NOT NULL, -- transitional: accepts devices.id::text or devices.mac_address
+  device_id TEXT NOT NULL,
   energy_kwh NUMERIC(10, 4) NOT NULL,
-  average_watts NUMERIC(10, 2), -- Helpful for live dashboard gauge
-  voltage_v NUMERIC(10, 2), -- Optional metrology reading for Device Detail voltage gauge
-  current_a NUMERIC(10, 2), -- Optional metrology reading for Device Detail current gauge
+  average_watts NUMERIC(10, 2),
+  voltage_v NUMERIC(10, 2),
+  current_a NUMERIC(10, 2),
   recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index required for fast dashboard querying, charting, and data throttling
-CREATE INDEX idx_energy_logs_device_time ON energy_logs(device_id, recorded_at DESC);
+CREATE INDEX idx_energy_logs_device_time
+  ON energy_logs(device_id, recorded_at DESC);
 ```
 
-**Purpose:** Stores aggregated power consumption data. Index ensures fast time-range queries for charts and analytics without timeout or browser crash.
+Notes:
 
-**Transition note:** During key migration, `energy_logs.device_id` may contain either UUID text (`devices.id`) or legacy MAC (`devices.mac_address`). Aggregation queries should normalize both forms when joining device ownership.
+- `device_id` is intentionally `TEXT` during the transition period
+- it may contain either `devices.id::text` or legacy `devices.mac_address`
+- all ownership joins and lookup logic must support both formats
+- never query this table unbounded; always use a hard limit or bounded time range
 
----
+### `ai_insights`
 
-### 5. AI INSIGHTS (Trigger & Cache + Super Admin Cost Tracking)
-
-Caches AI-generated insights to avoid redundant OpenAI API calls.
+Cache table for OpenAI-generated insight payloads and token accounting.
 
 ```sql
 CREATE TABLE ai_insights (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  insight_type VARCHAR(50) NOT NULL, -- 'budget_alert' or 'weekly_recap'
-  message TEXT NOT NULL, -- The Taglish response
-  prompt_tokens INTEGER NOT NULL, -- Tracked for Super Admin Dashboard
-  completion_tokens INTEGER NOT NULL, -- Tracked for Super Admin Dashboard
+  insight_type VARCHAR(50) NOT NULL,
+  message TEXT NOT NULL,
+  prompt_tokens INTEGER NOT NULL DEFAULT 0,
+  completion_tokens INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for fast cache-hit lookups to prevent unnecessary OpenAI API calls
-CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_type, created_at DESC);
+CREATE INDEX idx_ai_insights_user_type_date
+  ON ai_insights(user_id, insight_type, created_at DESC);
 ```
 
-**Purpose:** Triggers OpenAI API only once per insight type per user per week. Stores token counts for Super Admin cost tracking.
+Notes:
 
----
+- the table shape is text-based, but the app may store normalized JSON as a serialized string inside `message`
+- the insights route uses trigger-and-cache behavior; check for recent cached rows before generating a new response
+- token fields support AI cost/admin observability
 
-### 6. DEVICE MONTH USAGE (Smart Control Accumulator)
+## Smart Control Tables
 
-Stores calendar-month per-device usage and variable spend for fast budget evaluation on telemetry INSERT.
+### `device_month_usage`
+
+Calendar-month per-device accumulator used by the Smart Control trigger.
 
 ```sql
 CREATE TABLE device_month_usage (
@@ -155,23 +180,28 @@ CREATE TABLE device_month_usage (
   device_id UUID REFERENCES devices(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   month_start DATE NOT NULL,
-  usage_kwh NUMERIC(12, 4) DEFAULT 0,
-  variable_spend_php NUMERIC(12, 2) DEFAULT 0,
+  usage_kwh NUMERIC(12, 4) NOT NULL DEFAULT 0,
+  variable_spend_php NUMERIC(12, 2) NOT NULL DEFAULT 0,
   last_energy_kwh NUMERIC(12, 4),
   last_recorded_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE (device_id, month_start)
 );
+
+CREATE INDEX idx_device_month_usage_user_month
+  ON device_month_usage(user_id, month_start);
 ```
 
-**Purpose:** Avoids rescanning raw `energy_logs` on every 5-second telemetry insert. The trigger updates one device-month row and compares `variable_spend_php` to `devices.user_approved_limit_php`.
+Purpose:
 
----
+- avoids rescanning raw `energy_logs` on every insert
+- stores per-device calendar-month usage and variable Meralco spend
+- budget enforcement excludes fixed monthly charges by design
 
-### 7. DEVICE BUDGET EVENTS (Smart Control Alerts)
+### `device_budget_events`
 
-Stores budget threshold events for user alerts and audit history.
+Audit and alert feed for Smart Control budget actions.
 
 ```sql
 CREATE TABLE device_budget_events (
@@ -179,52 +209,238 @@ CREATE TABLE device_budget_events (
   device_id UUID REFERENCES devices(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   month_start DATE NOT NULL,
-  event_type TEXT NOT NULL, -- 'approval_required' | 'auto_cutoff'
+  event_type TEXT NOT NULL,
   threshold_php NUMERIC(10, 2),
   spend_php NUMERIC(12, 2) NOT NULL,
   usage_kwh NUMERIC(12, 4) NOT NULL,
   message TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX idx_device_budget_events_user_created
+  ON device_budget_events(user_id, created_at DESC);
+
+CREATE INDEX idx_device_budget_events_device_month
+  ON device_budget_events(device_id, month_start, event_type);
 ```
 
-**Purpose:** Records whether WattWise auto-cut power or asked the user for manual approval after a per-device limit was hit.
+Constraint:
 
----
+- `event_type IN ('approval_required', 'auto_cutoff')`
 
-## Key Design Principles
+Purpose:
 
-1. **Cascading Deletes:** All foreign keys use `ON DELETE CASCADE` to maintain referential integrity when users delete their profile or devices.
+- records whether Wattwise asked for approval or automatically cut power
+- supports alert UIs and audit visibility
 
-2. **UUID Primary Keys:** All tables use UUID for distributed system compatibility and security.
+## Admin / Automation Table
 
-3. **Timestamps:** Every table includes `created_at` to track data lineage.
+### `meralco_rate_sync_runs`
 
-4. **Indexes for Performance:** Strategic indexes on `energy_logs` and `ai_insights` ensure queries remain fast even as data accumulates.
+Observability log for the Supabase Edge Function that syncs Meralco rates.
 
-5. **Free Tier Optimization:** 
-   - `energy_logs` data is aggregated before insertion (e.g., 1-minute or hourly averages) to stay within 500MB limit.
-   - `ai_insights` caching prevents redundant API calls to OpenAI.
+```sql
+CREATE TABLE meralco_rate_sync_runs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  status TEXT NOT NULL,
+  message TEXT NOT NULL,
+  source_url TEXT NOT NULL,
+  pdf_url TEXT,
+  effective_month DATE,
+  raw_rates JSONB,
+  warnings TEXT[] DEFAULT '{}',
+  ran_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-6. **Super Admin RLS Policies** *(migration at `supabase/migrations/002_admin_rls_policies.sql`)*:
-  - Super admins (`profiles.role = 'super_admin'`) have SELECT access to all rows in: `profiles`, `devices`, `energy_logs`, `ai_insights`.
-   - Super admins have INSERT and UPDATE access on `meralco_rates` for rate management.
-   - Policy pattern uses `EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')`.
+CREATE INDEX idx_meralco_sync_runs_ran_at
+  ON meralco_rate_sync_runs(ran_at DESC);
+```
 
----
+Notes:
+
+- `status` currently records values such as `success`, `skipped`, and `failed`
+- rows are written by the Edge Function with service-role privileges
+- only `super_admin` can read these rows under RLS
+
+## Functions and Triggers
+
+### `handle_new_user()`
+
+Trigger function attached to `auth.users` that inserts a matching row into `public.profiles`.
+
+Important behavior:
+
+- copies `NEW.email`
+- reads `NEW.raw_user_meta_data->>'full_name'`
+- uses `ON CONFLICT (id) DO NOTHING`
+
+### `get_latest_device_readings(p_user_id uuid)`
+
+Returns the latest telemetry row for each owned device.
+
+Returned columns:
+
+- `device_id`
+- `average_watts`
+- `voltage_v`
+- `current_a`
+- `energy_kwh`
+- `recorded_at`
+
+Use cases:
+
+- dashboard live cards
+- device-detail live metrology
+
+### `get_usage_kwh_by_device(p_user_id, p_start, p_end)`
+
+Billing-grade usage RPC for a bounded range.
+
+Behavior:
+
+- joins owned devices by UUID text or MAC address
+- deduplicates to one row per device per minute
+- computes usage from cumulative kWh deltas
+- clamps negative/reset drift to `0`
+
+### `get_usage_kwh_by_device_day(p_user_id, p_start, p_end)`
+
+Daily grouped version of the billing-grade usage RPC.
+
+Behavior:
+
+- same cumulative-delta logic as `get_usage_kwh_by_device`
+- groups by Manila-local `day_key` (`YYYY-MM-DD`)
+
+### `get_hourly_averages(p_user_id, p_date)`
+
+Returns average wattage by hour-of-day for a Manila-local date.
+
+Returned columns:
+
+- `hour_key`
+- `avg_watts`
+
+Use cases:
+
+- Home dashboard hourly chart
+
+### `handle_energy_log_smart_budget()`
+
+Trigger function executed `AFTER INSERT` on `energy_logs`.
+
+Behavior:
+
+- resolves the target device using either `devices.id::text` or `devices.mac_address`
+- derives the Manila-local `month_start`
+- loads the latest applicable `meralco_rates` row for the reading date
+- computes variable spend from the cumulative kWh delta only
+- upserts into `device_month_usage`
+- compares `variable_spend_php` against `devices.user_approved_limit_php`
+- if `require_approval_on_expiry = true`, records `approval_required`
+- otherwise sets `devices.relay_state = false` and records `auto_cutoff`
+
+Important guardrails:
+
+- if no device matches the incoming `device_id`, telemetry is still accepted
+- if no Meralco rate row is available, telemetry is still accepted and automation is skipped
+- duplicate budget events for the same device/month/type are prevented
+
+## RLS Summary
+
+### Enabled tables
+
+RLS is enabled on:
+
+- `profiles`
+- `meralco_rates`
+- `devices`
+- `energy_logs`
+- `ai_insights`
+- `meralco_rate_sync_runs`
+- `device_month_usage`
+- `device_budget_events`
+
+### Standard authenticated-user access
+
+Users can:
+
+- select, insert, update their own `profiles` row
+- select `meralco_rates`
+- select, insert, update, delete their own `devices`
+- select `energy_logs` that belong to their owned devices, matching by UUID text or MAC
+- select their own `ai_insights`
+- select their own `device_month_usage`
+- select their own `device_budget_events`
+
+### Super admin access
+
+`super_admin` users can select:
+
+- `profiles`
+- `meralco_rates`
+- `devices`
+- `energy_logs`
+- `ai_insights`
+- `meralco_rate_sync_runs`
+- `device_month_usage`
+- `device_budget_events`
+
+`super_admin` users can also:
+
+- insert and update `meralco_rates`
+
+### Hardware anon access
+
+The `anon` role is intentionally allowed to support ESP32 hardware:
+
+- `INSERT` into `energy_logs` only when `device_id` matches a registered `devices.mac_address`
+- `SELECT` from `devices` so hardware can poll `relay_state` by MAC address
+
+Important caution:
+
+- the anon device policy is permissive at the row-policy level (`USING (true)`) and relies on the REST query filtering to only expose the requested row and selected columns
+
+## Query and Implementation Rules
+
+### Billing
+
+- never compute billable cost with a flat multiplier like `kWh * 10`
+- always fetch the active `meralco_rates` row
+- include the correct unbundled components
+- apply VAT last
+- fixed monthly charges belong to home-level bill context, not per-device Smart Control cutoff logic
+
+### Telemetry
+
+- keep compatibility with both `devices.id::text` and `devices.mac_address`
+- bound all `energy_logs` reads by time or `LIMIT`
+- prefer RPCs for billing-grade usage totals and charts
+
+### AI and caching
+
+- all OpenAI calls stay server-side
+- insight routes should check `ai_insights` for a recent cached row before generating
+- if storing structured insight payloads, serialize them into `ai_insights.message`
+
+### Smart Control
+
+- calendar month is based on `Asia/Manila`
+- compare `device_month_usage.variable_spend_php` against `devices.user_approved_limit_php`
+- `require_approval_on_expiry = true` must not auto-disable relay power
+- keep Supabase Realtime enabled for `energy_logs` when working on live telemetry UX
 
 ## Common Query Patterns
 
-### Fetch Today's Energy Data (with throttling)
+### Latest live telemetry for owned devices
+
 ```sql
-SELECT * FROM energy_logs 
-WHERE device_id = $1 
-  AND recorded_at >= TODAY()
-ORDER BY recorded_at DESC
-LIMIT 100;
+SELECT * FROM get_latest_device_readings($1);
 ```
 
-### Accurate usage by device (cumulative readings, minute-deduped)
+### Accurate device usage for a bounded range
+
 ```sql
 SELECT * FROM get_usage_kwh_by_device(
   p_user_id := $1,
@@ -233,7 +449,8 @@ SELECT * FROM get_usage_kwh_by_device(
 );
 ```
 
-### Accurate usage by device/day (for weekly charts)
+### Accurate per-day usage for a bounded range
+
 ```sql
 SELECT * FROM get_usage_kwh_by_device_day(
   p_user_id := $1,
@@ -242,12 +459,14 @@ SELECT * FROM get_usage_kwh_by_device_day(
 );
 ```
 
-### Latest per-device telemetry for live cards
+### Hourly average watts for one Manila-local date
+
 ```sql
-SELECT * FROM get_latest_device_readings($1);
+SELECT * FROM get_hourly_averages($1, $2);
 ```
 
-### Fetch Smart Control Accumulator Rows
+### Current device-month accumulator rows
+
 ```sql
 SELECT *
 FROM device_month_usage
@@ -255,7 +474,8 @@ WHERE user_id = $1
   AND month_start = date_trunc('month', now() AT TIME ZONE 'Asia/Manila')::date;
 ```
 
-### Fetch Smart Control Budget Events
+### Recent device budget events
+
 ```sql
 SELECT *
 FROM device_budget_events
@@ -264,87 +484,36 @@ ORDER BY created_at DESC
 LIMIT 50;
 ```
 
-### Latest telemetry for Device Detail metrology gauges
-```sql
-SELECT energy_kwh, average_watts, voltage_v, current_a, recorded_at
-FROM energy_logs
-WHERE device_id IN ($1, $2)
-ORDER BY recorded_at DESC
-LIMIT 1;
-```
+### Current active Meralco rates
 
-### Check for Cached AI Insight
 ```sql
-SELECT message FROM ai_insights
-WHERE user_id = $1 
-  AND insight_type = 'budget_alert'
-  AND created_at > CURRENT_DATE - INTERVAL '7 days'
-LIMIT 1;
-```
-
-### Fetch Active Devices for User
-```sql
-SELECT * FROM devices
-WHERE user_id = $1 AND is_online = true;
-```
-
-### Get Current Meralco Rates
-```sql
-SELECT * FROM meralco_rates
+SELECT *
+FROM meralco_rates
 WHERE effective_month <= CURRENT_DATE
 ORDER BY effective_month DESC
 LIMIT 1;
 ```
 
-### Upsert Monthly Meralco Rates (including VAT)
+### Cached insight lookup
+
 ```sql
-INSERT INTO meralco_rates (
-  effective_month,
-  vat_rate,
-  generation,
-  transmission,
-  system_loss,
-  distribution,
-  universal_charges,
-  fit_all,
-  metering_charge,
-  supply_charge
-) VALUES (
-  '2026-03-01',
-  0.12,
-  5.3727,
-  0.8468,
-  0.5012,
-  1.4798,
-  0.1754,
-  0.0838,
-  5.00,
-  15.00
-)
-ON CONFLICT (effective_month) DO UPDATE
-SET
-  vat_rate = EXCLUDED.vat_rate,
-  generation = EXCLUDED.generation,
-  transmission = EXCLUDED.transmission,
-  system_loss = EXCLUDED.system_loss,
-  distribution = EXCLUDED.distribution,
-  universal_charges = EXCLUDED.universal_charges,
-  fit_all = EXCLUDED.fit_all,
-  metering_charge = EXCLUDED.metering_charge,
-  supply_charge = EXCLUDED.supply_charge;
+SELECT message
+FROM ai_insights
+WHERE user_id = $1
+  AND insight_type = $2
+ORDER BY created_at DESC
+LIMIT 1;
 ```
 
-### Fetch User Role for Admin Middleware
-```sql
-SELECT role FROM profiles
-WHERE id = $1;
-```
+### Update Home wallet budget
 
-### Update Home Monthly Budget (Home Dashboard only)
 ```sql
 UPDATE profiles
 SET monthly_budget_php = $2
 WHERE id = $1;
 ```
 
-**Usage note:** `$1` must be the authenticated `auth.uid()` profile id. Budget edits should only be exposed in the Home Dashboard wallet editor UI.
+Usage note:
+
+- `$1` must be the authenticated profile id
+- this update should only be exposed from the Home dashboard wallet flow
