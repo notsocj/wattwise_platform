@@ -76,11 +76,24 @@ CREATE TABLE devices (
   mac_address TEXT UNIQUE NOT NULL,
   is_online BOOLEAN DEFAULT false,
   last_seen_at TIMESTAMP WITH TIME ZONE,
+  relay_state BOOLEAN DEFAULT false,
+  appliance_type TEXT,
+  daily_usage_hours NUMERIC(4, 1),
+  suggested_monthly_limit_php NUMERIC(10, 2),
+  user_approved_limit_php NUMERIC(10, 2),
+  require_approval_on_expiry BOOLEAN DEFAULT false,
+  budget_status TEXT DEFAULT 'ok',
+  budget_breached_at TIMESTAMP WITH TIME ZONE,
+  relay_auto_disabled_at TIMESTAMP WITH TIME ZONE,
+  profiled_baseline_watts NUMERIC(10, 2),
+  profiled_voltage_v NUMERIC(10, 2),
+  profiled_current_a NUMERIC(10, 2),
+  profiled_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-**Purpose:** Represents each ESP32-S3 device pair-bonded to a user, tracking online status for the System Health monitor.
+**Purpose:** Represents each ESP32-S3 device pair-bonded to a user, tracking online status, relay state, AI profiling metadata, and per-device Smart Control budget limits.
 
 ---
 
@@ -129,6 +142,53 @@ CREATE INDEX idx_ai_insights_user_type_date ON ai_insights (user_id, insight_typ
 ```
 
 **Purpose:** Triggers OpenAI API only once per insight type per user per week. Stores token counts for Super Admin cost tracking.
+
+---
+
+### 6. DEVICE MONTH USAGE (Smart Control Accumulator)
+
+Stores calendar-month per-device usage and variable spend for fast budget evaluation on telemetry INSERT.
+
+```sql
+CREATE TABLE device_month_usage (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device_id UUID REFERENCES devices(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  month_start DATE NOT NULL,
+  usage_kwh NUMERIC(12, 4) DEFAULT 0,
+  variable_spend_php NUMERIC(12, 2) DEFAULT 0,
+  last_energy_kwh NUMERIC(12, 4),
+  last_recorded_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (device_id, month_start)
+);
+```
+
+**Purpose:** Avoids rescanning raw `energy_logs` on every 5-second telemetry insert. The trigger updates one device-month row and compares `variable_spend_php` to `devices.user_approved_limit_php`.
+
+---
+
+### 7. DEVICE BUDGET EVENTS (Smart Control Alerts)
+
+Stores budget threshold events for user alerts and audit history.
+
+```sql
+CREATE TABLE device_budget_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device_id UUID REFERENCES devices(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  month_start DATE NOT NULL,
+  event_type TEXT NOT NULL, -- 'approval_required' | 'auto_cutoff'
+  threshold_php NUMERIC(10, 2),
+  spend_php NUMERIC(12, 2) NOT NULL,
+  usage_kwh NUMERIC(12, 4) NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+**Purpose:** Records whether WattWise auto-cut power or asked the user for manual approval after a per-device limit was hit.
 
 ---
 
@@ -185,6 +245,23 @@ SELECT * FROM get_usage_kwh_by_device_day(
 ### Latest per-device telemetry for live cards
 ```sql
 SELECT * FROM get_latest_device_readings($1);
+```
+
+### Fetch Smart Control Accumulator Rows
+```sql
+SELECT *
+FROM device_month_usage
+WHERE user_id = $1
+  AND month_start = date_trunc('month', now() AT TIME ZONE 'Asia/Manila')::date;
+```
+
+### Fetch Smart Control Budget Events
+```sql
+SELECT *
+FROM device_budget_events
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT 50;
 ```
 
 ### Latest telemetry for Device Detail metrology gauges

@@ -88,7 +88,20 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
 - For Home Dashboard device cards, derive online/offline from telemetry freshness and expose live `average_watts`, `voltage_v`, and `current_a` (with safe voltage/current fallback for legacy rows) so W/V/A stays coherent with live status.
 - For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()` on `energy_logs` INSERT/UPDATE events. This preserves RPC-based billing accuracy while keeping UI telemetry live without periodic polling.
+- For dashboard cards that show live W/V/A, bind Supabase Realtime INSERT payloads directly into client state so the UI updates immediately without waiting for the server refresh bridge.
 - During schema transitions, avoid hard-failing device lists on optional metadata columns (for example `devices.relay_state`). Use a compatibility fetch path: try full select first, then retry with a reduced column set when PostgreSQL returns undefined-column (`42703`), and map sensible defaults in the view model.
+
+### 2b. Smart Control Budget Shutoff
+
+- Pairing must register the device row before AI profiling. Hardware anon INSERT is MAC-gated against `devices.mac_address`, so unregistered MACs cannot send telemetry.
+- AI appliance profiling should use fresh telemetry from `energy_logs` within the 20-second freshness window. Do not profile from stale or zero-watt readings unless the user explicitly chooses a non-live fallback.
+- The Smart Appliance profiler route is `POST /api/devices/[deviceId]/ai-profile`. It must run server-side only, verify device ownership, and send OpenAI the exact persona: "Act as an expert energy consultant in the Philippines. You speak in a casual, practical Taglish tone."
+- Appliance profiling prompts must include `appliance_type`, fresh baseline watts, and `estimated_daily_hours`, and must force raw JSON output with exactly `estimated_monthly_kwh`, `suggested_monthly_limit_php`, and `taglish_advice`.
+- When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
+- Per-device shutoff compares calendar-month variable Meralco spend against `devices.user_approved_limit_php`. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
+- Budget automation runs in PostgreSQL via the `energy_logs` INSERT trigger from `012_smart_budget_controls.sql`; do not duplicate cutoff decisions in client code.
+- If `devices.require_approval_on_expiry` is true, the trigger records `budget_status = 'approval_required'` and a `device_budget_events` row instead of setting `relay_state = false`.
+- If approval is not required, the trigger sets `devices.relay_state = false`, records `budget_status = 'auto_cutoff'`, and the ESP32-S3 relay polling loop handles the physical shutoff.
 
 ---
 
@@ -220,3 +233,4 @@ When implementing route or mutation feedback in the app shell and interactive co
 | Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
 | User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
 | API mutation feedback | Keep controls active and silent on errors | Disable pending controls, show inline `LoadingIndicator`, and display auto-dismiss error toast |
+| Appliance shutoff | Client-side cutoff math | PostgreSQL trigger updates `devices.relay_state` from `device_month_usage` |

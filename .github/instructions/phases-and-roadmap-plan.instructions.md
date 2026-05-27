@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** May 14, 2026
+> **Last Updated:** May 25, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -14,9 +14,9 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~70% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail now auto-refresh from Supabase Realtime with live online/offline + W/V/A card telemetry, plus periodic refresh fallback for stale-to-offline transitions; reusable `LoadingIndicator` and global route-transition indicator now wired in root layout, shared loading states are applied to splash/auth/onboarding flows, and route-level loading skeletons now exist for app/dashboard/insights/device detail; light/dark theme toggle now supported (splash stays dark); all 11 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added (migration 011); offline freshness window updated to 20 s (4 missed 5-second cycles) |
-| 2 — Billing & Control | In Progress | ~67% | Device Detail UI + Home Wallet + Meralco billing implemented (DB-driven, includes FIT-All + fixed charges); usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded via Supabase Edge Function + scheduled workflow (non-lifeline summary PDF mapping, anomaly guards, auto-upsert); scheduler now runs daily around midday PH with current-month no-op guard; relay on/off toggle on dashboard cards + device detail (PATCH API + RelayToggle component); relay and budget mutations now include inline spinners, disabled pending controls, and error toasts; device metadata migration (appliance_type, daily_usage_hours, relay_state) |
-| 3 — AI & PWA | In Progress | ~66% | Insights UI implemented with Appliances Overview + CoachingFeed client component; AI insights API route fully implemented with Trigger & Cache (4 types: budget_alert, weekly_recap, anomaly_alert, cost_optimizer); AI onboarding wizard in AddApplianceModal (4-step flow with setup-recommendation API) now includes helpful inline validation, inline loading states, disabled pending controls, and API error toast feedback; OpenAI package installed; PWA still pending |
+| 1 — Foundation | In Progress | ~75% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; all 12 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
+| 2 — Billing & Control | In Progress | ~78% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, monthly usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff |
+| 3 — AI & PWA | In Progress | ~74% | Insights UI implemented with Appliances Overview + CoachingFeed; AI insights API route implemented with Trigger & Cache; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
@@ -62,7 +62,7 @@ applyTo: "**"
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
-  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data on telemetry INSERT/UPDATE events)*
+  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data, plus direct dashboard W/V/A state updates from INSERT payloads)*
   - [x] Display live **Power (W)** gauge on each device card *(cards now show live online/offline state plus W/V/A telemetry with freshness gating)*
   - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
   - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
@@ -100,7 +100,7 @@ applyTo: "**"
 | Channel | Direction | Payload | Purpose |
 |---|---|---|---|
 | Supabase REST API | ESP32-S3 → Supabase | `energy_logs` INSERT (1-min avg) | Telemetry ingestion |
-| Supabase Realtime | Supabase → Next.js | `energy_logs` stream | Live dashboard updates |
+| Supabase Realtime | Supabase → Next.js | `energy_logs` stream | Live dashboard updates and direct W/V/A state |
 | Supabase Auth | Next.js ↔ Supabase | JWT tokens | User authentication |
 
 ---
@@ -133,6 +133,7 @@ applyTo: "**"
     - [x] Burn Rate progress bar — current spend vs. budget, color-coded (Bida/Naku!/Danger)
   - [x] Add **Home Wallet** card under Daily Cost on Home Dashboard (profile budget + burn rate from bounded monthly `energy_logs`)
   - [x] Add inline loading + error toast feedback for relay and home budget actions *(implemented in `RelayToggle` and `HomeBudgetEditor`)*
+  - [x] Add Smart Control per-device budget automation *(migration `012_smart_budget_controls.sql`: `device_month_usage`, `device_budget_events`, approved limits, approval override, and `energy_logs` INSERT trigger that can set `relay_state = false`)*
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**
@@ -158,6 +159,7 @@ applyTo: "**"
   - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only) *(env var stubbed — fill in real key)*
   - [x] Install `openai` npm package
   - [x] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
+  - [x] Create `app/api/devices/[deviceId]/ai-profile/route.ts` for fresh-telemetry appliance budget profiling with strict JSON output (`estimated_monthly_kwh`, `suggested_monthly_limit_php`, `taglish_advice`)
 
 - [x] **Trigger & Cache Flow Implementation**
   - [x] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
@@ -189,8 +191,18 @@ applyTo: "**"
   - [x] Build **Trend Comparison** — "This Wk" vs. "Last Wk" interactive bar chart
   - [x] Build **Financial Forecast** — predicted monthly bill + projected savings %
 
+- [x] **Predictive Burn-Rate Analytics (`app/analytics/page.tsx`)**
+  - [x] Use bounded usage RPCs for the past 7 days and month-to-date usage
+  - [x] Use active unbundled Meralco rates for projected PHP cost
+  - [x] Render 7-day financial velocity and projected calendar-month bill
+
+- [x] **Advanced Settings (`app/settings/page.tsx`)**
+  - [x] Add global theme controls through `ThemeProvider`
+  - [x] Add password reset email and self-service account deletion
+  - [x] Add per-device `require_approval_on_expiry` safety override toggles
+
 - [x] **Bottom Navigation Bar**
-  - [x] Implement persistent 2-tab navbar: **Home** (fleet view) and **Insights** (analytics)
+  - [x] Implement persistent navbar: **Home**, **Insights**, **Burn**, and **Settings**
   - [x] Active tab highlighted with green glow indicator
   - [x] Navigation bar hidden on Device Detail page (focus mode)
 

@@ -4,28 +4,21 @@ import {
   TrendingUp,
   Minus,
   ChevronRight,
-  Wind,
-  Tv,
-  Refrigerator,
   Wallet,
-  HelpCircle,
-  Power,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
-import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
-import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
   getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
-import { ApplianceType } from "@/lib/constants";
 
 const MOCK_AI_TIP = 'Overall usage is 10% lower today, Bida!';
 
@@ -36,6 +29,7 @@ type DeviceRow = {
   is_online: boolean | null;
   appliance_type: string | null;
   relay_state: boolean | null;
+  budget_status: string | null;
 };
 
 type LatestReadingRow = {
@@ -58,15 +52,18 @@ type ProfileRow = {
 
 type DashboardDevice = {
   id: string;
+  macAddress: string;
   name: string;
+  applianceType: string | null;
   watts: number;
   volts: number;
   amps: number;
   dailyKWh: number;
   isOnline: boolean;
   isActive: boolean;
-  icon: typeof Wind;
   relayState: boolean;
+  recordedAt: string | null;
+  budgetStatus: string | null;
 };
 
 const ACTIVE_READING_WINDOW_MS = 20 * 1000; // 4 missed 5-second hardware cycles before offline
@@ -89,7 +86,7 @@ async function fetchDashboardDevices(
 ): Promise<DeviceRow[]> {
   const withRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type, relay_state")
+    .select("id, device_name, mac_address, is_online, appliance_type, relay_state, budget_status")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
 
@@ -114,36 +111,8 @@ async function fetchDashboardDevices(
   return (withoutRelayState.data ?? []).map((device) => ({
     ...device,
     relay_state: true,
+    budget_status: "ok",
   })) as DeviceRow[];
-}
-
-function getDeviceIcon(applianceType: string | null, deviceName: string) {
-  // Prefer appliance_type from DB (set during AI onboarding)
-  if (applianceType) {
-    switch (applianceType) {
-      case ApplianceType.Aircon:
-        return Wind;
-      case ApplianceType.Refrigerator:
-        return Refrigerator;
-      case ApplianceType.Tv:
-        return Tv;
-      case ApplianceType.Other:
-        return HelpCircle;
-    }
-  }
-
-  // Fallback: match by device name for legacy devices
-  const label = deviceName.toLowerCase();
-
-  if (label.includes("aircon") || label.includes("ac") || label.includes("fan")) {
-    return Wind;
-  }
-
-  if (label.includes("fridge") || label.includes("freezer") || label.includes("ref")) {
-    return Refrigerator;
-  }
-
-  return Tv;
 }
 
 function toNumber(value: number | string | null): number {
@@ -285,20 +254,20 @@ export default async function DashboardPage() {
 
     return {
       id: device.id,
+      macAddress: device.mac_address,
       name: device.device_name,
+      applianceType: device.appliance_type,
       watts: currentWatts,
       volts: currentVolts,
       amps: currentAmps,
       dailyKWh: dailyKWhByDevice.get(device.id) ?? 0,
       isOnline: hasFreshTelemetry,
       isActive: hasFreshTelemetry && currentWatts > 0,
-      icon: getDeviceIcon(device.appliance_type, device.device_name),
       relayState: device.relay_state !== false,
+      recordedAt: latestRecordedAtByDevice.get(device.id) ?? null,
+      budgetStatus: device.budget_status,
     };
   });
-
-  const totalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
-  const onlineDeviceCount = devices.filter((device) => device.isOnline).length;
 
   const totalDailyKWh = devices.reduce((sum, d) => sum + d.dailyKWh, 0);
   const totalDailyCostPhp = computeMeralcoBill(
@@ -396,25 +365,7 @@ export default async function DashboardPage() {
       </header>
 
       <div className="px-5 pt-[84px] flex flex-col gap-4">
-        {/* ===== Total Live Wattage Card ===== */}
-        <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
-          {/* Mint left accent */}
-          <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
-          <div>
-            <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
-              Total Live Wattage
-            </p>
-            <p className="text-5xl font-bold tracking-tight text-white">
-              {totalWatts.toLocaleString()}
-              <span className="text-lg font-medium text-white/50 ml-1">
-                W
-              </span>
-            </p>
-            <div className="mt-2 text-bida text-sm">
-              <span className="font-medium">{onlineDeviceCount} device(s) online live</span>
-            </div>
-          </div>
-        </div>
+        <DashboardLiveTelemetry initialDevices={devices}>
 
         {/* ===== Total Daily Cost Card ===== */}
         <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
@@ -508,54 +459,7 @@ export default async function DashboardPage() {
           </div>
           <ChevronRight className="w-4 h-4 text-mint/50 group-hover:text-mint transition-colors shrink-0" />
         </Link>
-
-        {/* ===== Connected Units ===== */}
-        <section className="mt-2">
-          <h2 className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-3">
-            Connected Units
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {devices.map((device) => {
-              const Icon = device.icon;
-              return (
-                <Link
-                  key={device.id}
-                  href={`/dashboard/${device.id}`}
-                  className="relative rounded-xl bg-surface border border-white/5 p-4 flex flex-col justify-between min-h-[130px] transition-colors hover:border-mint/20 overflow-hidden"
-                >
-                  {/* Mint left accent */}
-                  <div className="absolute left-0 inset-y-0 w-1 bg-mint/50 rounded-r-full" />
-                  <div className="flex items-start justify-between">
-                    <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-mint" />
-                    </div>
-                    <RelayToggle
-                      deviceId={device.id}
-                      initialRelayState={device.relayState}
-                      variant="compact"
-                    />
-                  </div>
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold leading-tight mb-1 line-clamp-2">
-                      {device.name}
-                    </p>
-                    <div className="text-[11px]">
-                      <div className="flex items-center gap-1">
-                        <Power className={`w-3 h-3 ${device.relayState ? "text-mint" : "text-white/30"}`} />
-                        <span className={`${device.relayState ? "text-mint font-semibold" : "text-white/40"}`}>
-                          {device.relayState ? "ON" : "OFF"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-
-            {/* Add Appliance Tile */}
-            <AddApplianceTile />
-          </div>
-        </section>
+        </DashboardLiveTelemetry>
 
       </div>
 

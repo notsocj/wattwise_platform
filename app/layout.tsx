@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import MobileViewport from "@/components/ui/MobileViewport";
 import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
 
@@ -28,8 +29,10 @@ export default async function RootLayout({
     <html lang="en" data-theme="dark">
       <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
-          <RouteTransitionIndicator />
-          <MobileViewport>{children}</MobileViewport>
+          <ThemeProvider>
+            <RouteTransitionIndicator />
+            <MobileViewport>{children}</MobileViewport>
+          </ThemeProvider>
         </SupabaseProvider>
       </body>
     </html>

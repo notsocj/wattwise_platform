@@ -86,6 +86,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 ## Known Project Conventions
 
 - App Router pages already exist for `/`, `/dashboard`, `/insights`, `/admin`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/update-password`, and `/onboarding`.
+- Smart Control user routes also exist for `/analytics` and `/settings`.
 - Shared Supabase helpers live under `lib/supabase/`.
 - Route-level loading UIs are part of the app structure; preserve them when adding slow server-rendered pages.
 - Service worker/PWA work is planned but not fully implemented. Be careful not to document it as complete unless the code actually exists.
@@ -107,5 +108,13 @@ Expected environment variables live in `.env.local`.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `OPENAI_API_KEY`
+- `SUPABASE_SECRET_KEY` (service role key, server-only, used for self-service account deletion)
 
 Document any newly required variables when adding features.
+
+## Smart Control Notes
+
+- Add Appliance registers a device before AI profiling so the ESP32-S3 can post MAC-address telemetry under the existing anon RLS guard.
+- Per-device budget shutoff compares calendar-month variable Meralco spend against `devices.user_approved_limit_php`; fixed charges remain home-level context and are excluded from relay cutoff decisions.
+- `devices.require_approval_on_expiry = true` records an approval-required event instead of automatically setting `relay_state = false`.
+- Keep Supabase Realtime enabled for `energy_logs` in the Supabase dashboard; the browser listens for INSERT payloads for live W/V/A updates.
