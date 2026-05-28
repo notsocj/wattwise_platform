@@ -1,6 +1,6 @@
 export type CalendarAnalyticsDayPayload = {
   day_key: string;
-  weekday: string;
+  weekday: string; 
   kwh: number;
   cost_php: number;
 };
