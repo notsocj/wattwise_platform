@@ -139,6 +139,7 @@ applyTo: "**"
   - [x] Add staged multi-tenant owner/tenant model *(migration `014_multi_tenant_manager_tenant.sql`: `profiles.manager_id`, `profiles.must_update_password`, `devices.owner_id`, `devices.tenant_id`, manager/tenant RLS, role-aware usage RPCs, and owner-based Smart Control trigger)*
   - [x] Split manager command center into dedicated portal routes for fleet dashboard, rooms, tenants, calendar, AI assistant, and settings
   - [x] Add manager AI assistant and cached manager insight cards scoped to manager-owned rooms
+  - [x] Add frontend instant-load pass: verified internal navigation uses `next/link`, added manager route skeleton, and moved manager AI insight-card GET reads to SWR with shared JSON fetcher
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**

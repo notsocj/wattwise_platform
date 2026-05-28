@@ -82,7 +82,7 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - Default to `.limit(100)` when the exact row count is unknown.
 - For chart data, prefer server-side aggregation via Supabase RPC functions over client-side array processing.
 - For billing-grade totals, use RPCs that aggregate by minute and sum cumulative deltas (`get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`) instead of raw row loops.
-- Cache fetched data using SWR or TanStack Query to avoid re-fetching on re-renders.
+- Cache idempotent client-side API reads with SWR and the shared `lib/fetcher.ts` JSON fetcher to preserve stale data during back-navigation while revalidating in the background.
 - When correlating `energy_logs.device_id` to devices, normalize and support both key formats (`devices.id` and legacy `devices.mac_address`) to avoid zeroed dashboard totals during schema transition.
 - For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 1 minute for 10-second telemetry) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
 - For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.

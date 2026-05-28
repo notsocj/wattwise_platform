@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
+import useSWR from "swr";
 import { AlertTriangle, Bot, Send, Sparkles } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { jsonFetcher } from "@/lib/fetcher";
 import type { ManagerFleetSnapshot } from "@/lib/manager-data";
 
 type InsightCard = {
@@ -19,6 +21,10 @@ type ChatMessage = {
 
 type ManagerAiClientProps = {
   snapshot: Pick<ManagerFleetSnapshot, "devices" | "totals">;
+};
+
+type ManagerInsightsResponse = {
+  cards: InsightCard[];
 };
 
 function getCardClasses(severity: InsightCard["severity"]): string {
@@ -50,9 +56,17 @@ function getAccentClasses(severity: InsightCard["severity"]): string {
 }
 
 export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
-  const [cards, setCards] = useState<InsightCard[]>([]);
-  const [cardsLoading, setCardsLoading] = useState(true);
-  const [cardsError, setCardsError] = useState<string | null>(null);
+  const {
+    data: cardsData,
+    error: cardsError,
+    isLoading: cardsLoading,
+  } = useSWR<ManagerInsightsResponse>(
+    "/api/manager/ai/insights",
+    (url: string) => jsonFetcher<ManagerInsightsResponse>(url),
+    {
+      keepPreviousData: true,
+    }
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -62,48 +76,13 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
   ]);
   const [draft, setDraft] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadCards() {
-      try {
-        const response = await fetch("/api/manager/ai/insights");
-        const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(
-            typeof payload.error === "string"
-              ? payload.error
-              : "Could not load manager AI insights."
-          );
-        }
-
-        if (!ignore) {
-          setCards(Array.isArray(payload.cards) ? payload.cards : []);
-          setCardsError(null);
-        }
-      } catch (error) {
-        if (!ignore) {
-          setCardsError(
-            error instanceof Error
-              ? error.message
-              : "Could not load manager AI insights."
-          );
-        }
-      } finally {
-        if (!ignore) {
-          setCardsLoading(false);
-        }
-      }
-    }
-
-    void loadCards();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const cards = Array.isArray(cardsData?.cards) ? cardsData.cards : [];
+  const cardsErrorMessage =
+    cardsError instanceof Error
+      ? cardsError.message
+      : cardsError
+        ? "Could not load manager AI insights."
+        : null;
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -215,11 +194,11 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
               spinnerClassName="border-white/20 border-t-mint"
             />
           </div>
-        ) : cardsError ? (
+        ) : cardsErrorMessage ? (
           <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
             <p className="flex items-start gap-2 text-sm text-danger">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              {cardsError}
+              {cardsErrorMessage}
             </p>
           </div>
         ) : (
