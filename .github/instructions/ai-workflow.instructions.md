@@ -98,10 +98,11 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - The Smart Appliance profiler route is `POST /api/devices/[deviceId]/ai-profile`. It must run server-side only, verify device ownership, and send OpenAI the exact persona: "Act as an expert energy consultant in the Philippines. You speak in a casual, practical Taglish tone."
 - Appliance profiling prompts must include `appliance_type`, fresh baseline watts, and `estimated_daily_hours`, and must force raw JSON output with exactly `estimated_monthly_kwh`, `suggested_monthly_limit_php`, and `taglish_advice`.
 - When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
-- Per-device shutoff compares calendar-month variable Meralco spend against `devices.user_approved_limit_php`. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
+- Per-device shutoff compares current billing-cycle variable Meralco spend against `devices.user_approved_limit_php`. The cycle boundary comes from `profiles.billing_cycle_start_day` in Asia/Manila. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
 - Budget automation runs in PostgreSQL via the `energy_logs` INSERT trigger from `012_smart_budget_controls.sql`; do not duplicate cutoff decisions in client code.
 - If `devices.require_approval_on_expiry` is true, the trigger records `budget_status = 'approval_required'` and a `device_budget_events` row instead of setting `relay_state = false`.
 - If approval is not required, the trigger sets `devices.relay_state = false`, records `budget_status = 'auto_cutoff'`, and the ESP32-S3 relay polling loop handles the physical shutoff.
+- After migration `013_custom_billing_cycles.sql`, `device_month_usage.month_start` stores the billing-cycle start date instead of always representing the first day of a calendar month.
 
 ---
 
@@ -124,10 +125,10 @@ Example phrasing to steer toward:
 
 | `insight_type` | Purpose | Required input data |
 |---|---|---|
-| `budget_alert` | Warns if spend trajectory will exceed monthly budget | `currentSpend`, `monthlyBudget`, `daysElapsed` |
+| `budget_alert` | Warns if spend trajectory will exceed the home budget this billing cycle | `currentSpend`, `monthlyBudget`, `daysElapsed` |
 | `weekly_recap` | Positive reinforcement comparing week-over-week consumption | `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP` |
 | `anomaly_alert` | Flags unusual spikes or one-device outliers | `thisWeekKWh`, `lastWeekKWh`, top-device usage/cost |
-| `cost_optimizer` | Gives one concrete savings action | `monthlyBudget`, `projectedMonthly`, top-device usage/cost |
+| `cost_optimizer` | Gives one concrete savings action | `monthlyBudget`, `projectedBillingCycle`, top-device usage/cost |
 
 ### 3b.1 Contextual Insight UX
 
@@ -138,6 +139,7 @@ Example phrasing to steer toward:
 - If a boolean is false, its message must be an empty string. Do not return filler text like "everything looks normal."
 - If an insight payload is non-actionable, render `null` instead of a card. Clean dashboards beat mandatory AI chrome.
 - Calendar habit analysis belongs in `app/api/insights/calendar/route.ts`. It should accept bounded grouped daily rows from the month calendar, keep the same Taglish persona, and return a structured JSON analysis payload suitable for a modal or side panel.
+- Structured insight payloads stored in `ai_insights.message` may include `billing_cycle_start_day`, `cycle_start_date`, and `cycle_end_date`. Cache reuse should validate those values before returning a billing-sensitive cached response.
 
 ### 3c. Trigger & Cache — Mandatory Flow
 
@@ -158,7 +160,7 @@ Next.js API Route (app/api/insights/route.ts)
         └─[No row]
               │
               ▼
-        Aggregate data from energy_logs (with .limit() guard)
+        Aggregate bounded usage data (prefer billing-grade RPCs and billing-cycle helpers over raw row loops)
               │
               ▼
         Call openai.chat.completions.create (server-side only)

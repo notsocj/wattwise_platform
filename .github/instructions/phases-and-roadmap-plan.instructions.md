@@ -14,9 +14,9 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~75% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; all 12 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
-| 2 — Billing & Control | In Progress | ~78% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, monthly usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff |
-| 3 — AI & PWA | In Progress | ~77% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; OpenAI package installed; PWA still pending |
+| 1 — Foundation | In Progress | ~78% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; all 13 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
+| 2 — Billing & Control | In Progress | ~84% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, billing-cycle usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff; user-level `billing_cycle_start_day` now drives wallet, burn analytics, device detail, and Smart Control windows |
+| 3 — AI & PWA | In Progress | ~80% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; AI insight cache payloads now carry billing-cycle metadata so stale cycle advice is invalidated when the user's Meralco start day changes; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
 
 ---
@@ -134,6 +134,7 @@ applyTo: "**"
   - [x] Add **Home Wallet** card under Daily Cost on Home Dashboard (profile budget + burn rate from bounded monthly `energy_logs`)
   - [x] Add inline loading + error toast feedback for relay and home budget actions *(implemented in `RelayToggle` and `HomeBudgetEditor`)*
   - [x] Add Smart Control per-device budget automation *(migration `012_smart_budget_controls.sql`: `device_month_usage`, `device_budget_events`, approved limits, approval override, and `energy_logs` INSERT trigger that can set `relay_state = false`)*
+  - [x] Refactor billing-sensitive logic to a custom Meralco billing cycle *(migration `013_custom_billing_cycles.sql`: `profiles.billing_cycle_start_day`, custom-cycle Smart Control accumulation/backfill, cycle-aware Home/Burn/Device Detail math, and Settings UI save path)*
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**
@@ -172,7 +173,7 @@ applyTo: "**"
     5. [x] Return the new message to the client
 
 - [x] **Budget "Naku!" Alert (`budget_alert`)**
-  - [x] Calculate inputs: `currentSpend` (sum of this month's kWh × Meralco rate), `monthlyBudget` (from `profiles.monthly_budget_php`), `daysElapsed`
+  - [x] Calculate inputs: `currentSpend` (sum of this billing cycle's kWh priced against the correct Meralco rate rows), `monthlyBudget` (from `profiles.monthly_budget_php`), `daysElapsed`
   - [x] System prompt must reference exact ₱ amounts, appliance names, and timeframes
   - [x] Example output tone: *"Naku boss, Day 15 pa lang pero nasa ₱1,500 na tayo sa ₱2,000 budget mo..."*
   - [x] Display as a dismissible contextual card on the Home Dashboard when the payload is actionable or urgent
@@ -191,7 +192,7 @@ applyTo: "**"
 - [x] **Predictive Burn-Rate Analytics (`app/analytics/page.tsx`)**
   - [x] Use bounded usage RPCs for the past 7 days and month-to-date usage
   - [x] Use active unbundled Meralco rates for projected PHP cost
-  - [x] Render 7-day financial velocity and projected calendar-month bill
+  - [x] Render 7-day financial velocity and projected billing-cycle bill
   - [x] Render anomaly AI context above the burn-rate chart only when actionable
 
 - [x] **Calendar Analytics (`app/dashboard/calendar/page.tsx`)**

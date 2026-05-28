@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `012`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
+This file reflects the current database shape defined by `supabase/migrations/001` through `013`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
 
 ## Current Schema Summary
 
@@ -30,6 +30,7 @@ CREATE TABLE profiles (
   full_name TEXT,
   role VARCHAR(20) DEFAULT 'user',
   monthly_budget_php NUMERIC(10, 2) DEFAULT 2000.00,
+  billing_cycle_start_day INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -38,6 +39,8 @@ Notes:
 
 - `role` is currently used for `user` and `super_admin`
 - `monthly_budget_php` is the home-level wallet budget edited from the Home dashboard flow only
+- `billing_cycle_start_day` is the user-level Meralco reading day used for billing-cycle windows and Smart Control accumulation
+- `billing_cycle_start_day` must stay between `1` and `28`
 - `handle_new_user()` auto-creates a `profiles` row after `auth.users` insert
 
 ### `meralco_rates`
@@ -172,7 +175,7 @@ Notes:
 
 ### `device_month_usage`
 
-Calendar-month per-device accumulator used by the Smart Control trigger.
+Custom billing-cycle per-device accumulator used by the Smart Control trigger.
 
 ```sql
 CREATE TABLE device_month_usage (
@@ -196,8 +199,9 @@ CREATE INDEX idx_device_month_usage_user_month
 Purpose:
 
 - avoids rescanning raw `energy_logs` on every insert
-- stores per-device calendar-month usage and variable Meralco spend
+- stores per-device billing-cycle usage and variable Meralco spend
 - budget enforcement excludes fixed monthly charges by design
+- `month_start` remains the column name for compatibility, but since migration `013` it stores the billing-cycle start date, not necessarily the first day of a calendar month
 
 ### `device_budget_events`
 
@@ -333,7 +337,8 @@ Trigger function executed `AFTER INSERT` on `energy_logs`.
 Behavior:
 
 - resolves the target device using either `devices.id::text` or `devices.mac_address`
-- derives the Manila-local `month_start`
+- fetches `profiles.billing_cycle_start_day` for the owning user
+- derives the Manila-local billing-cycle start date
 - loads the latest applicable `meralco_rates` row for the reading date
 - computes variable spend from the cumulative kWh delta only
 - upserts into `device_month_usage`
@@ -426,7 +431,7 @@ Important caution:
 
 ### Smart Control
 
-- calendar month is based on `Asia/Manila`
+- billing-cycle boundaries are based on `profiles.billing_cycle_start_day` in `Asia/Manila`
 - compare `device_month_usage.variable_spend_php` against `devices.user_approved_limit_php`
 - `require_approval_on_expiry = true` must not auto-disable relay power
 - keep Supabase Realtime enabled for `energy_logs` when working on live telemetry UX
@@ -465,14 +470,18 @@ SELECT * FROM get_usage_kwh_by_device_day(
 SELECT * FROM get_hourly_averages($1, $2);
 ```
 
-### Current device-month accumulator rows
+### Current device-cycle accumulator rows
 
 ```sql
 SELECT *
 FROM device_month_usage
 WHERE user_id = $1
-  AND month_start = date_trunc('month', now() AT TIME ZONE 'Asia/Manila')::date;
+  AND month_start = $2;
 ```
+
+Usage note:
+
+- `$2` should be the current billing-cycle start date computed from `profiles.billing_cycle_start_day`, not `date_trunc('month', ...)`
 
 ### Recent device budget events
 

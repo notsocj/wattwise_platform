@@ -7,13 +7,15 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
-  computeMeralcoBill,
+  computeHistoricalVariableSpendByDeviceFromDayRows,
   getActiveMeralcoRates,
+  getMeralcoRatesForRange,
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import TipidTipCard from "@/components/insights/TipidTipCard";
+import { getCurrentBillingCycle } from "@/lib/date-utils";
 
 type DeviceRow = {
   id: string;
@@ -24,6 +26,7 @@ type DeviceRow = {
 
 type ProfileRow = {
   monthly_budget_php: number | string | null;
+  billing_cycle_start_day: number | null;
 };
 
 type EnergyLogRow = {
@@ -43,6 +46,7 @@ type LegacyEnergyLogRow = {
 type UsageByDeviceRow = {
   device_id: string;
   usage_kwh: number | string;
+  day_key: string;
 };
 
 type DeviceViewModel = {
@@ -230,26 +234,16 @@ export default async function DeviceDetailPage(props: {
     redirect("/login");
   }
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  const now = new Date();
 
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-
-  const [deviceData, { data: profileData }, usageByDeviceRes, devicesCountRes, activeRates] =
+  const [deviceData, { data: profileData }, devicesCountRes, activeRates] =
     await Promise.all([
       fetchOwnedDeviceById(supabase, user.id, deviceId),
       supabase
         .from("profiles")
-        .select("monthly_budget_php")
+        .select("monthly_budget_php, billing_cycle_start_day")
         .eq("id", user.id)
         .maybeSingle<ProfileRow>(),
-      supabase.rpc("get_usage_kwh_by_device", {
-        p_user_id: user.id,
-        p_start: startOfMonth.toISOString(),
-        p_end: endOfToday.toISOString(),
-      }),
       supabase
         .from("devices")
         .select("id", { count: "exact", head: true })
@@ -260,6 +254,20 @@ export default async function DeviceDetailPage(props: {
   if (!deviceData) {
     redirect("/dashboard");
   }
+
+  const billingCycle = getCurrentBillingCycle(
+    profileData?.billing_cycle_start_day ?? 1,
+    now
+  );
+
+  const [rateRows, usageByDeviceDayRes] = await Promise.all([
+    getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
+    supabase.rpc("get_usage_kwh_by_device_day", {
+      p_user_id: user.id,
+      p_start: billingCycle.startDate.toISOString(),
+      p_end: now.toISOString(),
+    }),
+  ]);
 
   const latestTelemetryResult = await supabase
     .from("energy_logs")
@@ -311,38 +319,34 @@ export default async function DeviceDetailPage(props: {
       )
     : 0;
   const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
-  const usageByDeviceRows = (usageByDeviceRes.data ?? []) as UsageByDeviceRow[];
+  const usageByDeviceRows = (usageByDeviceDayRes.data ?? []) as UsageByDeviceRow[];
   const deviceCount = Math.max(1, devicesCountRes.count ?? 1);
-  const monthlyKWh = Math.max(
-    0,
-    toNumber(
-      usageByDeviceRows.find((row) => row.device_id === deviceData.id)?.usage_kwh ?? 0
-    )
-  );
+  const cycleKWhByDevice = new Map<string, number>();
+  for (const row of usageByDeviceRows) {
+    cycleKWhByDevice.set(
+      row.device_id,
+      (cycleKWhByDevice.get(row.device_id) ?? 0) + Math.max(0, toNumber(row.usage_kwh))
+    );
+  }
+  const billingCycleKWh = Math.max(0, cycleKWhByDevice.get(deviceData.id) ?? 0);
 
-  const totalMonthlyKWhAcrossHome = usageByDeviceRows.reduce(
-    (sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)),
+  const totalBillingCycleKWhAcrossHome = Array.from(cycleKWhByDevice.values()).reduce(
+    (sum, usageKwh) => sum + Math.max(0, usageKwh),
     0
   );
 
-  const fixedFeeSharePhp = totalMonthlyKWhAcrossHome > 0
-    ? activeRates.fixedMonthlyChargesPhp * (monthlyKWh / totalMonthlyKWhAcrossHome)
+  const fixedFeeSharePhp = totalBillingCycleKWhAcrossHome > 0
+    ? activeRates.fixedMonthlyChargesPhp * (billingCycleKWh / totalBillingCycleKWhAcrossHome)
     : activeRates.fixedMonthlyChargesPhp / deviceCount;
 
-  const variableSpendPhp = computeMeralcoBill(
-    monthlyKWh,
-    activeRates.rates,
-    activeRates.vatRate
+  const variableSpendByDevice = computeHistoricalVariableSpendByDeviceFromDayRows(
+    usageByDeviceRows,
+    rateRows
   );
+  const variableSpendPhp = variableSpendByDevice.get(deviceData.id) ?? 0;
 
-  const estimatedBillPhp = computeMeralcoBill(
-    monthlyKWh,
-    activeRates.rates,
-    activeRates.vatRate,
-    {
-      fixedChargesPhp: fixedFeeSharePhp,
-    }
-  );
+  const estimatedBillPhp =
+    variableSpendPhp + fixedFeeSharePhp * (1 + activeRates.vatRate);
 
   const device: DeviceViewModel = {
     id: deviceData.id,
@@ -442,7 +446,7 @@ export default async function DeviceDetailPage(props: {
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-mint" />
               <h3 className="text-sm font-bold uppercase tracking-wider">
-                Appliance Burn Rate
+                Appliance Billing Cycle
               </h3>
             </div>
             <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
@@ -466,7 +470,7 @@ export default async function DeviceDetailPage(props: {
                 Estimated Appliance Bill
               </span>
               <span className="text-xs text-white/50">
-                ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} used
+                ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} this billing cycle
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">

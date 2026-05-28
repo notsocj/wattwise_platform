@@ -8,15 +8,22 @@ import BurnRateChart, {
 } from "@/components/analytics/BurnRateChart";
 import AnomalyAlertCard from "@/components/insights/AnomalyAlertCard";
 import { createClient } from "@/lib/supabase/server";
-import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
+import {
+  computeHistoricalVariableSpendByDay,
+  computeHistoricalVariableSpendFromDayRows,
+  getActiveMeralcoRates,
+  getMeralcoRatesForRange,
+} from "@/lib/meralco-rates";
+import {
+  getCurrentBillingCycle,
+  getEndOfManilaDay,
+  getManilaDayKey,
+  getStartOfManilaDay,
+} from "@/lib/date-utils";
 
 type ProfileRow = {
   monthly_budget_php: number | string | null;
-};
-
-type UsageByDeviceRow = {
-  device_id: string;
-  usage_kwh: number | string;
+  billing_cycle_start_day: number | null;
 };
 
 type UsageByDeviceDayRow = {
@@ -51,59 +58,57 @@ export default async function AnalyticsPage() {
   }
 
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfSevenDayWindow = new Date(now);
-  startOfSevenDayWindow.setDate(now.getDate() - 6);
-  startOfSevenDayWindow.setHours(0, 0, 0, 0);
+  const startOfToday = getStartOfManilaDay(now);
+  const startOfSevenDayWindow = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const endOfToday = getEndOfManilaDay(now);
 
-  const endOfToday = new Date(now);
-  endOfToday.setHours(23, 59, 59, 999);
-
-  const [activeRates, { data: profile }, monthUsageRes, sevenDayUsageRes] =
+  const [activeRates, { data: profile }] =
     await Promise.all([
       getActiveMeralcoRates(supabase),
       supabase
         .from("profiles")
-        .select("monthly_budget_php")
+        .select("monthly_budget_php, billing_cycle_start_day")
         .eq("id", user.id)
         .maybeSingle<ProfileRow>(),
-      supabase.rpc("get_usage_kwh_by_device", {
-        p_user_id: user.id,
-        p_start: startOfMonth.toISOString(),
-        p_end: now.toISOString(),
-      }),
-      supabase.rpc("get_usage_kwh_by_device_day", {
-        p_user_id: user.id,
-        p_start: startOfSevenDayWindow.toISOString(),
-        p_end: endOfToday.toISOString(),
-      }),
     ]);
+  const billingCycle = getCurrentBillingCycle(
+    profile?.billing_cycle_start_day ?? 1,
+    now
+  );
+  const rateRangeStart =
+    billingCycle.startDate.getTime() < startOfSevenDayWindow.getTime()
+      ? billingCycle.startDate
+      : startOfSevenDayWindow;
+  const [rateRows, cycleUsageByDayRes, sevenDayUsageRes] = await Promise.all([
+    getMeralcoRatesForRange(supabase, rateRangeStart, now),
+    supabase.rpc("get_usage_kwh_by_device_day", {
+      p_user_id: user.id,
+      p_start: billingCycle.startDate.toISOString(),
+      p_end: now.toISOString(),
+    }),
+    supabase.rpc("get_usage_kwh_by_device_day", {
+      p_user_id: user.id,
+      p_start: startOfSevenDayWindow.toISOString(),
+      p_end: endOfToday.toISOString(),
+    }),
+  ]);
 
   const monthlyBudget = Math.max(1, toNumber(profile?.monthly_budget_php ?? 2000));
-  const monthUsageRows = (monthUsageRes.data ?? []) as UsageByDeviceRow[];
+  const cycleUsageByDayRows = (cycleUsageByDayRes.data ?? []) as UsageByDeviceDayRow[];
   const sevenDayRows = (sevenDayUsageRes.data ?? []) as UsageByDeviceDayRow[];
-
-  const monthKWh = monthUsageRows.reduce(
-    (sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)),
-    0
+  const actualCycleVariableSpend = computeHistoricalVariableSpendFromDayRows(
+    cycleUsageByDayRows,
+    rateRows
   );
-  const monthVariableSpend = computeMeralcoBill(
-    monthKWh,
-    activeRates.rates,
-    activeRates.vatRate
-  );
-  const monthEstimatedBill = computeMeralcoBill(
-    monthKWh,
-    activeRates.rates,
-    activeRates.vatRate,
-    { fixedChargesPhp: activeRates.fixedMonthlyChargesPhp }
-  );
+  const cycleEstimatedBill =
+    actualCycleVariableSpend +
+    activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
 
   const kWhByDay = new Map<string, number>();
   for (let index = 0; index < 7; index += 1) {
     const date = new Date(startOfSevenDayWindow);
     date.setDate(startOfSevenDayWindow.getDate() + index);
-    const dayKey = date.toISOString().slice(0, 10);
+    const dayKey = getManilaDayKey(date);
     kWhByDay.set(dayKey, 0);
   }
 
@@ -113,23 +118,26 @@ export default async function AnalyticsPage() {
       (kWhByDay.get(row.day_key) ?? 0) + Math.max(0, toNumber(row.usage_kwh))
     );
   }
+  const costByDay = computeHistoricalVariableSpendByDay(sevenDayRows, rateRows);
 
   const chartData: BurnRatePoint[] = Array.from(kWhByDay.entries()).map(
     ([dayKey, kwh]) => ({
       day: toDayLabel(dayKey),
       kwh: Number(kwh.toFixed(2)),
-      cost: Number(
-        computeMeralcoBill(kwh, activeRates.rates, activeRates.vatRate).toFixed(2)
-      ),
+      cost: Number((costByDay.get(dayKey) ?? 0).toFixed(2)),
     })
   );
 
-  const sevenDayCost = chartData.reduce((sum, point) => sum + point.cost, 0);
-  const avgDailyVariableCost = sevenDayCost / 7;
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const daysElapsed = Math.max(1, now.getDate());
-  const projectedVariableSpend = avgDailyVariableCost * daysInMonth;
-  const projectedMonthlyBill =
+  const cycleStartDayKey = getManilaDayKey(billingCycle.startDate);
+  const forecastLookbackDays = Math.min(7, billingCycle.elapsedDays);
+  const forecastRows = sevenDayRows.filter((row) => row.day_key >= cycleStartDayKey);
+  const forecastVariableSpend = computeHistoricalVariableSpendFromDayRows(
+    forecastRows,
+    rateRows
+  );
+  const avgDailyVariableCost = forecastVariableSpend / Math.max(1, forecastLookbackDays);
+  const projectedVariableSpend = avgDailyVariableCost * billingCycle.totalDays;
+  const projectedCycleBill =
     projectedVariableSpend +
     activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
   const remainingBudgetForVariable = Math.max(
@@ -137,11 +145,14 @@ export default async function AnalyticsPage() {
     monthlyBudget - activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate)
   );
   const projectedHitDay =
-    avgDailyVariableCost > 0 && projectedMonthlyBill >= monthlyBudget
-      ? Math.min(daysInMonth, Math.ceil(remainingBudgetForVariable / avgDailyVariableCost))
+    avgDailyVariableCost > 0 && projectedCycleBill >= monthlyBudget
+      ? Math.min(
+          billingCycle.totalDays,
+          Math.ceil(remainingBudgetForVariable / avgDailyVariableCost)
+        )
       : null;
-  const burnPercent = Math.min((monthEstimatedBill / monthlyBudget) * 100, 100);
-  const remainingDays = Math.max(0, daysInMonth - daysElapsed);
+  const burnPercent = Math.min((cycleEstimatedBill / monthlyBudget) * 100, 100);
+  const remainingDays = billingCycle.remainingDays;
 
   return (
     <div className="min-h-screen bg-base pb-24 text-white">
@@ -162,17 +173,17 @@ export default async function AnalyticsPage() {
         <section className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-surface p-5">
           <div className="absolute inset-y-0 left-0 w-1 rounded-r-full bg-mint/60" />
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-white/50">
-            Projected Monthly Bill
+            Projected Billing Cycle Bill
           </p>
           <p className="text-5xl font-bold tracking-tight">
             <span className="mr-0.5 text-3xl font-semibold text-white/50">₱</span>
-            {projectedMonthlyBill.toLocaleString("en-PH", {
+            {projectedCycleBill.toLocaleString("en-PH", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
           <p className="mt-2 text-sm text-white/55">
-            Based on the last 7 days, with {remainingDays} day(s) left this month.
+            Based on the last {forecastLookbackDays} day{forecastLookbackDays === 1 ? "" : "s"}, with {remainingDays} day(s) left in your billing cycle.
           </p>
         </section>
 
@@ -196,16 +207,16 @@ export default async function AnalyticsPage() {
         <section className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-white/[0.06] bg-surface p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-white/45">
-              Month-To-Date
+              Billing Cycle To Date
             </p>
             <p className="mt-2 text-2xl font-bold">
-              ₱{monthEstimatedBill.toLocaleString("en-PH", {
+              ₱{cycleEstimatedBill.toLocaleString("en-PH", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </p>
             <p className="mt-1 text-[11px] text-white/40">
-              Variable: ₱{monthVariableSpend.toFixed(2)}
+              Variable: ₱{actualCycleVariableSpend.toFixed(2)}
             </p>
           </div>
 
@@ -243,8 +254,8 @@ export default async function AnalyticsPage() {
           </div>
           <p className="text-sm leading-relaxed text-white/70">
             {projectedHitDay
-              ? `Trending to hit your ₱${monthlyBudget.toLocaleString("en-PH")} budget around day ${projectedHitDay}. Naku, ease up on high-watt appliances before then.`
-              : `Bida, current trend stays within your ₱${monthlyBudget.toLocaleString("en-PH")} budget for this calendar month.`}
+              ? `Trending to hit your ₱${monthlyBudget.toLocaleString("en-PH")} budget around day ${projectedHitDay} of this billing cycle. Naku, ease up on high-watt appliances before then.`
+              : `Bida, current trend stays within your ₱${monthlyBudget.toLocaleString("en-PH")} budget for this billing cycle.`}
           </p>
         </section>
       </main>

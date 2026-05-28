@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getManilaDayKey } from "@/lib/date-utils";
 
 export type MeralcoRateComponents = {
   generation: number;
@@ -27,6 +28,20 @@ type MeralcoRatesRow = {
   supply_charge: number | string;
 };
 
+type UsageByDayInput = {
+  day_key: string;
+  usage_kwh: number | string;
+  device_id?: string | null;
+};
+
+export type HistoricalMeralcoRateRow = {
+  effectiveMonth: string;
+  rates: MeralcoRateComponents;
+  fixedCharges: MeralcoFixedCharges;
+  fixedMonthlyChargesPhp: number;
+  vatRate: number;
+};
+
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);
 }
@@ -52,7 +67,7 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   effectiveMonth: string;
   source: "table";
 }> {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = getManilaDayKey(new Date());
 
   const { data, error } = await supabase
     .from("meralco_rates")
@@ -86,6 +101,156 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
     effectiveMonth: data.effective_month,
     source: "table",
   };
+}
+
+function mapRowToHistoricalRate(row: MeralcoRatesRow): HistoricalMeralcoRateRow {
+  return {
+    effectiveMonth: row.effective_month,
+    rates: mapMeralcoRatesRowToComponents(row),
+    fixedCharges: {
+      meteringCharge: toNumber(row.metering_charge),
+      supplyCharge: toNumber(row.supply_charge),
+    },
+    fixedMonthlyChargesPhp:
+      toNumber(row.metering_charge) + toNumber(row.supply_charge),
+    vatRate: toNumber(row.vat_rate),
+  };
+}
+
+function getApplicableRateForDay(
+  dayKey: string,
+  rateRows: HistoricalMeralcoRateRow[]
+): HistoricalMeralcoRateRow | null {
+  let applicableRate: HistoricalMeralcoRateRow | null = null;
+
+  for (const rateRow of rateRows) {
+    if (rateRow.effectiveMonth <= dayKey) {
+      applicableRate = rateRow;
+      continue;
+    }
+
+    break;
+  }
+
+  return applicableRate;
+}
+
+function toUsageNumber(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export async function getMeralcoRatesForRange(
+  supabase: SupabaseClient,
+  startDate: Date,
+  endDate: Date
+): Promise<HistoricalMeralcoRateRow[]> {
+  const endDayKey = getManilaDayKey(endDate);
+
+  const { data, error } = await supabase
+    .from("meralco_rates")
+    .select(
+      "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
+    )
+    .lte("effective_month", endDayKey)
+    .order("effective_month", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to fetch meralco_rates range: ${error.message || "unknown error"}`);
+  }
+
+  const rows = (data ?? []) as MeralcoRatesRow[];
+  if (!rows.length) {
+    throw new Error(
+      "No applicable meralco_rates rows found for the requested date range."
+    );
+  }
+
+  const startDayKey = getManilaDayKey(startDate);
+  const lastRateBeforeStart = [...rows]
+    .reverse()
+    .find((row) => row.effective_month <= startDayKey);
+
+  if (!lastRateBeforeStart) {
+    throw new Error(
+      "No meralco_rates row exists on or before the billing cycle start date."
+    );
+  }
+
+  const filteredRows = rows.filter(
+    (row) => row.effective_month >= lastRateBeforeStart.effective_month
+  );
+
+  return filteredRows.map(mapRowToHistoricalRate);
+}
+
+export function computeHistoricalVariableSpendForDay(
+  dayKey: string,
+  usageKwh: number,
+  rateRows: HistoricalMeralcoRateRow[]
+): number {
+  if (usageKwh <= 0) {
+    return 0;
+  }
+
+  const applicableRate = getApplicableRateForDay(dayKey, rateRows);
+  if (!applicableRate) {
+    return 0;
+  }
+
+  return computeMeralcoBill(usageKwh, applicableRate.rates, applicableRate.vatRate);
+}
+
+export function computeHistoricalVariableSpendFromDayRows(
+  rows: UsageByDayInput[],
+  rateRows: HistoricalMeralcoRateRow[]
+): number {
+  return rows.reduce((sum, row) => {
+    const usageKwh = Math.max(0, toUsageNumber(row.usage_kwh));
+    return sum + computeHistoricalVariableSpendForDay(row.day_key, usageKwh, rateRows);
+  }, 0);
+}
+
+export function computeHistoricalVariableSpendByDay(
+  rows: UsageByDayInput[],
+  rateRows: HistoricalMeralcoRateRow[]
+): Map<string, number> {
+  const costByDay = new Map<string, number>();
+
+  for (const row of rows) {
+    const usageKwh = Math.max(0, toUsageNumber(row.usage_kwh));
+    const nextCost =
+      (costByDay.get(row.day_key) ?? 0) +
+      computeHistoricalVariableSpendForDay(row.day_key, usageKwh, rateRows);
+    costByDay.set(row.day_key, nextCost);
+  }
+
+  return costByDay;
+}
+
+export function computeHistoricalVariableSpendByDeviceFromDayRows(
+  rows: UsageByDayInput[],
+  rateRows: HistoricalMeralcoRateRow[]
+): Map<string, number> {
+  const costByDevice = new Map<string, number>();
+
+  for (const row of rows) {
+    if (!row.device_id) {
+      continue;
+    }
+
+    const usageKwh = Math.max(0, toUsageNumber(row.usage_kwh));
+    const nextCost =
+      (costByDevice.get(row.device_id) ?? 0) +
+      computeHistoricalVariableSpendForDay(row.day_key, usageKwh, rateRows);
+    costByDevice.set(row.device_id, nextCost);
+  }
+
+  return costByDevice;
 }
 
 export function computeMeralcoBill(

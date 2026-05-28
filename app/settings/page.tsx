@@ -13,6 +13,10 @@ type SettingsDevice = {
   budget_status: string | null;
 };
 
+type ProfileRow = {
+  billing_cycle_start_day: number | null;
+};
+
 export default async function SettingsPage() {
   const supabase = await createClient();
 
@@ -24,11 +28,18 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const { data: devices } = await supabase
-    .from("devices")
-    .select("id, device_name, require_approval_on_expiry, user_approved_limit_php, budget_status")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+  const [{ data: devices }, { data: profile }] = await Promise.all([
+    supabase
+      .from("devices")
+      .select("id, device_name, require_approval_on_expiry, user_approved_limit_php, budget_status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("billing_cycle_start_day")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+  ]);
 
   return (
     <div className="min-h-screen bg-base pb-24 text-white">
@@ -44,6 +55,7 @@ export default async function SettingsPage() {
 
       <main className="flex flex-col gap-4 px-5 pt-[84px]">
         <SettingsClient
+          billingCycleStartDay={profile?.billing_cycle_start_day ?? 1}
           email={user.email ?? "Your WattWise account"}
           devices={(devices ?? []) as SettingsDevice[]}
         />

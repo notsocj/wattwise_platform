@@ -3,7 +3,9 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import {
   getActiveMeralcoRates,
-  computeMeralcoBill,
+  computeHistoricalVariableSpendByDeviceFromDayRows,
+  computeHistoricalVariableSpendFromDayRows,
+  getMeralcoRatesForRange,
 } from "@/lib/meralco-rates";
 import { InsightType } from "@/lib/constants";
 import {
@@ -12,6 +14,12 @@ import {
   parseStructuredInsightsPayload,
   type StructuredInsightsPayload,
 } from "@/lib/insights";
+import {
+  getCurrentBillingCycle,
+  getEndOfManilaDay,
+  getManilaDayKey,
+  getStartOfManilaDay,
+} from "@/lib/date-utils";
 
 const VALID_INSIGHT_TYPES = Object.values(InsightType);
 
@@ -58,10 +66,15 @@ type DeviceRow = {
   appliance_type: string | null;
 };
 
-type EnergyLogRow = {
+type ProfileRow = {
+  monthly_budget_php: number | string | null;
+  billing_cycle_start_day: number | null;
+};
+
+type UsageByDeviceDayRow = {
   device_id: string;
-  energy_kwh: string | number;
-  recorded_at: string;
+  day_key: string;
+  usage_kwh: string | number;
 };
 
 type UsageResult = {
@@ -73,6 +86,12 @@ type TopDevice = {
   name: string;
   kwh: number;
   cost: number;
+};
+
+type CachedInsightMetadata = {
+  billing_cycle_start_day: number;
+  cycle_start_date: string;
+  cycle_end_date: string;
 };
 
 function parseJsonObject(content: string | null | undefined): unknown {
@@ -87,39 +106,29 @@ function parseJsonObject(content: string | null | undefined): unknown {
   }
 }
 
-function computeUsage(logs: EnergyLogRow[] | null): UsageResult {
-  if (!logs?.length) {
+function computeUsage(rows: UsageByDeviceDayRow[] | null): UsageResult {
+  if (!rows?.length) {
     return { totalKwh: 0, byDevice: new Map() };
   }
 
-  const byDevice = new Map<string, number[]>();
+  const byDevice = new Map<string, number>();
 
-  for (const log of logs) {
-    const kwh = Number(log.energy_kwh);
+  for (const row of rows) {
+    const kwh = Number(row.usage_kwh);
     if (!Number.isFinite(kwh) || kwh < 0) {
       continue;
     }
 
-    const readings = byDevice.get(log.device_id) ?? [];
-    readings.push(kwh);
-    byDevice.set(log.device_id, readings);
+    byDevice.set(row.device_id, (byDevice.get(row.device_id) ?? 0) + kwh);
   }
 
-  const usageByDevice = new Map<string, number>();
   let totalKwh = 0;
 
-  for (const [deviceId, readings] of byDevice) {
-    if (readings.length < 2) {
-      usageByDevice.set(deviceId, 0);
-      continue;
-    }
-
-    const usage = Math.max(0, Math.max(...readings) - Math.min(...readings));
-    usageByDevice.set(deviceId, usage);
+  for (const usage of byDevice.values()) {
     totalKwh += usage;
   }
 
-  return { totalKwh, byDevice: usageByDevice };
+  return { totalKwh, byDevice };
 }
 
 function buildEmptyResponse(insightType: InsightType, cached: boolean) {
@@ -127,6 +136,31 @@ function buildEmptyResponse(insightType: InsightType, cached: boolean) {
     ...createEmptyStructuredInsights(),
     insight_type: insightType,
     cached,
+  };
+}
+
+function parseCachedInsightMetadata(value: unknown): CachedInsightMetadata | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const payload = value as Record<string, unknown>;
+  const billingCycleStartDay = payload.billing_cycle_start_day;
+  const cycleStartDate = payload.cycle_start_date;
+  const cycleEndDate = payload.cycle_end_date;
+
+  if (
+    !Number.isInteger(billingCycleStartDay) ||
+    typeof cycleStartDate !== "string" ||
+    typeof cycleEndDate !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    billing_cycle_start_day: Number(billingCycleStartDay),
+    cycle_start_date: cycleStartDate,
+    cycle_end_date: cycleEndDate,
   };
 }
 
@@ -198,8 +232,8 @@ function sanitizeRequestedPayload(
 function buildFallbackInsights(params: {
   insightType: InsightType;
   monthlyBudget: number;
-  monthCostPhp: number;
-  projectedMonthly: number;
+  cycleCostPhp: number;
+  projectedCycleBill: number;
   daysElapsed: number;
   thisWeek: UsageResult;
   lastWeek: UsageResult;
@@ -211,8 +245,8 @@ function buildFallbackInsights(params: {
   const {
     insightType,
     monthlyBudget,
-    monthCostPhp,
-    projectedMonthly,
+    cycleCostPhp,
+    projectedCycleBill,
     daysElapsed,
     thisWeek,
     lastWeek,
@@ -233,8 +267,8 @@ function buildFallbackInsights(params: {
   switch (insightType) {
     case InsightType.BudgetAlert: {
       const isAtRisk =
-        projectedMonthly >= monthlyBudget ||
-        (daysElapsed >= 10 && monthCostPhp >= monthlyBudget * 0.8);
+        projectedCycleBill >= monthlyBudget ||
+        (daysElapsed >= 10 && cycleCostPhp >= monthlyBudget * 0.8);
 
       return {
         ...empty,
@@ -242,8 +276,8 @@ function buildFallbackInsights(params: {
           ? {
               is_at_risk: true,
               message: topDevice
-                ? `Naku boss, projected ka sa ₱${projectedMonthly.toFixed(2)} laban sa ₱${monthlyBudget.toFixed(2)} budget mo. Bantayan lalo si ${topDevice.name} kasi siya ang pinakamabigat ngayon at nasa ₱${topDevice.cost.toFixed(2)} na ang ambag niya.`
-                : `Naku boss, projected ka sa ₱${projectedMonthly.toFixed(2)} laban sa ₱${monthlyBudget.toFixed(2)} budget mo. Medyo bawasan muna ang high-watt appliance hours para di tayo lumampas.`,
+                ? `Naku boss, projected ka sa ₱${projectedCycleBill.toFixed(2)} laban sa ₱${monthlyBudget.toFixed(2)} budget mo this billing cycle. Bantayan lalo si ${topDevice.name} kasi siya ang pinakamabigat ngayon at nasa ₱${topDevice.cost.toFixed(2)} na ang ambag niya.`
+                : `Naku boss, projected ka sa ₱${projectedCycleBill.toFixed(2)} laban sa ₱${monthlyBudget.toFixed(2)} budget mo this billing cycle. Medyo bawasan muna ang high-watt appliance hours para di tayo lumampas.`,
             }
           : { is_at_risk: false, message: "" },
       };
@@ -311,9 +345,12 @@ function buildFallbackInsights(params: {
 function buildUserPrompt(params: {
   insightType: InsightType;
   monthlyBudget: number;
-  monthCostPhp: number;
-  projectedMonthly: number;
+  cycleCostPhp: number;
+  projectedCycleBill: number;
   daysElapsed: number;
+  cycleStartDate: string;
+  cycleEndDate: string;
+  billingCycleStartDay: number;
   devices: DeviceRow[];
   thisWeek: UsageResult;
   lastWeek: UsageResult;
@@ -324,9 +361,12 @@ function buildUserPrompt(params: {
   const {
     insightType,
     monthlyBudget,
-    monthCostPhp,
-    projectedMonthly,
+    cycleCostPhp,
+    projectedCycleBill,
     daysElapsed,
+    cycleStartDate,
+    cycleEndDate,
+    billingCycleStartDay,
     devices,
     thisWeek,
     lastWeek,
@@ -346,9 +386,12 @@ function buildUserPrompt(params: {
       "Populate only the object that matches insight_type. All other objects must have false booleans and empty messages.",
     data: {
       monthly_budget_php: Number(monthlyBudget.toFixed(2)),
-      current_month_spend_php: Number(monthCostPhp.toFixed(2)),
-      projected_monthly_php: Number(projectedMonthly.toFixed(2)),
-      days_elapsed: daysElapsed,
+      current_billing_cycle_spend_php: Number(cycleCostPhp.toFixed(2)),
+      projected_billing_cycle_php: Number(projectedCycleBill.toFixed(2)),
+      days_elapsed_in_cycle: daysElapsed,
+      billing_cycle_start_day: billingCycleStartDay,
+      cycle_start_date: cycleStartDate,
+      cycle_end_date: cycleEndDate,
       this_week_kwh: Number(thisWeek.totalKwh.toFixed(2)),
       this_week_php: Number(thisWeekCost.toFixed(2)),
       last_week_kwh: Number(lastWeek.totalKwh.toFixed(2)),
@@ -388,6 +431,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("monthly_budget_php, billing_cycle_start_day")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>();
+
+    const monthlyBudget = Number(profile?.monthly_budget_php ?? 2000);
+    const billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
+    const now = new Date();
+    const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
+    const cycleStartDate = getManilaDayKey(billingCycle.startDate);
+    const cycleEndDate = getManilaDayKey(billingCycle.endDate);
+
     const cacheDays = CACHE_WINDOW_DAYS[typedInsightType];
     const cacheStart = new Date();
     cacheStart.setDate(cacheStart.getDate() - cacheDays);
@@ -402,8 +458,17 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
+    const cachedRaw = parseJsonObject(cached?.message);
     const cachedPayload = parseStructuredInsightsJson(cached?.message);
-    if (cachedPayload) {
+    const cachedMetadata = parseCachedInsightMetadata(cachedRaw);
+    const canUseCachedPayload =
+      cachedPayload &&
+      cachedMetadata &&
+      cachedMetadata.billing_cycle_start_day === billingCycleStartDay &&
+      cachedMetadata.cycle_start_date === cycleStartDate &&
+      cachedMetadata.cycle_end_date === cycleEndDate;
+
+    if (canUseCachedPayload) {
       return NextResponse.json({
         ...cachedPayload,
         insight_type: typedInsightType,
@@ -418,14 +483,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("monthly_budget_php")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const monthlyBudget = Number(profile?.monthly_budget_php ?? 2000);
 
     const { data: devices } = await supabase
       .from("devices")
@@ -447,55 +504,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const deviceIds = devices.flatMap((device) =>
-      [device.id, device.mac_address].filter(Boolean)
-    );
+    const startOfToday = getStartOfManilaDay(now);
+    const endOfToday = getEndOfManilaDay(now);
+    const thisWeekStart = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
+    const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const lastWeekEnd = new Date(thisWeekStart.getTime() - 1);
+    const rateRangeStart =
+      billingCycle.startDate.getTime() < lastWeekStart.getTime()
+        ? billingCycle.startDate
+        : lastWeekStart;
 
-    const now = new Date();
-    const thisWeekStart = new Date(now);
-    thisWeekStart.setDate(now.getDate() - 7);
-    const lastWeekStart = new Date(now);
-    lastWeekStart.setDate(now.getDate() - 14);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [thisWeekLogsRes, lastWeekLogsRes, monthLogsRes] = await Promise.all([
-      supabase
-        .from("energy_logs")
-        .select("device_id, energy_kwh, recorded_at")
-        .in("device_id", deviceIds)
-        .gte("recorded_at", thisWeekStart.toISOString())
-        .order("recorded_at", { ascending: true })
-        .limit(5000),
-      supabase
-        .from("energy_logs")
-        .select("device_id, energy_kwh, recorded_at")
-        .in("device_id", deviceIds)
-        .gte("recorded_at", lastWeekStart.toISOString())
-        .lt("recorded_at", thisWeekStart.toISOString())
-        .order("recorded_at", { ascending: true })
-        .limit(5000),
-      supabase
-        .from("energy_logs")
-        .select("device_id, energy_kwh, recorded_at")
-        .in("device_id", deviceIds)
-        .gte("recorded_at", monthStart.toISOString())
-        .order("recorded_at", { ascending: true })
-        .limit(5000),
+    const [rateRows, thisWeekUsageRes, lastWeekUsageRes, cycleUsageRes] = await Promise.all([
+      getMeralcoRatesForRange(supabase, rateRangeStart, now),
+      supabase.rpc("get_usage_kwh_by_device_day", {
+        p_user_id: user.id,
+        p_start: thisWeekStart.toISOString(),
+        p_end: endOfToday.toISOString(),
+      }),
+      supabase.rpc("get_usage_kwh_by_device_day", {
+        p_user_id: user.id,
+        p_start: lastWeekStart.toISOString(),
+        p_end: lastWeekEnd.toISOString(),
+      }),
+      supabase.rpc("get_usage_kwh_by_device_day", {
+        p_user_id: user.id,
+        p_start: billingCycle.startDate.toISOString(),
+        p_end: now.toISOString(),
+      }),
     ]);
 
-    const thisWeek = computeUsage((thisWeekLogsRes.data ?? []) as EnergyLogRow[]);
-    const lastWeek = computeUsage((lastWeekLogsRes.data ?? []) as EnergyLogRow[]);
-    const monthUsage = computeUsage((monthLogsRes.data ?? []) as EnergyLogRow[]);
-
-    const monthCostPhp = computeMeralcoBill(
-      monthUsage.totalKwh,
-      meralcoData.rates,
-      meralcoData.vatRate,
-      { fixedChargesPhp: meralcoData.fixedMonthlyChargesPhp }
+    const thisWeekRows = (thisWeekUsageRes.data ?? []) as UsageByDeviceDayRow[];
+    const lastWeekRows = (lastWeekUsageRes.data ?? []) as UsageByDeviceDayRow[];
+    const cycleRows = (cycleUsageRes.data ?? []) as UsageByDeviceDayRow[];
+    const thisWeek = computeUsage(thisWeekRows);
+    const lastWeek = computeUsage(lastWeekRows);
+    const cycleUsage = computeUsage(cycleRows);
+    const cycleVariableSpendPhp = computeHistoricalVariableSpendFromDayRows(
+      cycleRows,
+      rateRows
     );
-
-    const daysElapsed = Math.max(1, now.getDate());
-    const projectedMonthly = (monthCostPhp / daysElapsed) * 30;
+    const cycleCostPhp =
+      cycleVariableSpendPhp +
+      meralcoData.fixedMonthlyChargesPhp * (1 + meralcoData.vatRate);
+    const projectedVariableSpend =
+      billingCycle.elapsedDays > 0
+        ? (cycleVariableSpendPhp / billingCycle.elapsedDays) * billingCycle.totalDays
+        : 0;
+    const projectedCycleBill =
+      projectedVariableSpend +
+      meralcoData.fixedMonthlyChargesPhp * (1 + meralcoData.vatRate);
+    const daysElapsed = billingCycle.elapsedDays;
 
     const deviceNameMap = new Map<string, string>();
     for (const device of devices) {
@@ -505,31 +563,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const topDevices = Array.from(monthUsage.byDevice.entries())
+    const variableSpendByDevice = computeHistoricalVariableSpendByDeviceFromDayRows(
+      cycleRows,
+      rateRows
+    );
+    const topDevices = Array.from(cycleUsage.byDevice.entries())
       .map(([deviceId, kwh]) => ({
         name: deviceNameMap.get(deviceId) ?? deviceId,
         kwh,
-        cost: computeMeralcoBill(kwh, meralcoData.rates, meralcoData.vatRate),
+        cost: variableSpendByDevice.get(deviceId) ?? 0,
       }))
       .sort((first, second) => second.cost - first.cost)
       .slice(0, 3);
 
-    const thisWeekCost = computeMeralcoBill(
-      thisWeek.totalKwh,
-      meralcoData.rates,
-      meralcoData.vatRate
+    const thisWeekCost = computeHistoricalVariableSpendFromDayRows(
+      thisWeekRows,
+      rateRows
     );
-    const lastWeekCost = computeMeralcoBill(
-      lastWeek.totalKwh,
-      meralcoData.rates,
-      meralcoData.vatRate
+    const lastWeekCost = computeHistoricalVariableSpendFromDayRows(
+      lastWeekRows,
+      rateRows
     );
 
     const fallbackPayload = buildFallbackInsights({
       insightType: typedInsightType,
       monthlyBudget,
-      monthCostPhp,
-      projectedMonthly,
+      cycleCostPhp,
+      projectedCycleBill,
       daysElapsed,
       thisWeek,
       lastWeek,
@@ -552,9 +612,12 @@ export async function POST(request: NextRequest) {
           content: buildUserPrompt({
             insightType: typedInsightType,
             monthlyBudget,
-            monthCostPhp,
-            projectedMonthly,
+            cycleCostPhp,
+            projectedCycleBill,
             daysElapsed,
+            cycleStartDate,
+            cycleEndDate,
+            billingCycleStartDay,
             devices: devices as DeviceRow[],
             thisWeek,
             lastWeek,
@@ -581,7 +644,12 @@ export async function POST(request: NextRequest) {
     await supabase.from("ai_insights").insert({
       user_id: user.id,
       insight_type: typedInsightType,
-      message: JSON.stringify(normalizedPayload),
+      message: JSON.stringify({
+        ...normalizedPayload,
+        billing_cycle_start_day: billingCycleStartDay,
+        cycle_start_date: cycleStartDate,
+        cycle_end_date: cycleEndDate,
+      }),
       prompt_tokens: promptTokens,
       completion_tokens: completionTokens,
     });
