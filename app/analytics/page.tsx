@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { AlertTriangle, CalendarClock, LineChart, TrendingUp } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import BurnRateChart, {
   type BurnRatePoint,
 } from "@/components/analytics/BurnRateChart";
@@ -162,10 +161,7 @@ export default async function AnalyticsPage() {
             <LineChart className="h-5 w-5 text-mint" />
             <h1 className="text-lg font-bold tracking-tight">Burn Analytics</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </header>
 

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import CalendarAnalyticsClient from "@/components/calendar/CalendarAnalyticsClient";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates";
@@ -111,10 +110,7 @@ export default async function DashboardCalendarPage(props: {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </header>
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, ShieldAlert, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { createClient } from "@/lib/supabase/client";
@@ -375,11 +376,19 @@ export default function SettingsClient({
         </h2>
         <p className="mt-1 text-xs text-white/45">{email}</p>
 
+        <Link
+          href="/update-password"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-bold text-white/70 transition-colors hover:border-mint/30 hover:bg-mint/10 hover:text-mint"
+        >
+          <KeyRound className="h-4 w-4" aria-hidden="true" />
+          Update Password
+        </Link>
+
         <button
           type="button"
           onClick={() => void sendPasswordReset()}
           disabled={isSendingReset || isDeleting}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSendingReset ? (
             <>

@@ -6,10 +6,8 @@ import {
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
-import UpdatePasswordLink from "@/components/ui/UpdatePasswordLink";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
 import BudgetAlertCard from "@/components/insights/BudgetAlertCard";
 import WeekSummaryWidget from "@/components/calendar/WeekSummaryWidget";
@@ -382,11 +380,7 @@ export default async function DashboardPage() {
               Watt<span className="text-mint">Wise</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <UpdatePasswordLink />
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </header>
 

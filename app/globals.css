@@ -113,20 +113,40 @@ html[data-theme] * {
   color: rgba(15, 17, 21, 0.3);
 }
 
+[data-theme="light"] .text-white\/35 {
+  color: rgba(15, 17, 21, 0.35);
+}
+
 [data-theme="light"] .text-white\/40 {
   color: rgba(15, 17, 21, 0.4);
+}
+
+[data-theme="light"] .text-white\/45 {
+  color: rgba(15, 17, 21, 0.45);
 }
 
 [data-theme="light"] .text-white\/50 {
   color: rgba(15, 17, 21, 0.5);
 }
 
+[data-theme="light"] .text-white\/55 {
+  color: rgba(15, 17, 21, 0.55);
+}
+
 [data-theme="light"] .text-white\/60 {
   color: rgba(15, 17, 21, 0.6);
 }
 
+[data-theme="light"] .text-white\/65 {
+  color: rgba(15, 17, 21, 0.65);
+}
+
 [data-theme="light"] .text-white\/70 {
   color: rgba(15, 17, 21, 0.7);
+}
+
+[data-theme="light"] .text-white\/75 {
+  color: rgba(15, 17, 21, 0.75);
 }
 
 [data-theme="light"] .text-white\/80 {
@@ -145,8 +165,16 @@ html[data-theme] * {
   color: rgba(15, 17, 21, 0.6);
 }
 
+[data-theme="light"] .hover\:text-white\/70:hover {
+  color: rgba(15, 17, 21, 0.7);
+}
+
 [data-theme="light"] .placeholder-white\/30::placeholder {
-  color: rgba(15, 17, 21, 0.3);
+  color: rgba(15, 17, 21, 0.45);
+}
+
+[data-theme="light"] .placeholder\:text-white\/30::placeholder {
+  color: rgba(15, 17, 21, 0.45);
 }
 
 [data-theme="dark"] .text-white {
@@ -161,20 +189,40 @@ html[data-theme] * {
   color: rgba(255, 255, 255, 0.3);
 }
 
+[data-theme="dark"] .text-white\/35 {
+  color: rgba(255, 255, 255, 0.35);
+}
+
 [data-theme="dark"] .text-white\/40 {
   color: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] .text-white\/45 {
+  color: rgba(255, 255, 255, 0.45);
 }
 
 [data-theme="dark"] .text-white\/50 {
   color: rgba(255, 255, 255, 0.5);
 }
 
+[data-theme="dark"] .text-white\/55 {
+  color: rgba(255, 255, 255, 0.55);
+}
+
 [data-theme="dark"] .text-white\/60 {
   color: rgba(255, 255, 255, 0.6);
 }
 
+[data-theme="dark"] .text-white\/65 {
+  color: rgba(255, 255, 255, 0.65);
+}
+
 [data-theme="dark"] .text-white\/70 {
   color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .text-white\/75 {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 [data-theme="dark"] .text-white\/80 {
@@ -193,6 +241,14 @@ html[data-theme] * {
   color: rgba(255, 255, 255, 0.6);
 }
 
+[data-theme="dark"] .hover\:text-white\/70:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 [data-theme="dark"] .placeholder-white\/30::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .placeholder\:text-white\/30::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }

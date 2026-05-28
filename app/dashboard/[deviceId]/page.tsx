@@ -13,7 +13,6 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import TipidTipCard from "@/components/insights/TipidTipCard";
 import { getCurrentBillingCycle } from "@/lib/date-utils";
 
@@ -405,7 +404,6 @@ export default async function DeviceDetailPage(props: {
           </p>
         </div>
         </div>
-        <ThemeToggle />
       </header>
 
       <div className="px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5">

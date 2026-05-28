@@ -22,5 +22,5 @@ export default async function UpdatePasswordPage() {
     redirect("/admin");
   }
 
-  return <UpdatePasswordForm mode="update" backHref="/dashboard" />;
+  return <UpdatePasswordForm mode="update" backHref="/settings" />;
 }
