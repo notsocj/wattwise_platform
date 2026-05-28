@@ -90,6 +90,7 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()` on `energy_logs` INSERT/UPDATE events. This preserves RPC-based billing accuracy while keeping UI telemetry live without periodic polling.
 - For dashboard cards that show live W/V/A, bind Supabase Realtime INSERT payloads directly into client state so the UI updates immediately without waiting for the server refresh bridge.
 - During schema transitions, avoid hard-failing device lists on optional metadata columns (for example `devices.relay_state`). Use a compatibility fetch path: try full select first, then retry with a reduced column set when PostgreSQL returns undefined-column (`42703`), and map sensible defaults in the view model.
+- Multi-tenant device access is owner/tenant based: managers/users manage `devices.owner_id = auth.uid()` while tenants only read `devices.tenant_id = auth.uid()`. `devices.user_id` is legacy compatibility only.
 
 ### 2b. Smart Control Budget Shutoff
 
@@ -99,6 +100,7 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - Appliance profiling prompts must include `appliance_type`, fresh baseline watts, and `estimated_daily_hours`, and must force raw JSON output with exactly `estimated_monthly_kwh`, `suggested_monthly_limit_php`, and `taglish_advice`.
 - When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
 - Per-device shutoff compares current billing-cycle variable Meralco spend against `devices.user_approved_limit_php`. The cycle boundary comes from `profiles.billing_cycle_start_day` in Asia/Manila. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
+- For tenant-assigned devices, `devices.user_approved_limit_php` is the manager hard limit. Tenant UI and APIs must hide or reject edits to hard limits, relay controls, pairing, billing-cycle settings, and account deletion.
 - Budget automation runs in PostgreSQL via the `energy_logs` INSERT trigger from `012_smart_budget_controls.sql`; do not duplicate cutoff decisions in client code.
 - If `devices.require_approval_on_expiry` is true, the trigger records `budget_status = 'approval_required'` and a `device_budget_events` row instead of setting `relay_state = false`.
 - If approval is not required, the trigger sets `devices.relay_state = false`, records `budget_status = 'auto_cutoff'`, and the ESP32-S3 relay polling loop handles the physical shutoff.
@@ -117,6 +119,7 @@ The OpenAI system prompt **must** define the assistant as:
 - **Language:** Casual conversational Taglish (Tagalog-English mix).
 - **Tone:** Encouraging, practical, and hyper-specific to the user's data.
 - **Data binding:** Always reference exact PHP amounts, appliance names, and timeframes. Never give generic advice.
+- **Multi-tenant tone:** Tenant insights should mention the landlord/manager-set hard limit when relevant; manager insights should frame advice around room/fleet management.
 
 Example phrasing to steer toward:
 > *"Naku boss, Day 15 pa lang pero nasa PHP 1,500 na tayo sa PHP 2,000 budget mo. Medyo dahan-dahan tayo sa washing machine this week para di tayo ma-over budget."*
@@ -129,6 +132,10 @@ Example phrasing to steer toward:
 | `weekly_recap` | Positive reinforcement comparing week-over-week consumption | `thisWeekKWh`, `lastWeekKWh`, `thisWeekPHP`, `lastWeekPHP` |
 | `anomaly_alert` | Flags unusual spikes or one-device outliers | `thisWeekKWh`, `lastWeekKWh`, top-device usage/cost |
 | `cost_optimizer` | Gives one concrete savings action | `monthlyBudget`, `projectedBillingCycle`, top-device usage/cost |
+| `manager_fleet_alert` | Flags the manager's highest-priority room/fleet issue | manager-owned rooms, tenant labels, hard limits, relay state |
+| `manager_room_anomaly` | Highlights stale telemetry, unusual room spend, or room-level behavior | manager-owned latest readings and current-cycle room spend |
+| `manager_cutoff_forecast` | Forecasts tenant-room cutoff risk against manager hard limits | per-room spend, hard limit, cycle elapsed days, relay state |
+| `manager_cost_optimizer` | Suggests one manager action or tenant coaching message | top spend room, tenant assignment, hard limit, current cycle spend |
 
 ### 3b.1 Contextual Insight UX
 
@@ -139,6 +146,7 @@ Example phrasing to steer toward:
 - If a boolean is false, its message must be an empty string. Do not return filler text like "everything looks normal."
 - If an insight payload is non-actionable, render `null` instead of a card. Clean dashboards beat mandatory AI chrome.
 - Calendar habit analysis belongs in `app/api/insights/calendar/route.ts`. It should accept bounded grouped daily rows from the month calendar, keep the same Taglish persona, and return a structured JSON analysis payload suitable for a modal or side panel.
+- Manager AI lives under `/manager/ai` and uses server routes under `/api/manager/ai/*`. It must scope every query to `devices.owner_id = auth.uid()`, cache manager insight cards in `ai_insights`, and keep chatbot behavior advisory-only. The chatbot must never claim it changed relays, limits, tenants, or room assignments.
 - Structured insight payloads stored in `ai_insights.message` may include `billing_cycle_start_day`, `cycle_start_date`, and `cycle_end_date`. Cache reuse should validate those values before returning a billing-sensitive cached response.
 
 ### 3c. Trigger & Cache — Mandatory Flow
@@ -200,6 +208,7 @@ CREATE INDEX idx_ai_insights_user_type_date
 **Hard constraint:** `profiles.monthly_budget_php` must be editable only from the Home Dashboard wallet UI.
 
 - Device Detail pages may display budget and burn-rate context, but must remain view-only.
+- Tenant pages must remain view-only and use assigned-device hard limits instead of exposing the home budget editor.
 - Use an icon-triggered editor card/popover in Home Wallet instead of a persistent budget form block.
 - Save flow should update only the authenticated profile row (`WHERE id = auth user id`) and refresh the dashboard state after success.
 

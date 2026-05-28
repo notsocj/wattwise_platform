@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { getHomePathForRole, type UserRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -14,10 +15,13 @@ import {
 } from "@/lib/user-form-messages";
 
 type RegisterFieldErrors = Partial<{
+  accountType: string;
   fullName: string;
   email: string;
   password: string;
 }>;
+
+type RegisterRole = Extract<UserRole, "user" | "manager">;
 
 const inputBaseClass =
   "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
@@ -33,6 +37,7 @@ function getInputClass(hasError: boolean, extraClass = ""): string {
 export default function RegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
+  const [accountType, setAccountType] = useState<RegisterRole>("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +48,9 @@ export default function RegisterPage() {
   function validateFullName(value = fullName): string | null {
     return value.trim()
       ? null
-      : "Enter a home name so your dashboard feels personal.";
+      : accountType === "manager"
+        ? "Enter your boarding house or property name."
+        : "Enter a home name so your dashboard feels personal.";
   }
 
   function validatePassword(value = password): string | null {
@@ -96,11 +103,15 @@ export default function RegisterPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: normalizeEmail(email),
+    const normalizedEmail = normalizeEmail(email);
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: normalizedEmail,
       password,
       options: {
-        data: { full_name: fullName.trim() },
+        data: {
+          full_name: fullName.trim(),
+          role: accountType,
+        },
       },
     });
     setLoading(false);
@@ -110,8 +121,18 @@ export default function RegisterPage() {
       return;
     }
 
-    // Profile row is auto-created by Supabase trigger (handle_new_user).
-    router.push("/dashboard");
+    // The trigger should persist role metadata. This fallback covers older
+    // trigger versions and races where the profile row already exists.
+    if (signUpData.user) {
+      await supabase.from("profiles").upsert({
+        id: signUpData.user.id,
+        email: normalizedEmail,
+        full_name: fullName.trim(),
+        role: accountType,
+      });
+    }
+
+    router.push(getHomePathForRole(accountType));
     router.refresh();
   }
 
@@ -151,16 +172,66 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} noValidate>
           <div className="mb-5">
+            <fieldset>
+              <legend className="mb-2 block text-base font-semibold text-white">
+                Account Type
+              </legend>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {
+                    value: "user" as const,
+                    title: "Home User",
+                    description: "Monitor your own household.",
+                  },
+                  {
+                    value: "manager" as const,
+                    title: "Property Manager",
+                    description: "Manage tenant sub-meters.",
+                  },
+                ].map((option) => {
+                  const selected = accountType === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setAccountType(option.value);
+                        clearFieldError("accountType");
+                      }}
+                      className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                        selected
+                          ? "border-mint bg-mint/10 text-white"
+                          : "border-white/10 bg-white/[0.03] text-white/60"
+                      }`}
+                      aria-pressed={selected}
+                    >
+                      <span className="block text-sm font-bold">{option.title}</span>
+                      <span className="mt-1 block text-[11px] leading-snug text-white/45">
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          </div>
+
+          <div className="mb-5">
             <label
               htmlFor="register-full-name"
               className="mb-2 block text-base font-semibold text-white"
             >
-              Home Name
+              {accountType === "manager" ? "Property Name" : "Home Name"}
             </label>
             <input
               id="register-full-name"
               type="text"
-              placeholder="e.g., Santos Residence"
+              placeholder={
+                accountType === "manager"
+                  ? "e.g., Mabini Boarding House"
+                  : "e.g., Santos Residence"
+              }
               value={fullName}
               onChange={(e) => {
                 setFullName(e.target.value);
@@ -183,7 +254,10 @@ export default function RegisterPage() {
                 fieldErrors.fullName ? "text-danger" : "text-white/40"
               }`}
             >
-              {fieldErrors.fullName ?? "Example: Santos Residence or Unit 4B."}
+              {fieldErrors.fullName ??
+                (accountType === "manager"
+                  ? "Example: Mabini Boarding House or CJS Rentals."
+                  : "Example: Santos Residence or Unit 4B.")}
             </p>
           </div>
 

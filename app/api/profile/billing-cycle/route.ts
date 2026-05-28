@@ -12,6 +12,19 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle<{ role: string | null }>();
+
+  if (profile?.role === "tenant") {
+    return NextResponse.json(
+      { error: "Tenants cannot edit billing cycle settings." },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json().catch(() => ({}));
   const rawBillingCycleStartDay = (body as { billing_cycle_start_day?: unknown })
     .billing_cycle_start_day;

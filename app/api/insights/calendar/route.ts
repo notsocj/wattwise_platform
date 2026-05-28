@@ -11,6 +11,7 @@ const SYSTEM_PROMPT = `You are WattWise Tipid Advisor, a Filipino energy consult
 Language: Casual conversational Taglish.
 Tone: Practical, warm, and specific to the user's data.
 Analyze grouped daily home energy data and look for habits such as weekend spikes, high-burn days, repeated low-usage streaks, and sudden changes in spend.
+If viewer_role is manager, frame the advice around room/fleet operations, tenant hard limits, relay cutoffs, and occupancy context. If viewer_role is tenant, mention assigned-room limits without exposing other rooms.
 Respond strictly as raw JSON with this shape:
 {
   "headline": string,
@@ -151,6 +152,8 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: JSON.stringify({
             month_label: body.month_label,
+            viewer_role: body.viewer_role ?? "user",
+            scope_label: body.scope_label ?? "Home",
             totals: {
               total_kwh: Number(totalKwh.toFixed(2)),
               total_cost_php: Number(totalCostPhp.toFixed(2)),

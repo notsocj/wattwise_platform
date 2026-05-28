@@ -21,11 +21,15 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   relay_state: boolean | null;
+  owner_id: string | null;
+  tenant_id: string | null;
+  user_approved_limit_php: number | string | null;
 };
 
 type ProfileRow = {
   monthly_budget_php: number | string | null;
   billing_cycle_start_day: number | null;
+  role: string | null;
 };
 
 type EnergyLogRow = {
@@ -83,13 +87,18 @@ function hasMissingRelayStateColumnError(error: {
 async function fetchOwnedDeviceById(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  deviceId: string
+  deviceId: string,
+  role: string | null | undefined
 ): Promise<DeviceRow | null> {
+  const accessFilter =
+    role === "tenant"
+      ? `tenant_id.eq.${userId}`
+      : `owner_id.eq.${userId},user_id.eq.${userId}`;
   const withRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, relay_state")
+    .select("id, device_name, mac_address, relay_state, owner_id, tenant_id, user_approved_limit_php")
     .eq("id", deviceId)
-    .eq("user_id", userId)
+    .or(accessFilter)
     .maybeSingle<DeviceRow>();
 
   if (!withRelayState.error) {
@@ -102,10 +111,10 @@ async function fetchOwnedDeviceById(
 
   const withoutRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address")
+    .select("id, device_name, mac_address, owner_id, tenant_id, user_approved_limit_php")
     .eq("id", deviceId)
-    .eq("user_id", userId)
-    .maybeSingle<Pick<DeviceRow, "id" | "device_name" | "mac_address">>();
+    .or(accessFilter)
+    .maybeSingle<Omit<DeviceRow, "relay_state">>();
 
   if (withoutRelayState.error || !withoutRelayState.data) {
     return null;
@@ -235,29 +244,42 @@ export default async function DeviceDetailPage(props: {
 
   const now = new Date();
 
-  const [deviceData, { data: profileData }, devicesCountRes, activeRates] =
-    await Promise.all([
-      fetchOwnedDeviceById(supabase, user.id, deviceId),
-      supabase
-        .from("profiles")
-        .select("monthly_budget_php, billing_cycle_start_day")
-        .eq("id", user.id)
-        .maybeSingle<ProfileRow>(),
-      supabase
-        .from("devices")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id),
-      getActiveMeralcoRates(supabase),
-    ]);
+  const [{ data: profileData }, activeRates] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("monthly_budget_php, billing_cycle_start_day, role")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+    getActiveMeralcoRates(supabase),
+  ]);
+  const isTenant = profileData?.role === "tenant";
+  const [deviceData, devicesCountRes] = await Promise.all([
+    fetchOwnedDeviceById(supabase, user.id, deviceId, profileData?.role),
+    supabase
+      .from("devices")
+      .select("id", { count: "exact", head: true })
+      .or(
+        isTenant
+          ? `tenant_id.eq.${user.id}`
+          : `owner_id.eq.${user.id},user_id.eq.${user.id}`
+      ),
+  ]);
 
   if (!deviceData) {
     redirect("/dashboard");
   }
 
-  const billingCycle = getCurrentBillingCycle(
-    profileData?.billing_cycle_start_day ?? 1,
-    now
-  );
+  let billingCycleStartDay = profileData?.billing_cycle_start_day ?? 1;
+  if (isTenant && deviceData.owner_id) {
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("billing_cycle_start_day")
+      .eq("id", deviceData.owner_id)
+      .maybeSingle<{ billing_cycle_start_day: number | null }>();
+    billingCycleStartDay = ownerProfile?.billing_cycle_start_day ?? billingCycleStartDay;
+  }
+
+  const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
 
   const [rateRows, usageByDeviceDayRes] = await Promise.all([
     getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
@@ -317,7 +339,9 @@ export default async function DeviceDetailPage(props: {
         Math.max(0, currentReading ?? (volts > 0 ? watts / volts : 0)).toFixed(1)
       )
     : 0;
-  const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
+  const monthlyBudget = isTenant
+    ? toNumber(deviceData.user_approved_limit_php) || toNumber(profileData?.monthly_budget_php ?? 2000)
+    : toNumber(profileData?.monthly_budget_php ?? 2000);
   const usageByDeviceRows = (usageByDeviceDayRes.data ?? []) as UsageByDeviceRow[];
   const deviceCount = Math.max(1, devicesCountRes.count ?? 1);
   const cycleKWhByDevice = new Map<string, number>();
@@ -432,11 +456,13 @@ export default async function DeviceDetailPage(props: {
         </section>
 
         {/* ===== Power Control (Relay) ===== */}
-        <RelayToggle
-          deviceId={device.id}
-          initialRelayState={deviceData.relay_state !== false}
-          variant="full"
-        />
+        {isTenant ? null : (
+          <RelayToggle
+            deviceId={device.id}
+            initialRelayState={deviceData.relay_state !== false}
+            variant="full"
+          />
+        )}
 
         {/* ===== Appliance Burn Rate ===== */}
         <section className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">

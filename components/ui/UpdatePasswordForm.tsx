@@ -105,6 +105,19 @@ export default function UpdatePasswordForm({
         return;
       }
 
+      if (mode === "update") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          await supabase
+            .from("profiles")
+            .update({ must_update_password: false })
+            .eq("id", user.id);
+        }
+      }
+
       setPassword("");
       setConfirmPassword("");
       setSuccess(true);

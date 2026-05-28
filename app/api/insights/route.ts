@@ -64,11 +64,15 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   appliance_type: string | null;
+  owner_id: string | null;
+  tenant_id: string | null;
+  user_approved_limit_php: number | string | null;
 };
 
 type ProfileRow = {
   monthly_budget_php: number | string | null;
   billing_cycle_start_day: number | null;
+  role: string | null;
 };
 
 type UsageByDeviceDayRow = {
@@ -357,6 +361,8 @@ function buildUserPrompt(params: {
   thisWeekCost: number;
   lastWeekCost: number;
   topDevices: TopDevice[];
+  viewerRole: string;
+  tenantHardLimitPhp: number | null;
 }): string {
   const {
     insightType,
@@ -373,6 +379,8 @@ function buildUserPrompt(params: {
     thisWeekCost,
     lastWeekCost,
     topDevices,
+    viewerRole,
+    tenantHardLimitPhp,
   } = params;
 
   const topDevicesStr =
@@ -386,6 +394,15 @@ function buildUserPrompt(params: {
       "Populate only the object that matches insight_type. All other objects must have false booleans and empty messages.",
     data: {
       monthly_budget_php: Number(monthlyBudget.toFixed(2)),
+      viewer_role: viewerRole,
+      tenant_hard_limit_php:
+        tenantHardLimitPhp === null ? null : Number(tenantHardLimitPhp.toFixed(2)),
+      advice_tone:
+        viewerRole === "tenant"
+          ? "Tenant view: explain the landlord-imposed hard limit in casual Taglish and warn before auto-off."
+          : viewerRole === "manager"
+            ? "Manager view: frame advice around room/fleet management and tenant sub-meter limits."
+            : "Homeowner view: use normal practical Taglish energy coaching.",
       current_billing_cycle_spend_php: Number(cycleCostPhp.toFixed(2)),
       projected_billing_cycle_php: Number(projectedCycleBill.toFixed(2)),
       days_elapsed_in_cycle: daysElapsed,
@@ -433,13 +450,42 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("monthly_budget_php, billing_cycle_start_day")
+      .select("monthly_budget_php, billing_cycle_start_day, role")
       .eq("id", user.id)
       .maybeSingle<ProfileRow>();
 
-    const monthlyBudget = Number(profile?.monthly_budget_php ?? 2000);
-    const billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
+    const viewerRole = profile?.role ?? "user";
+    let monthlyBudget = Number(profile?.monthly_budget_php ?? 2000);
+    let billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
     const now = new Date();
+    let tenantHardLimitPhp: number | null = null;
+
+    if (viewerRole === "tenant") {
+      const { data: assignedDevices } = await supabase
+        .from("devices")
+        .select("owner_id, user_approved_limit_php")
+        .eq("tenant_id", user.id);
+      const hardLimit = (assignedDevices ?? []).reduce(
+        (sum, device) => sum + Number(device.user_approved_limit_php ?? 0),
+        0
+      );
+      const ownerId = assignedDevices?.find((device) => device.owner_id)?.owner_id;
+
+      if (hardLimit > 0) {
+        tenantHardLimitPhp = hardLimit;
+        monthlyBudget = hardLimit;
+      }
+
+      if (ownerId) {
+        const { data: ownerProfile } = await supabase
+          .from("profiles")
+          .select("billing_cycle_start_day")
+          .eq("id", ownerId)
+          .maybeSingle<{ billing_cycle_start_day: number | null }>();
+        billingCycleStartDay = ownerProfile?.billing_cycle_start_day ?? billingCycleStartDay;
+      }
+    }
+
     const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
     const cycleStartDate = getManilaDayKey(billingCycle.startDate);
     const cycleEndDate = getManilaDayKey(billingCycle.endDate);
@@ -486,8 +532,12 @@ export async function POST(request: NextRequest) {
 
     const { data: devices } = await supabase
       .from("devices")
-      .select("id, device_name, mac_address, appliance_type")
-      .eq("user_id", user.id)
+      .select("id, device_name, mac_address, appliance_type, owner_id, tenant_id, user_approved_limit_php")
+      .or(
+        viewerRole === "tenant"
+          ? `tenant_id.eq.${user.id}`
+          : `owner_id.eq.${user.id},user_id.eq.${user.id}`
+      )
       .limit(50);
 
     if (!devices?.length) {
@@ -624,6 +674,8 @@ export async function POST(request: NextRequest) {
             thisWeekCost,
             lastWeekCost,
             topDevices,
+            viewerRole,
+            tenantHardLimitPhp,
           }),
         },
       ],

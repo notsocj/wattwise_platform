@@ -15,6 +15,7 @@ type SettingsDevice = {
 
 type ProfileRow = {
   billing_cycle_start_day: number | null;
+  role: string | null;
 };
 
 export default async function SettingsPage() {
@@ -32,14 +33,18 @@ export default async function SettingsPage() {
     supabase
       .from("devices")
       .select("id, device_name, require_approval_on_expiry, user_approved_limit_php, budget_status")
-      .eq("user_id", user.id)
+      .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
       .order("created_at", { ascending: true }),
     supabase
       .from("profiles")
-      .select("billing_cycle_start_day")
+      .select("billing_cycle_start_day, role")
       .eq("id", user.id)
       .maybeSingle<ProfileRow>(),
   ]);
+
+  if (profile?.role === "manager") {
+    redirect("/manager/settings");
+  }
 
   return (
     <div className="min-h-screen bg-base pb-24 text-white">
@@ -57,6 +62,7 @@ export default async function SettingsPage() {
         <SettingsClient
           billingCycleStartDay={profile?.billing_cycle_start_day ?? 1}
           email={user.email ?? "Your WattWise account"}
+          role={profile?.role ?? "user"}
           devices={(devices ?? []) as SettingsDevice[]}
         />
       </main>

@@ -129,6 +129,19 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle<{ role: string | null }>();
+
+  if (profile?.role === "tenant") {
+    return NextResponse.json(
+      { error: "Tenants cannot profile appliances." },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json().catch(() => ({}));
   const dailyHours = Number((body as { daily_usage_hours?: unknown }).daily_usage_hours);
 
@@ -143,7 +156,7 @@ export async function POST(
     .from("devices")
     .select("id, device_name, mac_address, appliance_type")
     .eq("id", deviceId)
-    .eq("user_id", user.id)
+    .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle<DeviceRow>();
 
   if (deviceError || !device) {

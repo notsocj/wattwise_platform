@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `013`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
+This file reflects the current database shape defined by `supabase/migrations/001` through `014`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
 
 ## Current Schema Summary
 
@@ -29,6 +29,8 @@ CREATE TABLE profiles (
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   role VARCHAR(20) DEFAULT 'user',
+  manager_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  must_update_password BOOLEAN NOT NULL DEFAULT false,
   monthly_budget_php NUMERIC(10, 2) DEFAULT 2000.00,
   billing_cycle_start_day INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -37,7 +39,10 @@ CREATE TABLE profiles (
 
 Notes:
 
-- `role` is currently used for `user` and `super_admin`
+- `role` supports `user`, `manager`, `tenant`, and `super_admin`
+- `manager_id` links manager-created tenants to the manager who can assign them to room sub-meters
+- `must_update_password` forces manager-created tenants through `/update-password` after first login
+- Public registration may request only `user` or `manager`; `handle_new_user()` sanitizes auth metadata and defaults all other requested roles to `user`
 - `monthly_budget_php` is the home-level wallet budget edited from the Home dashboard flow only
 - `billing_cycle_start_day` is the user-level Meralco reading day used for billing-cycle windows and Smart Control accumulation
 - `billing_cycle_start_day` must stay between `1` and `28`
@@ -78,6 +83,8 @@ Represents paired ESP32-S3 devices plus appliance-profile and Smart Control meta
 CREATE TABLE devices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  owner_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  tenant_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   device_name TEXT NOT NULL,
   mac_address TEXT UNIQUE NOT NULL,
   is_online BOOLEAN DEFAULT false,
@@ -118,6 +125,10 @@ Important behavior:
 
 - `relay_state` is polled by hardware every 5 seconds
 - `daily_usage_hours` is the current appliance-profiler hours field; do not add a duplicate `estimated_daily_hours` column
+- `owner_id` is the manager/user who physically owns and pairs the ESP32 hardware
+- `tenant_id` is the optional renter currently assigned to the room/sub-meter
+- `user_id` remains as a v1 compatibility mirror of `owner_id`; new application code should read/write `owner_id`
+- `user_approved_limit_php` is the owner/manager hard limit; tenants must never edit it
 - Add Appliance registers the device first so the ESP32 can post MAC-based telemetry before AI profiling completes
 
 ### `energy_logs`
@@ -428,6 +439,13 @@ Important caution:
 - all OpenAI calls stay server-side
 - insight routes should check `ai_insights` for a recent cached row before generating
 - if storing structured insight payloads, serialize them into `ai_insights.message`
+- manager AI insight cards use `manager_fleet_alert`, `manager_room_anomaly`, `manager_cutoff_forecast`, and `manager_cost_optimizer` as `ai_insights.insight_type` values
+- manager AI and chatbot routes must scope data to manager-owned devices only; chatbot replies are advisory and must not mutate relays, limits, tenants, or assignments
+
+### Service-role routes
+
+- manager tenant creation requires `SUPABASE_SERVICE_ROLE_KEY` server-side; `SUPABASE_SECRET_KEY` remains a backward-compatible fallback name
+- service-role clients must never be imported into client components
 
 ### Smart Control
 

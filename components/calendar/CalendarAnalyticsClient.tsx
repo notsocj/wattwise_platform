@@ -16,6 +16,7 @@ type CalendarAnalyticsClientProps = {
   monthTotalCostPhp: number;
   monthTotalKwh: number;
   daysForAi: CalendarAnalyticsDayPayload[];
+  aiContext?: Pick<CalendarAnalyticsRequest, "viewer_role" | "scope_label">;
   previousMonthHref?: string;
   nextMonthHref?: string;
   weeks: CalendarDailySummary[][];
@@ -76,6 +77,7 @@ export default function CalendarAnalyticsClient({
   monthTotalCostPhp,
   monthTotalKwh,
   daysForAi,
+  aiContext,
   previousMonthHref,
   nextMonthHref,
   weeks,
@@ -97,6 +99,8 @@ export default function CalendarAnalyticsClient({
       const payload: CalendarAnalyticsRequest = {
         month_label: monthLabel,
         days: daysForAi,
+        viewer_role: aiContext?.viewer_role,
+        scope_label: aiContext?.scope_label,
       };
 
       const response = await fetch("/api/insights/calendar", {

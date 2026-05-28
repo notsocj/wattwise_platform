@@ -3,6 +3,7 @@ import {
   TrendingUp,
   Minus,
   Wallet,
+  PlugZap,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
@@ -29,6 +30,7 @@ import {
   getManilaDayKey,
   getStartOfManilaDay,
 } from "@/lib/date-utils";
+import { isTenantRole } from "@/lib/roles";
 
 type DeviceRow = {
   id: string;
@@ -38,6 +40,9 @@ type DeviceRow = {
   appliance_type: string | null;
   relay_state: boolean | null;
   budget_status: string | null;
+  owner_id: string | null;
+  tenant_id: string | null;
+  user_approved_limit_php: number | string | null;
 };
 
 type LatestReadingRow = {
@@ -56,6 +61,7 @@ type UsageByDeviceRow = {
 type ProfileRow = {
   monthly_budget_php: number | string | null;
   billing_cycle_start_day: number | null;
+  role: string | null;
 };
 
 type DashboardDevice = {
@@ -91,12 +97,17 @@ function hasMissingRelayStateColumnError(error: {
 
 async function fetchDashboardDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
+  userId: string,
+  role: string | null | undefined
 ): Promise<DeviceRow[]> {
+  const accessFilter =
+    role === "tenant"
+      ? `tenant_id.eq.${userId}`
+      : `owner_id.eq.${userId},user_id.eq.${userId}`;
   const withRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type, relay_state, budget_status")
-    .eq("user_id", userId)
+    .select("id, device_name, mac_address, is_online, appliance_type, relay_state, budget_status, owner_id, tenant_id, user_approved_limit_php")
+    .or(accessFilter)
     .order("created_at", { ascending: true });
 
   if (!withRelayState.error) {
@@ -109,8 +120,8 @@ async function fetchDashboardDevices(
 
   const withoutRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type")
-    .eq("user_id", userId)
+    .select("id, device_name, mac_address, is_online, appliance_type, owner_id, tenant_id, user_approved_limit_php")
+    .or(accessFilter)
     .order("created_at", { ascending: true });
 
   if (withoutRelayState.error) {
@@ -147,6 +158,43 @@ function isFreshReading(recordedAt: string | null): boolean {
   return Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
+function TenantDashboardNotice({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="min-h-screen bg-base pb-24 text-white">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-5 pb-4 pt-5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold tracking-tight">
+              Watt<span className="text-mint">Wise</span>
+            </h1>
+          </div>
+          <LogoutButton />
+        </div>
+      </header>
+
+      <main className="flex min-h-screen items-center px-5 pt-[84px]">
+        <section className="w-full rounded-xl border border-white/[0.06] bg-surface p-6 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/10">
+            <PlugZap className="h-7 w-7 text-mint" />
+          </div>
+          <h2 className="mt-5 text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-white/55">
+            {description}
+          </p>
+        </section>
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -158,15 +206,42 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [devicesRows, { data: profileData }, activeRates] = await Promise.all([
-    fetchDashboardDevices(supabase, user.id),
-    supabase
-      .from("profiles")
-      .select("monthly_budget_php, billing_cycle_start_day")
-      .eq("id", user.id)
-      .maybeSingle<ProfileRow>(),
-    getActiveMeralcoRates(supabase),
-  ]);
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("monthly_budget_php, billing_cycle_start_day, role")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>();
+
+  if (profileData?.role === "manager") {
+    redirect("/manager");
+  }
+
+  const isTenant = isTenantRole(profileData?.role);
+  const devicesRows = await fetchDashboardDevices(supabase, user.id, profileData?.role);
+  const tenantHardLimit = devicesRows.reduce(
+    (sum, device) => sum + toNumber(device.user_approved_limit_php),
+    0
+  );
+
+  if (isTenant && devicesRows.length === 0) {
+    return (
+      <TenantDashboardNotice
+        title="WattWise Unit not yet assigned"
+        description="Your tenant account is active, but your landlord has not assigned a WattWise room unit yet. Once assigned, your live usage and billing-cycle limit will show here."
+      />
+    );
+  }
+
+  if (isTenant && tenantHardLimit <= 0) {
+    return (
+      <TenantDashboardNotice
+        title="WattWise unit limit not yet set"
+        description="Your assigned WattWise unit is connected to your tenant account, but your landlord has not set the hard peso limit yet. Your usage dashboard will appear after the limit is configured."
+      />
+    );
+  }
+
+  const activeRates = await getActiveMeralcoRates(supabase);
   const deviceIds = devicesRows.map((device) => device.id);
   const realtimeDeviceKeys = Array.from(
     new Set(
@@ -175,10 +250,20 @@ export default async function DashboardPage() {
   );
 
   const now = new Date();
-  const billingCycle = getCurrentBillingCycle(
-    profileData?.billing_cycle_start_day ?? 1,
-    now
-  );
+  let billingCycleStartDay = profileData?.billing_cycle_start_day ?? 1;
+  if (isTenant) {
+    const ownerId = devicesRows.find((device) => device.owner_id)?.owner_id;
+    if (ownerId) {
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("billing_cycle_start_day")
+        .eq("id", ownerId)
+        .maybeSingle<{ billing_cycle_start_day: number | null }>();
+      billingCycleStartDay = ownerProfile?.billing_cycle_start_day ?? billingCycleStartDay;
+    }
+  }
+
+  const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
   const startOfDay = getStartOfManilaDay(now);
   const startOfYesterday = new Date(startOfDay.getTime() - DAY_MS);
   const endOfYesterday = new Date(startOfDay.getTime() - 1);
@@ -332,7 +417,9 @@ export default async function DashboardPage() {
     trendCopy = "New spend today (no usage yesterday)";
   }
 
-  const monthlyBudget = toNumber(profileData?.monthly_budget_php ?? 2000);
+  const monthlyBudget = isTenant
+    ? tenantHardLimit
+    : toNumber(profileData?.monthly_budget_php ?? 2000);
   const safeMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : 1;
   const homeCycleVariableSpendPhp = computeHistoricalVariableSpendFromDayRows(
     cycleUsageByDayRows,
@@ -385,7 +472,7 @@ export default async function DashboardPage() {
       </header>
 
       <div className="px-5 pt-[84px] flex flex-col gap-4">
-        <DashboardLiveTelemetry initialDevices={devices}>
+        <DashboardLiveTelemetry initialDevices={devices} canManageDevices={!isTenant}>
 
         {/* ===== Total Daily Cost Card ===== */}
         <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
@@ -429,7 +516,20 @@ export default async function DashboardPage() {
             </span>
           </div>
 
-          <HomeBudgetEditor initialBudget={monthlyBudget} />
+          {isTenant ? (
+            <div className="mb-4">
+              <span className="text-sm text-white/70">Landlord Hard Limit</span>
+              <p className="mt-1 text-3xl font-bold tracking-tight">
+                <span className="mr-0.5 text-xl text-white/50">₱</span>
+                {monthlyBudget.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            </div>
+          ) : (
+            <HomeBudgetEditor initialBudget={monthlyBudget} />
+          )}
 
           <div className="mb-1.5">
             <div className="flex items-center justify-between mb-2">
@@ -445,7 +545,7 @@ export default async function DashboardPage() {
               />
             </div>
             <p className="text-[10px] text-white/40 mt-1.5">
-              Variable energy spend: ₱ {homeCycleVariableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed bill fees)
+              {isTenant ? "Room variable energy spend" : "Variable energy spend"}: ₱ {homeCycleVariableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed bill fees)
             </p>
             <p className="text-[10px] text-white/40 mt-1.5">
               Projected bill: ₱ {projectedCycleBill.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Based on the last {forecastLookbackDays} day{forecastLookbackDays === 1 ? "" : "s"}, with {billingCycle.remainingDays} day(s) left in your billing cycle.

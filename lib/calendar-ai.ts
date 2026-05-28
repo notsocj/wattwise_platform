@@ -8,6 +8,8 @@ export type CalendarAnalyticsDayPayload = {
 export type CalendarAnalyticsRequest = {
   month_label: string;
   days: CalendarAnalyticsDayPayload[];
+  viewer_role?: "user" | "manager" | "tenant";
+  scope_label?: string;
 };
 
 export type CalendarAnalyticsResponse = {

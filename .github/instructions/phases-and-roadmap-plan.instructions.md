@@ -14,10 +14,11 @@ applyTo: "**"
 ## Progress Summary
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~78% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; all 13 migration files committed to `supabase/migrations/`; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
+| 1 — Foundation | In Progress | ~82% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; 14 migration files now define the additive manager/tenant architecture; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
 | 2 — Billing & Control | In Progress | ~84% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, billing-cycle usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff; user-level `billing_cycle_start_day` now drives wallet, burn analytics, device detail, and Smart Control windows |
 | 3 — AI & PWA | In Progress | ~80% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; AI insight cache payloads now carry billing-cycle metadata so stale cycle advice is invalidated when the user's Meralco start day changes; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~20% | Admin layout & guards implemented; admin pages scaffolded |
+| 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes; managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
 ---
 
@@ -58,7 +59,7 @@ applyTo: "**"
 
 - [ ] **Device Pairing & Registration**
   - [ ] Build "Add Appliance" UI flow — user enters device name + MAC address
-  - [ ] Insert new row into `devices` table with `user_id`, `device_name`, `mac_address`
+  - [x] Insert new row into `devices` table with `owner_id`/legacy `user_id`, `device_name`, `mac_address`
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
 - [ ] **Live Dashboard — Real-time Telemetry**
@@ -135,6 +136,9 @@ applyTo: "**"
   - [x] Add inline loading + error toast feedback for relay and home budget actions *(implemented in `RelayToggle` and `HomeBudgetEditor`)*
   - [x] Add Smart Control per-device budget automation *(migration `012_smart_budget_controls.sql`: `device_month_usage`, `device_budget_events`, approved limits, approval override, and `energy_logs` INSERT trigger that can set `relay_state = false`)*
   - [x] Refactor billing-sensitive logic to a custom Meralco billing cycle *(migration `013_custom_billing_cycles.sql`: `profiles.billing_cycle_start_day`, custom-cycle Smart Control accumulation/backfill, cycle-aware Home/Burn/Device Detail math, and Settings UI save path)*
+  - [x] Add staged multi-tenant owner/tenant model *(migration `014_multi_tenant_manager_tenant.sql`: `profiles.manager_id`, `profiles.must_update_password`, `devices.owner_id`, `devices.tenant_id`, manager/tenant RLS, role-aware usage RPCs, and owner-based Smart Control trigger)*
+  - [x] Split manager command center into dedicated portal routes for fleet dashboard, rooms, tenants, calendar, AI assistant, and settings
+  - [x] Add manager AI assistant and cached manager insight cards scoped to manager-owned rooms
   - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
 
 - [ ] **Weekly Trend Charts**

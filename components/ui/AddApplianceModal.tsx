@@ -311,6 +311,7 @@ export default function AddApplianceModal({
     const { data, error: insertError } = await supabase
       .from("devices")
       .insert({
+        owner_id: user.id,
         user_id: user.id,
         mac_address: normalizedMac,
         device_name: trimmedName,

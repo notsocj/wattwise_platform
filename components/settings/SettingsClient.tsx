@@ -19,6 +19,7 @@ type SettingsDevice = {
 type SettingsClientProps = {
   billingCycleStartDay: number;
   email: string;
+  role: string;
   devices: SettingsDevice[];
 };
 
@@ -38,6 +39,7 @@ function formatPeso(value: number | string | null): string {
 export default function SettingsClient({
   billingCycleStartDay,
   email,
+  role,
   devices,
 }: SettingsClientProps) {
   const router = useRouter();
@@ -50,6 +52,7 @@ export default function SettingsClient({
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const canManageHomeSettings = role !== "tenant";
 
   useEffect(() => {
     if (!toast) return;
@@ -214,66 +217,68 @@ export default function SettingsClient({
 
   return (
     <>
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
-          Billing Cycle
-        </h2>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">
-          Set the Meralco reading date that starts your bill cycle. WattWise will
-          use this for wallet totals, analytics forecasts, and Smart Control cutoffs.
-        </p>
-
-        <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-          <label
-            htmlFor="billing-cycle-start-day"
-            className="text-[11px] font-semibold uppercase tracking-wider text-white/50"
-          >
-            Meralco Billing Start Date
-          </label>
-          <div className="mt-3 flex items-center gap-3">
-            <select
-              id="billing-cycle-start-day"
-              value={billingCycleDraft}
-              disabled={isSavingBillingCycle}
-              onChange={(event) => {
-                setBillingCycleDraft(event.target.value);
-                if (billingCycleError) {
-                  setBillingCycleError(null);
-                }
-              }}
-              className="h-11 flex-1 rounded-xl border border-white/10 bg-black/10 px-3 text-sm font-semibold text-white outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
-                <option key={day} value={String(day)} className="bg-surface text-white">
-                  {day}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={() => void saveBillingCycle()}
-              disabled={isSavingBillingCycle}
-              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingBillingCycle ? (
-                <>
-                  <LoadingIndicator size="sm" label="Saving" showLabel={false} />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </button>
-          </div>
-
-          <p className={`mt-3 text-xs ${billingCycleError ? "text-danger" : "text-white/45"}`}>
-            {billingCycleError
-              ? billingCycleError
-              : "Allowed values are 1 through 28 to match real Meralco reading windows safely."}
+      {canManageHomeSettings ? (
+        <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider">
+            Billing Cycle
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-white/45">
+            Set the Meralco reading date that starts your bill cycle. WattWise will
+            use this for wallet totals, analytics forecasts, and Smart Control cutoffs.
           </p>
-        </div>
-      </section>
+
+          <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+            <label
+              htmlFor="billing-cycle-start-day"
+              className="text-[11px] font-semibold uppercase tracking-wider text-white/50"
+            >
+              Meralco Billing Start Date
+            </label>
+            <div className="mt-3 flex items-center gap-3">
+              <select
+                id="billing-cycle-start-day"
+                value={billingCycleDraft}
+                disabled={isSavingBillingCycle}
+                onChange={(event) => {
+                  setBillingCycleDraft(event.target.value);
+                  if (billingCycleError) {
+                    setBillingCycleError(null);
+                  }
+                }}
+                className="h-11 flex-1 rounded-xl border border-white/10 bg-black/10 px-3 text-sm font-semibold text-white outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
+                  <option key={day} value={String(day)} className="bg-surface text-white">
+                    {day}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => void saveBillingCycle()}
+                disabled={isSavingBillingCycle}
+                className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingBillingCycle ? (
+                  <>
+                    <LoadingIndicator size="sm" label="Saving" showLabel={false} />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+
+            <p className={`mt-3 text-xs ${billingCycleError ? "text-danger" : "text-white/45"}`}>
+              {billingCycleError
+                ? billingCycleError
+                : "Allowed values are 1 through 28 to match real Meralco reading windows safely."}
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
@@ -289,7 +294,8 @@ export default function SettingsClient({
         </div>
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      {canManageHomeSettings ? (
+        <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Budget Shutoff Override
         </h2>
@@ -368,7 +374,8 @@ export default function SettingsClient({
             })
           )}
         </div>
-      </section>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
         <h2 className="text-sm font-bold uppercase tracking-wider">
@@ -400,7 +407,8 @@ export default function SettingsClient({
           )}
         </button>
 
-        <div className="mt-5 rounded-xl border border-danger/25 bg-danger/10 p-4">
+        {canManageHomeSettings ? (
+          <div className="mt-5 rounded-xl border border-danger/25 bg-danger/10 p-4">
           <div className="flex items-start gap-2">
             <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
             <div>
@@ -433,7 +441,8 @@ export default function SettingsClient({
               "Delete My Account"
             )}
           </button>
-        </div>
+          </div>
+        ) : null}
       </section>
 
       {toast ? (

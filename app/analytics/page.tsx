@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
-import { AlertTriangle, CalendarClock, LineChart, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  LineChart,
+  PlugZap,
+  TrendingUp,
+} from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import BurnRateChart, {
@@ -23,6 +29,7 @@ import {
 type ProfileRow = {
   monthly_budget_php: number | string | null;
   billing_cycle_start_day: number | null;
+  role: string | null;
 };
 
 type UsageByDeviceDayRow = {
@@ -45,6 +52,42 @@ function toDayLabel(dayKey: string): string {
   return `${month}/${day}`;
 }
 
+function TenantBurnNotice({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="min-h-screen bg-base pb-24 text-white">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-5 pb-4 pt-5">
+          <div className="flex items-center gap-2">
+            <LineChart className="h-5 w-5 text-mint" />
+            <h1 className="text-lg font-bold tracking-tight">Burn Analytics</h1>
+          </div>
+          <LogoutButton />
+        </div>
+      </header>
+
+      <main className="flex min-h-screen items-center px-5 pt-[84px]">
+        <section className="w-full rounded-xl border border-white/[0.06] bg-surface p-6 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/10">
+            <PlugZap className="h-7 w-7 text-mint" />
+          </div>
+          <h2 className="mt-5 text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-white/55">
+            {description}
+          </p>
+        </section>
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+}
+
 export default async function AnalyticsPage() {
   const supabase = await createClient();
 
@@ -61,19 +104,60 @@ export default async function AnalyticsPage() {
   const startOfSevenDayWindow = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
   const endOfToday = getEndOfManilaDay(now);
 
-  const [activeRates, { data: profile }] =
-    await Promise.all([
-      getActiveMeralcoRates(supabase),
-      supabase
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("monthly_budget_php, billing_cycle_start_day, role")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>();
+  const isTenant = profile?.role === "tenant";
+  let monthlyBudget = Math.max(1, toNumber(profile?.monthly_budget_php ?? 2000));
+  let billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
+
+  if (isTenant) {
+    const { data: assignedDevices } = await supabase
+      .from("devices")
+      .select("owner_id, user_approved_limit_php")
+      .eq("tenant_id", user.id);
+    const tenantLimit = (assignedDevices ?? []).reduce(
+      (sum, device) => sum + toNumber(device.user_approved_limit_php),
+      0
+    );
+    const ownerId = assignedDevices?.find((device) => device.owner_id)?.owner_id;
+
+    if (!assignedDevices?.length) {
+      return (
+        <TenantBurnNotice
+          title="WattWise Unit not yet assigned"
+          description="Your landlord has not assigned a WattWise room unit yet. Burn Analytics will appear once your tenant account has an assigned unit."
+        />
+      );
+    }
+
+    if (tenantLimit <= 0) {
+      return (
+        <TenantBurnNotice
+          title="WattWise unit limit not yet set"
+          description="Your assigned WattWise unit does not have a landlord hard limit yet. Burn projections will appear after the limit is configured."
+        />
+      );
+    }
+
+    if (tenantLimit > 0) {
+      monthlyBudget = tenantLimit;
+    }
+
+    if (ownerId) {
+      const { data: ownerProfile } = await supabase
         .from("profiles")
-        .select("monthly_budget_php, billing_cycle_start_day")
-        .eq("id", user.id)
-        .maybeSingle<ProfileRow>(),
-    ]);
-  const billingCycle = getCurrentBillingCycle(
-    profile?.billing_cycle_start_day ?? 1,
-    now
-  );
+        .select("billing_cycle_start_day")
+        .eq("id", ownerId)
+        .maybeSingle<{ billing_cycle_start_day: number | null }>();
+      billingCycleStartDay = ownerProfile?.billing_cycle_start_day ?? billingCycleStartDay;
+    }
+  }
+
+  const activeRates = await getActiveMeralcoRates(supabase);
+  const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
   const rateRangeStart =
     billingCycle.startDate.getTime() < startOfSevenDayWindow.getTime()
       ? billingCycle.startDate
@@ -92,7 +176,6 @@ export default async function AnalyticsPage() {
     }),
   ]);
 
-  const monthlyBudget = Math.max(1, toNumber(profile?.monthly_budget_php ?? 2000));
   const cycleUsageByDayRows = (cycleUsageByDayRes.data ?? []) as UsageByDeviceDayRow[];
   const sevenDayRows = (sevenDayUsageRes.data ?? []) as UsageByDeviceDayRow[];
   const actualCycleVariableSpend = computeHistoricalVariableSpendFromDayRows(

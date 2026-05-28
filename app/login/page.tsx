@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { getHomePathForRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -96,11 +97,14 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, must_update_password")
       .eq("id", data.user.id)
       .single();
 
-    const destination = profile?.role === "super_admin" ? "/admin" : "/dashboard";
+    const destination =
+      profile?.role === "tenant" && profile.must_update_password === true
+        ? "/update-password"
+        : getHomePathForRole(profile?.role);
     setLoading(false);
     router.push(destination);
     router.refresh();

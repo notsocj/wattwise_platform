@@ -25,6 +25,19 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle<{ role: string | null }>();
+
+  if (profile?.role === "tenant") {
+    return NextResponse.json(
+      { error: "Tenants cannot edit device limits." },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json().catch(() => ({}));
   const dailyUsageHours = toOptionalNumber((body as Record<string, unknown>).daily_usage_hours);
   const suggestedLimit = toOptionalNumber((body as Record<string, unknown>).suggested_monthly_limit_php);
@@ -58,7 +71,7 @@ export async function PATCH(
     .from("devices")
     .select("id")
     .eq("id", deviceId)
-    .eq("user_id", user.id)
+    .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle();
 
   if (fetchError || !device) {
@@ -85,7 +98,7 @@ export async function PATCH(
       relay_auto_disabled_at: null,
     })
     .eq("id", deviceId)
-    .eq("user_id", user.id);
+    .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`);
 
   if (updateError) {
     return NextResponse.json(

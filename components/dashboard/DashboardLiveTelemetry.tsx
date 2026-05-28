@@ -33,6 +33,7 @@ type EnergyLogPayload = {
 
 type DashboardLiveTelemetryProps = {
   initialDevices: LiveDevice[];
+  canManageDevices?: boolean;
   children?: ReactNode;
 };
 
@@ -88,6 +89,7 @@ function sanitizeChannelKey(value: string): string {
 
 export default function DashboardLiveTelemetry({
   initialDevices,
+  canManageDevices = true,
   children,
 }: DashboardLiveTelemetryProps) {
   const [devices, setDevices] = useState(initialDevices);
@@ -218,11 +220,13 @@ export default function DashboardLiveTelemetry({
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint/10">
                     <Icon className="h-4 w-4 text-mint" />
                   </div>
-                  <RelayToggle
-                    deviceId={device.id}
-                    initialRelayState={device.relayState}
-                    variant="compact"
-                  />
+                  {canManageDevices ? (
+                    <RelayToggle
+                      deviceId={device.id}
+                      initialRelayState={device.relayState}
+                      variant="compact"
+                    />
+                  ) : null}
                 </div>
                 <div className="mt-3">
                   <p className="mb-1 line-clamp-2 text-sm font-semibold leading-tight">
@@ -259,7 +263,7 @@ export default function DashboardLiveTelemetry({
             );
           })}
 
-          <AddApplianceTile />
+          {canManageDevices ? <AddApplianceTile /> : null}
         </div>
       </section>
     </>
