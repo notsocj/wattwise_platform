@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlugZap, Power, ShieldAlert } from "lucide-react";
+import { PlugZap, Power, QrCode, ShieldAlert } from "lucide-react";
 import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import MacQrScanner from "@/components/ui/MacQrScanner";
 import type { ManagerDevice, ManagerTenant } from "@/lib/manager-data";
 
 type ManagerRoomsClientProps = {
@@ -26,6 +27,7 @@ export default function ManagerRoomsClient({
   const router = useRouter();
   const [deviceName, setDeviceName] = useState("");
   const [macAddress, setMacAddress] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const tenantOptions = [
@@ -106,7 +108,7 @@ export default function ManagerRoomsClient({
             Pair Hardware
           </h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
           <input
             value={deviceName}
             onChange={(event) => setDeviceName(event.target.value)}
@@ -119,6 +121,15 @@ export default function ManagerRoomsClient({
             placeholder="AA:BB:CC:DD:EE:FF"
             className="rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
           />
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            disabled={pending !== null}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-bold text-white/75 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <QrCode className="h-4 w-4" />
+            Scan QR
+          </button>
           <button
             type="button"
             onClick={() => void pairDevice()}
@@ -259,6 +270,28 @@ export default function ManagerRoomsClient({
           )}
         </div>
       </section>
+
+      {showScanner ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-6 pt-4 backdrop-blur-sm"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowScanner(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <MacQrScanner
+              onScan={(mac) => {
+                setMacAddress(mac);
+                setShowScanner(false);
+                setMessage(null);
+              }}
+              onCancel={() => setShowScanner(false)}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
