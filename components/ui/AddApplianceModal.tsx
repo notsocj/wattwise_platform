@@ -55,9 +55,25 @@ const APPLIANCE_OPTIONS: {
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 const MAC_IN_TEXT = /([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}/;
+const COMPACT_MAC_IN_TEXT = /\b[0-9A-Fa-f]{12}\b/;
 
 function normalizeMac(value: string): string {
-  return value.trim().replace(/-/g, ":").toUpperCase();
+  const cleaned = value.trim();
+  const separatedMatch = cleaned.match(MAC_IN_TEXT);
+
+  if (separatedMatch) {
+    return separatedMatch[0].replace(/-/g, ":").toUpperCase();
+  }
+
+  const compactMatch = cleaned.match(COMPACT_MAC_IN_TEXT);
+  if (!compactMatch) {
+    return cleaned.replace(/-/g, ":").toUpperCase();
+  }
+
+  return compactMatch[0]
+    .toUpperCase()
+    .match(/.{1,2}/g)!
+    .join(":");
 }
 
 function parsePeso(value: string): number {
@@ -93,6 +109,7 @@ function QrScannerView({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
   const onScanRef = useRef(onScan);
+  const hasScannedRef = useRef(false);
 
   useEffect(() => {
     onScanRef.current = onScan;
@@ -100,9 +117,42 @@ function QrScannerView({
 
   useEffect(() => {
     let stopped = false;
+    let stopInFlight: Promise<void> | null = null;
+
+    async function stopScanner(
+      qr: import("html5-qrcode").Html5Qrcode,
+      scannerState?: typeof import("html5-qrcode").Html5QrcodeScannerState
+    ) {
+      if (stopInFlight) {
+        return stopInFlight;
+      }
+
+      stopInFlight = (async () => {
+        try {
+          const state = qr.getState();
+          const canStop =
+            !scannerState ||
+            (state === scannerState.SCANNING || state === scannerState.PAUSED);
+
+          if (canStop) {
+            await qr.stop();
+          }
+        } catch {
+          // html5-qrcode throws when stop is called after scan success/unmount races.
+        } finally {
+          try {
+            qr.clear();
+          } catch {
+            // Best effort cleanup; the scanner DOM may already be gone.
+          }
+        }
+      })();
+
+      return stopInFlight;
+    }
 
     async function startScanner() {
-      const { Html5Qrcode } = await import("html5-qrcode");
+      const { Html5Qrcode, Html5QrcodeScannerState } = await import("html5-qrcode");
       if (stopped) return;
 
       const qr = new Html5Qrcode("ww-qr-box");
@@ -113,10 +163,16 @@ function QrScannerView({
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (decodedText: string) => {
-            const match = decodedText.match(MAC_IN_TEXT);
-            if (match) {
-              qr.stop().catch(() => {});
-              onScanRef.current(normalizeMac(match[0]));
+            if (hasScannedRef.current) {
+              return;
+            }
+
+            const normalizedMac = normalizeMac(decodedText);
+            if (MAC_REGEX.test(normalizedMac)) {
+              hasScannedRef.current = true;
+              stopped = true;
+              void stopScanner(qr, Html5QrcodeScannerState);
+              onScanRef.current(normalizedMac);
             }
           },
           undefined
@@ -141,12 +197,7 @@ function QrScannerView({
       const qrInstance = scannerRef.current;
       scannerRef.current = null;
       if (qrInstance) {
-        qrInstance
-          .stop()
-          .catch(() => {})
-          .finally(() => {
-            qrInstance.clear();
-          });
+        void stopScanner(qrInstance);
       }
     };
   }, []);
