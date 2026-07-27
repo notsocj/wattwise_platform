@@ -12,6 +12,7 @@ import BurnRateChart, {
   type BurnRatePoint,
 } from "@/components/analytics/BurnRateChart";
 import AnomalyAlertCard from "@/components/insights/AnomalyAlertCard";
+import MeralcoBreakdownCard from "@/components/billing/MeralcoBreakdownCard";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendByDay,
@@ -177,6 +178,7 @@ export default async function AnalyticsPage() {
   ]);
 
   const cycleUsageByDayRows = (cycleUsageByDayRes.data ?? []) as UsageByDeviceDayRow[];
+  const cycleUsageKwh = cycleUsageByDayRows.reduce((sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)), 0);
   const sevenDayRows = (sevenDayUsageRes.data ?? []) as UsageByDeviceDayRow[];
   const actualCycleVariableSpend = computeHistoricalVariableSpendFromDayRows(
     cycleUsageByDayRows,
@@ -267,6 +269,8 @@ export default async function AnalyticsPage() {
         </section>
 
         <AnomalyAlertCard />
+
+        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={cycleUsageKwh} />
 
         <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
           <div className="mb-4 flex items-center justify-between gap-3">

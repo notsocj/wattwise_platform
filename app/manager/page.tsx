@@ -1,6 +1,7 @@
 import ManagerFleetDashboard from "@/components/manager/ManagerFleetDashboard";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import { getManagerFleetSnapshot, requireManagerPage } from "@/lib/manager-data";
+import BudgetWarningFeed from "@/components/insights/BudgetWarningFeed";
 
 export default async function ManagerPage() {
   const { supabase, user, profile } = await requireManagerPage();
@@ -16,6 +17,7 @@ export default async function ManagerPage() {
   return (
     <>
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
+      <BudgetWarningFeed />
       <ManagerFleetDashboard snapshot={snapshot} />
     </>
   );

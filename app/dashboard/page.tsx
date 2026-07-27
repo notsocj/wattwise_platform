@@ -31,6 +31,8 @@ import {
   getStartOfManilaDay,
 } from "@/lib/date-utils";
 import { isTenantRole } from "@/lib/roles";
+import MeralcoBreakdownCard from "@/components/billing/MeralcoBreakdownCard";
+import BudgetWarningFeed from "@/components/insights/BudgetWarningFeed";
 
 type DeviceRow = {
   id: string;
@@ -425,6 +427,7 @@ export default async function DashboardPage() {
     cycleUsageByDayRows,
     rateRows
   );
+  const homeCycleUsageKwh = cycleUsageByDayRows.reduce((sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)), 0);
   const homeCycleEstimatedBillPhp =
     homeCycleVariableSpendPhp +
     activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
@@ -566,6 +569,9 @@ export default async function DashboardPage() {
 
         <WeekSummaryWidget days={weekSummaries} />
         <BudgetAlertCard />
+        <BudgetWarningFeed />
+
+        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} />
         </DashboardLiveTelemetry>
 
       </div>

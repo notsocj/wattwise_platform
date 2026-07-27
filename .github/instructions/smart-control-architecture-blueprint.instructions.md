@@ -65,6 +65,13 @@ Analytics route:
 - `app/analytics/page.tsx`
 - Uses bounded usage RPCs and active Meralco rates to render 7-day financial velocity and projected monthly bill.
 
+Reports route:
+- `app/reports/page.tsx` and `app/api/reports/route.ts`
+- Supports bounded daily, weekly, and monthly measured-versus-estimated appliance reports, CSV download, and print-to-PDF.
+
+Budget warnings:
+- Migration `015_budget_warnings.sql` records deduplicated 80%, 90%, and 100% in-app warning events after telemetry updates.
+
 ## Supabase Cloud Setup
 
 Realtime must be enabled manually for `energy_logs`:

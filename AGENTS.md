@@ -88,6 +88,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - App Router pages already exist for `/`, `/dashboard`, `/dashboard/calendar`, `/analytics`, `/settings`, `/admin`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/update-password`, and `/onboarding`.
 - Smart Control user routes also exist for `/analytics` and `/settings`.
 - Shared Supabase helpers live under `lib/supabase/`.
+- Reports are served from `/reports` and `/api/reports`; keep period windows bounded and preserve CSV/print parity.
 - Route-level loading UIs are part of the app structure; preserve them when adding slow server-rendered pages.
 - Service worker/PWA work is planned but not fully implemented. Be careful not to document it as complete unless the code actually exists.
 

@@ -241,7 +241,8 @@ CREATE INDEX idx_device_budget_events_device_month
 
 Constraint:
 
-- `event_type IN ('approval_required', 'auto_cutoff')`
+- `event_type IN ('budget_warning', 'approval_required', 'auto_cutoff')`
+- `budget_warning` is deduplicated at 80%, 90%, and 100% of the configured limit by migration `015_budget_warnings.sql`.
 
 Purpose:
 
