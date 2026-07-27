@@ -52,6 +52,11 @@ type UsageByDeviceRow = {
   day_key: string;
 };
 
+type UsagePeriodRow = {
+  period_key: "hour" | "day" | "week" | "month";
+  usage_kwh: number | string;
+};
+
 type DeviceViewModel = {
   id: string;
   name: string;
@@ -281,12 +286,17 @@ export default async function DeviceDetailPage(props: {
 
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
 
-  const [rateRows, usageByDeviceDayRes] = await Promise.all([
+  const [rateRows, usageByDeviceDayRes, usagePeriodsRes] = await Promise.all([
     getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
     supabase.rpc("get_usage_kwh_by_device_day", {
       p_user_id: user.id,
       p_start: billingCycle.startDate.toISOString(),
       p_end: now.toISOString(),
+    }),
+    supabase.rpc("get_device_usage_periods", {
+      p_user_id: user.id,
+      p_device_id: deviceData.id,
+      p_now: now.toISOString(),
     }),
   ]);
 
@@ -352,6 +362,17 @@ export default async function DeviceDetailPage(props: {
     );
   }
   const billingCycleKWh = Math.max(0, cycleKWhByDevice.get(deviceData.id) ?? 0);
+  const periodUsage = new Map<string, number>();
+  for (const row of (usagePeriodsRes.data ?? []) as UsagePeriodRow[]) {
+    periodUsage.set(row.period_key, Math.max(0, toNumber(row.usage_kwh)));
+  }
+  const usageSummary = [
+    { label: "This hour", value: periodUsage.get("hour") ?? 0 },
+    { label: "Today", value: periodUsage.get("day") ?? 0 },
+    { label: "This week", value: periodUsage.get("week") ?? 0 },
+    { label: "This month", value: periodUsage.get("month") ?? 0 },
+    { label: "Billing cycle", value: billingCycleKWh },
+  ];
 
   const totalBillingCycleKWhAcrossHome = Array.from(cycleKWhByDevice.values()).reduce(
     (sum, usageKwh) => sum + Math.max(0, usageKwh),
@@ -453,6 +474,22 @@ export default async function DeviceDetailPage(props: {
             label="Current"
             unit="AMPS"
           />
+        </section>
+
+        <section className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider">Actual kWh usage</h3>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-mint/70">Metered</span>
+          </div>
+          <p className="mb-4 text-xs text-white/45">Derived from positive changes in this appliance&apos;s cumulative PZEM meter reading.</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {usageSummary.map((period) => (
+              <div key={period.label} className="rounded-lg bg-black/15 px-3 py-3">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-white/40">{period.label}</p>
+                <p className="mt-1 text-lg font-bold text-white">{period.value.toFixed(3)} <span className="text-xs font-medium text-mint/75">kWh</span></p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* ===== Power Control (Relay) ===== */}
