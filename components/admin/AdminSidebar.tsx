@@ -10,6 +10,9 @@ import {
   Brain,
   HeartPulse,
   Globe,
+  Users,
+  Cpu,
+  ScrollText,
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +24,9 @@ const NAV_ITEMS = [
   { label: "AI Costs", path: "/admin/ai-costs", icon: Brain },
   { label: "System Health", path: "/admin/health", icon: HeartPulse },
   { label: "Global Analytics", path: "/admin/analytics", icon: Globe },
+  { label: "Users", path: "/admin/users", icon: Users },
+  { label: "Devices", path: "/admin/devices", icon: Cpu },
+  { label: "Audit Log", path: "/admin/audit", icon: ScrollText },
 ];
 
 interface AdminSidebarProps {

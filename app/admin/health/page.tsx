@@ -1,20 +1,2 @@
-import { HeartPulse } from 'lucide-react';
-
-export default function AdminHealthPage() {
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-2">
-        <HeartPulse className="h-6 w-6 text-mint" />
-        <h1 className="text-2xl font-bold">System Health</h1>
-      </div>
-      <p className="text-white/50 mb-8">
-        Database storage usage, device fleet status, and Supabase Free Tier monitoring.
-      </p>
-      <div className="rounded-lg border border-white/10 bg-surface p-6">
-        <p className="text-white/40 text-sm">
-          Storage progress bar, online/offline device counts, and device health table will be displayed here.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { HeartPulse } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
+export default async function AdminHealthPage(){const admin=createAdminClient();const [devices,stale,logs,sync]=await Promise.all([admin.from('devices').select('*',{count:'exact',head:true}),admin.from('devices').select('*',{count:'exact',head:true}).lt('last_seen_at',new Date(new Date().getTime()-15*60000).toISOString()),admin.from('energy_logs').select('*',{count:'exact',head:true}).gte('recorded_at',new Date(new Date().getTime()-86400000).toISOString()),admin.from('meralco_rate_sync_runs').select('*').order('started_at',{ascending:false}).limit(1)]);return <div><div className="mb-6 flex items-center gap-3"><HeartPulse className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">System Health</h1></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Registered devices',devices.count],['Stale devices',stale.count],['Telemetry (24h)',logs.count],['Latest rate sync',sync.data?.[0]?.status||'No runs']].map(([l,v])=><div key={l} className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">{l}</p><p className="mt-2 text-2xl font-semibold">{v??0}</p></div>)}</div></div>}

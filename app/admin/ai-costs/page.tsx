@@ -1,20 +1,2 @@
-import { Brain } from 'lucide-react';
-
-export default function AdminAiCostsPage() {
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-2">
-        <Brain className="h-6 w-6 text-mint" />
-        <h1 className="text-2xl font-bold">OpenAI Cost Tracker</h1>
-      </div>
-      <p className="text-white/50 mb-8">
-        Monitor token usage, estimated USD costs, and insight generation volume.
-      </p>
-      <div className="rounded-lg border border-white/10 bg-surface p-6">
-        <p className="text-white/40 text-sm">
-          Daily token usage chart, total insights generated, and cost breakdown by insight type will be displayed here.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { Brain } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
+export default async function AdminAiCostsPage(){const {data}=await createAdminClient().from('ai_insights').select('prompt_tokens,completion_tokens,insight_type').limit(10000);const rows=data??[];const tokens=rows.reduce((s,r)=>s+Number(r.prompt_tokens||0)+Number(r.completion_tokens||0),0);return <div><div className="mb-6 flex items-center gap-3"><Brain className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">AI Costs</h1></div><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Insights</p><p className="mt-2 text-3xl font-semibold">{rows.length}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Tokens</p><p className="mt-2 text-3xl font-semibold">{tokens.toLocaleString()}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Insight types</p><p className="mt-2 text-3xl font-semibold">{new Set(rows.map(r=>r.insight_type)).size}</p></div></div></div>}

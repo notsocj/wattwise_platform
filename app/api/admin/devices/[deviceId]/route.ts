@@ -1,0 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
+  const auth = await requireAdminApi(); if ("response" in auth) return auth.response; const { deviceId } = await params; const body = await request.json(); const { data: before, error } = await auth.admin.from("devices").select("*").eq("id", deviceId).single(); if (error || !before) return NextResponse.json({ error: "Device not found" }, { status: 404 });
+  const update: Record<string, unknown> = {}; for (const key of ["device_name", "appliance_type", "tenant_id", "owner_id", "user_id", "daily_usage_hours", "user_approved_limit_php", "require_approval_on_expiry", "mac_address"]) if (body[key] !== undefined) update[key] = body[key]; if (update.mac_address) update.mac_address = String(update.mac_address).trim().toUpperCase().replace(/-/g, ":");
+  if (!Object.keys(update).length) return NextResponse.json({ data: before }); const result = await auth.admin.from("devices").update(update).eq("id", deviceId).select("*").single(); if (result.error) return NextResponse.json({ error: result.error.message }, { status: 400 }); await writeAdminAudit(auth.admin, { actorId: auth.user.id, action: "device_update", targetType: "device", targetId: deviceId, reason: body.reason, beforeState: before, afterState: result.data }); return NextResponse.json({ data: result.data });
+}

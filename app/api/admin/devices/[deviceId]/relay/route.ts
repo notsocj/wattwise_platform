@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+export async function POST(request: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
+  const auth = await requireAdminApi(); if ("response" in auth) return auth.response; const { deviceId } = await params; const body = await request.json(); if (body.confirm !== true || typeof body.relay_state !== "boolean" || String(body.reason || "").trim().length < 3) return NextResponse.json({ error: "Confirmation, relay_state, and a reason are required" }, { status: 400 });
+  const { data: before } = await auth.admin.from("devices").select("*").eq("id", deviceId).single(); if (!before) return NextResponse.json({ error: "Device not found" }, { status: 404 }); const { data: after, error } = await auth.admin.from("devices").update({ relay_state: body.relay_state }).eq("id", deviceId).select("*").single(); if (error) return NextResponse.json({ error: error.message }, { status: 500 }); await writeAdminAudit(auth.admin, { actorId: auth.user.id, action: "relay_change", targetType: "device", targetId: deviceId, reason: String(body.reason).slice(0, 500), beforeState: { relay_state: before.relay_state }, afterState: { relay_state: after.relay_state } }); return NextResponse.json({ data: after });
+}

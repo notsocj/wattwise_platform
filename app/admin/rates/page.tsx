@@ -1,20 +1,2 @@
-import { DollarSign } from 'lucide-react';
-
-export default function AdminRatesPage() {
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-2">
-        <DollarSign className="h-6 w-6 text-mint" />
-        <h1 className="text-2xl font-bold">Meralco Rate Editor</h1>
-      </div>
-      <p className="text-white/50 mb-8">
-        Manage unbundled Meralco billing rates across all users.
-      </p>
-      <div className="rounded-lg border border-white/10 bg-surface p-6">
-        <p className="text-white/40 text-sm">
-          Rate form (Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, Supply Charge, Metering Charge, VAT) and history table will be displayed here.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { DollarSign } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
+export default async function AdminRatesPage(){const {data}=await createAdminClient().from('meralco_rates').select('effective_month,generation,transmission,system_loss,distribution,universal_charges,fit_all,vat_rate,metering_charge,supply_charge').order('effective_month',{ascending:false}).limit(24);return <div><div className="mb-6 flex items-center gap-3"><DollarSign className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">Meralco Rates</h1></div><p className="mb-6 text-white/50">Rate history is sourced from the synchronized Meralco table. Creation and edits are audited through the admin API.</p><div className="overflow-x-auto rounded-lg border border-white/10 bg-surface"><table className="w-full text-left text-sm"><thead className="border-b border-white/10 text-white/50"><tr>{['Effective month','Generation','Transmission','Distribution','VAT','Fixed charges'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody>{(data??[]).map(r=><tr key={r.effective_month} className="border-b border-white/5"><td className="p-4">{r.effective_month}</td><td className="p-4">₱{Number(r.generation).toFixed(4)}</td><td className="p-4">₱{Number(r.transmission).toFixed(4)}</td><td className="p-4">₱{Number(r.distribution).toFixed(4)}</td><td className="p-4">{(Number(r.vat_rate)*100).toFixed(2)}%</td><td className="p-4">₱{(Number(r.metering_charge)+Number(r.supply_charge)).toFixed(2)}</td></tr>)}</tbody></table></div></div>}

@@ -1,20 +1,2 @@
-import { Globe } from 'lucide-react';
-
-export default function AdminAnalyticsPage() {
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-2">
-        <Globe className="h-6 w-6 text-mint" />
-        <h1 className="text-2xl font-bold">Global Energy Analytics</h1>
-      </div>
-      <p className="text-white/50 mb-8">
-        Platform-wide energy impact: total kWh monitored and estimated savings.
-      </p>
-      <div className="rounded-lg border border-white/10 bg-surface p-6">
-        <p className="text-white/40 text-sm">
-          Total kWh, total users, total devices, estimated savings, and daily consumption chart will be displayed here.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { Globe } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
+export default async function AdminAnalyticsPage(){const admin=createAdminClient();const since=new Date(new Date().getTime()-30*86400000).toISOString();const [{data:logs},{data:devices}]=await Promise.all([admin.from('energy_logs').select('energy_kwh,recorded_at').gte('recorded_at',since).order('recorded_at',{ascending:false}).limit(10000),admin.from('devices').select('appliance_type,is_online')]);const kwh=(logs??[]).reduce((s,l)=>s+Number(l.energy_kwh||0),0);return <div><div className="mb-6 flex items-center gap-3"><Globe className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">Global Analytics</h1></div><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">kWh (30 days)</p><p className="mt-2 text-3xl font-semibold">{kwh.toFixed(2)}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Active devices</p><p className="mt-2 text-3xl font-semibold">{(devices??[]).filter(d=>d.is_online).length}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Appliance types</p><p className="mt-2 text-3xl font-semibold">{new Set((devices??[]).map(d=>d.appliance_type).filter(Boolean)).size}</p></div></div></div>}
