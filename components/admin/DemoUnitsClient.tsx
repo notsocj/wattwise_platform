@@ -41,7 +41,8 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
 
   async function createUnit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setSubmitting(true);
     setMessage(null);
     const response = await fetch("/api/admin/demo-units", {
@@ -63,7 +64,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
       setMessage(payload.error || "Unable to create the demo unit.");
       return;
     }
-    event.currentTarget.reset();
+    formElement.reset();
     setMessage("Demo unit created. Start it, then use Run now to generate its first reading.");
     router.refresh();
   }
