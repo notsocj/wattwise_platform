@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `014`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
+This file reflects the current database shape defined by `supabase/migrations/001` through `024`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
 
 ## Current Schema Summary
 
@@ -14,8 +14,18 @@ Wattwise currently relies on these core database objects:
 - Tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights`
 - Smart Control tables: `device_month_usage`, `device_budget_events`
 - Admin/sync table: `meralco_rate_sync_runs`
+- Admin demo table: `demo_device_simulations`
 - RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_hourly_averages`
 - Triggers/functions: `handle_new_user`, `handle_energy_log_smart_budget`
+
+### `demo_device_simulations`
+
+Stores super-admin controlled virtual WattWise meters for demos and testing. Each row belongs to a normal `devices` row and the Edge Function writes the same cumulative payload contract to `energy_logs` as real ESP32 hardware.
+
+- The virtual device uses a locally administered MAC address starting with `02:DE:`.
+- Only the server-side super-admin APIs may create, assign, start, pause, reset, or run a simulation.
+- `simulate-demo-units` runs only active units and advances `energy_kwh` from `simulated_watts` and elapsed time (capped at ten minutes per invocation).
+- Resetting a simulation resets its future meter baseline; it intentionally does not delete historical `energy_logs`.
 
 ## Core Tables
 
