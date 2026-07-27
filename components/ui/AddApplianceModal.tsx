@@ -222,14 +222,23 @@ export default function AddApplianceModal({
     setToastMessage(null);
 
     try {
-      const res = await fetch(`/api/devices/${deviceId}/ai-profile`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ daily_usage_hours: dailyHours }),
-      });
+      let res: Response | null = null;
+      // The ESP32 polls the relay command every five seconds. Retry profiling
+      // briefly after enabling it so setup does not fail on the first request.
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        res = await fetch(`/api/devices/${deviceId}/ai-profile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ daily_usage_hours: dailyHours }),
+        });
+        if (res.ok) break;
+        const retryPayload = await res.clone().json().catch(() => ({}));
+        if (!String(retryPayload.error || "").toLowerCase().includes("no fresh telemetry") || attempt === 3) break;
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+      }
 
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
+      if (!res || !res.ok) {
+        const payload = await res?.json().catch(() => ({}));
         setApiError(
           getApiErrorMessage(
             typeof payload.error === "string" ? payload.error : undefined,

@@ -12,6 +12,8 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   appliance_type: string | null;
+  relay_state?: boolean | null;
+  budget_status?: string | null;
 };
 
 type LatestTelemetryRow = {
@@ -154,7 +156,7 @@ export async function POST(
 
   const { data: device, error: deviceError } = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, appliance_type")
+    .select("id, device_name, mac_address, appliance_type, relay_state, budget_status")
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle<DeviceRow>();
@@ -164,6 +166,13 @@ export async function POST(
       { error: "Device not found or not owned by you." },
       { status: 404 }
     );
+  }
+
+  // Live profiling needs the appliance energized. Preserve an automatic cutoff,
+  // but recover a normal device that was left OFF during registration so the
+  // ESP32 can receive the cloud command on its next polling cycle.
+  if (device.budget_status !== "auto_cutoff" && device.relay_state !== true) {
+    await supabase.from("devices").update({ relay_state: true }).eq("id", device.id);
   }
 
   const { data: latestTelemetry, error: telemetryError } = await supabase
