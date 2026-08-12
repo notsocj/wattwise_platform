@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import {
+  classifyProfileTelemetry,
+  toFiniteTelemetryNumber,
+  type ProfileTelemetrySample,
+} from "@/lib/device-profile-telemetry";
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
 
-const FRESH_READING_WINDOW_MS = 20 * 1000;
 const FALLBACK_PROMPT_RATE_PHP_PER_KWH = 12;
 const AI_SAFETY_FACTOR_PHP_PER_KWH = 12;
 
@@ -14,13 +18,6 @@ type DeviceRow = {
   appliance_type: string | null;
   relay_state?: boolean | null;
   budget_status?: string | null;
-};
-
-type LatestTelemetryRow = {
-  average_watts: number | string | null;
-  voltage_v: number | string | null;
-  current_a: number | string | null;
-  recorded_at: string | null;
 };
 
 type BaselinePayload = {
@@ -43,24 +40,6 @@ type AiProfileResponse = AiProfileModelResponse & {
   prompt_rate_php_per_kwh: number;
   prompt_rate_source: "table" | "fallback";
 };
-
-function toFiniteNumber(value: unknown): number | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function isFresh(recordedAt: string | null): boolean {
-  if (!recordedAt) {
-    return false;
-  }
-
-  const timestamp = new Date(recordedAt).getTime();
-  return !Number.isNaN(timestamp) && Date.now() - timestamp <= FRESH_READING_WINDOW_MS;
-}
 
 function parseJsonObject(content: string | null | undefined): unknown {
   if (!content) {
@@ -172,7 +151,28 @@ export async function POST(
   // but recover a normal device that was left OFF during registration so the
   // ESP32 can receive the cloud command on its next polling cycle.
   if (device.budget_status !== "auto_cutoff" && device.relay_state !== true) {
-    await supabase.from("devices").update({ relay_state: true }).eq("id", device.id);
+    const { error: relayError } = await supabase
+      .from("devices")
+      .update({ relay_state: true })
+      .eq("id", device.id);
+
+    if (relayError) {
+      return NextResponse.json(
+        {
+          code: "relay_enable_failed",
+          error: "WattWise could not enable the device relay for live profiling.",
+        },
+        { status: 500 }
+      );
+    }
+  } else if (device.budget_status === "auto_cutoff" && device.relay_state !== true) {
+    return NextResponse.json(
+      {
+        code: "relay_blocked_by_cutoff",
+        error: "This device is under automatic budget cutoff. Increase or approve its limit before profiling.",
+      },
+      { status: 409 }
+    );
   }
 
   const { data: latestTelemetry, error: telemetryError } = await supabase
@@ -181,37 +181,52 @@ export async function POST(
     .in("device_id", [device.id, device.mac_address])
     .order("recorded_at", { ascending: false })
     .limit(1)
-    .maybeSingle<LatestTelemetryRow>();
+    .maybeSingle<ProfileTelemetrySample>();
 
-  let baselineWatts =
-    latestTelemetry && isFresh(latestTelemetry.recorded_at)
-      ? Math.max(0, toFiniteNumber(latestTelemetry.average_watts) ?? 0)
-      : 0;
-  let voltageV =
-    latestTelemetry && isFresh(latestTelemetry.recorded_at)
-      ? toFiniteNumber(latestTelemetry.voltage_v)
-      : null;
-  let currentA =
-    latestTelemetry && isFresh(latestTelemetry.recorded_at)
-      ? toFiniteNumber(latestTelemetry.current_a)
-      : null;
+  if (telemetryError) {
+    return NextResponse.json(
+      {
+        code: "telemetry_lookup_failed",
+        error: "WattWise could not check the latest device reading. Try again shortly.",
+      },
+      { status: 500 }
+    );
+  }
+
+  const telemetry = classifyProfileTelemetry(latestTelemetry);
+
+  let baselineWatts = telemetry.baselineWatts;
+  let voltageV = telemetry.voltageV;
+  let currentA = telemetry.currentA;
 
   if (
-    (!latestTelemetry || !isFresh(latestTelemetry.recorded_at) || telemetryError) &&
+    telemetry.state === "pending" &&
     body &&
     typeof body === "object"
   ) {
     const payload = body as BaselinePayload;
-    baselineWatts = Math.max(0, toFiniteNumber(payload.baseline_watts) ?? 0);
-    voltageV = toFiniteNumber(payload.voltage_v);
-    currentA = toFiniteNumber(payload.current_a);
+    baselineWatts = Math.max(0, toFiniteTelemetryNumber(payload.baseline_watts) ?? 0);
+    voltageV = toFiniteTelemetryNumber(payload.voltage_v);
+    currentA = toFiniteTelemetryNumber(payload.current_a);
+  }
+
+  if (telemetry.state === "pending" && baselineWatts <= 0) {
+    return NextResponse.json(
+      {
+        code: "telemetry_pending",
+        error:
+          "WattWise is registered. Waiting for the device to connect and send its first live reading.",
+      },
+      { status: 409 }
+    );
   }
 
   if (baselineWatts <= 0) {
     return NextResponse.json(
       {
+        code: "load_not_detected",
         error:
-          "No fresh telemetry yet. Keep the WattWise device powered on and wait for a live reading.",
+          "WattWise is online, but the appliance is drawing 0 W. Turn the appliance on and keep it running while profiling.",
       },
       { status: 409 }
     );

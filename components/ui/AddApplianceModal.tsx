@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
-  AlertTriangle,
   HelpCircle,
   QrCode,
   Refrigerator,
@@ -17,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ApplianceType } from "@/lib/constants";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import MacQrScanner from "@/components/ui/MacQrScanner";
+import { pollForDeviceProfile } from "@/lib/device-profile-polling";
 import { MAC_REGEX, normalizeMac } from "@/lib/mac-address";
 
 interface AddApplianceModalProps {
@@ -64,6 +64,10 @@ function getApiErrorMessage(raw: string | undefined, fallback: string): string {
     return raw ?? fallback;
   }
 
+  if (message.includes("waiting for the device") || message.includes("drawing 0 w")) {
+    return raw ?? fallback;
+  }
+
   if (message.includes("openai")) {
     return "AI profiling is temporarily unavailable. Check OPENAI_API_KEY and try again.";
   }
@@ -91,23 +95,28 @@ export default function AddApplianceModal({
   const [step, setStep] = useState(1);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSavingDevice, setIsSavingDevice] = useState(false);
   const [isProfiling, setIsProfiling] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const profileAbortController = useRef<AbortController | null>(null);
+  const isMounted = useRef(true);
 
   const isBusy = isSavingDevice || isProfiling || isSavingProfile;
 
   useEffect(() => {
-    if (!toastMessage) return;
-
-    const timer = setTimeout(() => setToastMessage(null), 3500);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
+    return () => {
+      isMounted.current = false;
+      profileAbortController.current?.abort();
+    };
+  }, []);
 
   function setApiError(message: string) {
     setError(message);
-    setToastMessage(message);
+  }
+
+  function handleCloseModal() {
+    profileAbortController.current?.abort();
+    onClose();
   }
 
   function clearFieldError(field: keyof FieldErrors) {
@@ -155,7 +164,6 @@ export default function AddApplianceModal({
 
     setIsSavingDevice(true);
     setError(null);
-    setToastMessage(null);
 
     const supabase = createClient();
     const {
@@ -186,7 +194,40 @@ export default function AddApplianceModal({
 
     if (insertError || !data) {
       if (insertError?.code === "23505") {
-        setApiError("This MAC address is already registered to a device.");
+        const { data: existingDevice } = await supabase
+          .from("devices")
+          .select("id, profiled_at")
+          .eq("mac_address", normalizedMac)
+          .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
+          .maybeSingle<{ id: string; profiled_at: string | null }>();
+
+        if (existingDevice && !existingDevice.profiled_at) {
+          const { error: resumeError } = await supabase
+            .from("devices")
+            .update({
+              device_name: trimmedName,
+              appliance_type: applianceType,
+              relay_state: true,
+            })
+            .eq("id", existingDevice.id)
+            .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`);
+
+          if (!resumeError) {
+            setMacAddress(normalizedMac);
+            setDeviceName(trimmedName);
+            setDeviceId(existingDevice.id);
+            setIsSavingDevice(false);
+            setStep(3);
+            router.refresh();
+            return;
+          }
+        }
+
+        setApiError(
+          existingDevice?.profiled_at
+            ? "This MAC address is already assigned to a completed appliance."
+            : "This device was registered earlier, but WattWise could not resume its setup. Try again."
+        );
       } else {
         setApiError("We could not register this appliance. Try again.");
       }
@@ -219,26 +260,24 @@ export default function AddApplianceModal({
 
     setIsProfiling(true);
     setError(null);
-    setToastMessage(null);
+    const abortController = new AbortController();
+    profileAbortController.current?.abort();
+    profileAbortController.current = abortController;
 
     try {
-      let res: Response | null = null;
-      // The ESP32 polls the relay command every five seconds. Retry profiling
-      // briefly after enabling it so setup does not fail on the first request.
-      for (let attempt = 0; attempt < 4; attempt += 1) {
-        res = await fetch(`/api/devices/${deviceId}/ai-profile`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ daily_usage_hours: dailyHours }),
-        });
-        if (res.ok) break;
-        const retryPayload = await res.clone().json().catch(() => ({}));
-        if (!String(retryPayload.error || "").toLowerCase().includes("no fresh telemetry") || attempt === 3) break;
-        await new Promise((resolve) => setTimeout(resolve, 2500));
-      }
+      const res = await pollForDeviceProfile(
+        () =>
+          fetch(`/api/devices/${deviceId}/ai-profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ daily_usage_hours: dailyHours }),
+            signal: abortController.signal,
+          }),
+        { signal: abortController.signal }
+      );
 
-      if (!res || !res.ok) {
-        const payload = await res?.json().catch(() => ({}));
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
         setApiError(
           getApiErrorMessage(
             typeof payload.error === "string" ? payload.error : undefined,
@@ -253,10 +292,18 @@ export default function AddApplianceModal({
       setProfile(nextProfile);
       setApprovedLimit(nextProfile.suggested_monthly_limit_php.toFixed(2));
       setStep(4);
-    } catch {
+    } catch (profileError) {
+      if (profileError instanceof DOMException && profileError.name === "AbortError") {
+        return;
+      }
       setApiError("We could not reach WattWise right now. Check your connection and try again.");
     } finally {
-      setIsProfiling(false);
+      if (profileAbortController.current === abortController) {
+        profileAbortController.current = null;
+        if (isMounted.current) {
+          setIsProfiling(false);
+        }
+      }
     }
   }
 
@@ -278,7 +325,6 @@ export default function AddApplianceModal({
 
     setIsSavingProfile(true);
     setError(null);
-    setToastMessage(null);
 
     try {
       const res = await fetch(`/api/devices/${deviceId}/profile`, {
@@ -347,7 +393,13 @@ export default function AddApplianceModal({
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-20 pt-4 backdrop-blur-sm"
       onClick={(event) => {
-        if (!isBusy && event.target === event.currentTarget) onClose();
+        if (
+          !isSavingDevice &&
+          !isSavingProfile &&
+          event.target === event.currentTarget
+        ) {
+          handleCloseModal();
+        }
       }}
     >
       <div className="max-h-[85vh] w-full max-w-107.5 overflow-hidden overflow-y-auto rounded-2xl bg-white shadow-2xl">
@@ -376,8 +428,8 @@ export default function AddApplianceModal({
               </div>
               <button
                 type="button"
-                onClick={onClose}
-                disabled={isBusy}
+                onClick={handleCloseModal}
+                disabled={isSavingDevice || isSavingProfile}
                 className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Close modal"
               >
@@ -560,8 +612,8 @@ export default function AddApplianceModal({
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed text-gray-700">
-                      Keep the appliance powered on. WattWise will use the latest fresh
-                      hardware reading from this MAC to calculate its monthly budget limit.
+                      Registration is saved so the hardware can upload securely. Keep the
+                      WattWise unit and appliance powered on while we wait for its live reading.
                     </p>
                   </div>
 
@@ -707,7 +759,7 @@ export default function AddApplianceModal({
                 ) : (
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={handleCloseModal}
                     disabled={isBusy}
                     className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -729,7 +781,7 @@ export default function AddApplianceModal({
                         spinnerClassName="border-black/30 border-t-black"
                       />
                       {isSavingDevice && "Registering..."}
-                      {isProfiling && "Profiling..."}
+                      {isProfiling && "Waiting for live data..."}
                       {isSavingProfile && "Saving..."}
                     </>
                   ) : step === 1 ? (
@@ -748,14 +800,6 @@ export default function AddApplianceModal({
         )}
       </div>
 
-      {toastMessage ? (
-        <div className="fixed bottom-24 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-107.5 -translate-x-1/2 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
-            <p className="text-sm font-semibold text-danger">{toastMessage}</p>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** May 27, 2026
+> **Last Updated:** August 12, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -16,7 +16,7 @@ applyTo: "**"
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~82% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; 14 migration files now define the additive manager/tenant architecture; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
 | 2 — Billing & Control | In Progress | ~84% | Device Detail UI + Home Wallet + Meralco billing implemented; usage now aggregated via RPC minute-delta logic; Meralco base-rate auto-sync scaffolded; relay on/off toggle on dashboard cards + device detail; Smart Control migration adds per-device approved limits, billing-cycle usage accumulator, budget events, approval override, and database-triggered relay auto-cutoff; user-level `billing_cycle_start_day` now drives wallet, burn analytics, device detail, and Smart Control windows |
-| 3 — AI & PWA | In Progress | ~80% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance now registers MAC first, asks for estimated daily hours, profiles using fresh hardware telemetry through `/api/devices/[deviceId]/ai-profile`, and saves suggested plus user-approved device limits; AI insight cache payloads now carry billing-cycle metadata so stale cycle advice is invalidated when the user's Meralco start day changes; OpenAI package installed; PWA still pending |
+| 3 — AI & PWA | In Progress | ~80% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance registers MAC first, waits through the 2-minute hardware startup window, distinguishes missing telemetry from a live 0 W load, resumes unfinished same-owner MAC setup, and saves suggested plus user-approved device limits; AI insight cache payloads now carry billing-cycle metadata so stale cycle advice is invalidated when the user's Meralco start day changes; OpenAI package installed; PWA still pending |
 | 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; scheduled demo generation remains optional deployment configuration |
 | 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes; managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
@@ -57,8 +57,8 @@ applyTo: "**"
   - [x] Add light-mode theme tokens + UI toggle (splash remains dark)
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
 
-- [ ] **Device Pairing & Registration**
-  - [ ] Build "Add Appliance" UI flow — user enters device name + MAC address
+- [x] **Device Pairing & Registration**
+  - [x] Build "Add Appliance" UI flow — user enters device name + MAC address *(four-step registration, type, live telemetry, and budget approval flow; unfinished same-owner MAC setup is resumable)*
   - [x] Insert new row into `devices` table with `owner_id`/legacy `user_id`, `device_name`, `mac_address`
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 

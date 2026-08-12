@@ -95,7 +95,9 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 ### 2b. Smart Control Budget Shutoff
 
 - Pairing must register the device row before AI profiling. Hardware anon INSERT is MAC-gated against `devices.mac_address`, so unregistered MACs cannot send telemetry.
-- AI appliance profiling should use fresh telemetry from `energy_logs` within the 20-second freshness window. Do not profile from stale or zero-watt readings unless the user explicitly chooses a non-live fallback.
+- AI appliance profiling accepts telemetry from the latest 2-minute hardware startup window. The client may poll `POST /api/devices/[deviceId]/ai-profile` for up to 2 minutes because Wi-Fi provisioning, the 5-second relay poll, sensor initialization, and the first telemetry POST do not complete atomically.
+- Treat missing/stale telemetry (`telemetry_pending`) separately from a live meter reporting zero load (`load_not_detected`). The latter must tell the user to turn the appliance on; neither state may call OpenAI or be presented as a completed profile.
+- A duplicate MAC owned by the same user may resume setup only when `devices.profiled_at` is still null. A completed device must continue to reject duplicate registration.
 - The Smart Appliance profiler route is `POST /api/devices/[deviceId]/ai-profile`. It must run server-side only, verify device ownership, and send OpenAI the exact persona: "Act as an expert energy consultant in the Philippines. You speak in a casual, practical Taglish tone."
 - Appliance profiling prompts must include `appliance_type`, fresh baseline watts, and `estimated_daily_hours`, and must force raw JSON output with exactly `estimated_monthly_kwh`, `suggested_monthly_limit_php`, and `taglish_advice`.
 - When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
