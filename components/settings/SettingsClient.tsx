@@ -109,14 +109,23 @@ export default function SettingsClient({
     }
   }
 
-  async function toggleApproval(deviceId: string, nextValue: boolean) {
+  async function toggleAutoCutoff(deviceId: string, enabled: boolean) {
+    if (
+      enabled &&
+      !window.confirm(
+        "Enable automatic shutoff? WattWise will interrupt appliance power when this device reaches 100% of its approved limit."
+      )
+    ) {
+      return;
+    }
+
     const previousDevices = localDevices;
     setPendingDeviceId(deviceId);
     setToast(null);
     setLocalDevices((current) =>
       current.map((device) =>
         device.id === deviceId
-          ? { ...device, require_approval_on_expiry: nextValue }
+          ? { ...device, require_approval_on_expiry: !enabled }
           : device
       )
     );
@@ -125,19 +134,43 @@ export default function SettingsClient({
       const res = await fetch(`/api/devices/${deviceId}/settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ require_approval_on_expiry: nextValue }),
+        body: JSON.stringify({ auto_cutoff_enabled: enabled }),
       });
+      const payload = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         setLocalDevices(previousDevices);
         setToast({
           type: "error",
-          message: "We could not save that safety setting. Try again.",
+          message:
+            typeof payload.error === "string"
+              ? payload.error
+              : "We could not save that safety setting. Try again.",
         });
         return;
       }
 
-      setToast({ type: "success", message: "Safety setting saved." });
+      setLocalDevices((current) =>
+        current.map((device) =>
+          device.id === deviceId
+            ? {
+                ...device,
+                require_approval_on_expiry: !enabled,
+                budget_status:
+                  typeof payload.device?.budget_status === "string"
+                    ? payload.device.budget_status
+                    : device.budget_status,
+              }
+            : device
+        )
+      );
+
+      setToast({
+        type: "success",
+        message: enabled
+          ? "Automatic shutoff enabled."
+          : "Automatic shutoff disabled. Power will remain unchanged.",
+      });
       router.refresh();
     } catch {
       setLocalDevices(previousDevices);
@@ -145,6 +178,49 @@ export default function SettingsClient({
         type: "error",
         message: "Network error while saving safety setting.",
       });
+    } finally {
+      setPendingDeviceId(null);
+    }
+  }
+
+  async function restorePower(deviceId: string) {
+    if (!window.confirm("Restore power to this appliance now?")) return;
+    setPendingDeviceId(deviceId);
+    setToast(null);
+    try {
+      const response = await fetch(`/api/devices/${deviceId}/restore`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setToast({
+          type: "error",
+          message:
+            typeof payload.error === "string"
+              ? payload.error
+              : "Power could not be restored.",
+        });
+        return;
+      }
+      setLocalDevices((current) =>
+        current.map((device) =>
+          device.id === deviceId
+            ? {
+                ...device,
+                budget_status:
+                  typeof payload.device?.budget_status === "string"
+                    ? payload.device.budget_status
+                    : "ok",
+              }
+            : device
+        )
+      );
+      setToast({ type: "success", message: "Appliance power restored." });
+      router.refresh();
+    } catch {
+      setToast({ type: "error", message: "Network error while restoring power." });
     } finally {
       setPendingDeviceId(null);
     }
@@ -297,11 +373,11 @@ export default function SettingsClient({
       {canManageHomeSettings ? (
         <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
         <h2 className="text-sm font-bold uppercase tracking-wider">
-          Budget Shutoff Override
+          Automatic Shutoff at 100%
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-white/45">
-          When approval is required, WattWise will alert you after a device hits
-          its approved monthly limit instead of automatically cutting power.
+          Choose which appliances WattWise may turn off after their approved
+          billing-cycle variable-spend limit is reached.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -312,7 +388,7 @@ export default function SettingsClient({
           ) : (
             localDevices.map((device) => {
               const isPending = pendingDeviceId === device.id;
-              const approvalRequired = device.require_approval_on_expiry === true;
+              const autoCutoffEnabled = device.require_approval_on_expiry !== true;
 
               return (
                 <div
@@ -326,9 +402,14 @@ export default function SettingsClient({
                         Limit: {formatPeso(device.user_approved_limit_php)}
                       </p>
                       {device.budget_status === "approval_required" ? (
-                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-naku">
+                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
                           <ShieldAlert className="h-3 w-3" />
-                          Budget hit. Manual cut pending.
+                          100% reached. Power remains on.
+                        </p>
+                      ) : device.budget_status === "auto_cutoff" ? (
+                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
+                          <ShieldAlert className="h-3 w-3" />
+                          Automatic cutoff active.
                         </p>
                       ) : null}
                     </div>
@@ -336,14 +417,14 @@ export default function SettingsClient({
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() => void toggleApproval(device.id, !approvalRequired)}
+                      onClick={() => void toggleAutoCutoff(device.id, !autoCutoffEnabled)}
                       className={`relative h-7 w-14 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                        approvalRequired ? "bg-naku" : "bg-mint"
+                        autoCutoffEnabled ? "bg-danger" : "bg-white/15"
                       }`}
                       aria-label={
-                        approvalRequired
-                          ? "Disable approval before shutoff"
-                          : "Require approval before shutoff"
+                        autoCutoffEnabled
+                          ? "Disable automatic shutoff"
+                          : "Enable automatic shutoff"
                       }
                     >
                       {isPending ? (
@@ -358,17 +439,27 @@ export default function SettingsClient({
                       ) : (
                         <span
                           className={`absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-                            approvalRequired ? "translate-x-[28px]" : "translate-x-0"
+                            autoCutoffEnabled ? "translate-x-[28px]" : "translate-x-0"
                           }`}
                         />
                       )}
                     </button>
                   </div>
                   <p className="mt-3 text-[11px] text-white/40">
-                    {approvalRequired
-                      ? "Alert only: WattWise asks before cutting power."
-                      : "Auto shutoff: relay turns off when limit is reached."}
+                    {autoCutoffEnabled
+                      ? "Enabled: WattWise turns the relay off at 100%."
+                      : "Disabled: WattWise alerts you at 100% and leaves power on."}
                   </p>
+                  {device.budget_status === "auto_cutoff" ? (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => void restorePower(device.id)}
+                      className="mt-3 w-full rounded-lg border border-danger/35 bg-danger/10 px-3 py-2 text-xs font-bold text-danger disabled:opacity-50"
+                    >
+                      Restore Power
+                    </button>
+                  ) : null}
                 </div>
               );
             })

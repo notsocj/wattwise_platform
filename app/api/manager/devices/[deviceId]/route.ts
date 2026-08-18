@@ -45,10 +45,14 @@ export async function PATCH(
 
   const { data: device, error: deviceError } = await supabase
     .from("devices")
-    .select("id")
+    .select("id, require_approval_on_expiry, budget_status")
     .eq("id", deviceId)
     .eq("owner_id", user.id)
-    .maybeSingle<{ id: string }>();
+    .maybeSingle<{
+      id: string;
+      require_approval_on_expiry: boolean | null;
+      budget_status: string | null;
+    }>();
 
   if (deviceError || !device) {
     return NextResponse.json(
@@ -88,32 +92,49 @@ export async function PATCH(
       );
     }
 
-    updates.user_approved_limit_php = Number(approvedLimit.toFixed(2));
-    updates.budget_status = "ok";
-    updates.budget_breached_at = null;
-    updates.relay_auto_disabled_at = null;
   }
 
   if (typeof relayState === "boolean") {
-    updates.relay_state = relayState;
-    if (relayState) {
-      updates.budget_status = "ok";
-      updates.budget_breached_at = null;
-      updates.relay_auto_disabled_at = null;
+    if (relayState && device.budget_status === "auto_cutoff") {
+      return NextResponse.json(
+        { error: "Use Restore Power to recover a device under automatic cutoff." },
+        { status: 409 }
+      );
     }
+    updates.relay_state = relayState;
   }
 
-  const { error: updateError } = await supabase
-    .from("devices")
-    .update(updates)
-    .eq("id", deviceId)
-    .eq("owner_id", user.id);
+  const updateResult = Object.keys(updates).length
+    ? await supabase
+        .from("devices")
+        .update(updates)
+        .eq("id", deviceId)
+        .eq("owner_id", user.id)
+    : { error: null };
 
-  if (updateError) {
+  if (updateResult.error) {
     return NextResponse.json(
       { error: "Failed to update manager device settings." },
       { status: 500 }
     );
+  }
+
+  if (approvedLimit !== null) {
+    const { error: budgetError } = await supabase.rpc(
+      "apply_device_budget_settings",
+      {
+        p_device_id: deviceId,
+        p_limit_php: Number(approvedLimit.toFixed(2)),
+        p_auto_cutoff_enabled: device.require_approval_on_expiry !== true,
+      }
+    );
+
+    if (budgetError) {
+      return NextResponse.json(
+        { error: "Device was updated, but its budget state could not be reconciled." },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ ok: true });

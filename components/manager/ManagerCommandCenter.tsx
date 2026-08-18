@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound, PlugZap, Power, UserPlus } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { getBudgetToneClasses } from "@/lib/budget-policy";
 
 type ManagerTenant = {
   id: string;
@@ -311,13 +312,13 @@ export default function ManagerCommandCenter({
                     </div>
                     <div className="h-2 rounded-full bg-white/[0.06]">
                       <div
-                        className={`h-full rounded-full ${progress >= 100 ? "bg-danger" : progress >= 80 ? "bg-naku" : "bg-mint"}`}
+                        className={`h-full rounded-full ${getBudgetToneClasses(progress).bar}`}
                         style={{ width: `${progress}%` }}
                       />
                     </div>
                     {device.budget_status && device.budget_status !== "ok" ? (
-                      <p className="mt-2 text-[11px] font-semibold text-naku">
-                        {device.budget_status === "auto_cutoff" ? "Auto cutoff active" : "Approval required"}
+                      <p className="mt-2 text-[11px] font-semibold text-danger">
+                        {device.budget_status === "auto_cutoff" ? "Auto cutoff active" : "100% reached · power on"}
                       </p>
                     ) : null}
                   </div>

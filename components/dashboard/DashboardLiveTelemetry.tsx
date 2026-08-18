@@ -245,7 +245,7 @@ export default function DashboardLiveTelemetry({
                     </div>
                     {device.budgetStatus === "approval_required" ? (
                       <p className="font-semibold text-naku">
-                        Budget hit: manual cut?
+                        100% reached: power remains on
                       </p>
                     ) : device.budgetStatus === "auto_cutoff" ? (
                       <p className="font-semibold text-danger">

@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       mac_address: macAddress,
       relay_state: true,
       budget_status: "ok",
+      require_approval_on_expiry: true,
     })
     .select("id")
     .single<{ id: string }>();

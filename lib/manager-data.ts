@@ -4,10 +4,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
-import {
-  computeHistoricalVariableSpendByDeviceFromDayRows,
-  getMeralcoRatesForRange,
-} from "@/lib/meralco-rates";
+import { getBudgetProgressPercent } from "@/lib/budget-policy";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -89,10 +86,9 @@ type LatestReadingRow = {
   recorded_at: string | null;
 };
 
-type UsageByDeviceDayRow = {
+type DeviceMonthUsageRow = {
   device_id: string;
-  day_key: string;
-  usage_kwh: number | string;
+  variable_spend_php: number | string;
 };
 
 function toNumber(value: number | string | null | undefined): number {
@@ -169,7 +165,7 @@ export async function getManagerFleetSnapshot(
   const startKey = getManilaDayKey(billingCycle.startDate);
   const endKey = getManilaDayKey(billingCycle.endDate);
 
-  const [tenantsRes, devicesRes, latestReadingsRes, cycleUsageRes, rateRows] =
+  const [tenantsRes, devicesRes, latestReadingsRes, monthUsageRes] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -185,12 +181,10 @@ export async function getManagerFleetSnapshot(
         .eq("owner_id", managerId)
         .order("created_at", { ascending: true }),
       supabase.rpc("get_latest_device_readings", { p_user_id: managerId }),
-      supabase.rpc("get_usage_kwh_by_device_day", {
-        p_user_id: managerId,
-        p_start: billingCycle.startDate.toISOString(),
-        p_end: now.toISOString(),
-      }),
-      getMeralcoRatesForRange(supabase, billingCycle.startDate, now).catch(() => []),
+      supabase
+        .from("device_month_usage")
+        .select("device_id, variable_spend_php")
+        .eq("month_start", startKey),
     ]);
 
   const tenants = (tenantsRes.data ?? []) as ManagerTenant[];
@@ -201,10 +195,11 @@ export async function getManagerFleetSnapshot(
     latestByDevice.set(row.device_id, row);
   }
 
-  const cycleUsageRows = (cycleUsageRes.data ?? []) as UsageByDeviceDayRow[];
-  const spendByDevice = computeHistoricalVariableSpendByDeviceFromDayRows(
-    cycleUsageRows,
-    rateRows
+  const spendByDevice = new Map(
+    ((monthUsageRes.data ?? []) as DeviceMonthUsageRow[]).map((row) => [
+      row.device_id,
+      Math.max(0, toNumber(row.variable_spend_php)),
+    ])
   );
 
   const devices = ((devicesRes.data ?? []) as RawDeviceRow[]).map((device) => {
@@ -238,7 +233,7 @@ export async function getManagerFleetSnapshot(
       recorded_at: latest?.recorded_at ?? null,
       is_stale: isStaleReading(latest?.recorded_at ?? null, now),
       spend_php: spend,
-      progress_percent: limit > 0 ? Math.min((spend / limit) * 100, 100) : 0,
+      progress_percent: getBudgetProgressPercent(spend, limit),
     };
   });
 

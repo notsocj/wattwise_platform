@@ -14,7 +14,7 @@ Core behavior:
 - Add Appliance registers the MAC first with `relay_state = true`, then profiles from a fresh telemetry row within the 20-second freshness window.
 - Per-device monthly limits are stored on `devices.user_approved_limit_php`.
 - `energy_logs` INSERT triggers update `device_month_usage` and can set `devices.relay_state = false` when a device reaches its approved monthly variable spend limit.
-- `devices.require_approval_on_expiry = true` prevents auto-cutoff and records an approval-required budget event instead.
+- `devices.require_approval_on_expiry = true` prevents auto-cutoff and is the default for newly paired devices. Product/API copy exposes the inverse as `auto_cutoff_enabled`.
 
 ## Database Objects
 
@@ -57,9 +57,11 @@ Profile save route:
 - `PATCH /api/devices/[deviceId]/profile`
 - Stores daily hours, profiled baseline readings, suggested limit, and user-approved limit.
 
-Settings route:
+Settings and recovery routes:
 - `app/settings/page.tsx`
-- User self-service theme, password reset, account deletion, and per-device approval override matrix.
+- User self-service theme, password reset, account deletion, and per-device automatic-cutoff opt-in.
+- `PATCH /api/devices/[deviceId]/settings` accepts `auto_cutoff_enabled` and reconciles current-cycle spend atomically.
+- `POST /api/devices/[deviceId]/restore` requires `{ "confirmed": true }`; an enabled cutoff still above its limit returns `409`.
 
 Analytics route:
 - `app/analytics/page.tsx`
@@ -70,7 +72,9 @@ Reports route:
 - Supports bounded daily, weekly, and monthly measured-versus-estimated appliance reports, CSV download, and print-to-PDF.
 
 Budget warnings:
-- Migration `015_budget_warnings.sql` records deduplicated 80%, 90%, and 100% in-app warning events after telemetry updates.
+- Migration `025_budget_alert_policy.sql` records deduplicated 50% green and 80% amber warning events. The terminal approval/cutoff event supplies the one red 100% alert.
+- Smart Control progress always uses billing-cycle variable spend. Fixed charges remain estimated-bill context only.
+- Automatic cutoffs remain OFF until a confirmed manual restore; cycle rollover and limit edits never energize the relay automatically.
 
 ## Supabase Cloud Setup
 

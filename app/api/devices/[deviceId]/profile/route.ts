@@ -69,7 +69,7 @@ export async function PATCH(
 
   const { data: device, error: fetchError } = await supabase
     .from("devices")
-    .select("id")
+    .select("id, require_approval_on_expiry")
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle();
@@ -87,15 +87,11 @@ export async function PATCH(
       daily_usage_hours: Number(dailyUsageHours.toFixed(1)),
       suggested_monthly_limit_php:
         suggestedLimit === null ? null : Number(suggestedLimit.toFixed(2)),
-      user_approved_limit_php: Number(approvedLimit.toFixed(2)),
       profiled_baseline_watts:
         baselineWatts === null ? null : Number(baselineWatts.toFixed(2)),
       profiled_voltage_v: voltageV === null ? null : Number(voltageV.toFixed(2)),
       profiled_current_a: currentA === null ? null : Number(currentA.toFixed(2)),
       profiled_at: new Date().toISOString(),
-      budget_status: "ok",
-      budget_breached_at: null,
-      relay_auto_disabled_at: null,
     })
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`);
@@ -103,6 +99,22 @@ export async function PATCH(
   if (updateError) {
     return NextResponse.json(
       { error: "Failed to save appliance profile." },
+      { status: 500 }
+    );
+  }
+
+  const { error: budgetError } = await supabase.rpc(
+    "apply_device_budget_settings",
+    {
+      p_device_id: deviceId,
+      p_limit_php: Number(approvedLimit.toFixed(2)),
+      p_auto_cutoff_enabled: device.require_approval_on_expiry !== true,
+    }
+  );
+
+  if (budgetError) {
+    return NextResponse.json(
+      { error: "Profile saved, but its budget policy could not be initialized." },
       { status: 500 }
     );
   }

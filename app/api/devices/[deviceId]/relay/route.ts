@@ -43,7 +43,7 @@ export async function PATCH(
   // Verify device belongs to authenticated user
   const { data: device, error: fetchError } = await supabase
     .from("devices")
-    .select("id")
+    .select("id, budget_status")
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle();
@@ -52,6 +52,16 @@ export async function PATCH(
     return NextResponse.json(
       { error: "Device not found or not owned by you" },
       { status: 404 }
+    );
+  }
+
+  if (relay_state && device.budget_status === "auto_cutoff") {
+    return NextResponse.json(
+      {
+        error:
+          "This device was automatically cut off. Use Restore Power after disabling automatic shutoff or raising its limit.",
+      },
+      { status: 409 }
     );
   }
 

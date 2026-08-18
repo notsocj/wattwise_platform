@@ -188,6 +188,7 @@ export default function AddApplianceModal({
         device_name: trimmedName,
         appliance_type: applianceType,
         relay_state: true,
+        require_approval_on_expiry: true,
       })
       .select("id")
       .single<{ id: string }>();

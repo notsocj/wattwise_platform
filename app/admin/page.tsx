@@ -8,7 +8,7 @@ export default async function AdminPage() {
     admin.from('devices').select('*', { count: 'exact', head: true }),
     admin.from('devices').select('*', { count: 'exact', head: true }).eq('is_online', true),
     admin.from('profiles').select('*', { count: 'exact', head: true }).not('disabled_at', 'is', null),
-    admin.from('device_budget_events').select('*', { count: 'exact', head: true }).in('event_type', ['warning_80','warning_90']),
+    admin.from('device_budget_events').select('*', { count: 'exact', head: true }).in('event_type', ['budget_warning','approval_required']),
     admin.from('device_budget_events').select('*', { count: 'exact', head: true }).eq('event_type', 'auto_cutoff'),
   ]);
   const cards = [['Users', users.count], ['Devices', devices.count], ['Online devices', online.count], ['Disabled users', disabled.count], ['Warnings', warnings.count], ['Cutoffs', cutoffs.count]];

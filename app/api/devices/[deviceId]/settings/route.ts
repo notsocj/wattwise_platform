@@ -30,19 +30,19 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => ({}));
-  const requireApproval = (body as { require_approval_on_expiry?: unknown })
-    .require_approval_on_expiry;
+  const autoCutoffEnabled = (body as { auto_cutoff_enabled?: unknown })
+    .auto_cutoff_enabled;
 
-  if (typeof requireApproval !== "boolean") {
+  if (typeof autoCutoffEnabled !== "boolean") {
     return NextResponse.json(
-      { error: "require_approval_on_expiry must be a boolean." },
+      { error: "auto_cutoff_enabled must be a boolean." },
       { status: 400 }
     );
   }
 
   const { data: device, error: fetchError } = await supabase
     .from("devices")
-    .select("id")
+    .select("id, user_approved_limit_php")
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle();
@@ -54,11 +54,22 @@ export async function PATCH(
     );
   }
 
-  const { error: updateError } = await supabase
-    .from("devices")
-    .update({ require_approval_on_expiry: requireApproval })
-    .eq("id", deviceId)
-    .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`);
+  const limit = Number(device.user_approved_limit_php ?? 0);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return NextResponse.json(
+      { error: "Set a positive approved limit before configuring automatic shutoff." },
+      { status: 409 }
+    );
+  }
+
+  const { data: result, error: updateError } = await supabase.rpc(
+    "apply_device_budget_settings",
+    {
+      p_device_id: deviceId,
+      p_limit_php: limit,
+      p_auto_cutoff_enabled: autoCutoffEnabled,
+    }
+  );
 
   if (updateError) {
     return NextResponse.json(
@@ -68,6 +79,7 @@ export async function PATCH(
   }
 
   return NextResponse.json({
-    require_approval_on_expiry: requireApproval,
+    auto_cutoff_enabled: autoCutoffEnabled,
+    device: Array.isArray(result) ? result[0] ?? null : result,
   });
 }

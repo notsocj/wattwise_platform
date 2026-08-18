@@ -7,6 +7,7 @@ import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import MacQrScanner from "@/components/ui/MacQrScanner";
 import type { ManagerDevice, ManagerTenant } from "@/lib/manager-data";
+import { getBudgetToneClasses } from "@/lib/budget-policy";
 
 type ManagerRoomsClientProps = {
   devices: ManagerDevice[];
@@ -245,22 +246,16 @@ export default function ManagerRoomsClient({
                     </div>
                     <div className="h-2 rounded-full bg-white/[0.06]">
                       <div
-                        className={`h-full rounded-full ${
-                          device.progress_percent >= 100
-                            ? "bg-danger"
-                            : device.progress_percent >= 80
-                              ? "bg-naku"
-                              : "bg-mint"
-                        }`}
-                        style={{ width: `${device.progress_percent}%` }}
+                        className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
+                        style={{ width: `${Math.min(device.progress_percent, 100)}%` }}
                       />
                     </div>
                     {device.budget_status && device.budget_status !== "ok" ? (
-                      <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-naku">
+                      <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
                         <ShieldAlert className="h-3 w-3" />
                         {device.budget_status === "auto_cutoff"
                           ? "Auto cutoff active"
-                          : "Approval required"}
+                          : "100% reached · power on"}
                       </p>
                     ) : null}
                   </div>

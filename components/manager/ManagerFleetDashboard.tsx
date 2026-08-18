@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { ManagerFleetSnapshot } from "@/lib/manager-data";
+import { getBudgetToneClasses } from "@/lib/budget-policy";
 
 type ManagerFleetDashboardProps = {
   snapshot: ManagerFleetSnapshot;
@@ -27,7 +28,7 @@ function statusLabel(status: string | null): string {
   }
 
   if (status === "approval_required") {
-    return "Approval required";
+    return "100% reached · power on";
   }
 
   return "Normal";
@@ -43,6 +44,7 @@ export default function ManagerFleetDashboard({
     snapshot.totals.limit_php > 0
       ? Math.min((snapshot.totals.spend_php / snapshot.totals.limit_php) * 100, 100)
       : 0;
+  const totalTone = getBudgetToneClasses(totalProgress);
 
   return (
     <div className="space-y-4">
@@ -80,13 +82,7 @@ export default function ManagerFleetDashboard({
           </div>
           <div className="h-2 rounded-full bg-white/[0.06]">
             <div
-              className={`h-full rounded-full ${
-                totalProgress >= 100
-                  ? "bg-danger"
-                  : totalProgress >= 80
-                    ? "bg-naku"
-                    : "bg-mint"
-              }`}
+              className={`h-full rounded-full ${totalTone.bar}`}
               style={{ width: `${totalProgress}%` }}
             />
           </div>
@@ -194,14 +190,8 @@ export default function ManagerFleetDashboard({
 
                 <div className="mt-3 h-2 rounded-full bg-white/[0.06]">
                   <div
-                    className={`h-full rounded-full ${
-                      device.progress_percent >= 100
-                        ? "bg-danger"
-                        : device.progress_percent >= 80
-                          ? "bg-naku"
-                          : "bg-mint"
-                    }`}
-                    style={{ width: `${device.progress_percent}%` }}
+                    className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
+                    style={{ width: `${Math.min(device.progress_percent, 100)}%` }}
                   />
                 </div>
               </div>

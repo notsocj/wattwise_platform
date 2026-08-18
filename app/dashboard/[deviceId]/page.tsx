@@ -13,8 +13,10 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import RestorePowerButton from "@/components/ui/RestorePowerButton";
 import TipidTipCard from "@/components/insights/TipidTipCard";
-import { getCurrentBillingCycle } from "@/lib/date-utils";
+import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
+import { getBudgetProgressPercent, getBudgetToneClasses } from "@/lib/budget-policy";
 
 type DeviceRow = {
   id: string;
@@ -24,6 +26,7 @@ type DeviceRow = {
   owner_id: string | null;
   tenant_id: string | null;
   user_approved_limit_php: number | string | null;
+  budget_status: string | null;
 };
 
 type ProfileRow = {
@@ -55,6 +58,10 @@ type UsageByDeviceRow = {
 type UsagePeriodRow = {
   period_key: "hour" | "day" | "week" | "month";
   usage_kwh: number | string;
+};
+
+type DeviceMonthUsageRow = {
+  variable_spend_php: number | string;
 };
 
 type DeviceViewModel = {
@@ -101,7 +108,7 @@ async function fetchOwnedDeviceById(
       : `owner_id.eq.${userId},user_id.eq.${userId}`;
   const withRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, relay_state, owner_id, tenant_id, user_approved_limit_php")
+    .select("id, device_name, mac_address, relay_state, owner_id, tenant_id, user_approved_limit_php, budget_status")
     .eq("id", deviceId)
     .or(accessFilter)
     .maybeSingle<DeviceRow>();
@@ -116,7 +123,7 @@ async function fetchOwnedDeviceById(
 
   const withoutRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, owner_id, tenant_id, user_approved_limit_php")
+    .select("id, device_name, mac_address, owner_id, tenant_id, user_approved_limit_php, budget_status")
     .eq("id", deviceId)
     .or(accessFilter)
     .maybeSingle<Omit<DeviceRow, "relay_state">>();
@@ -286,7 +293,7 @@ export default async function DeviceDetailPage(props: {
 
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
 
-  const [rateRows, usageByDeviceDayRes, usagePeriodsRes] = await Promise.all([
+  const [rateRows, usageByDeviceDayRes, usagePeriodsRes, monthUsageRes] = await Promise.all([
     getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
     supabase.rpc("get_usage_kwh_by_device_day", {
       p_user_id: user.id,
@@ -298,6 +305,12 @@ export default async function DeviceDetailPage(props: {
       p_device_id: deviceData.id,
       p_now: now.toISOString(),
     }),
+    supabase
+      .from("device_month_usage")
+      .select("variable_spend_php")
+      .eq("device_id", deviceData.id)
+      .eq("month_start", getManilaDayKey(billingCycle.startDate))
+      .maybeSingle<DeviceMonthUsageRow>(),
   ]);
 
   const latestTelemetryResult = await supabase
@@ -349,9 +362,9 @@ export default async function DeviceDetailPage(props: {
         Math.max(0, currentReading ?? (volts > 0 ? watts / volts : 0)).toFixed(1)
       )
     : 0;
-  const monthlyBudget = isTenant
-    ? toNumber(deviceData.user_approved_limit_php) || toNumber(profileData?.monthly_budget_php ?? 2000)
-    : toNumber(profileData?.monthly_budget_php ?? 2000);
+  const monthlyBudget =
+    toNumber(deviceData.user_approved_limit_php) ||
+    toNumber(profileData?.monthly_budget_php ?? 2000);
   const usageByDeviceRows = (usageByDeviceDayRes.data ?? []) as UsageByDeviceRow[];
   const deviceCount = Math.max(1, devicesCountRes.count ?? 1);
   const cycleKWhByDevice = new Map<string, number>();
@@ -387,7 +400,9 @@ export default async function DeviceDetailPage(props: {
     usageByDeviceRows,
     rateRows
   );
-  const variableSpendPhp = variableSpendByDevice.get(deviceData.id) ?? 0;
+  const variableSpendPhp = monthUsageRes.data
+    ? Math.max(0, toNumber(monthUsageRes.data.variable_spend_php))
+    : variableSpendByDevice.get(deviceData.id) ?? 0;
 
   const estimatedBillPhp =
     variableSpendPhp + fixedFeeSharePhp * (1 + activeRates.vatRate);
@@ -412,16 +427,11 @@ export default async function DeviceDetailPage(props: {
 
   const safeMonthlyBudget = device.monthlyBudget > 0 ? device.monthlyBudget : 1;
 
-  const burnPercent = Math.min(
-    (device.estimatedBillPhp / safeMonthlyBudget) * 100,
-    100
+  const burnPercent = getBudgetProgressPercent(
+    device.variableSpendPhp,
+    safeMonthlyBudget
   );
-  const burnColor =
-    burnPercent >= 90
-      ? "bg-danger"
-      : burnPercent >= 70
-        ? "bg-naku"
-        : "bg-mint";
+  const burnTone = getBudgetToneClasses(burnPercent);
 
   return (
     <div className="min-h-screen bg-base text-white pb-8">
@@ -494,11 +504,16 @@ export default async function DeviceDetailPage(props: {
 
         {/* ===== Power Control (Relay) ===== */}
         {isTenant ? null : (
-          <RelayToggle
-            deviceId={device.id}
-            initialRelayState={deviceData.relay_state !== false}
-            variant="full"
-          />
+          <>
+            {deviceData.budget_status === "auto_cutoff" ? (
+              <RestorePowerButton deviceId={device.id} />
+            ) : null}
+            <RelayToggle
+              deviceId={device.id}
+              initialRelayState={deviceData.relay_state !== false}
+              variant="full"
+            />
+          </>
         )}
 
         {/* ===== Appliance Burn Rate ===== */}
@@ -511,13 +526,13 @@ export default async function DeviceDetailPage(props: {
               </h3>
             </div>
             <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
-              Set Budget On Home
+              Approved Device Limit
             </span>
           </div>
 
           {/* Budget row */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-white/70">Home Budget (View Only)</span>
+            <span className="text-sm text-white/70">Smart Control Limit</span>
             <span className="text-lg font-bold">
               <span className="text-white/50 text-sm mr-0.5">₱</span>
               {device.monthlyBudget.toLocaleString()}
@@ -528,29 +543,23 @@ export default async function DeviceDetailPage(props: {
           <div className="mb-1.5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-white/40">
-                Estimated Appliance Bill
+                Smart Control variable spend
               </span>
               <span className="text-xs text-white/50">
-                ₱ {device.estimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} this billing cycle
+                ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} this billing cycle
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${burnColor}`}
-                style={{ width: `${burnPercent}%` }}
+                className={`h-full rounded-full transition-all duration-500 ${burnTone.bar}`}
+                style={{ width: `${Math.min(burnPercent, 100)}%` }}
               />
             </div>
             <p className="text-[10px] text-white/40 mt-1.5">
               Variable spend: ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p
-              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
-                burnPercent >= 90
-                  ? "text-danger"
-                  : burnPercent >= 70
-                    ? "text-naku"
-                    : "text-bida"
-              }`}
+              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${burnTone.text}`}
             >
               {burnPercent.toFixed(1)}% of budget consumed
             </p>

@@ -33,6 +33,7 @@ import {
 import { isTenantRole } from "@/lib/roles";
 import MeralcoBreakdownCard from "@/components/billing/MeralcoBreakdownCard";
 import BudgetWarningFeed from "@/components/insights/BudgetWarningFeed";
+import { getBudgetToneClasses } from "@/lib/budget-policy";
 
 type DeviceRow = {
   id: string;
@@ -435,12 +436,7 @@ export default async function DashboardPage() {
     (homeCycleEstimatedBillPhp / safeMonthlyBudget) * 100,
     100
   );
-  const homeBurnColor =
-    homeBurnPercent >= 90
-      ? "bg-danger"
-      : homeBurnPercent >= 70
-        ? "bg-naku"
-        : "bg-mint";
+  const homeBurnTone = getBudgetToneClasses(homeBurnPercent);
   const cycleStartDayKey = getManilaDayKey(billingCycle.startDate);
   const forecastLookbackDays = Math.min(7, billingCycle.elapsedDays);
   const forecastUsageRows = sevenDayUsageRows.filter((row) => row.day_key >= cycleStartDayKey);
@@ -543,7 +539,7 @@ export default async function DashboardPage() {
             </div>
             <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${homeBurnColor}`}
+                className={`h-full rounded-full transition-all duration-500 ${homeBurnTone.bar}`}
                 style={{ width: `${homeBurnPercent}%` }}
               />
             </div>
@@ -554,13 +550,7 @@ export default async function DashboardPage() {
               Projected bill: ₱ {projectedCycleBill.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Based on the last {forecastLookbackDays} day{forecastLookbackDays === 1 ? "" : "s"}, with {billingCycle.remainingDays} day(s) left in your billing cycle.
             </p>
             <p
-              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${
-                homeBurnPercent >= 90
-                  ? "text-danger"
-                  : homeBurnPercent >= 70
-                    ? "text-naku"
-                    : "text-bida"
-              }`}
+              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${homeBurnTone.text}`}
             >
               {homeBurnPercent.toFixed(1)}% of home budget consumed
             </p>

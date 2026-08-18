@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       relay_state: true,
       is_online: false,
       budget_status: "ok",
+      require_approval_on_expiry: true,
     })
     .select("*")
     .single();

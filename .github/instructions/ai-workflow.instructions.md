@@ -104,8 +104,10 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - Per-device shutoff compares current billing-cycle variable Meralco spend against `devices.user_approved_limit_php`. The cycle boundary comes from `profiles.billing_cycle_start_day` in Asia/Manila. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
 - For tenant-assigned devices, `devices.user_approved_limit_php` is the manager hard limit. Tenant UI and APIs must hide or reject edits to hard limits, relay controls, pairing, billing-cycle settings, and account deletion.
 - Budget automation runs in PostgreSQL via the `energy_logs` INSERT trigger from `012_smart_budget_controls.sql`; do not duplicate cutoff decisions in client code.
-- If `devices.require_approval_on_expiry` is true, the trigger records `budget_status = 'approval_required'` and a `device_budget_events` row instead of setting `relay_state = false`.
-- If approval is not required, the trigger sets `devices.relay_state = false`, records `budget_status = 'auto_cutoff'`, and the ESP32-S3 relay polling loop handles the physical shutoff.
+- Migration `025_budget_alert_policy.sql` records one 50% green info event and one 80% amber warning per device/billing cycle; the terminal `approval_required` or `auto_cutoff` event is the single red 100% alert.
+- `devices.require_approval_on_expiry` remains the compatibility field, but public APIs expose its inverse as `auto_cutoff_enabled`. New devices default to alert-only mode (`require_approval_on_expiry = true`).
+- If automatic cutoff is disabled, the trigger records `budget_status = 'approval_required'` without changing the relay. If enabled, it sets `relay_state = false` and `budget_status = 'auto_cutoff'`.
+- Automatic cutoff is latched: neither a new billing cycle nor a raised limit restores power. Owners/managers must call `POST /api/devices/[deviceId]/restore` with explicit confirmation, and relay ON routes must not bypass an active cutoff.
 - After migration `013_custom_billing_cycles.sql`, `device_month_usage.month_start` stores the billing-cycle start date instead of always representing the first day of a calendar month.
 
 ---

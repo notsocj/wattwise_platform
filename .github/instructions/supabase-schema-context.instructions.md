@@ -140,6 +140,7 @@ Important behavior:
 - `user_id` remains as a v1 compatibility mirror of `owner_id`; new application code should read/write `owner_id`
 - `user_approved_limit_php` is the owner/manager hard limit; tenants must never edit it
 - Add Appliance registers the device first so the ESP32 can post MAC-based telemetry before AI profiling completes
+- New devices default to `require_approval_on_expiry = true`, exposed to application clients as `auto_cutoff_enabled = false`; existing rows retain their stored preference.
 
 ### `energy_logs`
 
@@ -252,12 +253,16 @@ CREATE INDEX idx_device_budget_events_device_month
 Constraint:
 
 - `event_type IN ('budget_warning', 'approval_required', 'auto_cutoff')`
-- `budget_warning` is deduplicated at 80%, 90%, and 100% of the configured limit by migration `015_budget_warnings.sql`.
+- migration `025_budget_alert_policy.sql` adds `threshold_percent` (1–100)
+- `budget_warning` is deduplicated at 50% and 80%; `approval_required` or `auto_cutoff` is the single terminal 100% event
 
 Purpose:
 
 - records whether Wattwise asked for approval or automatically cut power
 - supports alert UIs and audit visibility
+- `apply_device_budget_settings(uuid, numeric, boolean)` atomically reconciles limit/cutoff preference with current-cycle spend
+- `restore_device_power(uuid, boolean)` is the only owner/manager recovery path for an automatic cutoff; it never bypasses an enabled cutoff whose limit remains reached
+- migration `026_fix_budget_rpc_ambiguity.sql` qualifies accumulator columns in both budget RPCs for PostgreSQL `RETURNS TABLE` compatibility
 
 ## Admin / Automation Table
 
