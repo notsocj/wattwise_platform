@@ -17,6 +17,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { logoutOneSignal } from "@/lib/onesignal";
 
 const NAV_ITEMS = [
   { label: "Overview", path: "/admin", icon: Shield },
@@ -42,6 +43,7 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
 
   async function handleSignOut() {
     const supabase = createClient();
+    await logoutOneSignal().catch(() => undefined);
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();

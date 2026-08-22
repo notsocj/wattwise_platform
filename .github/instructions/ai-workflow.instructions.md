@@ -249,6 +249,20 @@ When implementing route or mutation feedback in the app shell and interactive co
 
 ---
 
+## 8. Budget Notification Delivery
+
+- External notifications must be triggered from deduplicated `device_budget_events`, never directly from high-volume `energy_logs`.
+- Channel policy is fixed for the current MVP: 50% in-app only, 80% push, and `approval_required`/`auto_cutoff` push plus email.
+- Notify both `COALESCE(devices.owner_id, devices.user_id)` and `devices.tenant_id`, deduplicating when they resolve to the same profile.
+- OneSignal must target the private `notification_preferences.onesignal_external_id`; never expose Supabase user UUIDs as provider aliases.
+- Push permission requires an explicit Settings action. Never auto-prompt during page load or sign-in.
+- Provider calls run only in `dispatch-budget-notifications`, use the delivery UUID as the provider idempotency key, retry only `429`, `5xx`, and network failures, and never block Smart Control or telemetry writes.
+- Missing provider credentials must produce a `skipped/provider_not_configured` delivery instead of breaking the budget-event workflow.
+- Deploy the dispatcher with `--no-verify-jwt` only because it performs its own authentication for both the shared-secret Database Webhook and authenticated test requests.
+- Full provider and webhook setup is documented in `NOTIFICATION_SETUP.md`.
+
+---
+
 ## Quick Reference — What NOT to Do
 
 | Situation | Forbidden | Required instead |

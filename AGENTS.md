@@ -59,6 +59,13 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Check `ai_insights` for a recent cached row before generating a new response.
 - Insight tone must stay casual, practical, and Taglish, grounded in exact user data.
 
+### External notifications
+
+- Trigger OneSignal/Resend delivery only from deduplicated `device_budget_events`, never directly from `energy_logs`.
+- Keep the MVP policy at 50% in-app only, 80% push, and both 100% terminal events push plus critical email.
+- Never expose Supabase user UUIDs to notification providers; target the private random OneSignal external ID.
+- Push permission must always follow an explicit user action. Missing provider credentials must degrade to a recorded skipped delivery without affecting telemetry or Smart Control.
+
 ### UI and design system
 
 - Use the existing Space Grotesk typography from `public/fonts` and `app/globals.css`.

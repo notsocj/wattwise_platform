@@ -64,6 +64,7 @@ export default async function SettingsPage() {
           email={user.email ?? "Your WattWise account"}
           role={profile?.role ?? "user"}
           devices={(devices ?? []) as SettingsDevice[]}
+          oneSignalAppId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID ?? null}
         />
       </main>
 

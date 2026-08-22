@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { logoutOneSignal } from "@/lib/onesignal";
 
 type LogoutButtonProps = {
   className?: string;
@@ -25,6 +26,7 @@ export default function LogoutButton({
     setIsLoading(true);
     const supabase = createClient();
 
+    await logoutOneSignal().catch(() => undefined);
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();

@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — 4-Phase Implementation Roadmap
 
-> **Last Updated:** August 13, 2026
+> **Last Updated:** August 19, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
 
@@ -16,7 +16,7 @@ applyTo: "**"
 |---|---|---|---|
 | 1 — Foundation | In Progress | ~82% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; 14 migration files now define the additive manager/tenant architecture; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
 | 2 — Billing & Control | In Progress | ~92% | Device Detail UI + Home Wallet + Meralco billing implemented; usage is aggregated via bounded RPCs; Smart Control now standardizes 50/80/100 in-app alerts, opt-in per-device automatic cutoff, variable-spend-only control progress, cutoff-safe relay guards, and explicitly confirmed manual power restoration; `billing_cycle_start_day` drives wallet, analytics, alerts, and cutoff windows |
-| 3 — AI & PWA | In Progress | ~80% | AI insights API route implemented with Trigger & Cache; the dedicated `/insights` page is deprecated in favor of dismissible contextual cards on Home, Burn, and Device Detail; contextual rendering now uses structured JSON booleans instead of free-form message heuristics; dashboard now includes a 7-day calendar pulse widget and `/dashboard/calendar` month view with AI habit analysis via `/api/insights/calendar`; Add Appliance registers MAC first, waits through the 2-minute hardware startup window, distinguishes missing telemetry from a live 0 W load, resumes unfinished same-owner MAC setup, and saves suggested plus user-approved device limits; AI insight cache payloads now carry billing-cycle metadata so stale cycle advice is invalidated when the user's Meralco start day changes; OpenAI package installed; PWA still pending |
+| 3 — AI & PWA | In Progress | ~84% | AI insights API route implemented with Trigger & Cache; OneSignal web-push and Resend critical-email notification scaffolding is implemented for 80%/100% budget events with per-user preferences, test controls, provider idempotency, and owner/tenant delivery; provider credentials and production webhook activation remain deployment steps; Serwist offline caching is still pending |
 | 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; scheduled demo generation remains optional deployment configuration |
 | 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes; managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
@@ -211,6 +211,13 @@ applyTo: "**"
   - [x] Add global theme controls through `ThemeProvider`
   - [x] Add password reset email and self-service account deletion
   - [x] Add per-device `require_approval_on_expiry` safety override toggles
+  - [x] Add budget notification preferences, explicit OneSignal push opt-in, iOS install guidance, critical Resend email opt-out, and rate-limited test controls
+
+- [x] **Budget Notification Delivery Scaffold**
+  - [x] Keep 50% in-app only, send push at 80%, and send push plus email for both 100% terminal events
+  - [x] Resolve the owner/manager and assigned tenant without duplicates and honor per-recipient channel preferences
+  - [x] Add private OneSignal external identities, RLS-protected delivery logs, provider idempotency, bounded retries, and graceful missing-key behavior
+  - [ ] Add production OneSignal/Resend credentials, verify the sending domain, deploy the Edge Function, and activate the Database Webhook
 
 - [x] **Bottom Navigation Bar**
   - [x] Implement persistent navbar: **Home**, **Burn**, and **Settings**
@@ -246,6 +253,7 @@ applyTo: "**"
 | Next.js API Route | Client → Server → OpenAI | Aggregated energy data | AI insight generation |
 | `ai_insights` table | Server → Client | Cached Taglish message | Insight delivery (cache-first) |
 | Service Worker | Browser cache | Static assets + API responses | Offline PWA support |
+| OneSignal + Resend | Budget event → user channels | 80% push; 100% push + email | External budget warnings |
 
 ---
 

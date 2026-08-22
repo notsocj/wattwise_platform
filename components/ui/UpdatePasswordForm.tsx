@@ -12,6 +12,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { logoutOneSignal } from "@/lib/onesignal";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 type UpdatePasswordFormProps = {
@@ -123,6 +124,7 @@ export default function UpdatePasswordForm({
       setSuccess(true);
 
       if (mode === "reset") {
+        await logoutOneSignal().catch(() => undefined);
         await supabase.auth.signOut();
         setTimeout(() => {
           router.replace("/login");

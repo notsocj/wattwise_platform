@@ -51,6 +51,7 @@ export default async function ManagerSettingsPage() {
           user_approved_limit_php: device.user_approved_limit_php,
           budget_status: device.budget_status,
         }))}
+        oneSignalAppId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID ?? null}
       />
     </div>
   );

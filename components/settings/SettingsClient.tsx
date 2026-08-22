@@ -7,6 +7,8 @@ import { AlertTriangle, CheckCircle2, KeyRound, ShieldAlert, Trash2 } from "luci
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { createClient } from "@/lib/supabase/client";
+import NotificationSettings from "@/components/settings/NotificationSettings";
+import { logoutOneSignal } from "@/lib/onesignal";
 
 type SettingsDevice = {
   id: string;
@@ -21,6 +23,7 @@ type SettingsClientProps = {
   email: string;
   role: string;
   devices: SettingsDevice[];
+  oneSignalAppId: string | null;
 };
 
 function formatPeso(value: number | string | null): string {
@@ -41,6 +44,7 @@ export default function SettingsClient({
   email,
   role,
   devices,
+  oneSignalAppId,
 }: SettingsClientProps) {
   const router = useRouter();
   const [billingCycleDraft, setBillingCycleDraft] = useState(String(billingCycleStartDay));
@@ -263,6 +267,7 @@ export default function SettingsClient({
     setToast(null);
 
     try {
+      await logoutOneSignal().catch(() => undefined);
       const res = await fetch("/api/account", { method: "DELETE" });
 
       if (!res.ok) {
@@ -369,6 +374,8 @@ export default function SettingsClient({
           <ThemeToggle />
         </div>
       </section>
+
+      <NotificationSettings appId={oneSignalAppId} />
 
       {canManageHomeSettings ? (
         <section className="rounded-xl border border-white/[0.06] bg-surface p-5">

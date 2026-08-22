@@ -5,6 +5,7 @@ import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import MobileViewport from "@/components/ui/MobileViewport";
 import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
+import OneSignalIdentityBridge from "@/components/providers/OneSignalIdentityBridge";
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +39,9 @@ export default async function RootLayout({
     <html lang="en" data-theme="dark">
       <body suppressHydrationWarning className="antialiased bg-base text-white">
         <SupabaseProvider session={session}>
+          <OneSignalIdentityBridge
+            appId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID ?? null}
+          />
           <ThemeProvider>
             <RouteTransitionIndicator />
             <MobileViewport>{children}</MobileViewport>

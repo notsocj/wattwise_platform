@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `024`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
+This file reflects the current database shape defined by `supabase/migrations/001` through `027`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
 
 ## Current Schema Summary
 
@@ -263,6 +263,53 @@ Purpose:
 - `apply_device_budget_settings(uuid, numeric, boolean)` atomically reconciles limit/cutoff preference with current-cycle spend
 - `restore_device_power(uuid, boolean)` is the only owner/manager recovery path for an automatic cutoff; it never bypasses an enabled cutoff whose limit remains reached
 - migration `026_fix_budget_rpc_ambiguity.sql` qualifies accumulator columns in both budget RPCs for PostgreSQL `RETURNS TABLE` compatibility
+
+## Notification Tables
+
+### `notification_preferences`
+
+One private row per profile, backfilled and created automatically by migration `027_notification_delivery.sql`.
+
+```sql
+CREATE TABLE notification_preferences (
+  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  onesignal_external_id UUID NOT NULL UNIQUE DEFAULT uuid_generate_v4(),
+  budget_push_enabled BOOLEAN NOT NULL DEFAULT false,
+  budget_email_enabled BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+- users may select only their row
+- authenticated updates are column-limited to the two preference booleans
+- the random OneSignal alias prevents provider payloads from exposing Supabase auth UUIDs
+
+### `notification_deliveries`
+
+Service-role audit and idempotency record for OneSignal/Resend attempts.
+
+```sql
+CREATE TABLE notification_deliveries (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  budget_event_id UUID REFERENCES device_budget_events(id) ON DELETE SET NULL,
+  recipient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  channel TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  provider_message_id TEXT,
+  error_code TEXT,
+  error_message TEXT,
+  is_test BOOLEAN NOT NULL DEFAULT false,
+  sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+- partial uniqueness on `(budget_event_id, recipient_id, channel)` prevents duplicate provider sends
+- users may read only deliveries addressed to their profile; authenticated clients cannot insert, update, or delete rows
+- `reserve_notification_test_delivery(uuid, text)` is service-role-only and atomically enforces the rolling 60-second test cooldown
 
 ## Admin / Automation Table
 
