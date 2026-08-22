@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, RotateCcw, Square, Zap } from "lucide-react";
+import { Play, RotateCcw, Square, Trash2, Zap } from "lucide-react";
 
 type Person = { id: string; full_name: string | null; email: string; role: string };
 type Unit = {
@@ -100,6 +100,23 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
     router.refresh();
   }
 
+  async function deleteUnit(unit: Unit) {
+    const deviceName = unit.devices?.device_name ?? "this demo unit";
+    if (!window.confirm(`Delete ${deviceName}? This permanently removes its demo device, simulation, and generated telemetry.`)) return;
+    setRunningId(unit.device_id);
+    setMessage(null);
+    const response = await fetch(`/api/admin/demo-units/${unit.device_id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: true, reason: "Deleted from demo unit control panel" }),
+    });
+    const payload = await response.json();
+    setRunningId(null);
+    if (!response.ok) { setMessage(payload.error || "Unable to delete the demo unit."); return; }
+    setMessage(`Demo unit deleted. Removed ${payload.deleted_telemetry_rows ?? 0} generated telemetry readings.`);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-8">
       <section className="rounded-xl border border-mint/20 bg-mint/5 p-5">
@@ -146,6 +163,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
                   <button disabled={busy} onClick={() => updateUnit(unit.device_id, { is_active: !unit.is_active, reason: unit.is_active ? "Paused demo unit" : "Started demo unit" })} className={`${buttonClass} border border-white/15 hover:bg-white/5`}>{unit.is_active ? <><Square className="h-3.5 w-3.5" />Pause</> : <><Play className="h-3.5 w-3.5" />Start</>}</button>
                   <button disabled={busy || !unit.is_active} onClick={() => runUnit(unit.device_id)} className={`${buttonClass} border border-mint/30 text-mint hover:bg-mint/10`}><Play className="h-3.5 w-3.5" />Run now</button>
                   <button disabled={busy} onClick={() => { if (window.confirm("Reset this simulated meter to 0 kWh? Existing energy log history remains for auditability.")) updateUnit(unit.device_id, { reset_energy: true, reason: "Reset simulated meter baseline" }); }} className={`${buttonClass} border border-white/15 text-white/70 hover:bg-white/5`}><RotateCcw className="h-3.5 w-3.5" />Reset</button>
+                  <button disabled={busy} onClick={() => void deleteUnit(unit)} className={`${buttonClass} border border-danger/35 text-danger hover:bg-danger/10`}><Trash2 className="h-3.5 w-3.5" />Delete</button>
                 </div></td>
               </tr>;
             })}
