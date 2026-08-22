@@ -12,6 +12,7 @@ import {
 } from "../_shared/notification-policy.ts";
 import {
   hasRequiredProviderConfig,
+  oneSignalPushEndpoint,
   parseOneSignalSuccess,
   sendProviderRequest,
   type ProviderResult,
@@ -191,7 +192,7 @@ async function sendPush(
 
   return sendProviderRequest(
     () =>
-      new Request("https://api.onesignal.com/notifications", {
+      new Request(oneSignalPushEndpoint, {
         method: "POST",
         signal: AbortSignal.timeout(8_000),
         headers: {

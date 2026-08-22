@@ -6,6 +6,9 @@ export type ProviderResult = {
   errorMessage?: string;
 };
 
+// OneSignal's current Create Message API requires an explicit push channel.
+export const oneSignalPushEndpoint = "https://api.onesignal.com/notifications?c=push";
+
 type ProviderRequestOptions = {
   fetcher?: typeof fetch;
   pause?: (milliseconds: number) => Promise<void>;
@@ -87,4 +90,3 @@ export async function sendProviderRequest(
     errorMessage: "The notification provider request did not complete.",
   };
 }
-

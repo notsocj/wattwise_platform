@@ -9,6 +9,7 @@ import {
 } from "../supabase/functions/_shared/notification-policy.ts";
 import {
   hasRequiredProviderConfig,
+  oneSignalPushEndpoint,
   parseOneSignalSuccess,
   sendProviderRequest,
 } from "../supabase/functions/_shared/provider-delivery.ts";
@@ -91,6 +92,7 @@ test("builds deterministic Taglish budget messages with safe HTML and destinatio
 });
 
 test("detects missing provider configuration and no push subscription", () => {
+  assert.equal(oneSignalPushEndpoint, "https://api.onesignal.com/notifications?c=push");
   assert.equal(hasRequiredProviderConfig("app-id", "api-key"), true);
   assert.equal(hasRequiredProviderConfig("app-id", "  "), false);
   assert.equal(hasRequiredProviderConfig("app-id", undefined), false);
@@ -180,4 +182,3 @@ test("retries network timeouts and returns a sanitized final failure", async () 
   assert.equal(result.errorCode, "provider_network_error");
   assert.doesNotMatch(result.errorMessage ?? "", /Timed out/);
 });
-
