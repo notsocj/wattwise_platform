@@ -152,7 +152,7 @@ test("does not retry permanent provider rejection such as invalid sender configu
     {
       fetcher: async () => {
         calls += 1;
-        return Response.json({}, { status: 403 });
+        return Response.json({ errors: ["App API key is invalid"] }, { status: 403 });
       },
       pause: async () => {},
     }
@@ -161,6 +161,7 @@ test("does not retry permanent provider rejection such as invalid sender configu
   assert.equal(calls, 1);
   assert.equal(result.status, "failed");
   assert.equal(result.errorCode, "provider_http_403");
+  assert.equal(result.errorMessage, "App API key is invalid");
 });
 
 test("retries network timeouts and returns a sanitized final failure", async () => {

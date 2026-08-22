@@ -36,6 +36,19 @@ export function parseOneSignalSuccess(body: Record<string, unknown>): ProviderRe
   };
 }
 
+function providerErrorDetail(body: Record<string, unknown>): string | null {
+  const candidate = typeof body.errors === "string"
+    ? body.errors
+    : Array.isArray(body.errors) ? body.errors.filter((value): value is string => typeof value === "string").join("; ")
+    : typeof body.error === "string" ? body.error
+    : typeof body.message === "string" ? body.message
+    : "";
+  const safe = candidate
+    .replace(/(authorization|api[ _-]?key|token)\s*[:=]\s*[^\s,;]+/gi, "$1: [redacted]")
+    .replace(/[\r\n]+/g, " ").trim().slice(0, 220);
+  return safe || null;
+}
+
 export async function sendProviderRequest(
   requestFactory: () => Request,
   parseSuccess: (body: Record<string, unknown>) => ProviderResult,
@@ -66,7 +79,7 @@ export async function sendProviderRequest(
         status: "failed",
         attempts: attempt,
         errorCode: `provider_http_${response.status}`,
-        errorMessage: "The notification provider rejected the request.",
+        errorMessage: providerErrorDetail(body) ?? "The notification provider rejected the request.",
       };
     } catch {
       if (attempt < maxAttempts) {
