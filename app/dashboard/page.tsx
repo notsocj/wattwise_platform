@@ -100,13 +100,9 @@ function hasMissingRelayStateColumnError(error: {
 
 async function fetchDashboardDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  role: string | null | undefined
+  userId: string
 ): Promise<DeviceRow[]> {
-  const accessFilter =
-    role === "tenant"
-      ? `tenant_id.eq.${userId}`
-      : `owner_id.eq.${userId},user_id.eq.${userId}`;
+  const accessFilter = `owner_id.eq.${userId},user_id.eq.${userId},tenant_id.eq.${userId}`;
   const withRelayState = await supabase
     .from("devices")
     .select("id, device_name, mac_address, is_online, appliance_type, relay_state, budget_status, owner_id, tenant_id, user_approved_limit_php")
@@ -209,18 +205,22 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("monthly_budget_php, billing_cycle_start_day, role")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>();
+  const [profileResult, activeRates, devicesRows] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("monthly_budget_php, billing_cycle_start_day, role")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+    getActiveMeralcoRates(supabase),
+    fetchDashboardDevices(supabase, user.id),
+  ]);
+  const profileData = profileResult.data;
 
   if (profileData?.role === "manager") {
     redirect("/manager");
   }
 
   const isTenant = isTenantRole(profileData?.role);
-  const devicesRows = await fetchDashboardDevices(supabase, user.id, profileData?.role);
   const tenantHardLimit = devicesRows.reduce(
     (sum, device) => sum + toNumber(device.user_approved_limit_php),
     0
@@ -244,7 +244,6 @@ export default async function DashboardPage() {
     );
   }
 
-  const activeRates = await getActiveMeralcoRates(supabase);
   const deviceIds = devicesRows.map((device) => device.id);
   const realtimeDeviceKeys = Array.from(
     new Set(

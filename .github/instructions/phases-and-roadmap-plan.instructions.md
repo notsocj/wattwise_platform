@@ -217,7 +217,7 @@ applyTo: "**"
   - [x] Keep 50% in-app only, send push at 80%, and send push plus email for both 100% terminal events
   - [x] Resolve the owner/manager and assigned tenant without duplicates and honor per-recipient channel preferences
   - [x] Add private OneSignal external identities, RLS-protected delivery logs, provider idempotency, bounded retries, and graceful missing-key behavior
-  - [ ] Add production OneSignal/Resend credentials, verify the sending domain, deploy the Edge Function, and activate the Database Webhook
+  - [x] Add production OneSignal/Resend credentials, verify the sending domain, deploy the Edge Function, and activate the Database Webhook *(verified with a real OneSignal provider message and Resend delivery on 2026-08-22)*
 
 - [x] **Bottom Navigation Bar**
   - [x] Implement persistent navbar: **Home**, **Burn**, and **Settings**
@@ -378,3 +378,4 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 
 - [x] Added `/admin/test-lab` for super-admin presentation verification across selected user, virtual/physical devices, real telemetry injection, budget thresholds, cutoff recovery, notification evidence, and audited changes.
 - [x] Test Lab retains production event deduplication and requires exact-name confirmation plus a reason before any physical-device mutation.
+- [x] Hardened production notification diagnostics and navigation: invalid OneSignal App ID configuration falls back to the verified public app identifier, structured provider errors remain actionable, core mobile tabs are prefetched, Reports has a route skeleton, and dashboard/Burn data dependencies avoid unnecessary sequential requests.

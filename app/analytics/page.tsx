@@ -105,11 +105,15 @@ export default async function AnalyticsPage() {
   const startOfSevenDayWindow = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
   const endOfToday = getEndOfManilaDay(now);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("monthly_budget_php, billing_cycle_start_day, role")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>();
+  const [profileResult, activeRates] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("monthly_budget_php, billing_cycle_start_day, role")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+    getActiveMeralcoRates(supabase),
+  ]);
+  const profile = profileResult.data;
   const isTenant = profile?.role === "tenant";
   let monthlyBudget = Math.max(1, toNumber(profile?.monthly_budget_php ?? 2000));
   let billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
@@ -157,7 +161,6 @@ export default async function AnalyticsPage() {
     }
   }
 
-  const activeRates = await getActiveMeralcoRates(supabase);
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
   const rateRangeStart =
     billingCycle.startDate.getTime() < startOfSevenDayWindow.getTime()

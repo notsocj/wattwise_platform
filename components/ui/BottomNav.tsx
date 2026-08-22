@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { FileText, Home, LineChart, Settings } from "lucide-react";
 
 const tabs = [
@@ -13,6 +14,17 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const warmRoutes = () => {
+      for (const tab of tabs) {
+        if (tab.href !== pathname) router.prefetch(tab.href);
+      }
+    };
+    const timer = window.setTimeout(warmRoutes, 250);
+    return () => window.clearTimeout(timer);
+  }, [pathname, router]);
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-white/5 bg-base/95 backdrop-blur-sm">
@@ -23,6 +35,7 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
+              prefetch
               className={`flex flex-col items-center gap-1 transition-colors ${
                 isActive ? "text-mint" : "text-white/40 hover:text-white/60"
               }`}

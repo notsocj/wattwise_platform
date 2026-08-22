@@ -60,7 +60,12 @@ function Toggle({
   );
 }
 
-function friendlyTestResult(channel: "push" | "email", status?: string, code?: string) {
+function friendlyTestResult(
+  channel: "push" | "email",
+  status?: string,
+  code?: string,
+  providerMessage?: string
+) {
   if (status === "sent") {
     return channel === "push"
       ? "Test push sent. Check this device's notifications."
@@ -76,7 +81,27 @@ function friendlyTestResult(channel: "push" | "email", status?: string, code?: s
   if (code === "preference_disabled") {
     return `Turn on ${channel === "push" ? "push alerts" : "critical email"} before testing.`;
   }
+  if (providerMessage) return providerMessage;
   return `The test ${channel} could not be delivered right now.`;
+}
+
+async function readFunctionInvokeError(error: unknown): Promise<string> {
+  const fallback = error instanceof Error ? error.message : "The notification test could not be completed.";
+  const context = error && typeof error === "object" && "context" in error
+    ? (error as { context?: unknown }).context
+    : null;
+  if (!context || typeof context !== "object" || !("clone" in context)) return fallback;
+
+  try {
+    const response = (context as Response).clone();
+    const payload = (await response.json()) as { error?: string; retry_after_seconds?: number };
+    if (payload.retry_after_seconds) {
+      return `Please wait ${payload.retry_after_seconds} second${payload.retry_after_seconds === 1 ? "" : "s"} before testing again.`;
+    }
+    return payload.error ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 export default function NotificationSettings({ appId }: { appId: string | null }) {
@@ -238,20 +263,26 @@ export default function NotificationSettings({ appId }: { appId: string | null }
       const { data, error } = await supabase.functions.invoke("dispatch-budget-notifications", {
         body: { mode: "test", channel },
       });
-      if (error) throw error;
+      if (error) throw new Error(await readFunctionInvokeError(error));
 
-      const result = (data ?? {}) as { status?: string; code?: string; error?: string };
+      const result = (data ?? {}) as {
+        status?: string;
+        code?: string;
+        message?: string;
+        error?: string;
+      };
       if (result.error) throw new Error(result.error);
       const sent = result.status === "sent";
       setFeedback({
         type: sent ? "success" : "info",
-        message: friendlyTestResult(channel, result.status, result.code),
+        message: friendlyTestResult(channel, result.status, result.code, result.message),
       });
-    } catch {
+    } catch (error) {
       setFeedback({
         type: "error",
-        message:
-          "The test service is not available yet. Deploy and configure the notification function, then try again.",
+        message: error instanceof Error
+          ? error.message
+          : "The notification test could not be completed.",
       });
     } finally {
       setPending(null);

@@ -13,6 +13,7 @@ export default function RouteTransitionIndicator() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const startAtRef = useRef<number | null>(null);
+  const destinationRef = useRef<string | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -28,14 +29,16 @@ export default function RouteTransitionIndicator() {
     }
   }, []);
 
-  const beginTransition = useCallback(() => {
+  const beginTransition = useCallback((destination: string) => {
     clearTimers();
     startAtRef.current = Date.now();
+    destinationRef.current = destination;
     setIsNavigating(true);
 
     safetyTimerRef.current = setTimeout(() => {
       setIsNavigating(false);
       startAtRef.current = null;
+      destinationRef.current = null;
     }, MAX_VISIBLE_MS);
   }, [clearTimers]);
 
@@ -47,6 +50,7 @@ export default function RouteTransitionIndicator() {
     hideTimerRef.current = setTimeout(() => {
       setIsNavigating(false);
       startAtRef.current = null;
+      destinationRef.current = null;
       clearTimers();
     }, delay);
   }, [clearTimers]);
@@ -92,11 +96,11 @@ export default function RouteTransitionIndicator() {
         return;
       }
 
-      beginTransition();
+      beginTransition(`${nextUrl.pathname}${nextUrl.search}`);
     }
 
     function onPopState() {
-      beginTransition();
+      beginTransition(`${window.location.pathname}${window.location.search}`);
     }
 
     document.addEventListener("click", onDocumentClick, true);
@@ -114,7 +118,11 @@ export default function RouteTransitionIndicator() {
       return;
     }
 
-    completeTransition();
+    const query = searchParams.toString();
+    const current = `${pathname}${query ? `?${query}` : ""}`;
+    if (destinationRef.current === current) {
+      completeTransition();
+    }
     // query string changes should also end the indicator
   }, [completeTransition, pathname, searchParams, isNavigating]);
 

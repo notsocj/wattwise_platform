@@ -8,6 +8,16 @@ export type ProviderResult = {
 
 // OneSignal's current Create Message API requires an explicit push channel.
 export const oneSignalPushEndpoint = "https://api.onesignal.com/notifications?c=push";
+// OneSignal App IDs are public identifiers. Keep a verified WattWise fallback so
+// an accidentally pasted provider secret cannot break production delivery.
+export const wattWiseOneSignalAppId = "7d47613e-7c0a-4b52-b613-3c57291f45d7";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function resolveOneSignalAppId(configuredValue: string | undefined): string {
+  const configured = configuredValue?.trim() ?? "";
+  return UUID_PATTERN.test(configured) ? configured : wattWiseOneSignalAppId;
+}
 
 type ProviderRequestOptions = {
   fetcher?: typeof fetch;
@@ -37,12 +47,14 @@ export function parseOneSignalSuccess(body: Record<string, unknown>): ProviderRe
 }
 
 function providerErrorDetail(body: Record<string, unknown>): string | null {
-  const candidate = typeof body.errors === "string"
-    ? body.errors
-    : Array.isArray(body.errors) ? body.errors.filter((value): value is string => typeof value === "string").join("; ")
-    : typeof body.error === "string" ? body.error
-    : typeof body.message === "string" ? body.message
-    : "";
+  const errorValue = body.errors ?? body.error ?? body.message;
+  const candidate = typeof errorValue === "string"
+    ? errorValue
+    : Array.isArray(errorValue)
+      ? errorValue.map((value) => typeof value === "string" ? value : JSON.stringify(value)).join("; ")
+    : errorValue === undefined
+      ? ""
+      : JSON.stringify(errorValue);
   const safe = candidate
     .replace(/(authorization|api[ _-]?key|token)\s*[:=]\s*[^\s,;]+/gi, "$1: [redacted]")
     .replace(/[\r\n]+/g, " ").trim().slice(0, 220);

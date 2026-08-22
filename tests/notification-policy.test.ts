@@ -11,6 +11,7 @@ import {
   hasRequiredProviderConfig,
   oneSignalPushEndpoint,
   parseOneSignalSuccess,
+  resolveOneSignalAppId,
   sendProviderRequest,
 } from "../supabase/functions/_shared/provider-delivery.ts";
 
@@ -104,6 +105,17 @@ test("detects missing provider configuration and no push subscription", () => {
   });
 });
 
+test("uses the verified public OneSignal app id when the configured value is invalid", () => {
+  assert.equal(
+    resolveOneSignalAppId("7d47613e-7c0a-4b52-b613-3c57291f45d7"),
+    "7d47613e-7c0a-4b52-b613-3c57291f45d7"
+  );
+  assert.equal(
+    resolveOneSignalAppId("re_resend_key_saved_in_the_wrong_field"),
+    "7d47613e-7c0a-4b52-b613-3c57291f45d7"
+  );
+});
+
 test("retries 429 and 5xx provider responses with the same idempotency key", async () => {
   const statuses = [429, 503, 200];
   const pauses: number[] = [];
@@ -162,6 +174,26 @@ test("does not retry permanent provider rejection such as invalid sender configu
   assert.equal(result.status, "failed");
   assert.equal(result.errorCode, "provider_http_403");
   assert.equal(result.errorMessage, "App API key is invalid");
+});
+
+test("preserves safe structured provider errors instead of hiding the rejection reason", async () => {
+  const result = await sendProviderRequest(
+    () => new Request("https://provider.example/send"),
+    () => ({ status: "sent", attempts: 1 }),
+    {
+      fetcher: async () =>
+        Response.json(
+          { errors: { invalid_aliases: { external_id: ["recipient-not-found"] } } },
+          { status: 400 }
+        ),
+      pause: async () => {},
+    }
+  );
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.errorCode, "provider_http_400");
+  assert.match(result.errorMessage ?? "", /invalid_aliases/);
+  assert.match(result.errorMessage ?? "", /recipient-not-found/);
 });
 
 test("retries network timeouts and returns a sanitized final failure", async () => {

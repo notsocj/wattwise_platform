@@ -14,6 +14,7 @@ import {
   hasRequiredProviderConfig,
   oneSignalPushEndpoint,
   parseOneSignalSuccess,
+  resolveOneSignalAppId,
   sendProviderRequest,
   type ProviderResult,
 } from "../_shared/provider-delivery.ts";
@@ -179,7 +180,7 @@ async function sendPush(
   externalId: string,
   message: BudgetNotificationMessage
 ): Promise<ProviderResult> {
-  const appId = Deno.env.get("ONESIGNAL_APP_ID")?.trim();
+  const appId = resolveOneSignalAppId(Deno.env.get("ONESIGNAL_APP_ID"));
   const apiKey = Deno.env.get("ONESIGNAL_APP_API_KEY")?.trim();
   if (!hasRequiredProviderConfig(appId, apiKey)) {
     return {
@@ -464,7 +465,13 @@ async function handleTest(
       errorMessage: "APP_BASE_URL is not configured.",
     };
     await finishDelivery(supabase, delivery.id, result);
-    return json({ ok: true, channel, status: result.status, code: result.errorCode });
+    return json({
+      ok: true,
+      channel,
+      status: result.status,
+      code: result.errorCode,
+      message: result.errorMessage,
+    });
   }
 
   const url = new URL(destinationForRole(profile.role), appBaseUrl).toString();
@@ -487,7 +494,13 @@ async function handleTest(
     message
   );
 
-  return json({ ok: true, channel, status: result.status, code: result.errorCode });
+  return json({
+    ok: true,
+    channel,
+    status: result.status,
+    code: result.errorCode,
+    message: result.errorMessage,
+  });
 }
 
 async function handleRequest(request: Request): Promise<Response> {
