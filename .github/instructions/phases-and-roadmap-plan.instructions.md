@@ -373,3 +373,8 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 | 2 | `lib/meralco-rates.ts`, `app/dashboard/[deviceId]/page.tsx` | None |
 | 3 | `app/api/insights/route.ts`, `app/api/insights/calendar/route.ts`, `components/insights/ContextualInsightCard.tsx`, `app/dashboard/page.tsx`, `app/dashboard/calendar/page.tsx`, `app/analytics/page.tsx`, `app/dashboard/[deviceId]/page.tsx`, `manifest.json`, `sw.ts` | `config_handler.cpp`, `ota_updater.cpp` |
 | 4 | `app/admin/layout.tsx`, `app/admin/rates/page.tsx`, `app/admin/ai-costs/page.tsx`, `app/admin/health/page.tsx`, `app/admin/analytics/page.tsx` | `diagnostics.cpp`, `offline_buffer.cpp` |
+
+### Completion note: Admin Test Lab
+
+- [x] Added `/admin/test-lab` for super-admin presentation verification across selected user, virtual/physical devices, real telemetry injection, budget thresholds, cutoff recovery, notification evidence, and audited changes.
+- [x] Test Lab retains production event deduplication and requires exact-name confirmation plus a reason before any physical-device mutation.

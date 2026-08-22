@@ -261,6 +261,13 @@ When implementing route or mutation feedback in the app shell and interactive co
 - Deploy the dispatcher with `--no-verify-jwt` only because it performs its own authentication for both the shared-secret Database Webhook and authenticated test requests.
 - Full provider and webhook setup is documented in `NOTIFICATION_SETUP.md`.
 
+## 9. Admin Test Lab
+
+- `/admin/test-lab` is super-admin-only and verifies the real telemetry → budget-event → webhook → provider flow; it must never fabricate delivery results.
+- Standard test thresholds are 50% (in-app only), 80% (push), and the applicable 100% terminal event (push plus email). Existing current-cycle event deduplication is preserved; use a fresh demo unit for a repeat.
+- Physical-device tests require the exact device-name confirmation and a meaningful audit reason. They persist telemetry and possible cutoff state; never add an automatic rollback.
+- Every Test Lab mutation uses `requireAdminApi`, server-side service access, and `writeAdminAudit`. Provider secrets and private notification aliases remain server-only.
+
 ---
 
 ## Quick Reference — What NOT to Do

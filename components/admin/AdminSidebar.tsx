@@ -14,6 +14,7 @@ import {
   Cpu,
   ScrollText,
   FlaskConical,
+  TestTube2,
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { label: "Users", path: "/admin/users", icon: Users },
   { label: "Devices", path: "/admin/devices", icon: Cpu },
   { label: "Demo Units", path: "/admin/demo-units", icon: FlaskConical },
+  { label: "Test Lab", path: "/admin/test-lab", icon: TestTube2 },
   { label: "Audit Log", path: "/admin/audit", icon: ScrollText },
 ];
 
