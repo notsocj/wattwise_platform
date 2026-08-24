@@ -11,6 +11,7 @@ import {
   getManilaDayKey,
   getStartOfManilaDay,
 } from "@/lib/date-utils";
+import { buildReportPdf } from "@/lib/report-pdf";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -154,6 +155,22 @@ export async function GET(request: NextRequest) {
   });
 
   const format = request.nextUrl.searchParams.get("format") ?? "json";
+  if (format === "pdf") {
+    const pdf = await buildReportPdf({
+      accountEmail: user.email ?? "WattWise account",
+      period,
+      start,
+      end,
+      rows,
+    });
+    return new NextResponse(Buffer.from(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="wattwise-${period}-report.pdf"`,
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }
   if (format === "csv") {
     const headers = Object.keys(rows[0] ?? {
       device_name: "", appliance_type: "", measured_kwh: "", estimated_kwh: "",

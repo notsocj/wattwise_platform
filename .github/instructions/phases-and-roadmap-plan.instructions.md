@@ -379,3 +379,4 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 - [x] Added `/admin/test-lab` for super-admin presentation verification across selected user, virtual/physical devices, real telemetry injection, budget thresholds, cutoff recovery, notification evidence, and audited changes.
 - [x] Test Lab retains production event deduplication and requires exact-name confirmation plus a reason before any physical-device mutation.
 - [x] Hardened production notification diagnostics and navigation: invalid OneSignal App ID configuration falls back to the verified public app identifier, structured provider errors remain actionable, core mobile tabs are prefetched, Reports has a route skeleton, and dashboard/Burn data dependencies avoid unnecessary sequential requests.
+- [x] Added authenticated, ready-to-share PDF exports for daily, weekly, and monthly energy reports, generated from the same bounded usage and Meralco cost rows as JSON/CSV.

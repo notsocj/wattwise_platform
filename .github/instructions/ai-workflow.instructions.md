@@ -268,6 +268,7 @@ When implementing route or mutation feedback in the app shell and interactive co
 - Standard test thresholds are 50% (in-app only), 80% (push), and the applicable 100% terminal event (push plus email). Existing current-cycle event deduplication is preserved; use a fresh demo unit for a repeat.
 - Physical-device tests require the exact device-name confirmation and a meaningful audit reason. They persist telemetry and possible cutoff state; never add an automatic rollback.
 - Every Test Lab mutation uses `requireAdminApi`, server-side service access, and `writeAdminAudit`. Provider secrets and private notification aliases remain server-only.
+- Report JSON, CSV, and PDF exports must share the same authenticated, bounded report calculation. PDF generation stays server-side and must not introduce a separate billing or telemetry calculation path.
 
 ---
 
