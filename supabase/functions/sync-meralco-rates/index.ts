@@ -210,38 +210,6 @@ function bytesToTextFragments(bytes: Uint8Array): string {
   return chunks.join("\n");
 }
 
-async function extractPdfTextWithPdfJs(pdfBytes: Uint8Array): Promise<string | null> {
-  try {
-    const loadingTask = pdfjsLib.getDocument({
-      data: pdfBytes,
-      disableWorker: true,
-      isEvalSupported: false,
-      disableFontFace: true,
-      useSystemFonts: false,
-    });
-
-    const pdf = await loadingTask.promise;
-    const pageTexts: string[] = [];
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      const pageText = (textContent.items as Array<{ str?: string }>)
-        .map((item) => item.str ?? "")
-        .join(" ");
-
-      if (pageText.trim()) {
-        pageTexts.push(pageText);
-      }
-    }
-
-    const combined = pageTexts.join("\n").trim();
-    return combined.length >= 120 ? combined : null;
-  } catch (_error) {
-    return null;
-  }
-}
-
 async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<string> {
   const externalParserUrl = Deno.env.get("PDF_TEXT_EXTRACTOR_URL")?.trim();
 
@@ -292,13 +260,9 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
     return text;
   }
 
-  const pdfJsText = await extractPdfTextWithPdfJs(pdfBytes);
-  if (pdfJsText) {
-    return pdfJsText;
-  }
-
-  // Zero-config fallback: use jina.ai's PDF-to-text proxy if available.
-  // This preserves full automation when no dedicated parser service is configured.
+  // Deno Edge Functions cannot reliably load pdfjs-dist's Node-compatible build.
+  // Use an explicit parser when one is configured, otherwise a text-only proxy
+  // that can fetch the public Meralco PDF without loading a Node-only module.
   const strippedPdfUrl = pdfUrl.replace(/^https?:\/\//, "");
   const jinaProxyUrls = [
     `https://r.jina.ai/http://${strippedPdfUrl}`,
@@ -334,7 +298,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
       if (!looksLikeProxyError && hasRateSignals && jinaText.trim().length >= 200) {
         return jinaText;
       }
-    } catch (_error) {
+    } catch {
       // Non-fatal: continue trying other proxy forms/local fallback.
     }
   }
@@ -726,7 +690,6 @@ function getRequiredEnv(name: string): string {
 }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.10.38/legacy/build/pdf.mjs";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

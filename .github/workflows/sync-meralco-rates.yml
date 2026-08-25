@@ -30,6 +30,7 @@ jobs:
         env:
           FUNCTION_URL: ${{ secrets.MERALCO_SYNC_FUNCTION_URL }}
           SYNC_SECRET: ${{ secrets.MERALCO_SYNC_SECRET }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           INPUT_DRY_RUN: ${{ github.event.inputs.dryRun }}
           INPUT_FORCE: ${{ github.event.inputs.force }}
           INPUT_TARGET_MONTH: ${{ github.event.inputs.targetMonth }}
@@ -41,6 +42,11 @@ jobs:
 
           if [ -z "$SYNC_SECRET" ]; then
             echo "Missing secret MERALCO_SYNC_SECRET"
+            exit 1
+          fi
+
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Missing secret SUPABASE_ANON_KEY"
             exit 1
           fi
 
@@ -71,6 +77,7 @@ jobs:
 
           RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$FUNCTION_URL" \
             -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "x-sync-secret: $SYNC_SECRET" \
             --data "$BODY")
 

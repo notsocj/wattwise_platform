@@ -348,6 +348,8 @@ CREATE TABLE customer_ai_messages (
 
 Observability log for the Supabase Edge Function that syncs Meralco rates.
 
+- A failed extraction is recorded here with `status = 'failed'`; `meralco_rates` remains untouched until all parsed rate components pass required-field, range, and anomaly validation.
+
 ```sql
 CREATE TABLE meralco_rate_sync_runs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
