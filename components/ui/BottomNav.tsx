@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { FileText, Home, LineChart, Settings } from "lucide-react";
+import CustomerAssistantFab from "@/components/customer-assistant/CustomerAssistantFab";
 
 const tabs = [
   { href: "/dashboard", label: "HOME", icon: Home },
@@ -27,6 +28,8 @@ export default function BottomNav() {
   }, [pathname, router]);
 
   return (
+    <>
+    <CustomerAssistantFab />
     <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-white/5 bg-base/95 backdrop-blur-sm">
       <div className="flex items-center justify-around px-4 py-3">
         {tabs.map(({ href, label, icon: Icon }) => {
@@ -54,5 +57,6 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+    </>
   );
 }

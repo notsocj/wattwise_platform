@@ -209,12 +209,13 @@ CREATE INDEX idx_ai_insights_user_type_date
 
 ## 4. Home Budget Edit Scope (Single Control Point)
 
-**Hard constraint:** `profiles.monthly_budget_php` must be editable only from the Home Dashboard wallet UI.
+**Hard constraint:** `profiles.monthly_budget_php` must be editable only from the Home Dashboard wallet UI or an authenticated customer-assistant proposal that the homeowner explicitly confirms.
 
 - Device Detail pages may display budget and burn-rate context, but must remain view-only.
 - Tenant pages must remain view-only and use assigned-device hard limits instead of exposing the home budget editor.
 - Use an icon-triggered editor card/popover in Home Wallet instead of a persistent budget form block.
 - Save flow should update only the authenticated profile row (`WHERE id = auth user id`) and refresh the dashboard state after success.
+- The customer assistant must show the exact current/proposed values, expire proposals after 15 minutes, and recheck role and ownership on confirmation. Tenants remain unable to change home budgets or device safety settings.
 
 ---
 
@@ -270,6 +271,18 @@ When implementing route or mutation feedback in the app shell and interactive co
 - Every Test Lab mutation uses `requireAdminApi`, server-side service access, and `writeAdminAudit`. Provider secrets and private notification aliases remain server-only.
 - Report JSON, CSV, and PDF exports must share the same authenticated, bounded report calculation. PDF generation stays server-side and must not introduce a separate billing or telemetry calculation path.
 
+## 10. Customer AI Assistant
+
+- Customer chat lives under `/api/customer-assistant/*`; OpenAI remains server-only and uses only the authenticated user's visible devices, bounded current-cycle usage, home budget, live-state summary, and notification preferences.
+- The model may suggest a strict structured proposal but can never perform a mutation. Only the confirmation route may write, after rechecking role, ownership, valid ranges, current state, expiry, and single-use status.
+- Homeowners may confirm home-budget, owned-device limit, automatic-cutoff, and own notification-preference changes. Tenants may confirm only their own notification preferences.
+- Chat never operates relay power, restores cutoff devices, changes credentials/billing-cycle dates/Wi-Fi/pairing, or deletes data.
+- `customer_ai_messages` is readable only by its owning user. Browser roles have no INSERT/UPDATE/DELETE grants; trusted server routes write through the service role and retain only the latest 10 messages.
+- Enforce the persisted rolling message limit before calling OpenAI. If OpenAI is missing or fails, return contextual advice from current WattWise data without fabricating an action proposal.
+- Common bill-driver and device-list questions must use deterministic grounding from current-cycle `device_month_usage` plus latest telemetry before calling OpenAI. Never ask the customer to guess which device is expensive when WattWise already has ranked device data.
+- When calendar-month spend differs from the current billing-cycle accumulator, show both windows explicitly. Calendar-month answers must use the same bounded daily usage plus active Meralco-rate calculation as Calendar Analytics; device-limit progress remains billing-cycle-only.
+- Rich assistant output is an allowlisted `display_data` payload. The current MVP supports only `device_list`, with at most eight server-resolved devices; never render arbitrary model HTML or model-supplied database identifiers.
+
 ---
 
 ## Quick Reference — What NOT to Do
@@ -280,7 +293,7 @@ When implementing route or mutation feedback in the app shell and interactive co
 | Fetching energy data | `.from('energy_logs').select('*')` | Add `.limit(100)` or date filter |
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
-| Editing home budget | Budget input duplicated across pages | Home-only icon-triggered editor card that updates `profiles.monthly_budget_php` |
+| Editing home budget | Unconfirmed or tenant-side writes | Home wallet editor, or a homeowner-confirmed assistant proposal that updates only their profile |
 | User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
 | API mutation feedback | Keep controls active and silent on errors | Disable pending controls, show inline `LoadingIndicator`, and display auto-dismiss error toast |
 | Appliance shutoff | Client-side cutoff math | PostgreSQL trigger updates `devices.relay_state` from `device_month_usage` |

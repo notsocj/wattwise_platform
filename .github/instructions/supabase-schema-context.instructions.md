@@ -311,6 +311,31 @@ CREATE TABLE notification_deliveries (
 - users may read only deliveries addressed to their profile; authenticated clients cannot insert, update, or delete rows
 - `reserve_notification_test_delivery(uuid, text)` is service-role-only and atomically enforces the rolling 60-second test cooldown
 
+### `customer_ai_messages`
+
+Customer assistant history and proposal audit state, added by `028_customer_ai_assistant.sql`; migration `029_customer_ai_message_displays.sql` adds the allowlisted rich-display payload.
+
+```sql
+CREATE TABLE customer_ai_messages (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  role text NOT NULL CHECK (role IN ('user', 'assistant')),
+  content text NOT NULL,
+  proposal jsonb,
+  proposal_status text,
+  proposal_result jsonb,
+  display_data jsonb,
+  created_at timestamptz NOT NULL,
+  confirmed_at timestamptz
+);
+```
+
+- authenticated users have SELECT-only access to rows where `user_id = auth.uid()`
+- inserts and proposal state transitions are service-role-only after a customer API route authenticates the session
+- server routes retain the latest 10 rows per user and enforce a rolling OpenAI message limit
+- proposal states are `pending`, `processing`, `confirmed`, `expired`, or `failed`; the `pending` → `processing` conditional update prevents double confirmation
+- `display_data` accepts only a `device_list` object with 1–8 server-resolved device cards; this persists rich answers without storing or rendering arbitrary HTML
+
 ## Admin / Automation Table
 
 ### `meralco_rate_sync_runs`
@@ -504,6 +529,7 @@ Important caution:
 - if storing structured insight payloads, serialize them into `ai_insights.message`
 - manager AI insight cards use `manager_fleet_alert`, `manager_room_anomaly`, `manager_cutoff_forecast`, and `manager_cost_optimizer` as `ai_insights.insight_type` values
 - manager AI and chatbot routes must scope data to manager-owned devices only; chatbot replies are advisory and must not mutate relays, limits, tenants, or assignments
+- customer AI routes scope context to devices visible to the authenticated homeowner/tenant. The model can only prepare typed proposals; the confirmation route revalidates and applies permitted settings through existing RLS/RPC boundaries.
 
 ### Service-role routes
 
