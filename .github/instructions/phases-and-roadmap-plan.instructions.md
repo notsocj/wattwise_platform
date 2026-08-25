@@ -380,5 +380,6 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 - [x] Test Lab retains production event deduplication and requires exact-name confirmation plus a reason before any physical-device mutation.
 - [x] Hardened production notification diagnostics and navigation: invalid OneSignal App ID configuration falls back to the verified public app identifier, structured provider errors remain actionable, core mobile tabs are prefetched, Reports has a route skeleton, and dashboard/Burn data dependencies avoid unnecessary sequential requests.
 - [x] Added authenticated, ready-to-share PDF exports for daily, weekly, and monthly energy reports, generated from the same bounded usage and Meralco cost rows as JSON/CSV.
+- [x] Added customer-facing Meralco rate transparency: effective month, recorded sync timestamp/source, detailed component view, and bounded historical monthly rows.
 - [x] Added the customer AI assistant FAB and bottom sheet for homeowner/tenant routes, with latest-10 history, scoped usage context, contextual fallback replies, rate limiting, and expiring review-before-confirm settings proposals.
 - [x] Grounded bill-driver/device-list questions in exact cycle data and added persistent, tappable device cards with spend, limit progress, live watts, and telemetry freshness.

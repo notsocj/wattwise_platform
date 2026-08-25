@@ -75,7 +75,11 @@ CREATE TABLE meralco_rates (
   fit_all NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
   supply_charge NUMERIC(10, 2) NOT NULL DEFAULT 15.00,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  source_url TEXT,
+  source_pdf_url TEXT,
+  fetched_at TIMESTAMP WITH TIME ZONE,
+  auto_updated BOOLEAN NOT NULL DEFAULT false
 );
 ```
 
@@ -84,6 +88,8 @@ Notes:
 - `fit_all` is a first-class column as of migration `008`
 - application cost logic must use unbundled components plus fixed charges, then apply VAT last
 - do not fall back to hardcoded runtime rates when a row is missing
+- `effective_month` means when the rate applies; `fetched_at` means when WattWise last obtained it. Do not label legacy `created_at` values as an official Meralco update.
+- `source_url` and `source_pdf_url` preserve the Meralco archive/PDF provenance when `sync-meralco-rates` created the row. Manual legacy rows must disclose that the official source link was not recorded.
 
 ### `devices`
 

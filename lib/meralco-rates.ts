@@ -15,7 +15,7 @@ export type MeralcoFixedCharges = {
   supplyCharge: number;
 };
 
-type MeralcoRatesRow = {
+export type MeralcoRatesRow = {
   effective_month: string;
   vat_rate: number | string;
   generation: number | string;
@@ -26,6 +26,11 @@ type MeralcoRatesRow = {
   fit_all: number | string;
   metering_charge: number | string;
   supply_charge: number | string;
+  created_at: string;
+  source_url: string | null;
+  source_pdf_url: string | null;
+  fetched_at: string | null;
+  auto_updated: boolean | null;
 };
 
 type UsageByDayInput = {
@@ -40,7 +45,19 @@ export type HistoricalMeralcoRateRow = {
   fixedCharges: MeralcoFixedCharges;
   fixedMonthlyChargesPhp: number;
   vatRate: number;
+  provenance: MeralcoRateProvenance;
 };
+
+export type MeralcoRateProvenance = {
+  sourceUrl: string | null;
+  sourcePdfUrl: string | null;
+  fetchedAt: string | null;
+  createdAt: string;
+  autoUpdated: boolean;
+};
+
+const MERALCO_RATE_SELECT =
+  "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
 
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);
@@ -66,14 +83,13 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   vatRate: number;
   effectiveMonth: string;
   source: "table";
+  provenance: MeralcoRateProvenance;
 }> {
   const todayIso = getManilaDayKey(new Date());
 
   const { data, error } = await supabase
     .from("meralco_rates")
-    .select(
-      "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
-    )
+    .select(MERALCO_RATE_SELECT)
     .lte("effective_month", todayIso)
     .order("effective_month", { ascending: false })
     .limit(1)
@@ -100,6 +116,17 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
     vatRate: toNumber(data.vat_rate),
     effectiveMonth: data.effective_month,
     source: "table",
+    provenance: mapMeralcoRateProvenance(data),
+  };
+}
+
+export function mapMeralcoRateProvenance(row: MeralcoRatesRow): MeralcoRateProvenance {
+  return {
+    sourceUrl: row.source_url,
+    sourcePdfUrl: row.source_pdf_url,
+    fetchedAt: row.fetched_at,
+    createdAt: row.created_at,
+    autoUpdated: row.auto_updated === true,
   };
 }
 
@@ -114,7 +141,25 @@ function mapRowToHistoricalRate(row: MeralcoRatesRow): HistoricalMeralcoRateRow 
     fixedMonthlyChargesPhp:
       toNumber(row.metering_charge) + toNumber(row.supply_charge),
     vatRate: toNumber(row.vat_rate),
+    provenance: mapMeralcoRateProvenance(row),
   };
+}
+
+export async function getMeralcoRateHistory(
+  supabase: SupabaseClient,
+  limit = 24
+): Promise<HistoricalMeralcoRateRow[]> {
+  const { data, error } = await supabase
+    .from("meralco_rates")
+    .select(MERALCO_RATE_SELECT)
+    .order("effective_month", { ascending: false })
+    .limit(Math.min(60, Math.max(1, limit)));
+
+  if (error) {
+    throw new Error(`Failed to fetch meralco_rates history: ${error.message || "unknown error"}`);
+  }
+
+  return ((data ?? []) as MeralcoRatesRow[]).map(mapRowToHistoricalRate);
 }
 
 function getApplicableRateForDay(
@@ -153,9 +198,7 @@ export async function getMeralcoRatesForRange(
 
   const { data, error } = await supabase
     .from("meralco_rates")
-    .select(
-      "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
-    )
+    .select(MERALCO_RATE_SELECT)
     .lte("effective_month", endDayKey)
     .order("effective_month", { ascending: true });
 

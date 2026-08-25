@@ -41,6 +41,7 @@ function computeMeralcoBill(
 
 - In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `system_loss`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
 - For automated rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
+- Customer-facing rate views must distinguish the effective month from the time WattWise fetched the row, and show the recorded Meralco archive/PDF link where available. Never imply a manual legacy row has an official source link.
 - Preferred scheduler cadence is daily around 10:00-12:00 PM PH time. In automatic mode, first check whether the current Manila month (`YYYY-MM-01`) already exists in `meralco_rates`; if present, return a no-op and skip external fetch/upsert.
 - If current month is not yet in DB, attempt current-month Summary Schedule lookup first; if not published yet, fall back to latest available summary and only write when that effective month is missing.
 - Automation must extract **base non-lifeline residential components** for `meralco_rates` and ignore lifeline-only discount/subsidy rows unless tiered billing schema is explicitly implemented.

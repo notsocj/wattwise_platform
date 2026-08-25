@@ -560,7 +560,7 @@ export default async function DashboardPage() {
         <BudgetAlertCard />
         <BudgetWarningFeed />
 
-        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} />
+        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
         </DashboardLiveTelemetry>
 
       </div>
