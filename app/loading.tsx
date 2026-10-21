@@ -3,7 +3,7 @@ import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 export default function AppLoading() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-base text-white tracking-tight">
+    <div className="relative min-h-screen overflow-hidden bg-canvas text-white tracking-tight">
       <div className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2">
         <Image
           src="/wattwise_mascot.png"

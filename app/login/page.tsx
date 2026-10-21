@@ -111,7 +111,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
       <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image

@@ -48,8 +48,8 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
   const header = getHeader(pathname);
 
   return (
-    <div className="min-h-screen bg-base pb-28 text-white">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-28 text-white">
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 pb-4 pt-5">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
@@ -68,7 +68,7 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
 
       <main className="mx-auto w-full max-w-5xl px-5 pt-4">{children}</main>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-base/95 backdrop-blur-sm">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="grid grid-cols-6 px-2 py-3">
           {tabs.map(({ href, label, icon: Icon }) => {
             const isActive = isActiveTab(pathname, href);

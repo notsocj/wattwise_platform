@@ -238,7 +238,7 @@ export default function CalendarAnalyticsClient({
           <button
             type="button"
             onClick={() => void handleConsultAi()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-mint px-4 py-3.5 text-sm font-bold text-base shadow-[0_16px_40px_rgba(0,230,111,0.18)] transition-transform hover:scale-[0.995] active:scale-[0.985]"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-mint px-4 py-3.5 text-sm font-bold text-ink shadow-[0_16px_40px_rgba(0,230,111,0.18)] transition-transform hover:scale-[0.995] active:scale-[0.985]"
           >
             <Sparkles className="h-4 w-4" />
             Consult AI Analytics

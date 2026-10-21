@@ -2,6 +2,7 @@ import Link from "next/link";
 import CalendarAnalyticsClient from "@/components/calendar/CalendarAnalyticsClient";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { getManilaMonthStart, getManilaMonthWindow } from "@/lib/date-utils";
 import {
   aggregateUsageByDay,
   buildMonthGrid,
@@ -21,12 +22,12 @@ function parseMonthParam(raw: string | string[] | undefined): Date {
   const value = Array.isArray(raw) ? raw[0] : raw;
 
   if (!value || !/^\d{4}-\d{2}$/.test(value)) {
-    return new Date();
+    return getManilaMonthStart();
   }
 
   const [yearPart, monthPart] = value.split("-").map(Number);
   if (!yearPart || !monthPart || monthPart < 1 || monthPart > 12) {
-    return new Date();
+    return getManilaMonthStart();
   }
 
   return new Date(yearPart, monthPart - 1, 1);
@@ -64,9 +65,10 @@ export default async function ManagerCalendarPage(props: {
     : searchParams?.device;
   const selectedDevice = snapshot.devices.find((device) => device.id === rawDevice) ?? null;
   const selectedDeviceId = selectedDevice?.id ?? null;
-  const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-  endOfMonth.setHours(23, 59, 59, 999);
+  const { start: startOfMonth, end: endOfMonth } = getManilaMonthWindow(
+    monthDate.getFullYear(),
+    monthDate.getMonth()
+  );
   const prevMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
   const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
 

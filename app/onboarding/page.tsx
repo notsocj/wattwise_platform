@@ -13,7 +13,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-base tracking-tight animate-in fade-in duration-700">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight animate-in fade-in duration-700">
       {/* Top Header Logo */}
         <div className="flex items-center justify-center pt-12 pb-3">
           <h2 className="text-xl font-bold text-white flex items-center">

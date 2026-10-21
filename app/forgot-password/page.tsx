@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <KeyRound className="h-8 w-8 text-bida" />
         </div>
@@ -100,8 +100,8 @@ export default function ForgotPasswordPage() {
           link to set a new password.
         </p>
         <p className="mb-8 max-w-sm text-center text-sm text-white/40">
-          The link will expire in 24 hours. If you don&apos;t receive it, check
-          your spam folder.
+          The link only works for a limited time. If you don&apos;t receive it,
+          check your spam folder.
         </p>
         <Link
           href="/login"
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
       <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="mb-3 flex h-24 w-24 items-center justify-center">
           <Image

@@ -69,7 +69,8 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 ### UI and design system
 
 - Use the existing Space Grotesk typography from `public/fonts` and `app/globals.css`.
-- Use Tailwind utility classes and shared theme tokens such as `bg-base`, `bg-surface`, `text-mint`, `text-bida`, `text-naku`, and `text-danger`.
+- Use Tailwind utility classes and shared theme tokens such as `bg-canvas`, `bg-surface`, `text-mint`, `text-bida`, `text-naku`, and `text-danger`.
+- Use `text-ink` for dark text on mint/bright fills (it stays dark in both themes). Never name a color token after a Tailwind size keyword (`base`, `sm`, `lg`, ...): `--color-base` once turned every `text-base` into a color instead of 16px.
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.
 - Reserve danger red for destructive or safety-critical states only.
 - Reuse shared feedback primitives like `components/ui/LoadingIndicator.tsx` for pending states.

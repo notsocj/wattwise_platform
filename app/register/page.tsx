@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import Link from "next/link";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { getHomePathForRole, type UserRole } from "@/lib/roles";
@@ -44,6 +44,7 @@ export default function RegisterPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
 
   function validateFullName(value = fullName): string | null {
     return value.trim()
@@ -104,7 +105,7 @@ export default function RegisterPage() {
     setLoading(true);
     const supabase = createClient();
     const normalizedEmail = normalizeEmail(email);
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
@@ -121,12 +122,45 @@ export default function RegisterPage() {
       return;
     }
 
+    // With email confirmation enabled, Supabase returns no session until the
+    // user clicks the link, so pushing into the app would bounce to /login.
+    if (!signUpData.session) {
+      setConfirmationEmail(normalizedEmail);
+      return;
+    }
+
     router.push(getHomePathForRole(accountType));
     router.refresh();
   }
 
+  if (confirmationEmail) {
+    return (
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
+          <MailCheck className="h-8 w-8 text-bida" />
+        </div>
+        <h1 className="mb-2 text-2xl font-bold">Confirm Your Email</h1>
+        <p className="mb-8 max-w-sm text-center text-white/50">
+          We sent a confirmation link to{" "}
+          <span className="font-semibold text-mint">{confirmationEmail}</span>. Open it
+          to activate your account, then log in.
+        </p>
+        <p className="mb-8 max-w-sm text-center text-sm text-white/50">
+          If it doesn&apos;t arrive in a few minutes, check your spam folder.
+        </p>
+        <Link
+          href="/login"
+          className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Login
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative flex min-h-screen flex-col bg-base tracking-tight">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
       <div className="flex flex-col items-center px-6 pb-6 pt-16">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image

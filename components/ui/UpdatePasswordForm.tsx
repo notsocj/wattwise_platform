@@ -142,7 +142,7 @@ export default function UpdatePasswordForm({
 
   if (sessionState === "checking") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-base px-6 text-white">
+      <div className="flex min-h-screen items-center justify-center bg-canvas px-6 text-white">
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4">
           <LoadingIndicator size="md" label="Preparing secure session" />
         </div>
@@ -152,7 +152,7 @@ export default function UpdatePasswordForm({
 
   if (success) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <CheckCircle2 className="h-8 w-8 text-bida" />
         </div>
@@ -178,7 +178,7 @@ export default function UpdatePasswordForm({
 
   if (sessionState === "missing") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-base px-6 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10">
           <KeyRound className="h-8 w-8 text-danger" />
         </div>
@@ -207,7 +207,7 @@ export default function UpdatePasswordForm({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base tracking-tight text-white">
+    <div className="flex min-h-screen flex-col bg-canvas tracking-tight text-white">
       <div className="flex flex-col items-center px-6 pb-6 pt-14">
         <div className="mb-3 flex h-20 w-20 items-center justify-center">
           <Image
@@ -315,13 +315,29 @@ export default function UpdatePasswordForm({
         </form>
 
         <div className="mt-6 flex justify-center">
-          <Link
-            href={backHref}
-            className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
+          {mode === "reset" ? (
+            // The recovery link signs the user in; leaving without a new
+            // password must end that session instead of entering the app.
+            <button
+              type="button"
+              onClick={async () => {
+                await createClient().auth.signOut();
+                router.replace("/login");
+              }}
+              className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Login
+            </button>
+          ) : (
+            <Link
+              href={backHref}
+              className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
+          )}
         </div>
       </div>
     </div>

@@ -157,15 +157,40 @@ export default function AddApplianceModal({
       return;
     }
 
-    if (deviceId) {
-      setStep(3);
-      return;
-    }
-
     setIsSavingDevice(true);
     setError(null);
 
     const supabase = createClient();
+
+    // Already registered in this session: persist any edits made after going
+    // back to step 1 so profiling runs against the current MAC, name, and type.
+    if (deviceId) {
+      const { error: updateError } = await supabase
+        .from("devices")
+        .update({
+          mac_address: normalizeMac(macAddress),
+          device_name: deviceName.trim(),
+          appliance_type: applianceType,
+        })
+        .eq("id", deviceId);
+
+      setIsSavingDevice(false);
+      if (updateError) {
+        setApiError(
+          updateError.code === "23505"
+            ? "That MAC address is already registered to another appliance."
+            : "We could not save your changes. Try again."
+        );
+        return;
+      }
+
+      setMacAddress(normalizeMac(macAddress));
+      setDeviceName(deviceName.trim());
+      setStep(3);
+      router.refresh();
+      return;
+    }
+
     const {
       data: { user },
       error: authError,
@@ -225,9 +250,11 @@ export default function AddApplianceModal({
         }
 
         setApiError(
-          existingDevice?.profiled_at
-            ? "This MAC address is already assigned to a completed appliance."
-            : "This device was registered earlier, but WattWise could not resume its setup. Try again."
+          !existingDevice
+            ? "This device is already linked to another WattWise account. Contact support if it belongs to you."
+            : existingDevice.profiled_at
+              ? "This MAC address is already assigned to a completed appliance."
+              : "This device was registered earlier, but WattWise could not resume its setup. Try again."
         );
       } else {
         setApiError("We could not register this appliance. Try again.");
@@ -771,7 +798,7 @@ export default function AddApplianceModal({
                 <button
                   type="submit"
                   disabled={isBusy}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-base transition-all hover:bg-mint/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-ink transition-all hover:bg-mint/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isBusy ? (
                     <>

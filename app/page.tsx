@@ -45,7 +45,7 @@ export default function SplashScreen() {
   return (
     <div
       data-theme="dark"
-      className="relative min-h-screen overflow-hidden bg-base tracking-tight transition-opacity duration-500"
+      className="relative min-h-screen overflow-hidden bg-canvas tracking-tight transition-opacity duration-500"
     >
       {/* Mascot */}
       <div

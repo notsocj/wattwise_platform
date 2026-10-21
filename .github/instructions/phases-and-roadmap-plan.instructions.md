@@ -52,7 +52,7 @@ applyTo: "**"
 
 - [x] **Design System Setup** *(95% complete)*
   - [x] Load **Space Grotesk** from local TTF files in `public/fonts` via `@font-face` in `app/globals.css`
-  - [x] Configure Tailwind 4 custom tokens: `bg-base (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
+  - [x] Configure Tailwind 4 custom tokens: `bg-canvas (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
   - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
   - [x] Add light-mode theme tokens + UI toggle (splash remains dark)
   - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons

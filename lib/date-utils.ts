@@ -48,6 +48,21 @@ export function getManilaDayKey(date: Date): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/** First day of the current Manila month as a civil (server-local) date for month math and labels. */
+export function getManilaMonthStart(date: Date = new Date()): Date {
+  const { year, month } = getManilaDateParts(date);
+  return new Date(year, month - 1, 1);
+}
+
+/** UTC instants bounding a Manila calendar month, for bounded telemetry queries. */
+export function getManilaMonthWindow(year: number, monthIndex: number): { start: Date; end: Date } {
+  const next = addMonths(year, monthIndex, 1);
+  return {
+    start: toUtcDateForManilaMidnight(year, monthIndex, 1),
+    end: new Date(toUtcDateForManilaMidnight(next.year, next.monthIndex, 1).getTime() - 1),
+  };
+}
+
 export function getStartOfManilaDay(date: Date = new Date()): Date {
   const { year, month, day } = getManilaDateParts(date);
   return toUtcDateForManilaMidnight(year, month - 1, day);

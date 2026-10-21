@@ -132,7 +132,7 @@ export default function RouteTransitionIndicator() {
 
   return (
     <div className="pointer-events-none fixed left-1/2 top-3 z-[70] -translate-x-1/2">
-      <div className="rounded-full border border-white/10 bg-base/90 px-3 py-1.5 shadow-lg backdrop-blur-sm">
+      <div className="rounded-full border border-white/10 bg-canvas/90 px-3 py-1.5 shadow-lg backdrop-blur-sm">
         <LoadingIndicator size="sm" label="Loading page" />
       </div>
     </div>

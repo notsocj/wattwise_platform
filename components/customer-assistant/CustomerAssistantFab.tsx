@@ -123,7 +123,7 @@ export default function CustomerAssistantFab() {
           type="button"
           onClick={() => setIsOpen(true)}
           aria-label="Open WattWise AI Assistant"
-          className="pointer-events-auto ml-auto mr-4 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-mint text-base shadow-[0_12px_40px_rgba(0,240,146,0.28)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint active:scale-95"
+          className="pointer-events-auto ml-auto mr-4 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-mint text-ink shadow-[0_12px_40px_rgba(0,240,146,0.28)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint active:scale-95"
         >
           <Sparkles className="h-6 w-6 text-black" aria-hidden="true" />
         </button>
@@ -137,7 +137,7 @@ export default function CustomerAssistantFab() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="customer-assistant-title"
-            className="flex max-h-[78dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-base shadow-2xl"
+            className="flex max-h-[78dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-canvas shadow-2xl"
           >
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20" />
             <header className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
@@ -259,7 +259,7 @@ export default function CustomerAssistantFab() {
               {error ? <p className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">{error}</p> : null}
             </div>
 
-            <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="border-t border-white/[0.07] bg-base p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+            <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="border-t border-white/[0.07] bg-canvas p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
               <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-surface p-1.5 focus-within:border-mint/40">
                 <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} maxLength={1000} disabled={isSending || isLoadingHistory} placeholder="Ask about your energy use..." aria-label="Message WattWise Assistant" className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-white outline-none placeholder:text-white/30 disabled:opacity-50" />
                 <button type="submit" disabled={!input.trim() || isSending || isLoadingHistory} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mint text-black disabled:cursor-not-allowed disabled:opacity-35">

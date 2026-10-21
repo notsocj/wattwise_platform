@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Power } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
@@ -9,17 +10,27 @@ interface RelayToggleProps {
   deviceId: string;
   initialRelayState: boolean;
   variant?: "compact" | "full";
+  onRelayChange?: (relayState: boolean) => void;
 }
 
 export default function RelayToggle({
   deviceId,
   initialRelayState,
   variant = "compact",
+  onRelayChange,
 }: RelayToggleProps) {
+  const router = useRouter();
   const [relayState, setRelayState] = useState(initialRelayState);
+  const [syncedInitialState, setSyncedInitialState] = useState(initialRelayState);
   const [isPending, setIsPending] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
+
+  // Follow server-side changes (budget cutoff, Restore Power, refreshes).
+  if (initialRelayState !== syncedInitialState) {
+    setSyncedInitialState(initialRelayState);
+    setRelayState(initialRelayState);
+  }
 
   useEffect(() => {
     if (!errorToast) {
@@ -67,6 +78,8 @@ export default function RelayToggle({
         setErrorToast(errorMessage);
       } else {
         setSuccessMessage(`Device turned ${newState ? "on" : "off"}.`);
+        onRelayChange?.(newState);
+        router.refresh();
       }
     } catch {
       setRelayState(!newState);

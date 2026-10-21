@@ -5,7 +5,7 @@ import LoadingIndicator, {
 
 export default function DeviceDetailLoading() {
   return (
-    <div className="min-h-screen bg-base text-white pb-8">
+    <div className="min-h-screen bg-canvas text-white pb-8">
       <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <LoadingSkeleton className="h-8 w-8 rounded-lg" />

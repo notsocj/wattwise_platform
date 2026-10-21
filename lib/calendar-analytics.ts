@@ -1,3 +1,4 @@
+import { getManilaDayKey, getManilaMonthStart } from "@/lib/date-utils";
 import { computeMeralcoBill, type MeralcoRateComponents } from "@/lib/meralco-rates";
 
 export type UsageByDeviceDayRow = {
@@ -28,11 +29,22 @@ function toNumber(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export function formatDayKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+// Calendar cells are civil dates stored at UTC midnight and read with UTC
+// getters, so the grid is independent of the server's timezone.
+function toCivilDate(year: number, monthIndex: number, day: number): Date {
+  return new Date(Date.UTC(year, monthIndex, day));
+}
+
+function manilaCivilDate(instant: Date): Date {
+  return new Date(`${getManilaDayKey(instant)}T00:00:00Z`);
+}
+
+function addCivilDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * 86400000);
+}
+
+function formatDayKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 export function aggregateUsageByDay(
@@ -81,13 +93,13 @@ function buildSummary(
 ): CalendarDailySummary {
   return {
     dayKey: formatDayKey(date),
-    dayNumber: date.getDate(),
-    weekdayShort: WEEKDAY_LABELS[date.getDay()],
+    dayNumber: date.getUTCDate(),
+    weekdayShort: WEEKDAY_LABELS[date.getUTCDay()],
     kwh: Number(usageKwh.toFixed(2)),
     costPhp: Number(computeMeralcoBill(usageKwh, rates, vatRate).toFixed(2)),
     intensity: getIntensity(usageKwh, maxUsageKwh),
-    isToday: formatDayKey(date) === formatDayKey(new Date()),
-    isCurrentMonth: date.getMonth() === currentMonth,
+    isToday: formatDayKey(date) === getManilaDayKey(new Date()),
+    isCurrentMonth: date.getUTCMonth() === currentMonth,
   };
 }
 
@@ -97,17 +109,12 @@ export function buildWeekSummaries(params: {
   rates: MeralcoRateComponents;
   vatRate: number;
 }): CalendarDailySummary[] {
-  const endDate = params.endDate ? new Date(params.endDate) : new Date();
-  endDate.setHours(0, 0, 0, 0);
-
-  const startDate = new Date(endDate);
-  startDate.setDate(endDate.getDate() - 6);
+  const endDate = manilaCivilDate(params.endDate ?? new Date());
+  const startDate = addCivilDays(endDate, -6);
 
   const dates: Date[] = [];
   for (let index = 0; index < 7; index += 1) {
-    const nextDate = new Date(startDate);
-    nextDate.setDate(startDate.getDate() + index);
-    dates.push(nextDate);
+    dates.push(addCivilDays(startDate, index));
   }
 
   const maxUsageKwh = dates.reduce((maxValue, date) => {
@@ -118,7 +125,7 @@ export function buildWeekSummaries(params: {
   return dates.map((date) =>
     buildSummary(
       date,
-      date.getMonth(),
+      date.getUTCMonth(),
       params.usageByDay.get(formatDayKey(date)) ?? 0,
       maxUsageKwh,
       params.rates,
@@ -133,23 +140,22 @@ export function buildMonthGrid(params: {
   rates: MeralcoRateComponents;
   vatRate: number;
 }): CalendarDailySummary[][] {
-  const monthDate = params.monthDate ? new Date(params.monthDate) : new Date();
+  // monthDate is a civil month (e.g. new Date(2026, 9, 1)); read its local parts.
+  const monthDate = params.monthDate ?? getManilaMonthStart();
+  const year = monthDate.getFullYear();
   const currentMonth = monthDate.getMonth();
-  const startOfMonth = new Date(monthDate.getFullYear(), currentMonth, 1);
-  const endOfMonth = new Date(monthDate.getFullYear(), currentMonth + 1, 0);
+  const startOfMonth = toCivilDate(year, currentMonth, 1);
+  const endOfMonth = toCivilDate(year, currentMonth + 1, 0);
 
-  const gridStart = new Date(startOfMonth);
-  gridStart.setDate(startOfMonth.getDate() - startOfMonth.getDay());
-
-  const gridEnd = new Date(endOfMonth);
-  gridEnd.setDate(endOfMonth.getDate() + (6 - endOfMonth.getDay()));
+  const gridStart = addCivilDays(startOfMonth, -startOfMonth.getUTCDay());
+  const gridEnd = addCivilDays(endOfMonth, 6 - endOfMonth.getUTCDay());
 
   const dates: Date[] = [];
-  for (let cursor = new Date(gridStart); cursor <= gridEnd; cursor.setDate(cursor.getDate() + 1)) {
-    dates.push(new Date(cursor));
+  for (let cursor = gridStart; cursor <= gridEnd; cursor = addCivilDays(cursor, 1)) {
+    dates.push(cursor);
   }
 
-  const monthDates = dates.filter((date) => date.getMonth() === currentMonth);
+  const monthDates = dates.filter((date) => date.getUTCMonth() === currentMonth);
   const maxUsageKwh = monthDates.reduce((maxValue, date) => {
     const nextValue = params.usageByDay.get(formatDayKey(date)) ?? 0;
     return Math.max(maxValue, nextValue);

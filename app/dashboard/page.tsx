@@ -165,8 +165,8 @@ function TenantDashboardNotice({
   description: string;
 }) {
   return (
-    <div className="min-h-screen bg-base pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-24 text-white">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pb-4 pt-5">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold tracking-tight">
@@ -454,11 +454,11 @@ export default async function DashboardPage() {
     activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
 
   return (
-    <div className="min-h-screen bg-base text-white pb-24">
+    <div className="min-h-screen bg-canvas text-white pb-24">
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
 
       {/* ===== Header ===== */}
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold tracking-tight">

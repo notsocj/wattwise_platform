@@ -42,7 +42,8 @@
 
 @theme {
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --color-base: #121212;
+  --color-canvas: #121212;
+  --color-ink: #121212;
   --color-surface: #1E1E1E;
   --color-mint: #00E66F;
   --color-bida: #10B981;
@@ -52,7 +53,7 @@
 
 :root,
 [data-theme="dark"] {
-  --color-base: #121212;
+  --color-canvas: #121212;
   --color-surface: #1E1E1E;
   --color-text: #ffffff;
   --chart-axis: rgba(255, 255, 255, 0.4);
@@ -60,7 +61,7 @@
 }
 
 [data-theme="light"] {
-  --color-base: #f5f6f8;
+  --color-canvas: #f5f6f8;
   --color-surface: #ffffff;
   --color-text: #0f1115;
   --chart-axis: rgba(15, 17, 21, 0.45);
@@ -68,7 +69,7 @@
 }
 
 body {
-  background: var(--color-base);
+  background: var(--color-canvas);
   color: var(--color-text);
   font-family: var(--font-sans);
 }

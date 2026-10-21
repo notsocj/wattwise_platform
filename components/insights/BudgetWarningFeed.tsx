@@ -41,7 +41,7 @@ export default async function BudgetWarningFeed() {
         <h2 className="text-sm font-bold uppercase tracking-wider">Budget alerts</h2>
       </div>
       {events.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-base/30 p-3 text-sm text-white/50">
+        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-canvas/30 p-3 text-sm text-white/50">
           <CheckCircle2 className="h-4 w-4 text-bida" />
           No budget alerts yet.
         </div>

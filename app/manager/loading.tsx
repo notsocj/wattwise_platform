@@ -38,8 +38,8 @@ function RoomSkeleton() {
 
 export default function ManagerLoading() {
   return (
-    <div className="min-h-screen bg-base pb-28 text-white">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-28 text-white">
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 pb-4 pt-5">
           <div className="min-w-0">
             <LoadingSkeleton className="h-3 w-28 rounded" />
@@ -87,7 +87,7 @@ export default function ManagerLoading() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-base/95 backdrop-blur-sm">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="grid grid-cols-6 px-2 py-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div

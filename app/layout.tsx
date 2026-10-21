@@ -37,7 +37,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" data-theme="dark">
-      <body suppressHydrationWarning className="antialiased bg-base text-white">
+      <body suppressHydrationWarning className="antialiased bg-canvas text-white">
         <SupabaseProvider session={session}>
           <OneSignalIdentityBridge
             appId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID ?? null}

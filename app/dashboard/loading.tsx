@@ -31,8 +31,8 @@ function DeviceCardSkeleton() {
 
 export default function DashboardLoading() {
   return (
-    <div className="min-h-screen bg-base text-white pb-24">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas text-white pb-24">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <LoadingSkeleton className="h-6 w-32 rounded-md" />
           <LoadingIndicator size="sm" label="Loading dashboard" />

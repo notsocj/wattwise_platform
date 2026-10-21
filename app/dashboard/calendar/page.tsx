@@ -6,6 +6,7 @@ import LogoutButton from "@/components/ui/LogoutButton";
 import CalendarAnalyticsClient from "@/components/calendar/CalendarAnalyticsClient";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { getManilaMonthStart, getManilaMonthWindow } from "@/lib/date-utils";
 import {
   aggregateUsageByDay,
   buildMonthGrid,
@@ -24,12 +25,12 @@ function parseMonthParam(raw: string | string[] | undefined): Date {
   const value = Array.isArray(raw) ? raw[0] : raw;
 
   if (!value || !/^\d{4}-\d{2}$/.test(value)) {
-    return new Date();
+    return getManilaMonthStart();
   }
 
   const [yearPart, monthPart] = value.split("-").map(Number);
   if (!yearPart || !monthPart || monthPart < 1 || monthPart > 12) {
-    return new Date();
+    return getManilaMonthStart();
   }
 
   return new Date(yearPart, monthPart - 1, 1);
@@ -56,9 +57,10 @@ export default async function DashboardCalendarPage(props: {
 
   const searchParams = props.searchParams ? await props.searchParams : undefined;
   const monthDate = parseMonthParam(searchParams?.month);
-  const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-  endOfMonth.setHours(23, 59, 59, 999);
+  const { start: startOfMonth, end: endOfMonth } = getManilaMonthWindow(
+    monthDate.getFullYear(),
+    monthDate.getMonth()
+  );
   const prevMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
   const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
 
@@ -90,8 +92,8 @@ export default async function DashboardCalendarPage(props: {
   }));
 
   return (
-    <div className="min-h-screen bg-base pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-24 text-white">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-5">
           <div className="flex items-center gap-3">
             <Link

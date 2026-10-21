@@ -1,6 +1,6 @@
 export default function DashboardCalendarLoading() {
   return (
-    <div className="min-h-screen bg-base px-5 pt-[92px] text-white">
+    <div className="min-h-screen bg-canvas px-5 pt-[92px] text-white">
       <div className="animate-pulse space-y-4">
         <div className="rounded-xl border border-white/[0.06] bg-surface p-5">
           <div className="h-3 w-28 rounded bg-white/[0.08]" />

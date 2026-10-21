@@ -47,8 +47,8 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-24 text-white">
+      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-5 pb-4 pt-5">
           <div className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-mint" />

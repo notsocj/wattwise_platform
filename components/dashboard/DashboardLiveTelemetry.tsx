@@ -225,6 +225,13 @@ export default function DashboardLiveTelemetry({
                       deviceId={device.id}
                       initialRelayState={device.relayState}
                       variant="compact"
+                      onRelayChange={(relayState) =>
+                        setDevices((currentDevices) =>
+                          currentDevices.map((current) =>
+                            current.id === device.id ? { ...current, relayState } : current
+                          )
+                        )
+                      }
                     />
                   ) : null}
                 </div>

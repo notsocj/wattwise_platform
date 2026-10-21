@@ -22,11 +22,11 @@ export default async function ReportsPage({
     : "monthly";
 
   return (
-    <div className="min-h-screen bg-base pb-24 text-white print:bg-white print:text-black">
+    <div className="min-h-screen bg-canvas pb-24 text-white print:bg-white print:text-black">
       <header className="mx-auto flex max-w-[760px] items-center justify-between border-b border-white/10 px-5 py-5 print:border-black/10">
         <div><p className="text-xs uppercase tracking-widest text-mint print:text-black/60">WattWise</p><h1 className="text-2xl font-bold">Energy Reports</h1></div>
         <div className="flex items-center gap-2 print:hidden">
-          <a className="rounded-lg bg-mint px-3 py-2 text-xs font-bold text-base" href={`/api/reports?period=${period}&format=pdf`}>Download PDF</a>
+          <a className="rounded-lg bg-mint px-3 py-2 text-xs font-bold text-ink" href={`/api/reports?period=${period}&format=pdf`}>Download PDF</a>
           <a className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold" href={`/api/reports?period=${period}&format=csv`}>CSV</a>
           <LogoutButton />
         </div>

@@ -13,6 +13,7 @@ import {
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import TelemetryFreshnessBadge from "@/components/dashboard/TelemetryFreshnessBadge";
 import RestorePowerButton from "@/components/ui/RestorePowerButton";
 import TipidTipCard from "@/components/insights/TipidTipCard";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
@@ -434,7 +435,7 @@ export default async function DeviceDetailPage(props: {
   const burnTone = getBudgetToneClasses(burnPercent);
 
   return (
-    <div className="min-h-screen bg-base text-white pb-8">
+    <div className="min-h-screen bg-canvas text-white pb-8">
       <RealtimeRefreshBridge deviceKeys={[deviceData.id, deviceData.mac_address]} />
 
       {/* ===== Header ===== */}
@@ -455,7 +456,8 @@ export default async function DeviceDetailPage(props: {
             Device ID: {device.deviceCode} • <span className={`inline-flex items-center gap-1 ${deviceData.relay_state !== false ? "text-mint" : "text-white/60"}`}>
               <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? "text-mint" : "text-white/30"}`} />
               {deviceData.relay_state !== false ? "ON" : "OFF"}
-            </span>
+            </span>{" "}
+            • <TelemetryFreshnessBadge recordedAt={latestLog?.recorded_at ?? null} />
           </p>
         </div>
         </div>

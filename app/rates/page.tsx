@@ -63,8 +63,8 @@ export default async function RatesPage() {
   const history = await getMeralcoRateHistory(supabase);
   const current = history[0];
 
-  return <div className="min-h-screen bg-base pb-24 text-white">
-    <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-base/95 backdrop-blur-sm">
+  return <div className="min-h-screen bg-canvas pb-24 text-white">
+    <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
       <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-5">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/70 transition-colors hover:text-mint" aria-label="Back to dashboard"><ArrowLeft className="h-4 w-4" /></Link>
