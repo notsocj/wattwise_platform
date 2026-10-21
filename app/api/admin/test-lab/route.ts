@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import {
   getCycleStartDate,
   getVariableRatePerKwh,

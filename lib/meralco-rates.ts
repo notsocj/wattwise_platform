@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { getManilaDayKey } from "@/lib/date-utils";
 
 export type MeralcoRateComponents = {
@@ -62,7 +61,7 @@ export type MeralcoRateProvenance = {
   autoUpdated: boolean;
 };
 
-const MERALCO_RATE_SELECT =
+export const MERALCO_RATE_SELECT =
   "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
 
 function toNumber(value: number | string): number {
@@ -85,7 +84,7 @@ export function mapMeralcoRatesRowToComponents(
   };
 }
 
-export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
+export type ActiveMeralcoRates = {
   rates: MeralcoRateComponents;
   fixedCharges: MeralcoFixedCharges;
   fixedMonthlyChargesPhp: number;
@@ -93,20 +92,17 @@ export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<{
   effectiveMonth: string;
   source: "table";
   provenance: MeralcoRateProvenance;
-}> {
-  const todayIso = getManilaDayKey(new Date());
+};
 
-  const { data, error } = await supabase
-    .from("meralco_rates")
-    .select(MERALCO_RATE_SELECT)
-    .lte("effective_month", todayIso)
-    .order("effective_month", { ascending: false })
-    .limit(1)
-    .maybeSingle<MeralcoRatesRow>();
+// The selectors below work on every meralco_rates row sorted by
+// effective_month ascending; lib/meralco-rates-server.ts loads and caches them.
 
-  if (error) {
-    throw new Error(`Failed to fetch meralco_rates: ${error.message || "unknown error"}`);
-  }
+export function selectActiveMeralcoRates(
+  rows: MeralcoRatesRow[],
+  now: Date = new Date()
+): ActiveMeralcoRates {
+  const todayIso = getManilaDayKey(now);
+  const data = [...rows].reverse().find((row) => row.effective_month <= todayIso) ?? null;
 
   if (!data) {
     throw new Error(
@@ -154,21 +150,14 @@ function mapRowToHistoricalRate(row: MeralcoRatesRow): HistoricalMeralcoRateRow 
   };
 }
 
-export async function getMeralcoRateHistory(
-  supabase: SupabaseClient,
+export function selectMeralcoRateHistory(
+  rows: MeralcoRatesRow[],
   limit = 24
-): Promise<HistoricalMeralcoRateRow[]> {
-  const { data, error } = await supabase
-    .from("meralco_rates")
-    .select(MERALCO_RATE_SELECT)
-    .order("effective_month", { ascending: false })
-    .limit(Math.min(60, Math.max(1, limit)));
-
-  if (error) {
-    throw new Error(`Failed to fetch meralco_rates history: ${error.message || "unknown error"}`);
-  }
-
-  return ((data ?? []) as MeralcoRatesRow[]).map(mapRowToHistoricalRate);
+): HistoricalMeralcoRateRow[] {
+  return [...rows]
+    .reverse()
+    .slice(0, Math.min(60, Math.max(1, limit)))
+    .map(mapRowToHistoricalRate);
 }
 
 function getApplicableRateForDay(
@@ -198,24 +187,13 @@ function toUsageNumber(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export async function getMeralcoRatesForRange(
-  supabase: SupabaseClient,
+export function selectMeralcoRatesForRange(
+  allRows: MeralcoRatesRow[],
   startDate: Date,
   endDate: Date
-): Promise<HistoricalMeralcoRateRow[]> {
+): HistoricalMeralcoRateRow[] {
   const endDayKey = getManilaDayKey(endDate);
-
-  const { data, error } = await supabase
-    .from("meralco_rates")
-    .select(MERALCO_RATE_SELECT)
-    .lte("effective_month", endDayKey)
-    .order("effective_month", { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch meralco_rates range: ${error.message || "unknown error"}`);
-  }
-
-  const rows = (data ?? []) as MeralcoRatesRow[];
+  const rows = allRows.filter((row) => row.effective_month <= endDayKey);
   if (!rows.length) {
     throw new Error(
       "No applicable meralco_rates rows found for the requested date range."

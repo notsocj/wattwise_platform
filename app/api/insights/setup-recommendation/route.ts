@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import OpenAI from "openai";
 import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
-  getActiveMeralcoRates,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import { ApplianceType } from "@/lib/constants";
 
 const TYPICAL_WATTS: Record<ApplianceType, number> = {
@@ -18,9 +19,7 @@ const TYPICAL_WATTS: Record<ApplianceType, number> = {
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

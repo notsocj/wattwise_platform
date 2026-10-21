@@ -1,11 +1,11 @@
 import Link from "next/link";
+import { getSessionUser } from "@/lib/auth-context";
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import PageHeader from "@/components/ui/PageHeader";
 import { FileText } from "lucide-react";
 import ReportTable from "@/components/reports/ReportTable";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
-import { createClient } from "@/lib/supabase/server";
 
 const periods = ["daily", "weekly", "monthly"] as const;
 
@@ -14,8 +14,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const params = await searchParams;

@@ -1,9 +1,10 @@
 import PageHeader from "@/components/ui/PageHeader";
+import { getSessionUser } from "@/lib/auth-context";
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import CalendarAnalyticsClient from "@/components/calendar/CalendarAnalyticsClient";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import { getManilaMonthStart, getManilaMonthWindow } from "@/lib/date-utils";
 import {
   aggregateUsageByDay,
@@ -45,9 +46,7 @@ export default async function DashboardCalendarPage(props: {
 }) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");

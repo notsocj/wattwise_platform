@@ -1,13 +1,12 @@
 import "server-only";
+import { getSessionUser } from "@/lib/auth-context";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function requireAdminApi() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user)
     return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   const { data: profile } = await supabase

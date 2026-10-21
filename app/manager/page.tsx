@@ -1,4 +1,5 @@
 import ManagerFleetDashboard from "@/components/manager/ManagerFleetDashboard";
+import { Suspense } from "react";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import { getManagerFleetSnapshot, requireManagerPage } from "@/lib/manager-data";
 import BudgetWarningFeed from "@/components/insights/BudgetWarningFeed";
@@ -17,7 +18,9 @@ export default async function ManagerPage() {
   return (
     <>
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
-      <BudgetWarningFeed />
+      <Suspense fallback={null}>
+        <BudgetWarningFeed />
+      </Suspense>
       <ManagerFleetDashboard snapshot={snapshot} />
     </>
   );

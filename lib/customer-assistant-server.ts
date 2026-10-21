@@ -6,8 +6,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
 import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
-  getMeralcoRatesForRange,
 } from "@/lib/meralco-rates";
+import { getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import {
   CUSTOMER_ASSISTANT_PROPOSAL_TTL_MS,
   MAX_PESO_VALUE,

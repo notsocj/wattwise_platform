@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
 import { computeUsageKwhByDeviceFromLogs } from "@/lib/energy-usage";
 import {
   computeHistoricalVariableSpendForDay,
-  getActiveMeralcoRates,
-  getMeralcoRatesForRange,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import {
   getEndOfManilaDay,
   getManilaDayKey,
@@ -54,9 +54,7 @@ function csvCell(value: string | number | null): string {
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

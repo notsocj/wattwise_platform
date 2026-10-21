@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { startQuery } from "@/lib/start-query";
+import { getSessionUser } from "@/lib/auth-context";
 import { redirect } from "next/navigation";
 import {
   ArrowLeft,
@@ -10,10 +12,9 @@ import { fetchOwnedDeviceById } from "@/lib/dashboard-data";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
-  getActiveMeralcoRates,
-  getMeralcoRatesForRange,
   computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import TelemetryFreshnessBadge from "@/components/dashboard/TelemetryFreshnessBadge";
@@ -101,9 +102,7 @@ export default async function DeviceDetailPage(props: {
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");
@@ -111,17 +110,37 @@ export default async function DeviceDetailPage(props: {
 
   const now = new Date();
 
-  const [{ data: profileData }, activeRates] = await Promise.all([
+  const profilePromise = startQuery(
     supabase
       .from("profiles")
       .select("monthly_budget_php, billing_cycle_start_day, role")
       .eq("id", user.id)
-      .maybeSingle<ProfileRow>(),
+      .maybeSingle<ProfileRow>()
+  );
+  // The middleware forwards the role, so the device lookup need not wait for
+  // the profile; fall back to the profile's role if it is missing.
+  const role = user.role ?? (await profilePromise).data?.role ?? null;
+  const isTenant = role === "tenant";
+  // Owners bill on their own cycle day, which the middleware forwards; start
+  // that query now and use it below only if the profile agrees.
+  const forwardedCycle =
+    user.role && user.role !== "tenant" && user.billingCycleStartDay
+      ? getCurrentBillingCycle(user.billingCycleStartDay, now)
+      : null;
+  const forwardedCycleUsagePromise = forwardedCycle
+    ? startQuery(
+        supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: forwardedCycle.startDate.toISOString(),
+          p_end: now.toISOString(),
+        })
+      )
+    : null;
+
+  const [{ data: profileData }, activeRates, deviceData, devicesCountRes] = await Promise.all([
+    profilePromise,
     getActiveMeralcoRates(supabase),
-  ]);
-  const isTenant = profileData?.role === "tenant";
-  const [deviceData, devicesCountRes] = await Promise.all([
-    fetchOwnedDeviceById(supabase, user.id, deviceId, profileData?.role),
+    fetchOwnedDeviceById(supabase, user.id, deviceId, role),
     supabase
       .from("devices")
       .select("id", { count: "exact", head: true })
@@ -148,13 +167,16 @@ export default async function DeviceDetailPage(props: {
 
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
 
-  const [rateRows, usageByDeviceDayRes, usagePeriodsRes, monthUsageRes] = await Promise.all([
+  const [rateRows, usageByDeviceDayRes, usagePeriodsRes, monthUsageRes, latestTelemetryResult] = await Promise.all([
     getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
-    supabase.rpc("get_usage_kwh_by_device_day", {
-      p_user_id: user.id,
-      p_start: billingCycle.startDate.toISOString(),
-      p_end: now.toISOString(),
-    }),
+    forwardedCycleUsagePromise &&
+    forwardedCycle?.startDate.getTime() === billingCycle.startDate.getTime()
+      ? forwardedCycleUsagePromise
+      : supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: billingCycle.startDate.toISOString(),
+          p_end: now.toISOString(),
+        }),
     supabase.rpc("get_device_usage_periods", {
       p_user_id: user.id,
       p_device_id: deviceData.id,
@@ -166,15 +188,14 @@ export default async function DeviceDetailPage(props: {
       .eq("device_id", deviceData.id)
       .eq("month_start", getManilaDayKey(billingCycle.startDate))
       .maybeSingle<DeviceMonthUsageRow>(),
+    supabase
+      .from("energy_logs")
+      .select("energy_kwh, average_watts, voltage_v, current_a, recorded_at")
+      .in("device_id", [deviceData.id, deviceData.mac_address])
+      .order("recorded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<EnergyLogRow>(),
   ]);
-
-  const latestTelemetryResult = await supabase
-    .from("energy_logs")
-    .select("energy_kwh, average_watts, voltage_v, current_a, recorded_at")
-    .in("device_id", [deviceData.id, deviceData.mac_address])
-    .order("recorded_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<EnergyLogRow>();
 
   let latestLog: EnergyLogRow | null = null;
 

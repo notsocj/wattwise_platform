@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import OpenAI from "openai";
 import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import {
@@ -7,7 +8,8 @@ import {
   type ProfileTelemetrySample,
 } from "@/lib/device-profile-telemetry";
 import { createClient } from "@/lib/supabase/server";
-import { computeMeralcoBill, getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { computeMeralcoBill } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 
 const FALLBACK_PROMPT_RATE_PHP_PER_KWH = 12;
 const AI_SAFETY_FACTOR_PHP_PER_KWH = 12;
@@ -103,9 +105,7 @@ export async function POST(
   const { deviceId } = await props.params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

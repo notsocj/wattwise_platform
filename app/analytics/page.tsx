@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { startQuery } from "@/lib/start-query";
+import { getSessionUser } from "@/lib/auth-context";
 import PageHeader from "@/components/ui/PageHeader";
 import {
   AlertTriangle,
@@ -17,10 +19,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendByDay,
   computeHistoricalVariableSpendFromDayRows,
-  getActiveMeralcoRates,
-  getMeralcoRatesForRange,
   computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import {
   getCurrentBillingCycle,
   getEndOfManilaDay,
@@ -85,9 +86,7 @@ function TenantBurnNotice({
 export default async function AnalyticsPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");
@@ -97,6 +96,38 @@ export default async function AnalyticsPage() {
   const startOfToday = getStartOfManilaDay(now);
   const startOfSevenDayWindow = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
   const endOfToday = getEndOfManilaDay(now);
+
+  const sevenDayUsagePromise = startQuery(
+    supabase.rpc("get_usage_kwh_by_device_day", {
+      p_user_id: user.id,
+      p_start: startOfSevenDayWindow.toISOString(),
+      p_end: endOfToday.toISOString(),
+    })
+  );
+  const tenantDevicesPromise =
+    user.role === "tenant"
+      ? startQuery(
+          supabase
+            .from("devices")
+            .select("owner_id, user_approved_limit_php")
+            .eq("tenant_id", user.id)
+        )
+      : null;
+  // Owners bill on their own cycle day, which the middleware forwards; start
+  // that query now and use it below only if the profile agrees.
+  const forwardedCycle =
+    user.role && user.role !== "tenant" && user.billingCycleStartDay
+      ? getCurrentBillingCycle(user.billingCycleStartDay, now)
+      : null;
+  const forwardedCycleUsagePromise = forwardedCycle
+    ? startQuery(
+        supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: forwardedCycle.startDate.toISOString(),
+          p_end: now.toISOString(),
+        })
+      )
+    : null;
 
   const [profileResult, activeRates] = await Promise.all([
     supabase
@@ -112,10 +143,11 @@ export default async function AnalyticsPage() {
   let billingCycleStartDay = profile?.billing_cycle_start_day ?? 1;
 
   if (isTenant) {
-    const { data: assignedDevices } = await supabase
-      .from("devices")
-      .select("owner_id, user_approved_limit_php")
-      .eq("tenant_id", user.id);
+    const { data: assignedDevices } = await (tenantDevicesPromise ??
+      supabase
+        .from("devices")
+        .select("owner_id, user_approved_limit_php")
+        .eq("tenant_id", user.id));
     const tenantLimit = (assignedDevices ?? []).reduce(
       (sum, device) => sum + toNumber(device.user_approved_limit_php),
       0
@@ -161,16 +193,15 @@ export default async function AnalyticsPage() {
       : startOfSevenDayWindow;
   const [rateRows, cycleUsageByDayRes, sevenDayUsageRes] = await Promise.all([
     getMeralcoRatesForRange(supabase, rateRangeStart, now),
-    supabase.rpc("get_usage_kwh_by_device_day", {
-      p_user_id: user.id,
-      p_start: billingCycle.startDate.toISOString(),
-      p_end: now.toISOString(),
-    }),
-    supabase.rpc("get_usage_kwh_by_device_day", {
-      p_user_id: user.id,
-      p_start: startOfSevenDayWindow.toISOString(),
-      p_end: endOfToday.toISOString(),
-    }),
+    forwardedCycleUsagePromise &&
+    forwardedCycle?.startDate.getTime() === billingCycle.startDate.getTime()
+      ? forwardedCycleUsagePromise
+      : supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: billingCycle.startDate.toISOString(),
+          p_end: now.toISOString(),
+        }),
+    sevenDayUsagePromise,
   ]);
 
   const cycleUsageByDayRows = (cycleUsageByDayRes.data ?? []) as UsageByDeviceDayRow[];

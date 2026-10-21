@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth-context";
 import UpdatePasswordForm from "@/components/ui/UpdatePasswordForm";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function UpdatePasswordPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");

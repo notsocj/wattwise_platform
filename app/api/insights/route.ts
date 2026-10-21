@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import OpenAI from "openai";
 import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getActiveMeralcoRates,
   computeHistoricalVariableSpendByDeviceFromDayRows,
   computeHistoricalVariableSpendFromDayRows,
-  getMeralcoRatesForRange,
   computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import { InsightType } from "@/lib/constants";
 import {
   createEmptyStructuredInsights,
@@ -115,9 +115,7 @@ export async function POST(request: NextRequest) {
     const typedInsightType = insightType as InsightType;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getSessionUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import OpenAI from "openai";
 import { OPENAI_CHAT_MODEL } from "@/lib/openai";
-import { createClient } from "@/lib/supabase/server";
 import type {
   CalendarAnalyticsDayPayload,
   CalendarAnalyticsRequest,
@@ -90,11 +90,8 @@ function buildFallbackResponse(
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

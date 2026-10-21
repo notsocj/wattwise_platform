@@ -1,7 +1,7 @@
 import Link from "next/link";
 import CalendarAnalyticsClient from "@/components/calendar/CalendarAnalyticsClient";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMeralcoRates } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import { getManilaMonthStart, getManilaMonthWindow } from "@/lib/date-utils";
 import {
   aggregateUsageByDay,

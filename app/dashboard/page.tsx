@@ -5,6 +5,9 @@ import {
   Wallet,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
+import { Suspense } from "react";
+import { startQuery } from "@/lib/start-query";
+import { getSessionUser } from "@/lib/auth-context";
 import PageHeader from "@/components/ui/PageHeader";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
@@ -17,10 +20,9 @@ import { fetchDashboardDevices } from "@/lib/dashboard-data";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendFromDayRows,
-  getActiveMeralcoRates,
-  getMeralcoRatesForRange,
   computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
+import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import {
   aggregateUsageByDay,
   buildWeekSummaries,
@@ -86,13 +88,60 @@ function toNumber(value: number | string | null): number {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  // These only need the user id and the current time, so start them now and
+  // await them later instead of waiting for the profile and device lookups.
+  const now = new Date();
+  const startOfDay = getStartOfManilaDay(now);
+  const startOfYesterday = new Date(startOfDay.getTime() - DAY_MS);
+  const endOfYesterday = new Date(startOfDay.getTime() - 1);
+  const startOfSevenDayWindow = new Date(startOfDay.getTime() - 6 * DAY_MS);
+  const endOfToday = getEndOfManilaDay(now);
+  const latestReadingsPromise = startQuery(
+    supabase.rpc("get_latest_device_readings", { p_user_id: user.id })
+  );
+  const dailyUsagePromise = startQuery(
+    supabase.rpc("get_usage_kwh_by_device", {
+      p_user_id: user.id,
+      p_start: startOfDay.toISOString(),
+      p_end: now.toISOString(),
+    })
+  );
+  const yesterdayUsagePromise = startQuery(
+    supabase.rpc("get_usage_kwh_by_device", {
+      p_user_id: user.id,
+      p_start: startOfYesterday.toISOString(),
+      p_end: endOfYesterday.toISOString(),
+    })
+  );
+  const sevenDayUsagePromise = startQuery(
+    supabase.rpc("get_usage_kwh_by_device_day", {
+      p_user_id: user.id,
+      p_start: startOfSevenDayWindow.toISOString(),
+      p_end: endOfToday.toISOString(),
+    })
+  );
+
+  // Owners bill on their own cycle day, which the middleware forwards; start
+  // that query now and use it below only if the profile agrees.
+  const forwardedCycle =
+    user.role && user.role !== "tenant" && user.billingCycleStartDay
+      ? getCurrentBillingCycle(user.billingCycleStartDay, now)
+      : null;
+  const forwardedCycleUsagePromise = forwardedCycle
+    ? startQuery(
+        supabase.rpc("get_usage_kwh_by_device_day", {
+          p_user_id: user.id,
+          p_start: forwardedCycle.startDate.toISOString(),
+          p_end: now.toISOString(),
+        })
+      )
+    : null;
 
   const [profileResult, activeRates, devicesRows] = await Promise.all([
     supabase
@@ -134,7 +183,6 @@ export default async function DashboardPage() {
   }
 
   const deviceIds = devicesRows.map((device) => device.id);
-  const now = new Date();
   let billingCycleStartDay = profileData?.billing_cycle_start_day ?? 1;
   if (isTenant) {
     const ownerId = devicesRows.find((device) => device.owner_id)?.owner_id;
@@ -149,11 +197,6 @@ export default async function DashboardPage() {
   }
 
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
-  const startOfDay = getStartOfManilaDay(now);
-  const startOfYesterday = new Date(startOfDay.getTime() - DAY_MS);
-  const endOfYesterday = new Date(startOfDay.getTime() - 1);
-  const startOfSevenDayWindow = new Date(startOfDay.getTime() - 6 * DAY_MS);
-  const endOfToday = getEndOfManilaDay(now);
   const rateRangeStart =
     billingCycle.startDate.getTime() < startOfSevenDayWindow.getTime()
       ? billingCycle.startDate
@@ -169,29 +212,18 @@ export default async function DashboardPage() {
   ] = deviceIds.length
     ? await Promise.all([
         getMeralcoRatesForRange(supabase, rateRangeStart, now),
-        supabase.rpc("get_latest_device_readings", {
-          p_user_id: user.id,
-        }),
-        supabase.rpc("get_usage_kwh_by_device", {
-          p_user_id: user.id,
-          p_start: startOfDay.toISOString(),
-          p_end: now.toISOString(),
-        }),
-        supabase.rpc("get_usage_kwh_by_device", {
-          p_user_id: user.id,
-          p_start: startOfYesterday.toISOString(),
-          p_end: endOfYesterday.toISOString(),
-        }),
-        supabase.rpc("get_usage_kwh_by_device_day", {
-          p_user_id: user.id,
-          p_start: billingCycle.startDate.toISOString(),
-          p_end: now.toISOString(),
-        }),
-        supabase.rpc("get_usage_kwh_by_device_day", {
-          p_user_id: user.id,
-          p_start: startOfSevenDayWindow.toISOString(),
-          p_end: endOfToday.toISOString(),
-        }),
+        latestReadingsPromise,
+        dailyUsagePromise,
+        yesterdayUsagePromise,
+        forwardedCycleUsagePromise &&
+        forwardedCycle?.startDate.getTime() === billingCycle.startDate.getTime()
+          ? forwardedCycleUsagePromise
+          : supabase.rpc("get_usage_kwh_by_device_day", {
+              p_user_id: user.id,
+              p_start: billingCycle.startDate.toISOString(),
+              p_end: now.toISOString(),
+            }),
+        sevenDayUsagePromise,
       ])
     : [
         [] as Awaited<ReturnType<typeof getMeralcoRatesForRange>>,
@@ -431,7 +463,9 @@ export default async function DashboardPage() {
 
         <WeekSummaryWidget days={weekSummaries} />
         <BudgetAlertCard />
-        <BudgetWarningFeed />
+        <Suspense fallback={null}>
+          <BudgetWarningFeed />
+        </Suspense>
 
         <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
         </DashboardLiveTelemetry>

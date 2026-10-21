@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth-context";
 import PageHeader from "@/components/ui/PageHeader";
 import { Settings } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
@@ -21,9 +22,7 @@ type ProfileRow = {
 export default async function SettingsPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     redirect("/login");

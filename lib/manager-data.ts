@@ -1,7 +1,8 @@
 import "server-only";
+import { cache } from "react";
+import { getSessionUser, type SessionUser } from "@/lib/auth-context";
 
 import { redirect } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
 import { getBudgetProgressPercent } from "@/lib/budget-policy";
@@ -113,15 +114,14 @@ function isStaleReading(recordedAt: string | null, now: Date): boolean {
   return now.getTime() - recordedTime > 20_000;
 }
 
-export async function getManagerSession(): Promise<{
+// cache(): the manager layout and page share one profile read per request.
+export const getManagerSession = cache(async (): Promise<{
   supabase: SupabaseServerClient;
-  user: User;
+  user: SessionUser;
   profile: ManagerProfile;
-} | null> {
+} | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     return null;
@@ -138,16 +138,13 @@ export async function getManagerSession(): Promise<{
   }
 
   return { supabase, user, profile };
-}
+});
 
 export async function requireManagerPage() {
   const session = await getManagerSession();
 
   if (!session) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getSessionUser();
 
     redirect(user ? "/dashboard" : "/login");
   }

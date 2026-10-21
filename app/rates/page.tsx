@@ -1,8 +1,10 @@
 import PageHeader from "@/components/ui/PageHeader";
+import { getSessionUser } from "@/lib/auth-context";
 import { CalendarClock, ExternalLink, History } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import { createClient } from "@/lib/supabase/server";
-import { getMeralcoRateHistory, type HistoricalMeralcoRateRow, computeMeralcoBill } from "@/lib/meralco-rates";
+import { type HistoricalMeralcoRateRow, computeMeralcoBill } from "@/lib/meralco-rates";
+import { getMeralcoRateHistory } from "@/lib/meralco-rates-server";
 import { redirect } from "next/navigation";
 
 function formatMonth(value: string): string {
@@ -92,9 +94,7 @@ function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
 
 export default async function RatesPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const history = await getMeralcoRateHistory(supabase);

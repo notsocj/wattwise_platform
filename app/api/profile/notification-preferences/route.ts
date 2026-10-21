@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
 
 type PreferenceRow = {
@@ -27,9 +28,7 @@ function responsePayload(preferences: PreferenceRow) {
 
 async function authenticatedPreferences() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) return { error: "unauthorized" as const };
 
