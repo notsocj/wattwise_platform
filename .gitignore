@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated artifacts (rendered videos, PDFs, previews)
+/output/
+/tmp/
+
+# supabase CLI cache
+/supabase/.temp/
+
+# survey video audio masters (large binaries kept local)
+/wattwise-survey-video/public/**/*.wav
+/wattwise-survey-video/public/**/*.mp3
