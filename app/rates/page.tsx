@@ -28,8 +28,11 @@ function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
   const rows = [
     ["Generation", rate.rates.generation],
     ["Transmission", rate.rates.transmission],
+    ["Ancillary service", rate.rates.ancillaryService],
     ["System loss", rate.rates.systemLoss],
     ["Distribution", rate.rates.distribution],
+    ["Supply", rate.rates.supplyRate],
+    ["Metering", rate.rates.meteringRate],
     ["Universal charges", rate.rates.universalCharges],
     ["FIT-All", rate.rates.fitAll],
   ] as const;

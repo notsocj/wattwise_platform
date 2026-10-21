@@ -5,8 +5,11 @@ type MeralcoBreakdownCardProps = {
   rates: {
     generation: number;
     transmission: number;
+    ancillaryService: number;
     systemLoss: number;
     distribution: number;
+    supplyRate: number;
+    meteringRate: number;
     universalCharges: number;
     fitAll: number;
   };
@@ -44,8 +47,11 @@ export default function MeralcoBreakdownCard({ rates, vatRate, fixedCharges, usa
   const items = [
     ["Generation", rates.generation],
     ["Transmission", rates.transmission],
+    ["Ancillary service", rates.ancillaryService],
     ["System loss", rates.systemLoss],
     ["Distribution", rates.distribution],
+    ["Supply", rates.supplyRate],
+    ["Metering", rates.meteringRate],
     ["Universal charges", rates.universalCharges],
     ["FIT-All", rates.fitAll],
   ] as const;

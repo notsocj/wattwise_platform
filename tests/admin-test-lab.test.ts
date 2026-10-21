@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { getCycleStartDate, targetCumulativeEnergy, thresholdEventType, validatePhysicalDeviceConfirmation } from "../lib/admin-test-lab.ts";
 
-const rates = { generation: 5, transmission: 1, systemLoss: 0.5, distribution: 1, universalCharges: 0.2, fitAll: 0.1 };
+const rates = { generation: 5, transmission: 1, ancillaryService: 0.3, systemLoss: 0.5, distribution: 1, supplyRate: 0.2, meteringRate: 0.1, universalCharges: 0.2, fitAll: 0.1 };
 
 test("uses the selected profile billing cycle in Manila", () => {
   assert.equal(getCycleStartDate(15, new Date("2026-08-14T16:00:00Z")), "2026-08-15");

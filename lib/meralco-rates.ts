@@ -4,8 +4,11 @@ import { getManilaDayKey } from "@/lib/date-utils";
 export type MeralcoRateComponents = {
   generation: number;
   transmission: number;
+  ancillaryService: number;
   systemLoss: number;
   distribution: number;
+  supplyRate: number;
+  meteringRate: number;
   universalCharges: number;
   fitAll: number;
 };
@@ -20,8 +23,11 @@ export type MeralcoRatesRow = {
   vat_rate: number | string;
   generation: number | string;
   transmission: number | string;
+  ancillary_service: number | string;
   system_loss: number | string;
   distribution: number | string;
+  supply_rate: number | string;
+  metering_rate: number | string;
   universal_charges: number | string;
   fit_all: number | string;
   metering_charge: number | string;
@@ -57,7 +63,7 @@ export type MeralcoRateProvenance = {
 };
 
 const MERALCO_RATE_SELECT =
-  "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
+  "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
 
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);
@@ -69,8 +75,11 @@ export function mapMeralcoRatesRowToComponents(
   return {
     generation: toNumber(row.generation),
     transmission: toNumber(row.transmission),
+    ancillaryService: toNumber(row.ancillary_service),
     systemLoss: toNumber(row.system_loss),
     distribution: toNumber(row.distribution),
+    supplyRate: toNumber(row.supply_rate),
+    meteringRate: toNumber(row.metering_rate),
     universalCharges: toNumber(row.universal_charges),
     fitAll: toNumber(row.fit_all),
   };
@@ -307,8 +316,11 @@ export function computeMeralcoBill(
   const subtotalPerKWh =
     rates.generation +
     rates.transmission +
+    rates.ancillaryService +
     rates.systemLoss +
     rates.distribution +
+    rates.supplyRate +
+    rates.meteringRate +
     rates.universalCharges +
     rates.fitAll;
 

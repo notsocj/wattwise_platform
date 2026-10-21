@@ -5,23 +5,16 @@ type ArchiveEntry = {
   pdfUrl: string;
 };
 
-type ParsedRates = {
-  generation: number | null;
-  transmission: number | null;
-  system_loss: number | null;
-  distribution: number | null;
-  universal_charges: number | null;
-  fit_all: number | null;
-  vat_rate: number | null;
-  metering_charge: number | null;
-  supply_charge: number | null;
-};
+import { parseRatesFromText, type ParsedRates } from "./parser.ts";
 
 type CompleteRates = {
   generation: number;
   transmission: number;
+  ancillary_service: number;
   system_loss: number;
   distribution: number;
+  supply_rate: number;
+  metering_rate: number;
   universal_charges: number;
   fit_all: number;
   vat_rate: number;
@@ -36,8 +29,11 @@ type ExistingRateRow = {
   vat_rate: number;
   generation: number;
   transmission: number;
+  ancillary_service: number;
   system_loss: number;
   distribution: number;
+  supply_rate: number;
+  metering_rate: number;
   universal_charges: number;
   fit_all: number;
   metering_charge: number;
@@ -227,7 +223,7 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
     const parserResponse = await fetch(externalParserUrl, {
       method: "POST",
       headers,
-      body: pdfBytes,
+      body: pdfBytes.buffer as ArrayBuffer,
     });
 
     if (!parserResponse.ok) {
@@ -313,263 +309,6 @@ async function extractPdfText(pdfBytes: Uint8Array, pdfUrl: string): Promise<str
   return localText;
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function toNumber(raw: string): number | null {
-  const normalized = raw.replace(/,/g, "").trim();
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseSignedNumberToken(raw: string): number | null {
-  const trimmed = raw.trim();
-  const normalized =
-    trimmed.startsWith("(") && trimmed.endsWith(")")
-      ? `-${trimmed.slice(1, -1)}`
-      : trimmed;
-  return toNumber(normalized);
-}
-
-function parseResidentialBaseRowValues(text: string): number[] | null {
-  const rowAnchors = [
-    "101 TO 200 KWH",
-    "201 TO 300 KWH",
-    "0 TO 20 KWH",
-  ];
-
-  for (const anchor of rowAnchors) {
-    const idx = text.toUpperCase().indexOf(anchor);
-    if (idx < 0) {
-      continue;
-    }
-
-    const snippet = text.slice(idx, idx + 500);
-    const tokens = snippet.match(/\(?-?\d+(?:\.\d+)?\)?/g) ?? [];
-    let numbers = tokens
-      .map((token) => parseSignedNumberToken(token))
-      .filter((value): value is number => value !== null);
-
-    // Row labels include kWh ranges (e.g., 101 TO 200 KWH). Remove those leading bounds.
-    if (
-      numbers.length >= 20 &&
-      numbers[0] >= 0 &&
-      numbers[0] <= 500 &&
-      numbers[1] >= 0 &&
-      numbers[1] <= 500 &&
-      numbers[2] > 0 &&
-      numbers[2] < 20
-    ) {
-      numbers = numbers.slice(2);
-    }
-
-    if (numbers.length >= 18) {
-      return numbers;
-    }
-  }
-
-  // Anchor-free fallback: find a plausible residential rate row by numeric pattern.
-  const allDecimalTokens = text.match(/\(?-?\d+\.\d+\)?/g) ?? [];
-  const allNumbers = allDecimalTokens
-    .map((token) => parseSignedNumberToken(token))
-    .filter((value): value is number => value !== null);
-
-  for (let i = 0; i + 18 < allNumbers.length; i += 1) {
-    const window = allNumbers.slice(i, i + 19);
-
-    const looksLikeResidentialRow =
-      window[0] >= 3 &&
-      window[0] <= 15 &&
-      window[1] >= 0.5 &&
-      window[1] <= 3 &&
-      window[2] >= 0.1 &&
-      window[2] <= 2 &&
-      window[3] >= 0.5 &&
-      window[3] <= 3 &&
-      window[7] >= 0 &&
-      window[7] <= 20 &&
-      window[17] >= 0 &&
-      window[17] <= 2 &&
-      window[18] >= 0 &&
-      window[18] <= 2;
-
-    if (looksLikeResidentialRow) {
-      return window;
-    }
-  }
-
-  return null;
-}
-
-function findByLabels(
-  text: string,
-  labels: string[],
-  options?: { min?: number; max?: number; window?: number; requireDecimal?: boolean }
-): number | null {
-  const min = options?.min ?? Number.NEGATIVE_INFINITY;
-  const max = options?.max ?? Number.POSITIVE_INFINITY;
-  const window = options?.window ?? 120;
-  const requireDecimal = options?.requireDecimal ?? false;
-  const numberPattern = requireDecimal
-    ? "-?\\d{1,4}(?:,\\d{3})*\\.\\d{1,4}"
-    : "-?\\d{1,4}(?:,\\d{3})*(?:\\.\\d{1,4})?";
-
-  for (const label of labels) {
-    const escaped = escapeRegExp(label);
-    const regex = new RegExp(
-      `${escaped}[\\s\\S]{0,${window}}?(${numberPattern})`,
-      "gi"
-    );
-
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(text)) !== null) {
-      const value = toNumber(match[1]);
-      if (value === null) {
-        continue;
-      }
-      if (value >= min && value <= max) {
-        return value;
-      }
-    }
-  }
-
-  return null;
-}
-
-function findVatRate(text: string): number | null {
-  const vatPercentRegex = /vat[\s\S]{0,50}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
-  let vatPercentMatch: RegExpExecArray | null;
-
-  while ((vatPercentMatch = vatPercentRegex.exec(text)) !== null) {
-    const value = Number(vatPercentMatch[1]);
-    if (Number.isFinite(value) && value > 0 && value <= 100) {
-      return value / 100;
-    }
-  }
-
-  const otherChargesRegex = /other\s+charges[\s\S]{0,30}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
-  let otherChargesMatch: RegExpExecArray | null;
-
-  while ((otherChargesMatch = otherChargesRegex.exec(text)) !== null) {
-    const value = Number(otherChargesMatch[1]);
-    if (Number.isFinite(value) && value > 0 && value <= 100) {
-      return value / 100;
-    }
-  }
-
-  return findByLabels(text, ["VAT rate", "VAT"], { min: 0.01, max: 0.3 });
-}
-
-function parseRatesFromText(text: string): ParsedRates {
-  const normalizedText = text
-    .replace(/\u00A0/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const residentialBaseRow = parseResidentialBaseRowValues(normalizedText);
-
-  const rowFallbackUniversal =
-    residentialBaseRow && residentialBaseRow.length >= 19
-      ? residentialBaseRow.slice(11, 17).reduce((sum, value) => sum + Math.max(value, 0), 0)
-      : null;
-
-  const rowFallbackGeneration =
-    residentialBaseRow && residentialBaseRow.length >= 1
-      ? residentialBaseRow[0]
-      : null;
-
-  const rowFallbackTransmission =
-    residentialBaseRow && residentialBaseRow.length >= 2
-      ? residentialBaseRow[1]
-      : null;
-
-  const rowFallbackSystemLoss =
-    residentialBaseRow && residentialBaseRow.length >= 3
-      ? residentialBaseRow[2]
-      : null;
-
-  const rowFallbackDistribution =
-    residentialBaseRow && residentialBaseRow.length >= 4
-      ? residentialBaseRow[3]
-      : null;
-
-  const rowFallbackFitAll =
-    residentialBaseRow && residentialBaseRow.length >= 19
-      ? residentialBaseRow[17]
-      : null;
-
-  const rowFallbackSupplyCharge =
-    residentialBaseRow && residentialBaseRow.length >= 6
-      ? residentialBaseRow[5]
-      : null;
-
-  const rowFallbackMeteringCharge =
-    residentialBaseRow && residentialBaseRow.length >= 8
-      ? residentialBaseRow[7]
-      : null;
-
-  return {
-    generation:
-      rowFallbackGeneration ??
-      findByLabels(normalizedText, ["Generation Charge", "Generation"], {
-        min: 0.1,
-        max: 20,
-        requireDecimal: true,
-      }),
-    transmission:
-      rowFallbackTransmission ??
-      findByLabels(normalizedText, ["Transmission Charge", "Transmission"], {
-        min: 0.05,
-        max: 10,
-        requireDecimal: true,
-      }),
-    system_loss:
-      rowFallbackSystemLoss ??
-      findByLabels(normalizedText, ["System Loss Charge", "System Loss", "System-Loss"], {
-        min: 0.01,
-        max: 10,
-        requireDecimal: true,
-      }),
-    distribution:
-      rowFallbackDistribution ??
-      findByLabels(normalizedText, ["Distribution Charge", "Distribution"], {
-        min: 0.01,
-        max: 10,
-        requireDecimal: true,
-      }),
-    universal_charges:
-      rowFallbackUniversal ??
-      findByLabels(
-        normalizedText,
-        ["Universal Charge", "Universal Charges", "Universal Charge FIT-All"],
-        { min: 0.001, max: 10, window: 1200, requireDecimal: true }
-      ),
-    fit_all:
-      rowFallbackFitAll ??
-      findByLabels(normalizedText, ["FIT-All", "FIT All", "FITALL"], {
-        min: 0.0001,
-        max: 3,
-        requireDecimal: true,
-      }),
-    vat_rate: findVatRate(normalizedText),
-    metering_charge:
-      rowFallbackMeteringCharge ??
-      findByLabels(normalizedText, ["Metering Charge", "Metering Cust Charge"], {
-        min: 0,
-        max: 100,
-        requireDecimal: true,
-      }),
-    supply_charge:
-      rowFallbackSupplyCharge ??
-      findByLabels(normalizedText, ["Supply Charge", "Supply Cust Charge"], {
-        min: 0,
-        max: 100,
-        requireDecimal: true,
-      }),
-  };
-}
-
 function requireNumber(field: keyof CompleteRates, value: number | null): number {
   if (value === null || !Number.isFinite(value)) {
     throw new Error(`Missing or invalid parsed value for '${field}'.`);
@@ -582,8 +321,11 @@ function validateRanges(rates: CompleteRates): void {
   const checks: Array<{ key: keyof CompleteRates; min: number; max: number }> = [
     { key: "generation", min: 0.1, max: 20 },
     { key: "transmission", min: 0.05, max: 10 },
+    { key: "ancillary_service", min: 0.01, max: 10 },
     { key: "system_loss", min: 0.01, max: 10 },
     { key: "distribution", min: 0.01, max: 10 },
+    { key: "supply_rate", min: 0.01, max: 10 },
+    { key: "metering_rate", min: 0.01, max: 10 },
     { key: "universal_charges", min: 0.001, max: 10 },
     { key: "fit_all", min: 0, max: 3 },
     { key: "vat_rate", min: 0.01, max: 0.3 },
@@ -619,8 +361,11 @@ function validateAgainstPrevious(
   const fields: Array<keyof CompleteRates> = [
     "generation",
     "transmission",
+    "ancillary_service",
     "system_loss",
     "distribution",
+    "supply_rate",
+    "metering_rate",
     "universal_charges",
     "fit_all",
     "vat_rate",
@@ -862,7 +607,7 @@ Deno.serve(async (req) => {
     const { data: previousRow, error: previousError } = await supabase
       .from("meralco_rates")
       .select(
-        "effective_month, vat_rate, generation, transmission, system_loss, distribution, universal_charges, fit_all, metering_charge, supply_charge"
+        "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge"
       )
       .order("effective_month", { ascending: false })
       .limit(1)
@@ -875,8 +620,11 @@ Deno.serve(async (req) => {
     const completeRates: CompleteRates = {
       generation: requireNumber("generation", parsed.generation),
       transmission: requireNumber("transmission", parsed.transmission),
+      ancillary_service: requireNumber("ancillary_service", parsed.ancillary_service),
       system_loss: requireNumber("system_loss", parsed.system_loss),
       distribution: requireNumber("distribution", parsed.distribution),
+      supply_rate: requireNumber("supply_rate", parsed.supply_rate),
+      metering_rate: requireNumber("metering_rate", parsed.metering_rate),
       universal_charges: requireNumber("universal_charges", parsed.universal_charges),
       fit_all: requireNumber("fit_all", parsed.fit_all),
       vat_rate: parsed.vat_rate ?? previousRow?.vat_rate ?? (() => {
@@ -930,8 +678,11 @@ Deno.serve(async (req) => {
       vat_rate: completeRates.vat_rate,
       generation: completeRates.generation,
       transmission: completeRates.transmission,
+      ancillary_service: completeRates.ancillary_service,
       system_loss: completeRates.system_loss,
       distribution: completeRates.distribution,
+      supply_rate: completeRates.supply_rate,
+      metering_rate: completeRates.metering_rate,
       universal_charges: completeRates.universal_charges,
       fit_all: completeRates.fit_all,
       metering_charge: completeRates.metering_charge,

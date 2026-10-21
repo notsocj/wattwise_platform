@@ -69,8 +69,11 @@ CREATE TABLE meralco_rates (
   vat_rate NUMERIC(6, 4) NOT NULL,
   generation NUMERIC(10, 4) NOT NULL,
   transmission NUMERIC(10, 4) NOT NULL,
+  ancillary_service NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   system_loss NUMERIC(10, 4) NOT NULL,
   distribution NUMERIC(10, 4) NOT NULL,
+  supply_rate NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
+  metering_rate NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   universal_charges NUMERIC(10, 4) NOT NULL,
   fit_all NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
@@ -86,6 +89,8 @@ CREATE TABLE meralco_rates (
 Notes:
 
 - `fit_all` is a first-class column as of migration `008`
+- `ancillary_service`, `supply_rate`, and `metering_rate` are first-class per-kWh columns as of migration `031`; `supply_charge` and `metering_charge` remain fixed per-customer charges
+- migration `031` corrects the August 2026 row after the previous parser shifted fields at the Ancillary Service column
 - application cost logic must use unbundled components plus fixed charges, then apply VAT last
 - do not fall back to hardcoded runtime rates when a row is missing
 - `effective_month` means when the rate applies; `fetched_at` means when WattWise last obtained it. Do not label legacy `created_at` values as an official Meralco update.

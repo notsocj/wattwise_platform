@@ -1,8 +1,11 @@
 export type TestLabMeralcoRates = {
   generation: number;
   transmission: number;
+  ancillaryService: number;
   systemLoss: number;
   distribution: number;
+  supplyRate: number;
+  meteringRate: number;
   universalCharges: number;
   fitAll: number;
 };
@@ -27,7 +30,7 @@ export function getCycleStartDate(billingStartDay: number, date = new Date()): s
 }
 
 export function getVariableRatePerKwh(rates: TestLabMeralcoRates, vatRate: number): number {
-  return (rates.generation + rates.transmission + rates.systemLoss + rates.distribution + rates.universalCharges + rates.fitAll) * (1 + vatRate);
+  return (rates.generation + rates.transmission + rates.ancillaryService + rates.systemLoss + rates.distribution + rates.supplyRate + rates.meteringRate + rates.universalCharges + rates.fitAll) * (1 + vatRate);
 }
 
 export function targetCumulativeEnergy(input: {

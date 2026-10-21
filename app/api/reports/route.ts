@@ -145,8 +145,11 @@ export async function GET(request: NextRequest) {
       budget_percent: limit > 0 ? Number(((variableCost / limit) * 100).toFixed(2)) : null,
       generation_rate: activeRates.rates.generation,
       transmission_rate: activeRates.rates.transmission,
+      ancillary_service_rate: activeRates.rates.ancillaryService,
       distribution_rate: activeRates.rates.distribution,
       system_loss_rate: activeRates.rates.systemLoss,
+      supply_rate: activeRates.rates.supplyRate,
+      metering_rate: activeRates.rates.meteringRate,
       universal_charges_rate: activeRates.rates.universalCharges,
       fit_all_rate: activeRates.rates.fitAll,
       vat_rate: activeRates.vatRate,
@@ -176,7 +179,8 @@ export async function GET(request: NextRequest) {
       device_name: "", appliance_type: "", measured_kwh: "", estimated_kwh: "",
       difference_kwh: "", difference_percent: "", average_watts: "",
       variable_cost_php: "", limit_php: "", budget_percent: "", generation_rate: "",
-      transmission_rate: "", distribution_rate: "", system_loss_rate: "",
+      transmission_rate: "", ancillary_service_rate: "", distribution_rate: "", system_loss_rate: "",
+      supply_rate: "", metering_rate: "",
       universal_charges_rate: "", fit_all_rate: "", vat_rate: "", fixed_charges_php: "",
     });
     const csv = [headers, ...rows.map((row) => headers.map((header) => row[header as keyof typeof row]))]
