@@ -29,11 +29,20 @@ Wattwise is a mobile-first energy monitoring SaaS platform for Philippine househ
 - `npm run build`: production build validation
 - `npm run start`: run the production build locally
 - `npm run lint`: run ESLint
+- `npm test`: unit tests (`node --test` with `--experimental-strip-types`; needs Node 22.6+)
+- `npx tsc --noEmit -p .`: type-check, including `tests/`
 - `npm run preview`: OpenNext Cloudflare preview build
 - `npm run deploy`: OpenNext Cloudflare deploy build
 - `npm run cf-typegen`: refresh Cloudflare env typings
 
 Default local URL is `http://localhost:3000`. If you need to avoid a port conflict with related Wattwise projects, prefer port `3001`.
+
+## Deployment and Database Changes
+
+- Pushing to `main` deploys production through Vercel's Git integration. Functions are pinned to Seoul (`icn1`) in `vercel.json`, next to the Supabase project (ap-northeast-2); keep them in the same region.
+- Deploys do not apply migrations. Check `supabase migration list --linked`, then apply with `supabase db push --linked`.
+- Before applying an RLS, trigger, or RPC change, verify it on production inside a transaction that ends in `ROLLBACK`: run the old and new versions as each role (`SET LOCAL ROLE authenticated` plus `request.jwt.claims` for a real user; `anon` for hardware) and compare results and timing. Migrations `032`-`036` record how this was done.
+- If something was changed in the Supabase dashboard, capture it in a migration and mark it with `supabase migration repair --status applied <version> --linked` instead of re-running it.
 
 ## Architecture Rules
 
@@ -47,7 +56,11 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 
 - Treat Supabase as the system of record for auth, rates, telemetry, and cached AI insights.
 - Never expose server secrets in client code. `SUPABASE_SECRET_KEY` and `OPENAI_API_KEY` stay server-only.
-- Do not query `energy_logs` without a hard limit or a bounded time range.
+- Do not query `energy_logs` without a hard limit or a bounded time range. Each hardware unit adds about 17,000 rows a day; read telemetry through the bounded, index-backed RPCs (`get_latest_device_readings`, `get_usage_kwh_by_device[_day]`, `get_average_watts_by_device`) rather than raw rows.
+- Keep RLS on large tables cheap: wrap `auth.uid()` and `current_profile_role()` in `(SELECT ...)` and compare against a SECURITY DEFINER key list (see migration `033`). Never add per-row function calls or per-row `EXISTS` subqueries to `energy_logs` policies.
+- Pages and route handlers get the signed-in user from `getSessionUser()` (`lib/auth-context.ts`). The middleware verifies the session once, reads the profile once, and forwards id, email, role, and billing day in `x-wattwise-*` request headers after deleting any client-supplied copies. Never read those headers anywhere else, and never set them from client code.
+- Start independent queries together (`startQuery` in `lib/start-query.ts`, `Promise.all`) and put secondary server components under `<Suspense>`; avoid one awaited query per line.
+- The root layout must not read cookies or headers, or every public page becomes dynamic again. The session is read in the browser by `SupabaseProvider`.
 - Prefer RPCs and server-side aggregation for billing-grade totals and charts.
 - During the `energy_logs.device_id` transition, support both `devices.id` and legacy `devices.mac_address`.
 
@@ -120,7 +133,7 @@ Expected environment variables live in `.env.local`.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `OPENAI_API_KEY`
-- `SUPABASE_SECRET_KEY` (service role key, server-only, used for self-service account deletion)
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` (service role key, server-only): admin console, tenant creation, account deletion, and the cross-request Meralco rate cache in `lib/meralco-rates-server.ts`, which falls back to direct reads when it is missing
 
 Document any newly required variables when adding features.
 
@@ -129,4 +142,7 @@ Document any newly required variables when adding features.
 - Add Appliance registers a device before AI profiling so the ESP32-S3 can post MAC-address telemetry under the existing anon RLS guard.
 - Per-device budget shutoff compares calendar-month variable Meralco spend against `devices.user_approved_limit_php`; fixed charges remain home-level context and are excluded from relay cutoff decisions.
 - `devices.require_approval_on_expiry = true` records an approval-required event instead of automatically setting `relay_state = false`.
-- Keep Supabase Realtime enabled for `energy_logs` in the Supabase dashboard; the browser listens for INSERT payloads for live W/V/A updates.
+- Keep `energy_logs` and `devices` in the `supabase_realtime` publication. The dashboard patches live W/V/A from `energy_logs` INSERTs and follows `devices` UPDATEs, but triggers update `devices` on every reading (`last_seen_at`, `budget_status = 'ok'`), so only react when `relay_state` or `budget_status` actually changes. Do not call `router.refresh()` per reading; it re-renders the whole page and its background prefetches.
+- A device is LIVE/online when its latest reading or `devices.last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (20 s). `devices.is_online` is set on every reading but never cleared, so do not use it for status.
+- `update_device_last_seen()` must stay SECURITY DEFINER: hardware inserts as `anon`, which cannot update `devices` (migration `036`).
+- Relay changes from the app are commands; the unit applies them on its next 5 s poll. Confirm before turning a device off and word results as "sent".
