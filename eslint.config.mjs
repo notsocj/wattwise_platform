@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "out/**",
     "build/**",
+    "wattwise-survey-video/build/**",
     "next-env.d.ts",
   ]),
 ]);

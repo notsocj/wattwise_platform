@@ -384,3 +384,11 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 - [x] Added customer-facing Meralco rate transparency: effective month, recorded sync timestamp/source, detailed component view, and bounded historical monthly rows.
 - [x] Added the customer AI assistant FAB and bottom sheet for homeowner/tenant routes, with latest-10 history, scoped usage context, contextual fallback replies, rate limiting, and expiring review-before-confirm settings proposals.
 - [x] Grounded bill-driver/device-list questions in exact cycle data and added persistent, tappable device cards with spend, limit progress, live watts, and telemetry freshness.
+
+- 2026-09-27: Added an editable Remotion end-user survey orientation in `wattwise-survey-video/`, with narrated household workflows, clearly labeled illustrative interfaces/sample data, and a conceptual hardware unit. This research asset does not change implementation status or replace hands-on usability testing.
+
+- 2026-09-27: Tightened the survey orientation video to ~84 seconds with shorter narration, staggered screen reveals, animated budget bars, alternating layouts, and a low-volume original instrumental pulse. The original ~144-second MP4 remains available for comparison.
+
+- 2026-09-27: Integrated the supplied ElevenLabs recording into the survey walkthrough (~156 seconds), with local word-aligned captions, per-scene narration splits, and a quiet instrumental bed that ducks beneath speech and fades at the ends. Earlier MP4 cuts are retained.
+
+- 2026-09-27: Added a separate 1080p Remotion motion graphics edition of the survey video (`WattwiseMotionFilm`): 33 narration-aligned shots, conceptual hardware reveal, kinetic type, live metrics, animated budget dial, usage charts, and reports. The finished ElevenLabs narration/music master and earlier walkthrough composition are preserved; this research asset does not alter feature implementation status.

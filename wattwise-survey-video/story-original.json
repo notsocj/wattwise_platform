@@ -1,0 +1,102 @@
+[
+  {
+    "id": "Welcome",
+    "kicker": "MEET WATTWISE",
+    "title": "Your electricity.\nMade visible.",
+    "description": "A mobile-first energy monitoring app for Philippine households.",
+    "kind": "intro",
+    "narration": "Welcome to WattWise. This walkthrough introduces the app before your hands-on survey session. It helps you view electricity use, understand estimated costs, and manage budgets. All readings shown here are sample data.",
+    "duration": 420,
+    "audioSeconds": 12.518231292517006
+  },
+  {
+    "id": "Hardware",
+    "kicker": "01 / CONNECT",
+    "title": "From appliance\nto your phone.",
+    "description": "A monitoring unit measures usage and sends readings over Wi-Fi.",
+    "kind": "hardware",
+    "narration": "A WattWise monitoring unit measures an appliance's electricity use and sends readings over Wi-Fi to the app. This is a conceptual hardware illustration. Researchers prepare the electrical connections for your test session.",
+    "duration": 420,
+    "audioSeconds": 11.944081632653061
+  },
+  {
+    "id": "Setup",
+    "kicker": "02 / GET STARTED",
+    "title": "Add an appliance.\nApprove its budget.",
+    "description": "Identify the device, enter normal usage, then review the suggested limit.",
+    "kind": "setup",
+    "narration": "After signing in, add an appliance by scanning its device code or entering its identifier. Enter its normal daily use, generate an AI profile, and review the suggested budget. You approve the appliance limit.",
+    "duration": 420,
+    "audioSeconds": 12.478095238095237
+  },
+  {
+    "id": "Dashboard",
+    "kicker": "03 / LIVE DASHBOARD",
+    "title": "See what is\nrunning now.",
+    "description": "View power, voltage, current, and daily energy for connected appliances.",
+    "kind": "dashboard",
+    "narration": "The Home Dashboard shows live appliance readings and the estimated daily cost. You can check watts, voltage, current, and energy use. If recent readings stop arriving, the appliance is shown as offline or idle.",
+    "duration": 420,
+    "audioSeconds": 12.226984126984126
+  },
+  {
+    "id": "Wallet",
+    "kicker": "04 / HOME WALLET",
+    "title": "Keep your budget\nin view.",
+    "description": "Set a household budget and compare it with spending and projections.",
+    "kind": "wallet",
+    "narration": "The Home Wallet lets household users edit their budget and see spending so far. A projected bill uses recent usage. Cost estimates use stored Meralco rate components, fixed charges, and tax. They are not your official bill.",
+    "duration": 430,
+    "audioSeconds": 13.109342403628117
+  },
+  {
+    "id": "History",
+    "kicker": "05 / USAGE HISTORY",
+    "title": "Find patterns\nover time.",
+    "description": "Explore daily records, weekly summaries, and spending trends.",
+    "kind": "history",
+    "narration": "Open the calendar and Burn Analytics to review daily energy records, weekly summaries, and spending trends. These views help you see when usage changes and which connected appliances contribute to it.",
+    "duration": 420,
+    "audioSeconds": 11.0118820861678
+  },
+  {
+    "id": "Insights",
+    "kicker": "06 / ENERGY INSIGHTS",
+    "title": "Practical tips.\nIn familiar language.",
+    "description": "Read Taglish insights informed by your recorded usage.",
+    "kind": "insights",
+    "narration": "WattWise provides practical Taglish energy insights based on your recorded data, along with budget warnings and unusual usage alerts. Read the explanation, then decide whether the suggestion fits your household. Savings are not guaranteed.",
+    "duration": 440,
+    "audioSeconds": 13.447256235827664
+  },
+  {
+    "id": "Control",
+    "kicker": "07 / SMART CONTROL",
+    "title": "Choose how\npower is managed.",
+    "description": "Review appliance limits and choose approval or automatic shutoff.",
+    "kind": "control",
+    "narration": "Smart Control lets you manage appliance power and choose what happens at the approved limit. The app can request approval or shut power off automatically. The cutoff uses calendar-month variable energy spending and excludes home-level fixed charges.",
+    "duration": 428,
+    "audioSeconds": 13.053378684807257
+  },
+  {
+    "id": "Reports",
+    "kicker": "08 / REPORTS & SETTINGS",
+    "title": "Review, export,\nand personalize.",
+    "description": "Download usage reports and manage your account and notifications.",
+    "kind": "reports",
+    "narration": "Energy Reports let you review a selected period and export PDF or CSV records. Settings include your account, billing cycle, and notification preferences. Push permission requires your action. Delivery depends on permissions and service availability.",
+    "duration": 484,
+    "audioSeconds": 14.915691609977324
+  },
+  {
+    "id": "Feedback",
+    "kicker": "YOUR TURN",
+    "title": "Try the app.\nTell us what you think.",
+    "description": "What is clear? What is confusing? What would you actually use?",
+    "kind": "feedback",
+    "narration": "Now try the assigned tasks yourself. We are evaluating WattWise, not you. Tell us what feels clear, confusing, or useful. Answer the survey based on what you personally used or observed. There are no right or wrong answers.",
+    "duration": 430,
+    "audioSeconds": 13.126621315192743
+  }
+]

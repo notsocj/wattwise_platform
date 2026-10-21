@@ -1,0 +1,513 @@
+[
+  {
+    "id": "Welcome",
+    "kicker": "MEET WATTWISE",
+    "title": "Know what\u2019s on.\nKnow what it costs.",
+    "description": "A quick look at your household energy.",
+    "kind": "intro",
+    "narration": "Meet WattWise. An energy monitoring app for Philippine households. See what your connected appliances are using, understand estimated electricity costs, and keep your budget in view. Let's take a quick look. The readings in this demonstration are sample data.",
+    "duration": 507,
+    "audioSeconds": 16.9,
+    "focus": "Live use \u2192 estimated costs \u2192 budgets",
+    "voiceover": "voiceover/elevenlabs/Welcome.wav",
+    "captions": [
+      {
+        "text": "Meet WattWise.",
+        "startMs": 0,
+        "endMs": 1070,
+        "timestampMs": 0,
+        "confidence": null
+      },
+      {
+        "text": "An energy monitoring app for Philippine households.",
+        "startMs": 1760,
+        "endMs": 4090,
+        "timestampMs": 1760,
+        "confidence": null
+      },
+      {
+        "text": "See what your connected appliances are using, understand estimated electricity",
+        "startMs": 4880,
+        "endMs": 8850,
+        "timestampMs": 4880,
+        "confidence": null
+      },
+      {
+        "text": "costs, and keep your budget in view.",
+        "startMs": 8700,
+        "endMs": 11090,
+        "timestampMs": 8700,
+        "confidence": null
+      },
+      {
+        "text": "Let's take a quick look.",
+        "startMs": 11760,
+        "endMs": 12790,
+        "timestampMs": 11760,
+        "confidence": null
+      },
+      {
+        "text": "The readings in this demonstration are sample data.",
+        "startMs": 13520,
+        "endMs": 16130,
+        "timestampMs": 13520,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Hardware",
+    "kicker": "01 / CONNECT",
+    "title": "Appliance. Wi-Fi.\nYour phone.",
+    "description": "A monitoring unit connects usage to the app.",
+    "kind": "hardware",
+    "narration": "It starts with a monitoring unit. The unit measures an appliance's electricity use, then sends readings to WattWise over Wi-Fi. The hardware shown here is a concept illustration. For your test session, researchers prepare the electrical connections.",
+    "duration": 488,
+    "audioSeconds": 16.266666666666666,
+    "focus": "Usage travels over Wi-Fi",
+    "voiceover": "voiceover/elevenlabs/Hardware.wav",
+    "captions": [
+      {
+        "text": "It starts with a monitoring unit.",
+        "startMs": 160,
+        "endMs": 1870,
+        "timestampMs": 160,
+        "confidence": null
+      },
+      {
+        "text": "The unit measures an appliance's electricity use, then sends readings",
+        "startMs": 2460,
+        "endMs": 6410,
+        "timestampMs": 2460,
+        "confidence": null
+      },
+      {
+        "text": "to WattWise over Wi-Fi.",
+        "startMs": 6260,
+        "endMs": 7970,
+        "timestampMs": 6260,
+        "confidence": null
+      },
+      {
+        "text": "The hardware shown here is a concept illustration.",
+        "startMs": 8620,
+        "endMs": 10970,
+        "timestampMs": 8620,
+        "confidence": null
+      },
+      {
+        "text": "For your test session, researchers prepare the electrical connections.",
+        "startMs": 11760,
+        "endMs": 15530,
+        "timestampMs": 11760,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Setup",
+    "kicker": "02 / GET STARTED",
+    "title": "Scan. Add.\nApprove.",
+    "description": "Connect the device and review its suggested budget.",
+    "kind": "setup",
+    "narration": "To add an appliance, scan its device code or enter its identifier. Tell WattWise how you normally use it. Then review the AI profile and suggested budget. You choose the appliance limit before approving it.",
+    "duration": 412,
+    "audioSeconds": 13.733333333333333,
+    "focus": "You approve the limit",
+    "voiceover": "voiceover/elevenlabs/Setup.wav",
+    "captions": [
+      {
+        "text": "To add an appliance, scan its device code or enter",
+        "startMs": 173,
+        "endMs": 3123,
+        "timestampMs": 173,
+        "confidence": null
+      },
+      {
+        "text": "its identifier.",
+        "startMs": 2973,
+        "endMs": 3603,
+        "timestampMs": 2973,
+        "confidence": null
+      },
+      {
+        "text": "Tell WattWise how you normally use it.",
+        "startMs": 4713,
+        "endMs": 6663,
+        "timestampMs": 4713,
+        "confidence": null
+      },
+      {
+        "text": "Then review the AI profile and suggested budget.",
+        "startMs": 7553,
+        "endMs": 9963,
+        "timestampMs": 7553,
+        "confidence": null
+      },
+      {
+        "text": "You choose the appliance limit before approving it.",
+        "startMs": 10953,
+        "endMs": 13303,
+        "timestampMs": 10953,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Dashboard",
+    "kicker": "03 / LIVE DASHBOARD",
+    "title": "What\u2019s running\nright now?",
+    "description": "Live watts, volts, current, and daily energy.",
+    "kind": "dashboard",
+    "narration": "On the Home Dashboard, you can see what's running right now. Check power in watts, voltage, current, and energy used today. You'll also see the estimated daily cost. When fresh readings stop arriving, the device shows as offline or idle.",
+    "duration": 479,
+    "audioSeconds": 15.966666666666667,
+    "focus": "65 W \u00b7 230 V \u00b7 0.52 kWh",
+    "voiceover": "voiceover/elevenlabs/Dashboard.wav",
+    "captions": [
+      {
+        "text": "On the Home Dashboard, you can see what's running right",
+        "startMs": 180,
+        "endMs": 2710,
+        "timestampMs": 180,
+        "confidence": null
+      },
+      {
+        "text": "now.",
+        "startMs": 2560,
+        "endMs": 3010,
+        "timestampMs": 2560,
+        "confidence": null
+      },
+      {
+        "text": "Check power in watts, voltage, current, and energy used today.",
+        "startMs": 3660,
+        "endMs": 7570,
+        "timestampMs": 3660,
+        "confidence": null
+      },
+      {
+        "text": "You'll also see the estimated daily cost.",
+        "startMs": 8180,
+        "endMs": 10350,
+        "timestampMs": 8180,
+        "confidence": null
+      },
+      {
+        "text": "When fresh readings stop arriving, the device shows as offline",
+        "startMs": 10200,
+        "endMs": 14850,
+        "timestampMs": 10200,
+        "confidence": null
+      },
+      {
+        "text": "or idle.",
+        "startMs": 14700,
+        "endMs": 15390,
+        "timestampMs": 14700,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Wallet",
+    "kicker": "04 / HOME WALLET",
+    "title": "Your budget.\nAt a glance.",
+    "description": "Spending so far, plus a projected bill.",
+    "kind": "wallet",
+    "narration": "Next, open your Home Wallet. Set a household budget, check spending so far, and view your projected bill. Estimates use Meralco rate components, fixed charges, and tax. They help you track costs, but they are not your official electricity bill.",
+    "duration": 476,
+    "audioSeconds": 15.866666666666667,
+    "focus": "\u20b1840 of \u20b12,000 \u00b7 sample budget",
+    "voiceover": "voiceover/elevenlabs/Wallet.wav",
+    "captions": [
+      {
+        "text": "Next, open your Home Wallet.",
+        "startMs": 173,
+        "endMs": 1723,
+        "timestampMs": 173,
+        "confidence": null
+      },
+      {
+        "text": "Set a household budget, check spending so far, and view",
+        "startMs": 2393,
+        "endMs": 5683,
+        "timestampMs": 2393,
+        "confidence": null
+      },
+      {
+        "text": "your projected bill.",
+        "startMs": 5533,
+        "endMs": 6603,
+        "timestampMs": 5533,
+        "confidence": null
+      },
+      {
+        "text": "Estimates use Meralco rate components, fixed charges, and tax.",
+        "startMs": 7313,
+        "endMs": 11123,
+        "timestampMs": 7313,
+        "confidence": null
+      },
+      {
+        "text": "They help you track costs, but they are not your",
+        "startMs": 11853,
+        "endMs": 14203,
+        "timestampMs": 11853,
+        "confidence": null
+      },
+      {
+        "text": "official electricity bill.",
+        "startMs": 14053,
+        "endMs": 15523,
+        "timestampMs": 14053,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "History",
+    "kicker": "05 / USAGE HISTORY",
+    "title": "Spot the\npattern.",
+    "description": "Daily records. Weekly summaries. Spending trends.",
+    "kind": "history",
+    "narration": "Want to understand your usage over time? Open the calendar and Burn Analytics. Explore daily records, weekly summaries, and spending trends. Compare your connected appliances and see when usage changes.",
+    "duration": 401,
+    "audioSeconds": 13.366666666666667,
+    "focus": "Look back. Compare. Understand.",
+    "voiceover": "voiceover/elevenlabs/History.wav",
+    "captions": [
+      {
+        "text": "Want to understand your usage over time?",
+        "startMs": 167,
+        "endMs": 2017,
+        "timestampMs": 167,
+        "confidence": null
+      },
+      {
+        "text": "Open the calendar and Burn Analytics.",
+        "startMs": 2927,
+        "endMs": 4397,
+        "timestampMs": 2927,
+        "confidence": null
+      },
+      {
+        "text": "Explore daily records, weekly summaries, and spending trends.",
+        "startMs": 5207,
+        "endMs": 8857,
+        "timestampMs": 5207,
+        "confidence": null
+      },
+      {
+        "text": "Compare your connected appliances and see when usage changes.",
+        "startMs": 9507,
+        "endMs": 12777,
+        "timestampMs": 9507,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Insights",
+    "kicker": "06 / ENERGY INSIGHTS",
+    "title": "Tips you\ncan understand.",
+    "description": "Practical Taglish guidance from your usage data.",
+    "kind": "insights",
+    "narration": "WattWise also offers practical energy insights in Taglish. These insights use your recorded data to explain usage patterns. Budget warnings and unusual-use alerts highlight changes to review. Choose the suggestions that fit your household. Actual savings will depend on how you use your appliances.",
+    "duration": 575,
+    "audioSeconds": 19.166666666666668,
+    "focus": "Taglish insights \u00b7 practical next steps",
+    "voiceover": "voiceover/elevenlabs/Insights.wav",
+    "captions": [
+      {
+        "text": "WattWise also offers practical energy insights in Taglish.",
+        "startMs": 160,
+        "endMs": 3450,
+        "timestampMs": 160,
+        "confidence": null
+      },
+      {
+        "text": "These insights use your recorded data to explain usage patterns.",
+        "startMs": 4120,
+        "endMs": 7350,
+        "timestampMs": 4120,
+        "confidence": null
+      },
+      {
+        "text": "Budget warnings and unusual-use alerts highlight changes to review.",
+        "startMs": 8240,
+        "endMs": 12090,
+        "timestampMs": 8240,
+        "confidence": null
+      },
+      {
+        "text": "Choose the suggestions that fit your household.",
+        "startMs": 13220,
+        "endMs": 15070,
+        "timestampMs": 13220,
+        "confidence": null
+      },
+      {
+        "text": "Actual savings will depend on how you use your appliances.",
+        "startMs": 15900,
+        "endMs": 18650,
+        "timestampMs": 15900,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Control",
+    "kicker": "07 / SMART CONTROL",
+    "title": "You choose\nwhat happens.",
+    "description": "Approval request or optional automatic shutoff.",
+    "kind": "control",
+    "narration": "With Smart Control, you choose what happens when an appliance reaches its approved limit. You can require approval, or enable automatic shutoff. The cutoff tracks calendar-month variable energy spending. Home-level fixed charges are excluded.",
+    "duration": 451,
+    "audioSeconds": 15.033333333333333,
+    "focus": "Approval first, or optional shutoff",
+    "voiceover": "voiceover/elevenlabs/Control.wav",
+    "captions": [
+      {
+        "text": "With Smart Control, you choose what happens when an appliance",
+        "startMs": 173,
+        "endMs": 3603,
+        "timestampMs": 173,
+        "confidence": null
+      },
+      {
+        "text": "reaches its approved limit.",
+        "startMs": 3453,
+        "endMs": 5023,
+        "timestampMs": 3453,
+        "confidence": null
+      },
+      {
+        "text": "You can require approval, or enable automatic shutoff.",
+        "startMs": 4873,
+        "endMs": 8843,
+        "timestampMs": 4873,
+        "confidence": null
+      },
+      {
+        "text": "The cutoff tracks calendar-month variable energy spending.",
+        "startMs": 9413,
+        "endMs": 12223,
+        "timestampMs": 9413,
+        "confidence": null
+      },
+      {
+        "text": "Home-level fixed charges are excluded.",
+        "startMs": 12693,
+        "endMs": 14523,
+        "timestampMs": 12693,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Reports",
+    "kicker": "08 / REPORTS & SETTINGS",
+    "title": "Review it.\nExport it.",
+    "description": "PDF, CSV, and account preferences.",
+    "kind": "reports",
+    "narration": "Need a record of your usage? Open Energy Reports, choose a period, and download a PDF or CSV. In Settings, manage your account, billing cycle, and notification preferences. Push notifications require your permission and service availability.",
+    "duration": 483,
+    "audioSeconds": 16.1,
+    "focus": "PDF + CSV \u00b7 your selected period",
+    "voiceover": "voiceover/elevenlabs/Reports.wav",
+    "captions": [
+      {
+        "text": "Need a record of your usage?",
+        "startMs": 160,
+        "endMs": 1230,
+        "timestampMs": 160,
+        "confidence": null
+      },
+      {
+        "text": "Open Energy Reports, choose a period, and download a PDF",
+        "startMs": 1920,
+        "endMs": 5390,
+        "timestampMs": 1920,
+        "confidence": null
+      },
+      {
+        "text": "or CSV.",
+        "startMs": 5240,
+        "endMs": 6230,
+        "timestampMs": 5240,
+        "confidence": null
+      },
+      {
+        "text": "In Settings, manage your account, billing cycle, and notification preferences.",
+        "startMs": 7380,
+        "endMs": 11370,
+        "timestampMs": 7380,
+        "confidence": null
+      },
+      {
+        "text": "Push notifications require your permission and service availability.",
+        "startMs": 12400,
+        "endMs": 15270,
+        "timestampMs": 12400,
+        "confidence": null
+      }
+    ]
+  },
+  {
+    "id": "Feedback",
+    "kicker": "YOUR TURN",
+    "title": "Try it.\nBe honest.",
+    "description": "Tell us what is clear, confusing, or useful.",
+    "kind": "feedback",
+    "narration": "Now, it's your turn to try WattWise. Complete the assigned tasks. Tell us what feels clear, what feels confusing, and what you would actually use. Answer the survey based on your own experience. There are no right or wrong answers.",
+    "duration": 407,
+    "audioSeconds": 13.566666666666666,
+    "focus": "Your experience is what matters",
+    "voiceover": "voiceover/elevenlabs/Feedback.wav",
+    "captions": [
+      {
+        "text": "Now, it's your turn to try WattWise.",
+        "startMs": 160,
+        "endMs": 1950,
+        "timestampMs": 160,
+        "confidence": null
+      },
+      {
+        "text": "Complete the assigned tasks.",
+        "startMs": 2420,
+        "endMs": 3630,
+        "timestampMs": 2420,
+        "confidence": null
+      },
+      {
+        "text": "Tell us what feels clear, what feels confusing, and what",
+        "startMs": 3480,
+        "endMs": 7070,
+        "timestampMs": 3480,
+        "confidence": null
+      },
+      {
+        "text": "you would actually use.",
+        "startMs": 6920,
+        "endMs": 8030,
+        "timestampMs": 6920,
+        "confidence": null
+      },
+      {
+        "text": "Answer the survey based on your own experience.",
+        "startMs": 8720,
+        "endMs": 10670,
+        "timestampMs": 8720,
+        "confidence": null
+      },
+      {
+        "text": "There are no right or wrong answers.",
+        "startMs": 11380,
+        "endMs": 12890,
+        "timestampMs": 11380,
+        "confidence": null
+      }
+    ]
+  }
+]

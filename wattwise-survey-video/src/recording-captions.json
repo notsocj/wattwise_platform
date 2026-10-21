@@ -1,0 +1,2683 @@
+[
+  {
+    "text": " Meet",
+    "startMs": 0,
+    "endMs": 240,
+    "timestampMs": 0,
+    "confidence": 0.7794157862663269
+  },
+  {
+    "text": " WattWise.",
+    "startMs": 240,
+    "endMs": 920,
+    "timestampMs": 240,
+    "confidence": 0.37124591941634816
+  },
+  {
+    "text": " An",
+    "startMs": 1760,
+    "endMs": 1860,
+    "timestampMs": 1760,
+    "confidence": 0.9805145859718323
+  },
+  {
+    "text": " energy",
+    "startMs": 1860,
+    "endMs": 2100,
+    "timestampMs": 1860,
+    "confidence": 0.6324496269226074
+  },
+  {
+    "text": " monitoring",
+    "startMs": 2100,
+    "endMs": 2480,
+    "timestampMs": 2100,
+    "confidence": 0.9768357276916504
+  },
+  {
+    "text": " app",
+    "startMs": 2480,
+    "endMs": 2960,
+    "timestampMs": 2480,
+    "confidence": 0.9935865998268127
+  },
+  {
+    "text": " for",
+    "startMs": 2960,
+    "endMs": 3180,
+    "timestampMs": 2960,
+    "confidence": 0.9988629817962646
+  },
+  {
+    "text": " Philippine",
+    "startMs": 3180,
+    "endMs": 3480,
+    "timestampMs": 3180,
+    "confidence": 0.9980910420417786
+  },
+  {
+    "text": " households.",
+    "startMs": 3480,
+    "endMs": 3940,
+    "timestampMs": 3480,
+    "confidence": 0.9928390383720398
+  },
+  {
+    "text": " See",
+    "startMs": 4880,
+    "endMs": 5220,
+    "timestampMs": 4880,
+    "confidence": 0.9924507737159729
+  },
+  {
+    "text": " what",
+    "startMs": 5220,
+    "endMs": 5360,
+    "timestampMs": 5220,
+    "confidence": 0.9687661528587341
+  },
+  {
+    "text": " your",
+    "startMs": 5360,
+    "endMs": 5500,
+    "timestampMs": 5360,
+    "confidence": 0.9933528900146484
+  },
+  {
+    "text": " connected",
+    "startMs": 5500,
+    "endMs": 5820,
+    "timestampMs": 5500,
+    "confidence": 0.9528746604919434
+  },
+  {
+    "text": " appliances",
+    "startMs": 5820,
+    "endMs": 6220,
+    "timestampMs": 5820,
+    "confidence": 0.9953528642654419
+  },
+  {
+    "text": " are",
+    "startMs": 6220,
+    "endMs": 6640,
+    "timestampMs": 6220,
+    "confidence": 0.9990764856338501
+  },
+  {
+    "text": " using.",
+    "startMs": 6640,
+    "endMs": 6840,
+    "timestampMs": 6640,
+    "confidence": 0.9995591044425964
+  },
+  {
+    "text": " Understand",
+    "startMs": 7900,
+    "endMs": 7900,
+    "timestampMs": 7900,
+    "confidence": 0.9900516867637634
+  },
+  {
+    "text": " estimated",
+    "startMs": 7900,
+    "endMs": 8420,
+    "timestampMs": 7900,
+    "confidence": 0.9836260676383972
+  },
+  {
+    "text": " electricity",
+    "startMs": 8420,
+    "endMs": 8700,
+    "timestampMs": 8420,
+    "confidence": 0.9970388412475586
+  },
+  {
+    "text": " costs",
+    "startMs": 8700,
+    "endMs": 9380,
+    "timestampMs": 8700,
+    "confidence": 0.9946035742759705
+  },
+  {
+    "text": " and",
+    "startMs": 9380,
+    "endMs": 9980,
+    "timestampMs": 9380,
+    "confidence": 0.8169124126434326
+  },
+  {
+    "text": " keep",
+    "startMs": 9980,
+    "endMs": 10140,
+    "timestampMs": 9980,
+    "confidence": 0.9936780333518982
+  },
+  {
+    "text": " your",
+    "startMs": 10140,
+    "endMs": 10320,
+    "timestampMs": 10140,
+    "confidence": 0.9977184534072876
+  },
+  {
+    "text": " budget",
+    "startMs": 10320,
+    "endMs": 10540,
+    "timestampMs": 10320,
+    "confidence": 0.9972884654998779
+  },
+  {
+    "text": " in",
+    "startMs": 10540,
+    "endMs": 10760,
+    "timestampMs": 10540,
+    "confidence": 0.998859167098999
+  },
+  {
+    "text": " view.",
+    "startMs": 10760,
+    "endMs": 10940,
+    "timestampMs": 10760,
+    "confidence": 0.9930930137634277
+  },
+  {
+    "text": " Let's",
+    "startMs": 11760,
+    "endMs": 11980,
+    "timestampMs": 11760,
+    "confidence": 0.9911658465862274
+  },
+  {
+    "text": " take",
+    "startMs": 11980,
+    "endMs": 12080,
+    "timestampMs": 11980,
+    "confidence": 0.9988915324211121
+  },
+  {
+    "text": " a",
+    "startMs": 12080,
+    "endMs": 12180,
+    "timestampMs": 12080,
+    "confidence": 0.9994532465934753
+  },
+  {
+    "text": " quick",
+    "startMs": 12180,
+    "endMs": 12340,
+    "timestampMs": 12180,
+    "confidence": 0.9947261214256287
+  },
+  {
+    "text": " look.",
+    "startMs": 12340,
+    "endMs": 12640,
+    "timestampMs": 12340,
+    "confidence": 0.9994307160377502
+  },
+  {
+    "text": " The",
+    "startMs": 13520,
+    "endMs": 13740,
+    "timestampMs": 13520,
+    "confidence": 0.9755216240882874
+  },
+  {
+    "text": " readings",
+    "startMs": 13740,
+    "endMs": 13960,
+    "timestampMs": 13740,
+    "confidence": 0.9843563437461853
+  },
+  {
+    "text": " in",
+    "startMs": 13960,
+    "endMs": 14260,
+    "timestampMs": 13960,
+    "confidence": 0.998015284538269
+  },
+  {
+    "text": " this",
+    "startMs": 14260,
+    "endMs": 14440,
+    "timestampMs": 14260,
+    "confidence": 0.9984914064407349
+  },
+  {
+    "text": " demonstration",
+    "startMs": 14440,
+    "endMs": 14940,
+    "timestampMs": 14440,
+    "confidence": 0.9966667294502258
+  },
+  {
+    "text": " are",
+    "startMs": 14940,
+    "endMs": 15300,
+    "timestampMs": 14940,
+    "confidence": 0.9959731698036194
+  },
+  {
+    "text": " sample",
+    "startMs": 15300,
+    "endMs": 15620,
+    "timestampMs": 15300,
+    "confidence": 0.9379305839538574
+  },
+  {
+    "text": " data.",
+    "startMs": 15620,
+    "endMs": 15980,
+    "timestampMs": 15620,
+    "confidence": 0.9968921542167664
+  },
+  {
+    "text": " It",
+    "startMs": 17060,
+    "endMs": 17220,
+    "timestampMs": 17060,
+    "confidence": 0.9908850789070129
+  },
+  {
+    "text": " starts",
+    "startMs": 17220,
+    "endMs": 17440,
+    "timestampMs": 17220,
+    "confidence": 0.9979844093322754
+  },
+  {
+    "text": " with",
+    "startMs": 17440,
+    "endMs": 17720,
+    "timestampMs": 17440,
+    "confidence": 0.9996850490570068
+  },
+  {
+    "text": " a",
+    "startMs": 17720,
+    "endMs": 17820,
+    "timestampMs": 17720,
+    "confidence": 0.9885879755020142
+  },
+  {
+    "text": " monitoring",
+    "startMs": 17820,
+    "endMs": 18120,
+    "timestampMs": 17820,
+    "confidence": 0.9807079434394836
+  },
+  {
+    "text": " unit.",
+    "startMs": 18120,
+    "endMs": 18620,
+    "timestampMs": 18120,
+    "confidence": 0.9995965361595154
+  },
+  {
+    "text": " The",
+    "startMs": 19360,
+    "endMs": 19580,
+    "timestampMs": 19360,
+    "confidence": 0.9956691265106201
+  },
+  {
+    "text": " unit",
+    "startMs": 19580,
+    "endMs": 19740,
+    "timestampMs": 19580,
+    "confidence": 0.9846881031990051
+  },
+  {
+    "text": " measures",
+    "startMs": 19740,
+    "endMs": 20100,
+    "timestampMs": 19740,
+    "confidence": 0.9955323934555054
+  },
+  {
+    "text": " and",
+    "startMs": 20100,
+    "endMs": 20360,
+    "timestampMs": 20100,
+    "confidence": 0.5371871590614319
+  },
+  {
+    "text": " appliances",
+    "startMs": 20360,
+    "endMs": 20860,
+    "timestampMs": 20360,
+    "confidence": 0.9980033040046692
+  },
+  {
+    "text": " electricity",
+    "startMs": 20860,
+    "endMs": 21380,
+    "timestampMs": 20860,
+    "confidence": 0.8899468779563904
+  },
+  {
+    "text": " use,",
+    "startMs": 21380,
+    "endMs": 21820,
+    "timestampMs": 21380,
+    "confidence": 0.9973347783088684
+  },
+  {
+    "text": " then",
+    "startMs": 22480,
+    "endMs": 22620,
+    "timestampMs": 22480,
+    "confidence": 0.9928298592567444
+  },
+  {
+    "text": " sends",
+    "startMs": 22620,
+    "endMs": 22860,
+    "timestampMs": 22620,
+    "confidence": 0.989949107170105
+  },
+  {
+    "text": " readings",
+    "startMs": 22860,
+    "endMs": 23160,
+    "timestampMs": 22860,
+    "confidence": 0.9967674016952515
+  },
+  {
+    "text": " to",
+    "startMs": 23160,
+    "endMs": 23480,
+    "timestampMs": 23160,
+    "confidence": 0.9988628625869751
+  },
+  {
+    "text": " WattWise",
+    "startMs": 23480,
+    "endMs": 24060,
+    "timestampMs": 23480,
+    "confidence": 0.9191134174664816
+  },
+  {
+    "text": " over",
+    "startMs": 24060,
+    "endMs": 24260,
+    "timestampMs": 24060,
+    "confidence": 0.9802222847938538
+  },
+  {
+    "text": " Wi",
+    "startMs": 24260,
+    "endMs": 24440,
+    "timestampMs": 24260,
+    "confidence": 0.5207805633544922
+  },
+  {
+    "text": "-Fi.",
+    "startMs": 24440,
+    "endMs": 24720,
+    "timestampMs": 24440,
+    "confidence": 0.9801660776138306
+  },
+  {
+    "text": " The",
+    "startMs": 25520,
+    "endMs": 25740,
+    "timestampMs": 25520,
+    "confidence": 0.9970483183860779
+  },
+  {
+    "text": " hardware",
+    "startMs": 25740,
+    "endMs": 25940,
+    "timestampMs": 25740,
+    "confidence": 0.9960713386535645
+  },
+  {
+    "text": " shown",
+    "startMs": 25940,
+    "endMs": 26320,
+    "timestampMs": 25940,
+    "confidence": 0.983930766582489
+  },
+  {
+    "text": " here",
+    "startMs": 26320,
+    "endMs": 26640,
+    "timestampMs": 26320,
+    "confidence": 0.9990691542625427
+  },
+  {
+    "text": " is",
+    "startMs": 26640,
+    "endMs": 26880,
+    "timestampMs": 26640,
+    "confidence": 0.9971185922622681
+  },
+  {
+    "text": " a",
+    "startMs": 26880,
+    "endMs": 27000,
+    "timestampMs": 26880,
+    "confidence": 0.9958034157752991
+  },
+  {
+    "text": " concept",
+    "startMs": 27000,
+    "endMs": 27360,
+    "timestampMs": 27000,
+    "confidence": 0.9890369772911072
+  },
+  {
+    "text": " illustration.",
+    "startMs": 27360,
+    "endMs": 27720,
+    "timestampMs": 27360,
+    "confidence": 0.998870313167572
+  },
+  {
+    "text": " For",
+    "startMs": 28660,
+    "endMs": 29180,
+    "timestampMs": 28660,
+    "confidence": 0.19175826013088226
+  },
+  {
+    "text": " your",
+    "startMs": 29180,
+    "endMs": 29340,
+    "timestampMs": 29180,
+    "confidence": 0.9870742559432983
+  },
+  {
+    "text": " test",
+    "startMs": 29340,
+    "endMs": 29540,
+    "timestampMs": 29340,
+    "confidence": 0.9641804695129395
+  },
+  {
+    "text": " session,",
+    "startMs": 29540,
+    "endMs": 29940,
+    "timestampMs": 29540,
+    "confidence": 0.9941108822822571
+  },
+  {
+    "text": " researchers",
+    "startMs": 30300,
+    "endMs": 30620,
+    "timestampMs": 30300,
+    "confidence": 0.9814499616622925
+  },
+  {
+    "text": " prepare",
+    "startMs": 30620,
+    "endMs": 31160,
+    "timestampMs": 30620,
+    "confidence": 0.9911870360374451
+  },
+  {
+    "text": " the",
+    "startMs": 31160,
+    "endMs": 31420,
+    "timestampMs": 31160,
+    "confidence": 0.9971691966056824
+  },
+  {
+    "text": " electrical",
+    "startMs": 31420,
+    "endMs": 31760,
+    "timestampMs": 31420,
+    "confidence": 0.9802026748657227
+  },
+  {
+    "text": " connections.",
+    "startMs": 31760,
+    "endMs": 32280,
+    "timestampMs": 31760,
+    "confidence": 0.9960732460021973
+  },
+  {
+    "text": " To",
+    "startMs": 33340,
+    "endMs": 33460,
+    "timestampMs": 33340,
+    "confidence": 0.9953125715255737
+  },
+  {
+    "text": " add",
+    "startMs": 33460,
+    "endMs": 33640,
+    "timestampMs": 33460,
+    "confidence": 0.9987320303916931
+  },
+  {
+    "text": " an",
+    "startMs": 33640,
+    "endMs": 33760,
+    "timestampMs": 33640,
+    "confidence": 0.9916483163833618
+  },
+  {
+    "text": " appliance,",
+    "startMs": 33760,
+    "endMs": 34060,
+    "timestampMs": 33760,
+    "confidence": 0.9326507449150085
+  },
+  {
+    "text": " scan",
+    "startMs": 34600,
+    "endMs": 34840,
+    "timestampMs": 34600,
+    "confidence": 0.9982461929321289
+  },
+  {
+    "text": " its",
+    "startMs": 34840,
+    "endMs": 35060,
+    "timestampMs": 34840,
+    "confidence": 0.9130735993385315
+  },
+  {
+    "text": " device",
+    "startMs": 35060,
+    "endMs": 35340,
+    "timestampMs": 35060,
+    "confidence": 0.979540228843689
+  },
+  {
+    "text": " code",
+    "startMs": 35340,
+    "endMs": 35660,
+    "timestampMs": 35340,
+    "confidence": 0.9972499012947083
+  },
+  {
+    "text": " or",
+    "startMs": 35660,
+    "endMs": 35900,
+    "timestampMs": 35660,
+    "confidence": 0.8728235960006714
+  },
+  {
+    "text": " enter",
+    "startMs": 35900,
+    "endMs": 36140,
+    "timestampMs": 35900,
+    "confidence": 0.9959348440170288
+  },
+  {
+    "text": " its",
+    "startMs": 36140,
+    "endMs": 36320,
+    "timestampMs": 36140,
+    "confidence": 0.9634191393852234
+  },
+  {
+    "text": " identifier.",
+    "startMs": 36320,
+    "endMs": 36620,
+    "timestampMs": 36320,
+    "confidence": 0.9963705539703369
+  },
+  {
+    "text": " Tell",
+    "startMs": 37880,
+    "endMs": 37960,
+    "timestampMs": 37880,
+    "confidence": 0.9904252886772156
+  },
+  {
+    "text": " WattWise",
+    "startMs": 37960,
+    "endMs": 38600,
+    "timestampMs": 37960,
+    "confidence": 0.4623598555723826
+  },
+  {
+    "text": " how",
+    "startMs": 38600,
+    "endMs": 38820,
+    "timestampMs": 38600,
+    "confidence": 0.975726306438446
+  },
+  {
+    "text": " you",
+    "startMs": 38820,
+    "endMs": 38980,
+    "timestampMs": 38820,
+    "confidence": 0.9986869692802429
+  },
+  {
+    "text": " normally",
+    "startMs": 38980,
+    "endMs": 39180,
+    "timestampMs": 38980,
+    "confidence": 0.9954742789268494
+  },
+  {
+    "text": " use",
+    "startMs": 39180,
+    "endMs": 39580,
+    "timestampMs": 39180,
+    "confidence": 0.9981288313865662
+  },
+  {
+    "text": " it.",
+    "startMs": 39580,
+    "endMs": 39680,
+    "timestampMs": 39580,
+    "confidence": 0.9989359974861145
+  },
+  {
+    "text": " Then",
+    "startMs": 40720,
+    "endMs": 40900,
+    "timestampMs": 40720,
+    "confidence": 0.9879091382026672
+  },
+  {
+    "text": " review",
+    "startMs": 40900,
+    "endMs": 41120,
+    "timestampMs": 40900,
+    "confidence": 0.8807508945465088
+  },
+  {
+    "text": " the",
+    "startMs": 41120,
+    "endMs": 41340,
+    "timestampMs": 41120,
+    "confidence": 0.9976586103439331
+  },
+  {
+    "text": " AI",
+    "startMs": 41340,
+    "endMs": 41520,
+    "timestampMs": 41340,
+    "confidence": 0.9598041772842407
+  },
+  {
+    "text": " profile",
+    "startMs": 41520,
+    "endMs": 41980,
+    "timestampMs": 41520,
+    "confidence": 0.7163565158843994
+  },
+  {
+    "text": " and",
+    "startMs": 41980,
+    "endMs": 42280,
+    "timestampMs": 41980,
+    "confidence": 0.800037682056427
+  },
+  {
+    "text": " suggested",
+    "startMs": 42280,
+    "endMs": 42560,
+    "timestampMs": 42280,
+    "confidence": 0.9791669845581055
+  },
+  {
+    "text": " budget.",
+    "startMs": 42560,
+    "endMs": 42980,
+    "timestampMs": 42560,
+    "confidence": 0.9845957159996033
+  },
+  {
+    "text": " You",
+    "startMs": 44120,
+    "endMs": 44300,
+    "timestampMs": 44120,
+    "confidence": 0.9931713342666626
+  },
+  {
+    "text": " choose",
+    "startMs": 44300,
+    "endMs": 44420,
+    "timestampMs": 44300,
+    "confidence": 0.9846924543380737
+  },
+  {
+    "text": " the",
+    "startMs": 44420,
+    "endMs": 44620,
+    "timestampMs": 44420,
+    "confidence": 0.998840868473053
+  },
+  {
+    "text": " appliance",
+    "startMs": 44620,
+    "endMs": 45000,
+    "timestampMs": 44620,
+    "confidence": 0.8871657252311707
+  },
+  {
+    "text": " limit",
+    "startMs": 45000,
+    "endMs": 45300,
+    "timestampMs": 45000,
+    "confidence": 0.9703873991966248
+  },
+  {
+    "text": " before",
+    "startMs": 45300,
+    "endMs": 45700,
+    "timestampMs": 45300,
+    "confidence": 0.9965617060661316
+  },
+  {
+    "text": " approving",
+    "startMs": 45700,
+    "endMs": 46160,
+    "timestampMs": 45700,
+    "confidence": 0.9631592035293579
+  },
+  {
+    "text": " it.",
+    "startMs": 46160,
+    "endMs": 46320,
+    "timestampMs": 46160,
+    "confidence": 0.9982726573944092
+  },
+  {
+    "text": " On",
+    "startMs": 47080,
+    "endMs": 47180,
+    "timestampMs": 47080,
+    "confidence": 0.9968560934066772
+  },
+  {
+    "text": " the",
+    "startMs": 47180,
+    "endMs": 47280,
+    "timestampMs": 47180,
+    "confidence": 0.9971621036529541
+  },
+  {
+    "text": " Home",
+    "startMs": 47280,
+    "endMs": 47440,
+    "timestampMs": 47280,
+    "confidence": 0.24769438803195953
+  },
+  {
+    "text": " Dashboard,",
+    "startMs": 47440,
+    "endMs": 48020,
+    "timestampMs": 47440,
+    "confidence": 0.8678866028785706
+  },
+  {
+    "text": " you",
+    "startMs": 48340,
+    "endMs": 48500,
+    "timestampMs": 48340,
+    "confidence": 0.9974466562271118
+  },
+  {
+    "text": " can",
+    "startMs": 48500,
+    "endMs": 48600,
+    "timestampMs": 48500,
+    "confidence": 0.9983036518096924
+  },
+  {
+    "text": " see",
+    "startMs": 48600,
+    "endMs": 48780,
+    "timestampMs": 48600,
+    "confidence": 0.9985547661781311
+  },
+  {
+    "text": " what's",
+    "startMs": 48780,
+    "endMs": 49020,
+    "timestampMs": 48780,
+    "confidence": 0.9833292067050934
+  },
+  {
+    "text": " running",
+    "startMs": 49020,
+    "endMs": 49200,
+    "timestampMs": 49020,
+    "confidence": 0.9993876218795776
+  },
+  {
+    "text": " right",
+    "startMs": 49200,
+    "endMs": 49460,
+    "timestampMs": 49200,
+    "confidence": 0.997745931148529
+  },
+  {
+    "text": " now.",
+    "startMs": 49460,
+    "endMs": 49760,
+    "timestampMs": 49460,
+    "confidence": 0.9996405839920044
+  },
+  {
+    "text": " Check",
+    "startMs": 50560,
+    "endMs": 50580,
+    "timestampMs": 50560,
+    "confidence": 0.9964399933815002
+  },
+  {
+    "text": " power",
+    "startMs": 50580,
+    "endMs": 50820,
+    "timestampMs": 50580,
+    "confidence": 0.7618675827980042
+  },
+  {
+    "text": " in",
+    "startMs": 50820,
+    "endMs": 51120,
+    "timestampMs": 50820,
+    "confidence": 0.9887843132019043
+  },
+  {
+    "text": " watts,",
+    "startMs": 51120,
+    "endMs": 51320,
+    "timestampMs": 51120,
+    "confidence": 0.604825496673584
+  },
+  {
+    "text": " voltage,",
+    "startMs": 51880,
+    "endMs": 52100,
+    "timestampMs": 51880,
+    "confidence": 0.9904906749725342
+  },
+  {
+    "text": " current,",
+    "startMs": 52760,
+    "endMs": 52880,
+    "timestampMs": 52760,
+    "confidence": 0.9984850287437439
+  },
+  {
+    "text": " and",
+    "startMs": 53380,
+    "endMs": 53480,
+    "timestampMs": 53380,
+    "confidence": 0.9989761114120483
+  },
+  {
+    "text": " energy",
+    "startMs": 53480,
+    "endMs": 53700,
+    "timestampMs": 53480,
+    "confidence": 0.992586076259613
+  },
+  {
+    "text": " use",
+    "startMs": 53700,
+    "endMs": 53980,
+    "timestampMs": 53700,
+    "confidence": 0.5911895632743835
+  },
+  {
+    "text": " today.",
+    "startMs": 53980,
+    "endMs": 54320,
+    "timestampMs": 53980,
+    "confidence": 0.9965638518333435
+  },
+  {
+    "text": " You'll",
+    "startMs": 55080,
+    "endMs": 55440,
+    "timestampMs": 55080,
+    "confidence": 0.98202845454216
+  },
+  {
+    "text": " also",
+    "startMs": 55440,
+    "endMs": 55680,
+    "timestampMs": 55440,
+    "confidence": 0.9988813996315002
+  },
+  {
+    "text": " see",
+    "startMs": 55680,
+    "endMs": 55860,
+    "timestampMs": 55680,
+    "confidence": 0.9983708262443542
+  },
+  {
+    "text": " the",
+    "startMs": 55860,
+    "endMs": 56000,
+    "timestampMs": 55860,
+    "confidence": 0.9989705085754395
+  },
+  {
+    "text": " estimated",
+    "startMs": 56000,
+    "endMs": 56440,
+    "timestampMs": 56000,
+    "confidence": 0.9776492714881897
+  },
+  {
+    "text": " daily",
+    "startMs": 56440,
+    "endMs": 56680,
+    "timestampMs": 56440,
+    "confidence": 0.9873546957969666
+  },
+  {
+    "text": " cost",
+    "startMs": 56680,
+    "endMs": 57100,
+    "timestampMs": 56680,
+    "confidence": 0.9872534871101379
+  },
+  {
+    "text": " when",
+    "startMs": 57100,
+    "endMs": 58140,
+    "timestampMs": 57100,
+    "confidence": 0.057163119316101074
+  },
+  {
+    "text": " fresh",
+    "startMs": 58140,
+    "endMs": 58360,
+    "timestampMs": 58140,
+    "confidence": 0.8815463185310364
+  },
+  {
+    "text": " readings",
+    "startMs": 58360,
+    "endMs": 58740,
+    "timestampMs": 58360,
+    "confidence": 0.8896760940551758
+  },
+  {
+    "text": " stop",
+    "startMs": 58740,
+    "endMs": 59120,
+    "timestampMs": 58740,
+    "confidence": 0.9568032622337341
+  },
+  {
+    "text": " arriving.",
+    "startMs": 59120,
+    "endMs": 59460,
+    "timestampMs": 59120,
+    "confidence": 0.997251570224762
+  },
+  {
+    "text": " The",
+    "startMs": 60260,
+    "endMs": 60320,
+    "timestampMs": 60260,
+    "confidence": 0.9181477427482605
+  },
+  {
+    "text": " device",
+    "startMs": 60320,
+    "endMs": 60580,
+    "timestampMs": 60320,
+    "confidence": 0.9948891401290894
+  },
+  {
+    "text": " shows",
+    "startMs": 60580,
+    "endMs": 60920,
+    "timestampMs": 60580,
+    "confidence": 0.9959349632263184
+  },
+  {
+    "text": " as",
+    "startMs": 60920,
+    "endMs": 61120,
+    "timestampMs": 60920,
+    "confidence": 0.9491111636161804
+  },
+  {
+    "text": " offline",
+    "startMs": 61120,
+    "endMs": 61600,
+    "timestampMs": 61120,
+    "confidence": 0.9451925754547119
+  },
+  {
+    "text": " or",
+    "startMs": 61600,
+    "endMs": 61880,
+    "timestampMs": 61600,
+    "confidence": 0.9727502465248108
+  },
+  {
+    "text": " idle.",
+    "startMs": 61880,
+    "endMs": 62140,
+    "timestampMs": 61880,
+    "confidence": 0.9977201819419861
+  },
+  {
+    "text": " Next,",
+    "startMs": 63040,
+    "endMs": 63300,
+    "timestampMs": 63040,
+    "confidence": 0.9735066890716553
+  },
+  {
+    "text": " open",
+    "startMs": 63660,
+    "endMs": 63860,
+    "timestampMs": 63660,
+    "confidence": 0.9882539510726929
+  },
+  {
+    "text": " your",
+    "startMs": 63860,
+    "endMs": 64000,
+    "timestampMs": 63860,
+    "confidence": 0.9969123601913452
+  },
+  {
+    "text": " home",
+    "startMs": 64000,
+    "endMs": 64160,
+    "timestampMs": 64000,
+    "confidence": 0.9205297231674194
+  },
+  {
+    "text": " wallet.",
+    "startMs": 64160,
+    "endMs": 64440,
+    "timestampMs": 64160,
+    "confidence": 0.998508632183075
+  },
+  {
+    "text": " Set",
+    "startMs": 65260,
+    "endMs": 65560,
+    "timestampMs": 65260,
+    "confidence": 0.9943925738334656
+  },
+  {
+    "text": " a",
+    "startMs": 65560,
+    "endMs": 65680,
+    "timestampMs": 65560,
+    "confidence": 0.9971036314964294
+  },
+  {
+    "text": " household",
+    "startMs": 65680,
+    "endMs": 65900,
+    "timestampMs": 65680,
+    "confidence": 0.9793199896812439
+  },
+  {
+    "text": " budget,",
+    "startMs": 65900,
+    "endMs": 66380,
+    "timestampMs": 65900,
+    "confidence": 0.9979217648506165
+  },
+  {
+    "text": " check",
+    "startMs": 66680,
+    "endMs": 66860,
+    "timestampMs": 66680,
+    "confidence": 0.9936965107917786
+  },
+  {
+    "text": " spending",
+    "startMs": 66860,
+    "endMs": 67160,
+    "timestampMs": 66860,
+    "confidence": 0.9779103398323059
+  },
+  {
+    "text": " so",
+    "startMs": 67160,
+    "endMs": 67440,
+    "timestampMs": 67160,
+    "confidence": 0.9883999824523926
+  },
+  {
+    "text": " far,",
+    "startMs": 67440,
+    "endMs": 67640,
+    "timestampMs": 67440,
+    "confidence": 0.9946672916412354
+  },
+  {
+    "text": " and",
+    "startMs": 67980,
+    "endMs": 68180,
+    "timestampMs": 67980,
+    "confidence": 0.9983773231506348
+  },
+  {
+    "text": " view",
+    "startMs": 68180,
+    "endMs": 68400,
+    "timestampMs": 68180,
+    "confidence": 0.9982798099517822
+  },
+  {
+    "text": " your",
+    "startMs": 68400,
+    "endMs": 68620,
+    "timestampMs": 68400,
+    "confidence": 0.9978029131889343
+  },
+  {
+    "text": " projected",
+    "startMs": 68620,
+    "endMs": 68960,
+    "timestampMs": 68620,
+    "confidence": 0.9897229671478271
+  },
+  {
+    "text": " bill.",
+    "startMs": 68960,
+    "endMs": 69320,
+    "timestampMs": 68960,
+    "confidence": 0.9925253391265869
+  },
+  {
+    "text": " Estimates",
+    "startMs": 70180,
+    "endMs": 70400,
+    "timestampMs": 70180,
+    "confidence": 0.9590272903442383
+  },
+  {
+    "text": " use",
+    "startMs": 70400,
+    "endMs": 70740,
+    "timestampMs": 70400,
+    "confidence": 0.987442672252655
+  },
+  {
+    "text": " Meralco",
+    "startMs": 70740,
+    "endMs": 71240,
+    "timestampMs": 70740,
+    "confidence": 0.44642260670661926
+  },
+  {
+    "text": " rate",
+    "startMs": 71240,
+    "endMs": 71420,
+    "timestampMs": 71240,
+    "confidence": 0.727215588092804
+  },
+  {
+    "text": " components,",
+    "startMs": 71420,
+    "endMs": 71740,
+    "timestampMs": 71420,
+    "confidence": 0.994460940361023
+  },
+  {
+    "text": " fixed",
+    "startMs": 72440,
+    "endMs": 72540,
+    "timestampMs": 72440,
+    "confidence": 0.8506040573120117
+  },
+  {
+    "text": " charges,",
+    "startMs": 72540,
+    "endMs": 72880,
+    "timestampMs": 72540,
+    "confidence": 0.9925717711448669
+  },
+  {
+    "text": " and",
+    "startMs": 73420,
+    "endMs": 73580,
+    "timestampMs": 73420,
+    "confidence": 0.9976778626441956
+  },
+  {
+    "text": " tax.",
+    "startMs": 73580,
+    "endMs": 73840,
+    "timestampMs": 73580,
+    "confidence": 0.9691877961158752
+  },
+  {
+    "text": " They",
+    "startMs": 74720,
+    "endMs": 74860,
+    "timestampMs": 74720,
+    "confidence": 0.9965257048606873
+  },
+  {
+    "text": " help",
+    "startMs": 74860,
+    "endMs": 75000,
+    "timestampMs": 74860,
+    "confidence": 0.99873286485672
+  },
+  {
+    "text": " you",
+    "startMs": 75000,
+    "endMs": 75140,
+    "timestampMs": 75000,
+    "confidence": 0.9989884495735168
+  },
+  {
+    "text": " track",
+    "startMs": 75140,
+    "endMs": 75340,
+    "timestampMs": 75140,
+    "confidence": 0.9948605895042419
+  },
+  {
+    "text": " costs,",
+    "startMs": 75340,
+    "endMs": 75720,
+    "timestampMs": 75340,
+    "confidence": 0.9975337982177734
+  },
+  {
+    "text": " but",
+    "startMs": 75760,
+    "endMs": 76320,
+    "timestampMs": 75760,
+    "confidence": 0.9990153312683105
+  },
+  {
+    "text": " they",
+    "startMs": 76320,
+    "endMs": 76440,
+    "timestampMs": 76320,
+    "confidence": 0.9969513416290283
+  },
+  {
+    "text": " are",
+    "startMs": 76440,
+    "endMs": 76540,
+    "timestampMs": 76440,
+    "confidence": 0.9865267872810364
+  },
+  {
+    "text": " not",
+    "startMs": 76540,
+    "endMs": 76760,
+    "timestampMs": 76540,
+    "confidence": 0.998917818069458
+  },
+  {
+    "text": " your",
+    "startMs": 76760,
+    "endMs": 76920,
+    "timestampMs": 76760,
+    "confidence": 0.9979496598243713
+  },
+  {
+    "text": " official",
+    "startMs": 76920,
+    "endMs": 77240,
+    "timestampMs": 76920,
+    "confidence": 0.9806040525436401
+  },
+  {
+    "text": " electricity",
+    "startMs": 77240,
+    "endMs": 77640,
+    "timestampMs": 77240,
+    "confidence": 0.9856249690055847
+  },
+  {
+    "text": " bill.",
+    "startMs": 77640,
+    "endMs": 78240,
+    "timestampMs": 77640,
+    "confidence": 0.9987970590591431
+  },
+  {
+    "text": " Want",
+    "startMs": 78900,
+    "endMs": 79080,
+    "timestampMs": 78900,
+    "confidence": 0.7460981011390686
+  },
+  {
+    "text": " to",
+    "startMs": 79080,
+    "endMs": 79200,
+    "timestampMs": 79080,
+    "confidence": 0.998809814453125
+  },
+  {
+    "text": " understand",
+    "startMs": 79200,
+    "endMs": 79420,
+    "timestampMs": 79200,
+    "confidence": 0.9973604083061218
+  },
+  {
+    "text": " your",
+    "startMs": 79420,
+    "endMs": 79760,
+    "timestampMs": 79420,
+    "confidence": 0.9973146319389343
+  },
+  {
+    "text": " usage",
+    "startMs": 79760,
+    "endMs": 80040,
+    "timestampMs": 79760,
+    "confidence": 0.9993976354598999
+  },
+  {
+    "text": " over",
+    "startMs": 80040,
+    "endMs": 80240,
+    "timestampMs": 80040,
+    "confidence": 0.9632886052131653
+  },
+  {
+    "text": " time.",
+    "startMs": 80240,
+    "endMs": 80600,
+    "timestampMs": 80240,
+    "confidence": 0.9997900128364563
+  },
+  {
+    "text": " Open",
+    "startMs": 81660,
+    "endMs": 81660,
+    "timestampMs": 81660,
+    "confidence": 0.9968875050544739
+  },
+  {
+    "text": " the",
+    "startMs": 81660,
+    "endMs": 81800,
+    "timestampMs": 81660,
+    "confidence": 0.997249186038971
+  },
+  {
+    "text": " calendar",
+    "startMs": 81800,
+    "endMs": 82120,
+    "timestampMs": 81800,
+    "confidence": 0.954831063747406
+  },
+  {
+    "text": " and",
+    "startMs": 82120,
+    "endMs": 82440,
+    "timestampMs": 82120,
+    "confidence": 0.9691959619522095
+  },
+  {
+    "text": " burn",
+    "startMs": 82440,
+    "endMs": 82620,
+    "timestampMs": 82440,
+    "confidence": 0.9822260141372681
+  },
+  {
+    "text": " analytics.",
+    "startMs": 82620,
+    "endMs": 82980,
+    "timestampMs": 82620,
+    "confidence": 0.9937278032302856
+  },
+  {
+    "text": " Explore",
+    "startMs": 83940,
+    "endMs": 84200,
+    "timestampMs": 83940,
+    "confidence": 0.9567040801048279
+  },
+  {
+    "text": " daily",
+    "startMs": 84200,
+    "endMs": 84440,
+    "timestampMs": 84200,
+    "confidence": 0.990916907787323
+  },
+  {
+    "text": " records,",
+    "startMs": 84440,
+    "endMs": 84880,
+    "timestampMs": 84440,
+    "confidence": 0.9984716773033142
+  },
+  {
+    "text": " weekly",
+    "startMs": 85340,
+    "endMs": 85440,
+    "timestampMs": 85340,
+    "confidence": 0.998301088809967
+  },
+  {
+    "text": " summaries,",
+    "startMs": 85440,
+    "endMs": 86060,
+    "timestampMs": 85440,
+    "confidence": 0.9991294145584106
+  },
+  {
+    "text": " and",
+    "startMs": 86320,
+    "endMs": 86600,
+    "timestampMs": 86320,
+    "confidence": 0.9987558126449585
+  },
+  {
+    "text": " spending",
+    "startMs": 86600,
+    "endMs": 86940,
+    "timestampMs": 86600,
+    "confidence": 0.9903477430343628
+  },
+  {
+    "text": " costs.",
+    "startMs": 86940,
+    "endMs": 87080,
+    "timestampMs": 86940,
+    "confidence": 0.19966557621955872
+  },
+  {
+    "text": " Change",
+    "startMs": 87080,
+    "endMs": 87440,
+    "timestampMs": 87080,
+    "confidence": 0.0009066755301319063
+  },
+  {
+    "text": " trends.",
+    "startMs": 87440,
+    "endMs": 87440,
+    "timestampMs": 87440,
+    "confidence": 0.45024362206459045
+  },
+  {
+    "text": " Compare",
+    "startMs": 88240,
+    "endMs": 88720,
+    "timestampMs": 88240,
+    "confidence": 0.9909927845001221
+  },
+  {
+    "text": " your",
+    "startMs": 88720,
+    "endMs": 88900,
+    "timestampMs": 88720,
+    "confidence": 0.9960891008377075
+  },
+  {
+    "text": " connected",
+    "startMs": 88900,
+    "endMs": 89220,
+    "timestampMs": 88900,
+    "confidence": 0.9659056067466736
+  },
+  {
+    "text": " appliances",
+    "startMs": 89220,
+    "endMs": 89580,
+    "timestampMs": 89220,
+    "confidence": 0.9939953684806824
+  },
+  {
+    "text": " and",
+    "startMs": 89580,
+    "endMs": 90160,
+    "timestampMs": 89580,
+    "confidence": 0.9624472260475159
+  },
+  {
+    "text": " see",
+    "startMs": 90160,
+    "endMs": 90320,
+    "timestampMs": 90160,
+    "confidence": 0.9954779744148254
+  },
+  {
+    "text": " when",
+    "startMs": 90320,
+    "endMs": 90580,
+    "timestampMs": 90320,
+    "confidence": 0.9908614158630371
+  },
+  {
+    "text": " usage",
+    "startMs": 90580,
+    "endMs": 90800,
+    "timestampMs": 90580,
+    "confidence": 0.9986036419868469
+  },
+  {
+    "text": " changes.",
+    "startMs": 90800,
+    "endMs": 91360,
+    "timestampMs": 90800,
+    "confidence": 0.9990191459655762
+  },
+  {
+    "text": " WattWise",
+    "startMs": 92260,
+    "endMs": 92840,
+    "timestampMs": 92260,
+    "confidence": 0.24849075078964233
+  },
+  {
+    "text": " also",
+    "startMs": 92840,
+    "endMs": 93140,
+    "timestampMs": 92840,
+    "confidence": 0.9936308264732361
+  },
+  {
+    "text": " offers",
+    "startMs": 93140,
+    "endMs": 93440,
+    "timestampMs": 93140,
+    "confidence": 0.9981303811073303
+  },
+  {
+    "text": " practical",
+    "startMs": 93440,
+    "endMs": 93840,
+    "timestampMs": 93440,
+    "confidence": 0.948248565196991
+  },
+  {
+    "text": " energy",
+    "startMs": 93840,
+    "endMs": 94320,
+    "timestampMs": 93840,
+    "confidence": 0.9628015756607056
+  },
+  {
+    "text": " insights",
+    "startMs": 94320,
+    "endMs": 94720,
+    "timestampMs": 94320,
+    "confidence": 0.9855929017066956
+  },
+  {
+    "text": " and",
+    "startMs": 94720,
+    "endMs": 94960,
+    "timestampMs": 94720,
+    "confidence": 0.6380566954612732
+  },
+  {
+    "text": " taglish.",
+    "startMs": 94960,
+    "endMs": 95400,
+    "timestampMs": 94960,
+    "confidence": 0.8733754456043243
+  },
+  {
+    "text": " These",
+    "startMs": 96220,
+    "endMs": 96480,
+    "timestampMs": 96220,
+    "confidence": 0.9956470131874084
+  },
+  {
+    "text": " insights",
+    "startMs": 96480,
+    "endMs": 96800,
+    "timestampMs": 96480,
+    "confidence": 0.9803456664085388
+  },
+  {
+    "text": " use",
+    "startMs": 96800,
+    "endMs": 97140,
+    "timestampMs": 96800,
+    "confidence": 0.9836893677711487
+  },
+  {
+    "text": " your",
+    "startMs": 97140,
+    "endMs": 97280,
+    "timestampMs": 97140,
+    "confidence": 0.995459258556366
+  },
+  {
+    "text": " recorded",
+    "startMs": 97280,
+    "endMs": 97700,
+    "timestampMs": 97280,
+    "confidence": 0.9970088601112366
+  },
+  {
+    "text": " data",
+    "startMs": 97700,
+    "endMs": 97980,
+    "timestampMs": 97700,
+    "confidence": 0.9980960488319397
+  },
+  {
+    "text": " to",
+    "startMs": 97980,
+    "endMs": 98240,
+    "timestampMs": 97980,
+    "confidence": 0.9974333643913269
+  },
+  {
+    "text": " explain",
+    "startMs": 98240,
+    "endMs": 98580,
+    "timestampMs": 98240,
+    "confidence": 0.9981231093406677
+  },
+  {
+    "text": " usage",
+    "startMs": 98580,
+    "endMs": 98860,
+    "timestampMs": 98580,
+    "confidence": 0.9968953132629395
+  },
+  {
+    "text": " patterns.",
+    "startMs": 98860,
+    "endMs": 99300,
+    "timestampMs": 98860,
+    "confidence": 0.9965996146202087
+  },
+  {
+    "text": " Budget",
+    "startMs": 100340,
+    "endMs": 100700,
+    "timestampMs": 100340,
+    "confidence": 0.9529197812080383
+  },
+  {
+    "text": " warnings",
+    "startMs": 100700,
+    "endMs": 101040,
+    "timestampMs": 100700,
+    "confidence": 0.8434368371963501
+  },
+  {
+    "text": " and",
+    "startMs": 101040,
+    "endMs": 101420,
+    "timestampMs": 101040,
+    "confidence": 0.9779637455940247
+  },
+  {
+    "text": " unusual",
+    "startMs": 101420,
+    "endMs": 101720,
+    "timestampMs": 101420,
+    "confidence": 0.9937677383422852
+  },
+  {
+    "text": " use",
+    "startMs": 101720,
+    "endMs": 102160,
+    "timestampMs": 101720,
+    "confidence": 0.9642924070358276
+  },
+  {
+    "text": " alerts",
+    "startMs": 102160,
+    "endMs": 102520,
+    "timestampMs": 102160,
+    "confidence": 0.9897525310516357
+  },
+  {
+    "text": " highlight",
+    "startMs": 102520,
+    "endMs": 103100,
+    "timestampMs": 102520,
+    "confidence": 0.9528638124465942
+  },
+  {
+    "text": " changes",
+    "startMs": 103100,
+    "endMs": 103580,
+    "timestampMs": 103100,
+    "confidence": 0.9956023693084717
+  },
+  {
+    "text": " to",
+    "startMs": 103580,
+    "endMs": 103840,
+    "timestampMs": 103580,
+    "confidence": 0.9979596138000488
+  },
+  {
+    "text": " review.",
+    "startMs": 103840,
+    "endMs": 104040,
+    "timestampMs": 103840,
+    "confidence": 0.9972122311592102
+  },
+  {
+    "text": " Choose",
+    "startMs": 105320,
+    "endMs": 105320,
+    "timestampMs": 105320,
+    "confidence": 0.993311882019043
+  },
+  {
+    "text": " the",
+    "startMs": 105320,
+    "endMs": 105520,
+    "timestampMs": 105320,
+    "confidence": 0.997624933719635
+  },
+  {
+    "text": " suggestions",
+    "startMs": 105520,
+    "endMs": 105920,
+    "timestampMs": 105520,
+    "confidence": 0.9900726079940796
+  },
+  {
+    "text": " that",
+    "startMs": 105920,
+    "endMs": 106280,
+    "timestampMs": 105920,
+    "confidence": 0.9988729357719421
+  },
+  {
+    "text": " fit",
+    "startMs": 106280,
+    "endMs": 106500,
+    "timestampMs": 106280,
+    "confidence": 0.9970429539680481
+  },
+  {
+    "text": " your",
+    "startMs": 106500,
+    "endMs": 106700,
+    "timestampMs": 106500,
+    "confidence": 0.9960303902626038
+  },
+  {
+    "text": " household.",
+    "startMs": 106700,
+    "endMs": 107020,
+    "timestampMs": 106700,
+    "confidence": 0.9956982135772705
+  },
+  {
+    "text": " Actual",
+    "startMs": 108000,
+    "endMs": 108300,
+    "timestampMs": 108000,
+    "confidence": 0.9984210729598999
+  },
+  {
+    "text": " savings",
+    "startMs": 108300,
+    "endMs": 108600,
+    "timestampMs": 108300,
+    "confidence": 0.986666738986969
+  },
+  {
+    "text": " will",
+    "startMs": 108600,
+    "endMs": 109000,
+    "timestampMs": 108600,
+    "confidence": 0.9978396892547607
+  },
+  {
+    "text": " depend",
+    "startMs": 109000,
+    "endMs": 109240,
+    "timestampMs": 109000,
+    "confidence": 0.998372495174408
+  },
+  {
+    "text": " on",
+    "startMs": 109240,
+    "endMs": 109520,
+    "timestampMs": 109240,
+    "confidence": 0.9968715310096741
+  },
+  {
+    "text": " how",
+    "startMs": 109520,
+    "endMs": 109700,
+    "timestampMs": 109520,
+    "confidence": 0.9987115859985352
+  },
+  {
+    "text": " you",
+    "startMs": 109700,
+    "endMs": 109860,
+    "timestampMs": 109700,
+    "confidence": 0.9965818524360657
+  },
+  {
+    "text": " use",
+    "startMs": 109860,
+    "endMs": 110100,
+    "timestampMs": 109860,
+    "confidence": 0.9975807666778564
+  },
+  {
+    "text": " your",
+    "startMs": 110100,
+    "endMs": 110220,
+    "timestampMs": 110100,
+    "confidence": 0.999248206615448
+  },
+  {
+    "text": " appliances.",
+    "startMs": 110220,
+    "endMs": 110600,
+    "timestampMs": 110220,
+    "confidence": 0.9970295429229736
+  },
+  {
+    "text": " With",
+    "startMs": 111440,
+    "endMs": 112000,
+    "timestampMs": 111440,
+    "confidence": 0.9985246062278748
+  },
+  {
+    "text": " smart",
+    "startMs": 112000,
+    "endMs": 112220,
+    "timestampMs": 112000,
+    "confidence": 0.5427812933921814
+  },
+  {
+    "text": " control,",
+    "startMs": 112220,
+    "endMs": 112480,
+    "timestampMs": 112220,
+    "confidence": 0.9823921322822571
+  },
+  {
+    "text": " you",
+    "startMs": 113180,
+    "endMs": 113300,
+    "timestampMs": 113180,
+    "confidence": 0.9973080158233643
+  },
+  {
+    "text": " choose",
+    "startMs": 113300,
+    "endMs": 113440,
+    "timestampMs": 113300,
+    "confidence": 0.9904730916023254
+  },
+  {
+    "text": " what",
+    "startMs": 113440,
+    "endMs": 113720,
+    "timestampMs": 113440,
+    "confidence": 0.9985381364822388
+  },
+  {
+    "text": " happens",
+    "startMs": 113720,
+    "endMs": 114000,
+    "timestampMs": 113720,
+    "confidence": 0.9992891550064087
+  },
+  {
+    "text": " when",
+    "startMs": 114000,
+    "endMs": 114280,
+    "timestampMs": 114000,
+    "confidence": 0.9988490343093872
+  },
+  {
+    "text": " an",
+    "startMs": 114280,
+    "endMs": 114400,
+    "timestampMs": 114280,
+    "confidence": 0.9976018071174622
+  },
+  {
+    "text": " appliance",
+    "startMs": 114400,
+    "endMs": 114720,
+    "timestampMs": 114400,
+    "confidence": 0.9952998161315918
+  },
+  {
+    "text": " reaches",
+    "startMs": 114720,
+    "endMs": 115200,
+    "timestampMs": 114720,
+    "confidence": 0.9992161989212036
+  },
+  {
+    "text": " its",
+    "startMs": 115200,
+    "endMs": 115500,
+    "timestampMs": 115200,
+    "confidence": 0.9755457639694214
+  },
+  {
+    "text": " approved",
+    "startMs": 115500,
+    "endMs": 115820,
+    "timestampMs": 115500,
+    "confidence": 0.9739512205123901
+  },
+  {
+    "text": " limit.",
+    "startMs": 115820,
+    "endMs": 116140,
+    "timestampMs": 115820,
+    "confidence": 0.9526404738426208
+  },
+  {
+    "text": " You",
+    "startMs": 116140,
+    "endMs": 117240,
+    "timestampMs": 116140,
+    "confidence": 0.3654917776584625
+  },
+  {
+    "text": " can",
+    "startMs": 117240,
+    "endMs": 117400,
+    "timestampMs": 117240,
+    "confidence": 0.9963027238845825
+  },
+  {
+    "text": " require",
+    "startMs": 117400,
+    "endMs": 117740,
+    "timestampMs": 117400,
+    "confidence": 0.9417868852615356
+  },
+  {
+    "text": " approval",
+    "startMs": 117740,
+    "endMs": 118220,
+    "timestampMs": 117740,
+    "confidence": 0.9914954900741577
+  },
+  {
+    "text": " or",
+    "startMs": 118220,
+    "endMs": 118620,
+    "timestampMs": 118220,
+    "confidence": 0.8847803473472595
+  },
+  {
+    "text": " enable",
+    "startMs": 118620,
+    "endMs": 118960,
+    "timestampMs": 118620,
+    "confidence": 0.9964573979377747
+  },
+  {
+    "text": " automatic",
+    "startMs": 118960,
+    "endMs": 119380,
+    "timestampMs": 118960,
+    "confidence": 0.9758737683296204
+  },
+  {
+    "text": " shut",
+    "startMs": 119380,
+    "endMs": 119740,
+    "timestampMs": 119380,
+    "confidence": 0.9159584045410156
+  },
+  {
+    "text": "-off.",
+    "startMs": 119740,
+    "endMs": 119960,
+    "timestampMs": 119740,
+    "confidence": 0.69581638276577
+  },
+  {
+    "text": " The",
+    "startMs": 120680,
+    "endMs": 120860,
+    "timestampMs": 120680,
+    "confidence": 0.9848011136054993
+  },
+  {
+    "text": " Cut",
+    "startMs": 120860,
+    "endMs": 121040,
+    "timestampMs": 120860,
+    "confidence": 0.7293450832366943
+  },
+  {
+    "text": "-off",
+    "startMs": 121040,
+    "endMs": 121200,
+    "timestampMs": 121040,
+    "confidence": 0.6510806381702423
+  },
+  {
+    "text": " Track's",
+    "startMs": 121200,
+    "endMs": 121620,
+    "timestampMs": 121200,
+    "confidence": 0.5116653814911842
+  },
+  {
+    "text": " calendar",
+    "startMs": 121620,
+    "endMs": 121940,
+    "timestampMs": 121620,
+    "confidence": 0.7177714705467224
+  },
+  {
+    "text": " month",
+    "startMs": 121940,
+    "endMs": 122200,
+    "timestampMs": 121940,
+    "confidence": 0.8811374306678772
+  },
+  {
+    "text": " variable",
+    "startMs": 122200,
+    "endMs": 122480,
+    "timestampMs": 122200,
+    "confidence": 0.9478856325149536
+  },
+  {
+    "text": " energy",
+    "startMs": 122480,
+    "endMs": 122940,
+    "timestampMs": 122480,
+    "confidence": 0.9720457196235657
+  },
+  {
+    "text": " spending.",
+    "startMs": 122940,
+    "endMs": 123340,
+    "timestampMs": 122940,
+    "confidence": 0.9968776702880859
+  },
+  {
+    "text": " Home",
+    "startMs": 123960,
+    "endMs": 124180,
+    "timestampMs": 123960,
+    "confidence": 0.9606214761734009
+  },
+  {
+    "text": " level",
+    "startMs": 124180,
+    "endMs": 124440,
+    "timestampMs": 124180,
+    "confidence": 0.4946201741695404
+  },
+  {
+    "text": " fixed",
+    "startMs": 124440,
+    "endMs": 124660,
+    "timestampMs": 124440,
+    "confidence": 0.8705270886421204
+  },
+  {
+    "text": " charges",
+    "startMs": 124660,
+    "endMs": 125020,
+    "timestampMs": 124660,
+    "confidence": 0.9800057411193848
+  },
+  {
+    "text": " are",
+    "startMs": 125020,
+    "endMs": 125320,
+    "timestampMs": 125020,
+    "confidence": 0.9990524649620056
+  },
+  {
+    "text": " excluded.",
+    "startMs": 125320,
+    "endMs": 125640,
+    "timestampMs": 125320,
+    "confidence": 0.9977426528930664
+  },
+  {
+    "text": " Need",
+    "startMs": 126460,
+    "endMs": 126500,
+    "timestampMs": 126460,
+    "confidence": 0.9742783904075623
+  },
+  {
+    "text": " a",
+    "startMs": 126500,
+    "endMs": 126580,
+    "timestampMs": 126500,
+    "confidence": 0.9991858601570129
+  },
+  {
+    "text": " record",
+    "startMs": 126580,
+    "endMs": 126820,
+    "timestampMs": 126580,
+    "confidence": 0.9882659316062927
+  },
+  {
+    "text": " of",
+    "startMs": 126820,
+    "endMs": 127000,
+    "timestampMs": 126820,
+    "confidence": 0.9966943264007568
+  },
+  {
+    "text": " your",
+    "startMs": 127000,
+    "endMs": 127140,
+    "timestampMs": 127000,
+    "confidence": 0.9967833757400513
+  },
+  {
+    "text": " usage?",
+    "startMs": 127140,
+    "endMs": 127380,
+    "timestampMs": 127140,
+    "confidence": 0.9995124340057373
+  },
+  {
+    "text": " Open",
+    "startMs": 128220,
+    "endMs": 128500,
+    "timestampMs": 128220,
+    "confidence": 0.9953798055648804
+  },
+  {
+    "text": " energy",
+    "startMs": 128500,
+    "endMs": 128740,
+    "timestampMs": 128500,
+    "confidence": 0.5163253545761108
+  },
+  {
+    "text": " reports,",
+    "startMs": 128740,
+    "endMs": 129120,
+    "timestampMs": 128740,
+    "confidence": 0.9955602884292603
+  },
+  {
+    "text": " choose",
+    "startMs": 129620,
+    "endMs": 129740,
+    "timestampMs": 129620,
+    "confidence": 0.983368456363678
+  },
+  {
+    "text": " a",
+    "startMs": 129740,
+    "endMs": 129860,
+    "timestampMs": 129740,
+    "confidence": 0.9985015392303467
+  },
+  {
+    "text": " period,",
+    "startMs": 129860,
+    "endMs": 130100,
+    "timestampMs": 129860,
+    "confidence": 0.9859866499900818
+  },
+  {
+    "text": " and",
+    "startMs": 130580,
+    "endMs": 130700,
+    "timestampMs": 130580,
+    "confidence": 0.9985926747322083
+  },
+  {
+    "text": " download",
+    "startMs": 130700,
+    "endMs": 130980,
+    "timestampMs": 130700,
+    "confidence": 0.9946223497390747
+  },
+  {
+    "text": " a",
+    "startMs": 130980,
+    "endMs": 131220,
+    "timestampMs": 130980,
+    "confidence": 0.9968756437301636
+  },
+  {
+    "text": " PDF",
+    "startMs": 131220,
+    "endMs": 131540,
+    "timestampMs": 131220,
+    "confidence": 0.9615741968154907
+  },
+  {
+    "text": " or",
+    "startMs": 131540,
+    "endMs": 132040,
+    "timestampMs": 131540,
+    "confidence": 0.9210598468780518
+  },
+  {
+    "text": " CSV.",
+    "startMs": 132040,
+    "endMs": 132380,
+    "timestampMs": 132040,
+    "confidence": 0.9521106481552124
+  },
+  {
+    "text": " In",
+    "startMs": 133680,
+    "endMs": 133740,
+    "timestampMs": 133680,
+    "confidence": 0.9884230494499207
+  },
+  {
+    "text": " Settings,",
+    "startMs": 133740,
+    "endMs": 133940,
+    "timestampMs": 133740,
+    "confidence": 0.6535356044769287
+  },
+  {
+    "text": " manage",
+    "startMs": 134460,
+    "endMs": 134700,
+    "timestampMs": 134460,
+    "confidence": 0.9596684575080872
+  },
+  {
+    "text": " your",
+    "startMs": 134700,
+    "endMs": 134920,
+    "timestampMs": 134700,
+    "confidence": 0.9979448914527893
+  },
+  {
+    "text": " account,",
+    "startMs": 134920,
+    "endMs": 135200,
+    "timestampMs": 134920,
+    "confidence": 0.9650512933731079
+  },
+  {
+    "text": " billing",
+    "startMs": 135580,
+    "endMs": 135780,
+    "timestampMs": 135580,
+    "confidence": 0.9962322115898132
+  },
+  {
+    "text": " cycle,",
+    "startMs": 135780,
+    "endMs": 136120,
+    "timestampMs": 135780,
+    "confidence": 0.9952508211135864
+  },
+  {
+    "text": " and",
+    "startMs": 136460,
+    "endMs": 136620,
+    "timestampMs": 136460,
+    "confidence": 0.9994474053382874
+  },
+  {
+    "text": " notification",
+    "startMs": 136620,
+    "endMs": 136880,
+    "timestampMs": 136620,
+    "confidence": 0.9876353144645691
+  },
+  {
+    "text": " preferences.",
+    "startMs": 136880,
+    "endMs": 137520,
+    "timestampMs": 136880,
+    "confidence": 0.9969208240509033
+  },
+  {
+    "text": " Push",
+    "startMs": 138700,
+    "endMs": 138900,
+    "timestampMs": 138700,
+    "confidence": 0.9733441472053528
+  },
+  {
+    "text": " notifications",
+    "startMs": 138900,
+    "endMs": 139180,
+    "timestampMs": 138900,
+    "confidence": 0.9323006272315979
+  },
+  {
+    "text": " require",
+    "startMs": 139180,
+    "endMs": 139700,
+    "timestampMs": 139180,
+    "confidence": 0.9851691722869873
+  },
+  {
+    "text": " your",
+    "startMs": 139700,
+    "endMs": 140180,
+    "timestampMs": 139700,
+    "confidence": 0.9953464865684509
+  },
+  {
+    "text": " permission",
+    "startMs": 140180,
+    "endMs": 140460,
+    "timestampMs": 140180,
+    "confidence": 0.9670809507369995
+  },
+  {
+    "text": " and",
+    "startMs": 140460,
+    "endMs": 140800,
+    "timestampMs": 140460,
+    "confidence": 0.9872565269470215
+  },
+  {
+    "text": " service",
+    "startMs": 140800,
+    "endMs": 141080,
+    "timestampMs": 140800,
+    "confidence": 0.9987938404083252
+  },
+  {
+    "text": " availability.",
+    "startMs": 141080,
+    "endMs": 141420,
+    "timestampMs": 141080,
+    "confidence": 0.9963157773017883
+  },
+  {
+    "text": " Now",
+    "startMs": 142560,
+    "endMs": 142720,
+    "timestampMs": 142560,
+    "confidence": 0.9986705780029297
+  },
+  {
+    "text": " it's",
+    "startMs": 142720,
+    "endMs": 142920,
+    "timestampMs": 142720,
+    "confidence": 0.9135842323303223
+  },
+  {
+    "text": " your",
+    "startMs": 142920,
+    "endMs": 143080,
+    "timestampMs": 142920,
+    "confidence": 0.9987978935241699
+  },
+  {
+    "text": " turn",
+    "startMs": 143080,
+    "endMs": 143340,
+    "timestampMs": 143080,
+    "confidence": 0.995318591594696
+  },
+  {
+    "text": " to",
+    "startMs": 143340,
+    "endMs": 143460,
+    "timestampMs": 143340,
+    "confidence": 0.9987733960151672
+  },
+  {
+    "text": " try",
+    "startMs": 143460,
+    "endMs": 143640,
+    "timestampMs": 143460,
+    "confidence": 0.9971145391464233
+  },
+  {
+    "text": " WattWise.",
+    "startMs": 143640,
+    "endMs": 144200,
+    "timestampMs": 143640,
+    "confidence": 0.3175123706459999
+  },
+  {
+    "text": " Complete",
+    "startMs": 144820,
+    "endMs": 145040,
+    "timestampMs": 144820,
+    "confidence": 0.9933003187179565
+  },
+  {
+    "text": " the",
+    "startMs": 145040,
+    "endMs": 145240,
+    "timestampMs": 145040,
+    "confidence": 0.9594491720199585
+  },
+  {
+    "text": " assigned",
+    "startMs": 145240,
+    "endMs": 145420,
+    "timestampMs": 145240,
+    "confidence": 0.8596892952919006
+  },
+  {
+    "text": " tasks.",
+    "startMs": 145420,
+    "endMs": 145880,
+    "timestampMs": 145420,
+    "confidence": 0.9776685237884521
+  },
+  {
+    "text": " Tell",
+    "startMs": 145880,
+    "endMs": 146740,
+    "timestampMs": 145880,
+    "confidence": 0.13340498507022858
+  },
+  {
+    "text": " us",
+    "startMs": 146740,
+    "endMs": 146900,
+    "timestampMs": 146740,
+    "confidence": 0.9955480098724365
+  },
+  {
+    "text": " what",
+    "startMs": 146900,
+    "endMs": 147060,
+    "timestampMs": 146900,
+    "confidence": 0.9888398051261902
+  },
+  {
+    "text": " feels",
+    "startMs": 147060,
+    "endMs": 147320,
+    "timestampMs": 147060,
+    "confidence": 0.9903064966201782
+  },
+  {
+    "text": " clear,",
+    "startMs": 147320,
+    "endMs": 147600,
+    "timestampMs": 147320,
+    "confidence": 0.9946840405464172
+  },
+  {
+    "text": " what",
+    "startMs": 147960,
+    "endMs": 147980,
+    "timestampMs": 147960,
+    "confidence": 0.9964698553085327
+  },
+  {
+    "text": " feels",
+    "startMs": 147980,
+    "endMs": 148200,
+    "timestampMs": 147980,
+    "confidence": 0.9898348450660706
+  },
+  {
+    "text": " confusing,",
+    "startMs": 148200,
+    "endMs": 148580,
+    "timestampMs": 148200,
+    "confidence": 0.9980581402778625
+  },
+  {
+    "text": " and",
+    "startMs": 148980,
+    "endMs": 149100,
+    "timestampMs": 148980,
+    "confidence": 0.9972403049468994
+  },
+  {
+    "text": " what",
+    "startMs": 149100,
+    "endMs": 149320,
+    "timestampMs": 149100,
+    "confidence": 0.9979482293128967
+  },
+  {
+    "text": " you",
+    "startMs": 149320,
+    "endMs": 149480,
+    "timestampMs": 149320,
+    "confidence": 0.9958477020263672
+  },
+  {
+    "text": " would",
+    "startMs": 149480,
+    "endMs": 149600,
+    "timestampMs": 149480,
+    "confidence": 0.9773872494697571
+  },
+  {
+    "text": " actually",
+    "startMs": 149600,
+    "endMs": 149880,
+    "timestampMs": 149600,
+    "confidence": 0.9942013621330261
+  },
+  {
+    "text": " use.",
+    "startMs": 149880,
+    "endMs": 150280,
+    "timestampMs": 149880,
+    "confidence": 0.995722770690918
+  },
+  {
+    "text": " Answer",
+    "startMs": 151120,
+    "endMs": 151460,
+    "timestampMs": 151120,
+    "confidence": 0.9772192239761353
+  },
+  {
+    "text": " the",
+    "startMs": 151460,
+    "endMs": 151600,
+    "timestampMs": 151460,
+    "confidence": 0.9932671785354614
+  },
+  {
+    "text": " survey",
+    "startMs": 151600,
+    "endMs": 151900,
+    "timestampMs": 151600,
+    "confidence": 0.9966493248939514
+  },
+  {
+    "text": " based",
+    "startMs": 151900,
+    "endMs": 152180,
+    "timestampMs": 151900,
+    "confidence": 0.99595707654953
+  },
+  {
+    "text": " on",
+    "startMs": 152180,
+    "endMs": 152340,
+    "timestampMs": 152180,
+    "confidence": 0.9982713460922241
+  },
+  {
+    "text": " your",
+    "startMs": 152340,
+    "endMs": 152480,
+    "timestampMs": 152340,
+    "confidence": 0.9976317882537842
+  },
+  {
+    "text": " own",
+    "startMs": 152480,
+    "endMs": 152640,
+    "timestampMs": 152480,
+    "confidence": 0.990757405757904
+  },
+  {
+    "text": " experience.",
+    "startMs": 152640,
+    "endMs": 152920,
+    "timestampMs": 152640,
+    "confidence": 0.9976738095283508
+  },
+  {
+    "text": " There",
+    "startMs": 153780,
+    "endMs": 153900,
+    "timestampMs": 153780,
+    "confidence": 0.9922592043876648
+  },
+  {
+    "text": " are",
+    "startMs": 153900,
+    "endMs": 154000,
+    "timestampMs": 153900,
+    "confidence": 0.9982910752296448
+  },
+  {
+    "text": " no",
+    "startMs": 154000,
+    "endMs": 154200,
+    "timestampMs": 154000,
+    "confidence": 0.9936483502388
+  },
+  {
+    "text": " right",
+    "startMs": 154200,
+    "endMs": 154480,
+    "timestampMs": 154200,
+    "confidence": 0.9945270419120789
+  },
+  {
+    "text": " or",
+    "startMs": 154480,
+    "endMs": 154600,
+    "timestampMs": 154480,
+    "confidence": 0.989280641078949
+  },
+  {
+    "text": " wrong",
+    "startMs": 154600,
+    "endMs": 154800,
+    "timestampMs": 154600,
+    "confidence": 0.9994992017745972
+  },
+  {
+    "text": " answers.",
+    "startMs": 154800,
+    "endMs": 155140,
+    "timestampMs": 154800,
+    "confidence": 0.9983842372894287
+  }
+]
