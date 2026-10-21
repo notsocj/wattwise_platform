@@ -16,33 +16,45 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
   const [editing, setEditing] = useState<User | null>(null);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   async function save() {
     if (!editing) return;
     setSaving(true);
-    const res = await fetch(`/api/admin/users/${editing.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        role: editing.role,
-        manager_id: editing.manager_id || null,
-        must_update_password: editing.must_update_password,
-        disabled: Boolean(editing.disabled_at),
-        reason,
-      }),
-    });
-    const json = await res.json();
-    setSaving(false);
-    if (!res.ok) {
-      alert(json.error || "Unable to save user");
+    setSaveError(null);
+    let res: Response;
+    let json: { data?: User; error?: string };
+    try {
+      res = await fetch(`/api/admin/users/${editing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: editing.role,
+          manager_id: editing.manager_id || null,
+          must_update_password: editing.must_update_password,
+          disabled: Boolean(editing.disabled_at),
+          reason,
+        }),
+      });
+      json = await res.json().catch(() => ({}));
+    } catch {
+      setSaving(false);
+      setSaveError("Network error while saving. Check your connection and try again.");
       return;
     }
-    setRows(rows.map((row) => (row.id === editing.id ? json.data : row)));
+    setSaving(false);
+    const saved = json.data;
+    if (!res.ok || !saved) {
+      setSaveError(json.error || "Unable to save user.");
+      return;
+    }
+    setRows(rows.map((row) => (row.id === editing.id ? saved : row)));
     setEditing(null);
     setReason("");
   }
   function openEdit(user: User) {
     setEditing({ ...user });
     setReason("");
+    setSaveError(null);
   }
   return (
     <>
@@ -163,9 +175,17 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                 />
               </label>
             </div>
+            {saveError ? (
+              <p role="alert" className="mt-4 rounded-lg border border-danger/35 bg-danger/10 px-3 py-2 text-sm text-danger">
+                {saveError}
+              </p>
+            ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={() => setEditing(null)}
+                onClick={() => {
+                  setEditing(null);
+                  setSaveError(null);
+                }}
                 className="rounded-lg border border-white/10 px-4 py-2 text-sm"
               >
                 Cancel
@@ -173,7 +193,7 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
               <button
                 disabled={saving}
                 onClick={save}
-                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save changes"}
               </button>

@@ -25,30 +25,41 @@ export default function AdminDevicesTable({
   const [editing, setEditing] = useState<Device | null>(null);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const person = (id: string | null | undefined) => people.find((p) => p.id === id);
   async function save() {
     if (!editing) return;
     setSaving(true);
-    const res = await fetch(`/api/admin/devices/${editing.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        device_name: editing.device_name,
-        appliance_type: editing.appliance_type,
-        owner_id: editing.owner_id || editing.user_id || null,
-        user_id: editing.owner_id || editing.user_id || null,
-        tenant_id: editing.tenant_id || null,
-        user_approved_limit_php: editing.user_approved_limit_php,
-        reason,
-      }),
-    });
-    const json = await res.json();
-    setSaving(false);
-    if (!res.ok) {
-      alert(json.error || "Unable to save device");
+    setSaveError(null);
+    let res: Response;
+    let json: { data?: Device; error?: string };
+    try {
+      res = await fetch(`/api/admin/devices/${editing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          device_name: editing.device_name,
+          appliance_type: editing.appliance_type,
+          owner_id: editing.owner_id || editing.user_id || null,
+          user_id: editing.owner_id || editing.user_id || null,
+          tenant_id: editing.tenant_id || null,
+          user_approved_limit_php: editing.user_approved_limit_php,
+          reason,
+        }),
+      });
+      json = await res.json().catch(() => ({}));
+    } catch {
+      setSaving(false);
+      setSaveError("Network error while saving. Check your connection and try again.");
       return;
     }
-    setRows(rows.map((r) => (r.id === editing.id ? json.data : r)));
+    setSaving(false);
+    const saved = json.data;
+    if (!res.ok || !saved) {
+      setSaveError(json.error || "Unable to save device.");
+      return;
+    }
+    setRows(rows.map((r) => (r.id === editing.id ? saved : r)));
     setEditing(null);
     setReason("");
   }
@@ -94,7 +105,10 @@ export default function AdminDevicesTable({
                 <td className="p-4">{d.budget_status || "ok"}</td>
                 <td className="p-4">
                   <button
-                    onClick={() => setEditing({ ...d, owner_id: d.owner_id || d.user_id })}
+                    onClick={() => {
+                      setSaveError(null);
+                      setEditing({ ...d, owner_id: d.owner_id || d.user_id });
+                    }}
                     className="rounded-md border border-mint/30 px-3 py-1.5 text-xs font-semibold text-mint hover:bg-mint/10"
                   >
                     Configure
@@ -192,9 +206,17 @@ export default function AdminDevicesTable({
                 />
               </label>
             </div>
+            {saveError ? (
+              <p role="alert" className="mt-4 rounded-lg border border-danger/35 bg-danger/10 px-3 py-2 text-sm text-danger">
+                {saveError}
+              </p>
+            ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={() => setEditing(null)}
+                onClick={() => {
+                  setEditing(null);
+                  setSaveError(null);
+                }}
                 className="rounded-lg border border-white/10 px-4 py-2 text-sm"
               >
                 Cancel
@@ -202,7 +224,7 @@ export default function AdminDevicesTable({
               <button
                 disabled={saving}
                 onClick={save}
-                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-black"
+                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-ink"
               >
                 {saving ? "Saving…" : "Save changes"}
               </button>
