@@ -486,7 +486,7 @@ Users can:
 - select, insert, update their own `profiles` row, except privileged columns: the `guard_profile_privileged_columns` trigger (migration `032`) rejects `authenticated`/`anon` changes to `role`, `email`, `manager_id`, `disabled_at`, `disabled_reason`, and setting `must_update_password = true`, unless the caller is a super admin. Service-role and `SECURITY DEFINER` writes are unaffected; never write `role` from client code
 - select `meralco_rates`
 - select, insert, update, delete their own `devices`
-- select `energy_logs` that belong to their owned devices, matching by UUID text or MAC
+- select `energy_logs` that belong to devices they own, use, or rent, matching by UUID text or MAC. Since migration `033` this is a single policy, `users_select_accessible_energy_logs`, that compares `device_id` against `accessible_energy_log_device_keys()` (one SECURITY DEFINER lookup per query) and checks `(SELECT current_profile_role())` once; never reintroduce per-row function calls or `EXISTS` subqueries in `energy_logs` policies, because the table grows by ~17k rows per device per day
 - select their own `ai_insights`
 - select their own `device_month_usage`
 - select their own `device_budget_events`
