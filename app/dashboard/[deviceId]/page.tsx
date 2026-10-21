@@ -150,7 +150,7 @@ function CircularGauge({
   max,
   label,
   unit,
-  color = "#00E66F",
+  color = "var(--color-mint)",
 }: {
   value: number;
   max: number;
@@ -178,7 +178,7 @@ function CircularGauge({
             cy={center}
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--chart-track)"
             strokeWidth={stroke}
           />
           {/* Progress */}
@@ -192,10 +192,7 @@ function CircularGauge({
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
-            style={{
-              filter: `drop-shadow(0 0 6px ${color}60)`,
-              transition: "stroke-dashoffset 0.6s ease",
-            }}
+            style={{ transition: "stroke-dashoffset 0.6s ease" }}
           />
         </svg>
         {/* Center text */}
@@ -416,18 +413,18 @@ export default async function DeviceDetailPage(props: {
         <div className="flex items-center gap-3">
         <Link
           href="/dashboard"
-          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
-          aria-label="Go back"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/70 transition-colors hover:text-mint"
+          aria-label="Back to dashboard"
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-[15px] font-bold leading-tight">
+          <h1 className="text-lg font-bold leading-tight tracking-tight">
             {device.name}
           </h1>
           <p className="text-[11px] text-white/60">
             Device ID: {device.deviceCode} • <span className={`inline-flex items-center gap-1 ${deviceData.relay_state !== false ? "text-mint" : "text-white/60"}`}>
-              <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? "text-mint" : "text-white/30"}`} />
+              <Power className={`w-3 h-3 ${deviceData.relay_state !== false ? "text-mint" : "text-white/50"}`} />
               {deviceData.relay_state !== false ? "ON" : "OFF"}
             </span>{" "}
             • <TelemetryFreshnessBadge recordedAt={latestLog?.recorded_at ?? null} />
@@ -463,7 +460,7 @@ export default async function DeviceDetailPage(props: {
 
         <section className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
           <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider">Actual kWh usage</h3>
+            <h2 className="text-sm font-bold uppercase tracking-wider">Actual kWh usage</h2>
             <span className="text-[10px] font-medium uppercase tracking-wider text-mint/70">Metered</span>
           </div>
           <p className="mb-4 text-xs text-white/45">Derived from positive changes in this appliance&apos;s cumulative PZEM meter reading.</p>
@@ -496,9 +493,9 @@ export default async function DeviceDetailPage(props: {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-mint" />
-              <h3 className="text-sm font-bold uppercase tracking-wider">
+              <h2 className="text-sm font-bold uppercase tracking-wider">
                 Appliance Billing Cycle
-              </h3>
+              </h2>
             </div>
             <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
               Approved Device Limit

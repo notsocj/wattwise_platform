@@ -22,11 +22,11 @@ export default function BurnRateChart({ data }: { data: BurnRatePoint[] }) {
       <AreaChart data={data} margin={{ top: 12, right: 8, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="burnRateFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#00E66F" stopOpacity={0.35} />
-            <stop offset="95%" stopColor="#00E66F" stopOpacity={0.02} />
+            <stop offset="5%" stopColor="var(--color-mint)" stopOpacity={0.35} />
+            <stop offset="95%" stopColor="var(--color-mint)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
         <XAxis
           dataKey="day"
           axisLine={false}
@@ -40,10 +40,10 @@ export default function BurnRateChart({ data }: { data: BurnRatePoint[] }) {
           tickFormatter={(value) => `₱${value}`}
         />
         <Tooltip
-          cursor={{ stroke: "rgba(0,230,111,0.35)" }}
+          cursor={{ stroke: "var(--color-mint)", strokeOpacity: 0.35 }}
           contentStyle={{
             background: "var(--color-surface)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid var(--chart-track)",
             borderRadius: 12,
             color: "var(--color-text)",
           }}
@@ -55,7 +55,7 @@ export default function BurnRateChart({ data }: { data: BurnRatePoint[] }) {
         <Area
           type="monotone"
           dataKey="cost"
-          stroke="#00E66F"
+          stroke="var(--color-mint)"
           strokeWidth={2}
           fill="url(#burnRateFill)"
         />

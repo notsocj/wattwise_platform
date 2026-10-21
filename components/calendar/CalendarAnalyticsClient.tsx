@@ -25,11 +25,11 @@ type CalendarAnalyticsClientProps = {
 function getDayCircleClasses(intensity: CalendarDailySummary["intensity"]): string {
   switch (intensity) {
     case "high":
-      return "bg-danger text-white shadow-[0_10px_26px_rgba(239,68,68,0.22)]";
+      return "bg-danger/20 font-bold text-danger";
     case "medium":
-      return "bg-naku text-white shadow-[0_10px_26px_rgba(245,158,11,0.18)]";
+      return "bg-naku/20 font-bold text-naku";
     case "low":
-      return "bg-bida text-white shadow-[0_10px_26px_rgba(16,185,129,0.2)]";
+      return "bg-mint/15 font-bold text-mint";
     default:
       return "bg-transparent text-white";
   }
@@ -42,7 +42,7 @@ function getIndicatorClasses(intensity: CalendarDailySummary["intensity"]): stri
     case "medium":
       return "bg-naku";
     case "low":
-      return "bg-bida";
+      return "bg-mint";
     case "none":
     default:
       return "bg-white/10";
@@ -65,10 +65,10 @@ function getModalBadgeClasses(intensity: CalendarDailySummary["intensity"]): str
     case "medium":
       return "bg-naku/18 text-naku";
     case "low":
-      return "bg-bida/18 text-bida";
+      return "bg-mint/15 text-mint";
     case "none":
     default:
-      return "bg-white/[0.05] text-white/35";
+      return "bg-white/[0.05] text-white/50";
   }
 }
 
@@ -135,7 +135,7 @@ export default function CalendarAnalyticsClient({
   return (
     <>
       <div className="flex flex-col gap-5 pb-28">
-        <section className="rounded-[28px] bg-surface/90 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+        <section className="rounded-2xl border border-white/[0.06] bg-surface p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
@@ -182,7 +182,7 @@ export default function CalendarAnalyticsClient({
           </div>
         </section>
 
-        <section className="rounded-[28px] bg-surface/80 p-4">
+        <section className="rounded-2xl border border-white/[0.06] bg-surface p-4">
           <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((label) => (
               <span key={label}>{label}</span>
@@ -238,7 +238,7 @@ export default function CalendarAnalyticsClient({
           <button
             type="button"
             onClick={() => void handleConsultAi()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-mint px-4 py-3.5 text-sm font-bold text-ink shadow-[0_16px_40px_rgba(0,230,111,0.18)] transition-transform hover:scale-[0.995] active:scale-[0.985]"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-mint px-4 py-3.5 text-sm font-bold text-ink transition-transform hover:scale-[0.995] active:scale-[0.985]"
           >
             <Sparkles className="h-4 w-4" />
             Consult AI Analytics
@@ -272,7 +272,7 @@ export default function CalendarAnalyticsClient({
                 type="button"
                 onClick={() => setIsPanelOpen(false)}
                 disabled={isLoading}
-                className="rounded-full bg-white/[0.04] p-2 text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -327,7 +327,7 @@ export default function CalendarAnalyticsClient({
             className="absolute inset-0"
             onClick={() => setSelectedDay(null)}
           />
-          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-[28px] bg-surface p-5 shadow-2xl">
+          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl bg-surface p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
@@ -340,7 +340,7 @@ export default function CalendarAnalyticsClient({
               <button
                 type="button"
                 onClick={() => setSelectedDay(null)}
-                className="rounded-full bg-white/[0.04] p-2 text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />

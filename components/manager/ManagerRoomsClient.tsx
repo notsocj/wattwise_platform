@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PlugZap, Power, QrCode, ShieldAlert } from "lucide-react";
 import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import MacQrScanner from "@/components/ui/MacQrScanner";
 import type { ManagerDevice, ManagerTenant } from "@/lib/manager-data";
 import { getBudgetToneClasses } from "@/lib/budget-policy";
@@ -21,6 +22,7 @@ export default function ManagerRoomsClient({
 }: ManagerRoomsClientProps) {
   const router = useRouter();
   const [deviceName, setDeviceName] = useState("");
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [macAddress, setMacAddress] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
@@ -177,16 +179,26 @@ export default function ManagerRoomsClient({
                     </div>
                     <button
                       type="button"
-                      onClick={() =>
-                        void updateDevice(device.id, {
-                          relay_state: !device.relay_state,
-                        })
-                      }
+                      onClick={async () => {
+                        if (
+                          device.relay_state &&
+                          !(await confirm({
+                            title: `Turn off ${device.device_name}?`,
+                            description: "Power to this room's appliance will be cut until it is turned back on.",
+                            confirmLabel: "Turn off",
+                            tone: "danger",
+                          }))
+                        ) {
+                          return;
+                        }
+                        void updateDevice(device.id, { relay_state: !device.relay_state });
+                      }}
+                      aria-label={`${device.device_name} power is ${device.relay_state ? "on" : "off"}. Tap to turn ${device.relay_state ? "off" : "on"}.`}
                       disabled={isPending}
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
                         device.relay_state
                           ? "bg-mint/10 text-mint"
-                          : "bg-danger/10 text-danger"
+                          : "bg-white/[0.06] text-white/60"
                       } disabled:opacity-60`}
                     >
                       <Power className="h-3 w-3" />
@@ -281,6 +293,7 @@ export default function ManagerRoomsClient({
           </div>
         </div>
       ) : null}
+      {confirmDialog}
     </div>
   );
 }

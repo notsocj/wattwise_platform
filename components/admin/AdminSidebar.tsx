@@ -98,7 +98,7 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
       <div className="px-3 py-4 border-t border-white/10">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-danger hover:bg-danger/10 transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors w-full"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign Out

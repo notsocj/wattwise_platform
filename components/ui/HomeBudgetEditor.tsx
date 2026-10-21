@@ -159,7 +159,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               onClick={openEditor}
               disabled={isSaving}
               aria-label="Edit home budget"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
             >
               <PencilLine className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -177,7 +177,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
                 onClick={closeEditor}
                 disabled={isSaving}
                 aria-label="Close budget editor"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>

@@ -58,7 +58,7 @@ export default function ManagerSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-56 overflow-y-auto rounded-xl border border-black/10 bg-white p-1 shadow-2xl dark:border-white/10 dark:bg-[#202020]"
+          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-56 overflow-y-auto rounded-xl border border-black/10 bg-white p-1 shadow-2xl dark:border-white/10 dark:bg-surface"
         >
           {options.map((option) => {
             const isSelected = option.value === value;

@@ -141,7 +141,7 @@ export default function CustomerAssistantFab() {
           type="button"
           onClick={() => setIsOpen(true)}
           aria-label="Open WattWise AI Assistant"
-          className="pointer-events-auto ml-auto mr-4 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-mint text-ink shadow-[0_12px_40px_rgba(0,240,146,0.28)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint active:scale-95"
+          className="pointer-events-auto ml-auto mr-4 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-mint text-ink shadow-lg shadow-black/30 transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint active:scale-95"
         >
           <Sparkles className="h-6 w-6 text-black" aria-hidden="true" />
         </button>
@@ -284,7 +284,7 @@ export default function CustomerAssistantFab() {
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
-              <p className="mt-1.5 text-center text-[9px] text-white/30">Review every proposed change before confirming.</p>
+              <p className="mt-1.5 text-center text-[11px] text-white/50">Review every proposed change before confirming.</p>
             </form>
           </section>
         </div>

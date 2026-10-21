@@ -127,12 +127,14 @@ export default function RelayToggle({
           type="button"
           onClick={handleToggle}
           disabled={isPending}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+          role="switch"
+          aria-checked={relayState}
+          aria-label={relayState ? "Power is on. Turn appliance off" : "Power is off. Turn appliance on"}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
             relayState
               ? "bg-mint/15 text-mint hover:bg-mint/25"
-              : "bg-white/[0.06] text-white/30 hover:bg-white/10"
+              : "bg-white/[0.06] text-white/60 hover:bg-white/10"
           } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
-          title={relayState ? "Relay ON - tap to turn off" : "Relay OFF - tap to turn on"}
         >
           {isPending ? (
             <LoadingIndicator
@@ -146,7 +148,7 @@ export default function RelayToggle({
               }
             />
           ) : (
-            <Power className="w-3.5 h-3.5" />
+            <Power className="w-4 h-4" />
           )}
         </button>
         {errorToastElement}
@@ -167,7 +169,7 @@ export default function RelayToggle({
               }`}
             >
               <Power
-                className={`w-5 h-5 ${relayState ? "text-mint" : "text-white/30"}`}
+                className={`w-5 h-5 ${relayState ? "text-mint" : "text-white/50"}`}
               />
             </div>
             <div>
@@ -198,10 +200,12 @@ export default function RelayToggle({
             type="button"
             onClick={handleToggle}
             disabled={isPending}
+            role="switch"
+            aria-checked={relayState}
             className={`relative w-14 h-7 rounded-full transition-colors ${
               relayState ? "bg-mint" : "bg-white/10"
             } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-            aria-label={relayState ? "Turn relay off" : "Turn relay on"}
+            aria-label="Appliance power"
           >
             <span
               className={`absolute left-0.5 top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
@@ -211,7 +215,7 @@ export default function RelayToggle({
           </button>
         </div>
 
-        <p className="text-[10px] text-white/30 mt-3">
+        <p className="text-[11px] text-white/50 mt-3">
           Pag naka-off, titigil ang data collection at power sa appliance.
         </p>
       </div>

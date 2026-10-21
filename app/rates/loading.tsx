@@ -1,9 +1,11 @@
+import { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
+
 export default function RatesLoading() {
   return (
-    <div className="min-h-screen bg-canvas px-5 pt-[92px] text-white">
-      <div className="h-7 w-40 animate-pulse rounded bg-white/[0.08]" />
-      <div className="mt-6 h-96 animate-pulse rounded-xl border border-white/[0.06] bg-surface" />
-      <div className="mt-5 h-52 animate-pulse rounded-xl border border-white/[0.06] bg-surface" />
+    <div className="min-h-screen bg-canvas px-5 pt-[84px] text-white">
+      <LoadingSkeleton className="h-7 w-40 rounded" />
+      <LoadingSkeleton className="mt-6 h-96 rounded-xl" />
+      <LoadingSkeleton className="mt-5 h-52 rounded-xl" />
     </div>
   );
 }

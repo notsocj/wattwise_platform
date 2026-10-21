@@ -110,6 +110,29 @@ export default function AddApplianceModal({
     };
   }, []);
 
+  // Escape backs out of the QR scanner first, then closes the modal. Never
+  // close while a save/profiling request is in flight.
+  const escapeHandlerRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    escapeHandlerRef.current = () => {
+      if (isBusy) return;
+      if (showScanner) {
+        setShowScanner(false);
+        return;
+      }
+      handleCloseModal();
+    };
+  });
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") escapeHandlerRef.current();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   function setApiError(message: string) {
     setError(message);
   }
@@ -430,7 +453,13 @@ export default function AddApplianceModal({
         }
       }}
     >
-      <div className="max-h-[85vh] w-full max-w-107.5 overflow-hidden overflow-y-auto rounded-2xl bg-white shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={showScanner ? undefined : "add-appliance-modal-title"}
+        aria-label={showScanner ? "Scan device QR code" : undefined}
+        className="max-h-[85vh] w-full max-w-107.5 overflow-hidden overflow-y-auto rounded-2xl border border-white/10 bg-surface shadow-2xl"
+      >
         {showScanner ? (
           <MacQrScanner
             onScan={(mac) => {
@@ -442,15 +471,18 @@ export default function AddApplianceModal({
           />
         ) : (
           <>
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 pb-3 pt-5">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 pb-3 pt-5">
               <div>
-                <h2 className="text-sm font-bold tracking-tight text-gray-900">
+                <h2
+                  id="add-appliance-modal-title"
+                  className="text-sm font-bold tracking-tight text-white"
+                >
                   {step === 1 && "Add New Appliance"}
                   {step === 2 && "Choose Appliance Type"}
                   {step === 3 && "Live AI Profiling"}
                   {step === 4 && "Approve Budget Limit"}
                 </h2>
-                <p className="mt-0.5 text-[11px] text-gray-400">
+                <p className="mt-0.5 text-[11px] text-white/50">
                   Step {step} of 4
                 </p>
               </div>
@@ -458,7 +490,7 @@ export default function AddApplianceModal({
                 type="button"
                 onClick={handleCloseModal}
                 disabled={isSavingDevice || isSavingProfile}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -470,12 +502,12 @@ export default function AddApplianceModal({
                 <div key={label} className="flex-1">
                   <div
                     className={`h-1 rounded-full transition-colors ${
-                      index + 1 <= step ? "bg-mint" : "bg-gray-200"
+                      index + 1 <= step ? "bg-mint" : "bg-white/10"
                     }`}
                   />
                   <p
-                    className={`mt-1 text-center text-[9px] font-medium ${
-                      index + 1 <= step ? "text-gray-700" : "text-gray-300"
+                    className={`mt-1 text-center text-[10px] font-medium ${
+                      index + 1 <= step ? "text-white/80" : "text-white/50"
                     }`}
                   >
                     {label}
@@ -490,7 +522,7 @@ export default function AddApplianceModal({
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="appliance-mac-address"
-                      className="text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+                      className="text-[11px] font-semibold uppercase tracking-wider text-white/60"
                     >
                       MAC Address
                     </label>
@@ -516,18 +548,19 @@ export default function AddApplianceModal({
                         spellCheck={false}
                         aria-invalid={Boolean(fieldErrors.macAddress)}
                         aria-describedby="appliance-mac-address-message"
-                        className={`flex-1 rounded-xl border bg-gray-50 px-4 py-3 font-mono text-sm text-gray-900 placeholder-gray-300 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+                        className={`flex-1 rounded-xl border bg-white/[0.03] px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
                           fieldErrors.macAddress
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                            : "border-gray-200 focus:border-mint focus:ring-mint/30"
+                            ? "border-danger/40 focus:border-danger focus:ring-danger/30"
+                            : "border-white/10 focus:border-mint focus:ring-mint/30"
                         }`}
                       />
                       <button
                         type="button"
                         disabled={isBusy}
                         onClick={() => setShowScanner(true)}
-                        className="flex w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-400 transition-colors hover:border-mint/40 hover:bg-mint/5 hover:text-mint disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex min-h-10 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-mint/40 hover:bg-mint/5 hover:text-mint disabled:cursor-not-allowed disabled:opacity-40"
                         title="Scan QR Code"
+                        aria-label="Scan QR code"
                       >
                         <QrCode className="h-4 w-4" />
                       </button>
@@ -535,7 +568,7 @@ export default function AddApplianceModal({
                     <p
                       id="appliance-mac-address-message"
                       className={`text-[11px] leading-snug ${
-                        fieldErrors.macAddress ? "text-red-600" : "text-gray-400"
+                        fieldErrors.macAddress ? "text-danger" : "text-white/50"
                       }`}
                     >
                       {fieldErrors.macAddress ??
@@ -546,7 +579,7 @@ export default function AddApplianceModal({
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="appliance-device-name"
-                      className="text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+                      className="text-[11px] font-semibold uppercase tracking-wider text-white/60"
                     >
                       Appliance Name
                     </label>
@@ -567,16 +600,16 @@ export default function AddApplianceModal({
                       placeholder="e.g. Living Room Aircon"
                       aria-invalid={Boolean(fieldErrors.deviceName)}
                       aria-describedby="appliance-device-name-message"
-                      className={`rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      className={`rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
                         fieldErrors.deviceName
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                          : "border-gray-200 focus:border-mint focus:ring-mint/30"
+                          ? "border-danger/40 focus:border-danger focus:ring-danger/30"
+                          : "border-white/10 focus:border-mint focus:ring-mint/30"
                       }`}
                     />
                     <p
                       id="appliance-device-name-message"
                       className={`text-[11px] leading-snug ${
-                        fieldErrors.deviceName ? "text-red-600" : "text-gray-400"
+                        fieldErrors.deviceName ? "text-danger" : "text-white/50"
                       }`}
                     >
                       {fieldErrors.deviceName ??
@@ -606,12 +639,12 @@ export default function AddApplianceModal({
                             isSelected
                               ? "border-mint bg-mint/5"
                               : fieldErrors.applianceType
-                                ? "border-red-200 bg-red-50 hover:border-red-300"
-                                : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                                ? "border-danger/40 bg-danger/10 hover:border-danger/60"
+                                : "border-white/10 bg-white/[0.03] hover:border-white/20"
                           }`}
                         >
-                          <Icon className={`h-8 w-8 ${isSelected ? "text-mint" : "text-gray-400"}`} />
-                          <span className={`text-sm font-semibold ${isSelected ? "text-gray-900" : "text-gray-500"}`}>
+                          <Icon className={`h-8 w-8 ${isSelected ? "text-mint" : "text-white/50"}`} />
+                          <span className={`text-sm font-semibold ${isSelected ? "text-white" : "text-white/60"}`}>
                             {option.label}
                           </span>
                         </button>
@@ -621,7 +654,7 @@ export default function AddApplianceModal({
                   <p
                     id="appliance-type-message"
                     className={`text-[11px] leading-snug ${
-                      fieldErrors.applianceType ? "text-red-600" : "text-gray-400"
+                      fieldErrors.applianceType ? "text-danger" : "text-white/50"
                     }`}
                   >
                     {fieldErrors.applianceType ??
@@ -634,12 +667,12 @@ export default function AddApplianceModal({
                 <>
                   <div className="rounded-xl border border-mint/20 bg-mint/10 p-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-green-700" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">
+                      <Zap className="h-4 w-4 text-bida" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-bida">
                         Device Registered
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed text-gray-700">
+                    <p className="text-sm leading-relaxed text-white/80">
                       Registration is saved so the hardware can upload securely. Keep the
                       WattWise unit and appliance powered on while we wait for its live reading.
                     </p>
@@ -647,10 +680,10 @@ export default function AddApplianceModal({
 
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
                         Estimated Daily Hours
                       </span>
-                      <span className="text-lg font-bold text-gray-900">{dailyHours}h</span>
+                      <span className="text-lg font-bold text-white">{dailyHours}h</span>
                     </div>
                     <input
                       type="range"
@@ -665,12 +698,12 @@ export default function AddApplianceModal({
                       }}
                       className="w-full accent-mint disabled:opacity-50"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-400">
+                    <div className="flex justify-between text-[10px] text-white/50">
                       <span>1h</span>
                       <span>12h</span>
                       <span>24h</span>
                     </div>
-                    <p className="text-[11px] leading-snug text-gray-400">
+                    <p className="text-[11px] leading-snug text-white/50">
                       Use the normal daily runtime for this appliance so the AI estimate feels realistic.
                     </p>
                   </div>
@@ -679,46 +712,46 @@ export default function AddApplianceModal({
 
               {step === 4 && profile ? (
                 <>
-                  <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                  <div className="rounded-xl border border-bida/30 bg-bida/10 p-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-green-600" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">
+                      <Zap className="h-4 w-4 text-bida" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-bida">
                         AI Recommendation
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed text-gray-700">
+                    <p className="text-sm leading-relaxed text-white/80">
                       {profile.taglish_advice}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold uppercase text-gray-400">
+                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-center">
+                      <p className="text-[10px] font-semibold uppercase text-white/50">
                         Live W
                       </p>
-                      <p className="mt-0.5 text-base font-bold text-gray-900">
+                      <p className="mt-0.5 text-base font-bold text-white">
                         {profile.baseline_watts.toFixed(0)}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold uppercase text-gray-400">
+                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-center">
+                      <p className="text-[10px] font-semibold uppercase text-white/50">
                         Est. kWh
                       </p>
-                      <p className="mt-0.5 text-base font-bold text-gray-900">
+                      <p className="mt-0.5 text-base font-bold text-white">
                         {profile.estimated_monthly_kwh.toFixed(1)}
                       </p>
                     </div>
                     <div className="rounded-lg border border-mint/30 bg-mint/10 p-3 text-center">
-                      <p className="text-[10px] font-semibold uppercase text-green-700">
+                      <p className="text-[10px] font-semibold uppercase text-mint">
                         Suggested
                       </p>
-                      <p className="mt-0.5 text-base font-bold text-green-700">
+                      <p className="mt-0.5 text-base font-bold text-mint">
                         ₱{profile.suggested_monthly_limit_php.toLocaleString("en-PH")}
                       </p>
                     </div>
                   </div>
 
-                  <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] leading-snug text-gray-500">
+                  <p className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] leading-snug text-white/60">
                     Estimated variable monthly spend: ₱
                     {profile.estimated_monthly_cost_php.toLocaleString("en-PH", {
                       minimumFractionDigits: 2,
@@ -729,7 +762,7 @@ export default function AddApplianceModal({
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="approved-limit"
-                      className="text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+                      className="text-[11px] font-semibold uppercase tracking-wider text-white/60"
                     >
                       Approved Monthly Limit (PHP)
                     </label>
@@ -745,16 +778,16 @@ export default function AddApplianceModal({
                       }}
                       aria-invalid={Boolean(fieldErrors.approvedLimit)}
                       aria-describedby="approved-limit-message"
-                      className={`rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      className={`rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
                         fieldErrors.approvedLimit
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                          : "border-gray-200 focus:border-mint focus:ring-mint/30"
+                          ? "border-danger/40 focus:border-danger focus:ring-danger/30"
+                          : "border-white/10 focus:border-mint focus:ring-mint/30"
                       }`}
                     />
                     <p
                       id="approved-limit-message"
                       className={`text-[11px] leading-snug ${
-                        fieldErrors.approvedLimit ? "text-red-600" : "text-gray-400"
+                        fieldErrors.approvedLimit ? "text-danger" : "text-white/50"
                       }`}
                     >
                       {fieldErrors.approvedLimit ??
@@ -767,10 +800,10 @@ export default function AddApplianceModal({
               {error ? (
                 <div
                   role="alert"
-                  className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3"
+                  className="flex items-start gap-2.5 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-3"
                 >
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                  <p className="text-sm leading-snug text-red-600">{error}</p>
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+                  <p className="text-sm leading-snug text-danger">{error}</p>
                 </div>
               ) : null}
 
@@ -780,7 +813,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={() => setStep((current) => Math.max(1, current - 1))}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Back
                   </button>
@@ -789,7 +822,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={handleCloseModal}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Cancel
                   </button>

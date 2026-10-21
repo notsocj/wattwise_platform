@@ -428,14 +428,12 @@ export default function SettingsClient({
                       type="button"
                       disabled={isPending}
                       onClick={() => void toggleAutoCutoff(device.id, !autoCutoffEnabled)}
+                      role="switch"
+                      aria-checked={autoCutoffEnabled}
                       className={`relative h-7 w-14 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                        autoCutoffEnabled ? "bg-danger" : "bg-white/15"
+                        autoCutoffEnabled ? "bg-naku" : "bg-white/15"
                       }`}
-                      aria-label={
-                        autoCutoffEnabled
-                          ? "Disable automatic shutoff"
-                          : "Enable automatic shutoff"
-                      }
+                      aria-label={`Automatic shutoff for ${device.device_name}`}
                     >
                       {isPending ? (
                         <span className="absolute inset-0 flex items-center justify-center">

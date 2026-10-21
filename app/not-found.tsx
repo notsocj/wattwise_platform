@@ -26,7 +26,7 @@ export default function NotFound() {
           <div className="mt-7 flex justify-center">
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-lg bg-mint px-5 py-2.5 text-sm font-semibold text-black transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/70 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              className="inline-flex items-center justify-center rounded-lg bg-mint px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/70 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
             >
               Return to App
             </Link>

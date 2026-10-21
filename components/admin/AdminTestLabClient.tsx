@@ -222,7 +222,7 @@ export default function AdminTestLabClient() {
             />
           </button>
           {accountPickerOpen && (
-            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#171717] shadow-2xl shadow-black/50">
+            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-surface shadow-2xl shadow-black/50">
               <div className="border-b border-white/10 p-3">
                 <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
                   <Search className="h-4 w-4 text-white/40" />
@@ -231,7 +231,7 @@ export default function AdminTestLabClient() {
                     value={accountQuery}
                     onChange={(event) => setAccountQuery(event.target.value)}
                     placeholder="Search name, email, or role…"
-                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
                   />
                 </label>
               </div>
@@ -558,7 +558,7 @@ export default function AdminTestLabClient() {
         </>
       )}
       {message && (
-        <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-white/85">
+        <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-white/80">
           {message}
         </div>
       )}
@@ -592,7 +592,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wider text-white/40">{label}</p>
-      <p className="mt-1 text-sm text-white/85">{value}</p>
+      <p className="mt-1 text-sm text-white/80">{value}</p>
     </div>
   );
 }

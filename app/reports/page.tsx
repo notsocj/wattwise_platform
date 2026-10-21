@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
-import LogoutButton from "@/components/ui/LogoutButton";
+import PageHeader from "@/components/ui/PageHeader";
+import { FileText } from "lucide-react";
 import ReportTable from "@/components/reports/ReportTable";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import { createClient } from "@/lib/supabase/server";
@@ -24,14 +25,9 @@ export default async function ReportsPage({
 
   return (
     <div className="min-h-screen bg-canvas pb-24 text-white print:bg-white print:text-black">
-      <header className="mx-auto flex max-w-[760px] items-center justify-between border-b border-white/10 px-5 py-5 print:border-black/10">
-        <div><p className="text-xs uppercase tracking-widest text-mint print:text-black/60">WattWise</p><h1 className="text-2xl font-bold">Energy Reports</h1></div>
-        <div className="flex items-center gap-2 print:hidden">
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="mx-auto max-w-[760px] px-5 py-6">
-        <div className="mb-6 flex gap-2 print:hidden">{periods.map((item) => <Link key={item} href={`/reports?period=${item}`} className={`rounded-lg px-3 py-2 text-xs font-bold uppercase ${item === period ? "bg-surface text-mint" : "text-white/45"}`}>{item}</Link>)}</div>
+      <PageHeader icon={FileText} title="Energy Reports" />
+      <main className="px-5 pb-6 pt-[84px] print:pt-6">
+        <div className="mb-6 flex gap-2 print:hidden">{periods.map((item) => <Link key={item} href={`/reports?period=${item}`} aria-current={item === period ? "page" : undefined} className={`inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-bold uppercase ${item === period ? "bg-surface text-mint" : "text-white/50"}`}>{item}</Link>)}</div>
         <p className="mb-6 text-sm text-white/50 print:text-black/60">Choose a period, review the totals, then download a ready-to-share PDF or CSV.</p>
         <ReportExportButtons period={period} />
         <ReportTable period={period} />

@@ -163,7 +163,7 @@ export default function ManagerFleetDashboard({
                     className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
                       device.relay_state
                         ? "bg-mint/10 text-mint"
-                        : "bg-danger/10 text-danger"
+                        : "bg-white/[0.06] text-white/60"
                     }`}
                   >
                     {device.relay_state ? "ON" : "OFF"}

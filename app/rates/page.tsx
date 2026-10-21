@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { ArrowLeft, CalendarClock, ExternalLink, History } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { CalendarClock, ExternalLink, History } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import LogoutButton from "@/components/ui/LogoutButton";
 import { createClient } from "@/lib/supabase/server";
 import { getMeralcoRateHistory, type HistoricalMeralcoRateRow } from "@/lib/meralco-rates";
 import { redirect } from "next/navigation";
@@ -103,28 +102,9 @@ export default async function RatesPage() {
 
   return (
     <div className="min-h-screen bg-canvas pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-5">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/70 transition-colors hover:text-mint"
-              aria-label="Back to dashboard"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
-                Rate transparency
-              </p>
-              <h1 className="mt-1 text-lg font-bold tracking-tight">Meralco Rates</h1>
-            </div>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <PageHeader backHref="/dashboard" eyebrow="Rate transparency" title="Meralco Rates" />
 
-      <main className="space-y-5 px-5 pt-[92px]">
+      <main className="space-y-5 px-5 pt-[84px]">
         {current ? (
           <section className="rounded-xl border border-mint/25 bg-surface p-5 shadow-[0_12px_35px_rgba(0,0,0,0.16)]">
             <div className="mb-5 flex items-start justify-between gap-3">

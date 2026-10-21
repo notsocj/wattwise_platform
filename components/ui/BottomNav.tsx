@@ -30,8 +30,11 @@ export default function BottomNav() {
   return (
     <>
     <CustomerAssistantFab />
-    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-white/5 bg-canvas/95 backdrop-blur-sm">
-      <div className="flex items-center justify-around px-4 py-3">
+    <nav
+      aria-label="Main"
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-white/5 bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
+    >
+      <div className="flex items-center justify-around px-4 py-2">
         {tabs.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
@@ -39,8 +42,9 @@ export default function BottomNav() {
               key={href}
               href={href}
               prefetch
-              className={`flex flex-col items-center gap-1 transition-colors ${
-                isActive ? "text-mint" : "text-white/40 hover:text-white/60"
+              aria-current={isActive ? "page" : undefined}
+              className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 transition-colors ${
+                isActive ? "text-mint" : "text-white/50 hover:text-white/60"
               }`}
             >
               <div className="relative">

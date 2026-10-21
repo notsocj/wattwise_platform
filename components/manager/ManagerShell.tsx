@@ -68,8 +68,11 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
 
       <main className="mx-auto w-full max-w-5xl px-5 pt-4">{children}</main>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-canvas/95 backdrop-blur-sm">
-        <div className="grid grid-cols-6 px-2 py-3">
+      <nav
+        aria-label="Manager"
+        className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
+      >
+        <div className="grid grid-cols-6 px-2 py-2">
           {tabs.map(({ href, label, icon: Icon }) => {
             const isActive = isActiveTab(pathname, href);
 
@@ -77,8 +80,9 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
               <Link
                 key={href}
                 href={href}
-                className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1.5 py-1.5 transition-colors ${
-                  isActive ? "text-mint" : "text-white/40 hover:text-white/65"
+                aria-current={isActive ? "page" : undefined}
+                className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-1.5 transition-colors ${
+                  isActive ? "text-mint" : "text-white/50 hover:text-white/60"
                 }`}
               >
                 <div className="relative">
@@ -87,7 +91,7 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
                     <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-mint" />
                   ) : null}
                 </div>
-                <span className="max-w-full truncate text-[9px] font-semibold uppercase tracking-wider">
+                <span className="max-w-full truncate text-[10px] font-semibold uppercase tracking-wide">
                   {label}
                 </span>
               </Link>

@@ -6,7 +6,7 @@ import {
   PlugZap,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import LogoutButton from "@/components/ui/LogoutButton";
+import PageHeader from "@/components/ui/PageHeader";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
@@ -140,16 +140,7 @@ function TenantDashboardNotice({
 }) {
   return (
     <div className="min-h-screen bg-canvas pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between px-5 pb-4 pt-5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight">
-              Watt<span className="text-mint">Wise</span>
-            </h1>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <PageHeader title={<>Watt<span className="text-mint">Wise</span></>} />
 
       <main className="flex min-h-screen items-center px-5 pt-[84px]">
         <section className="w-full rounded-xl border border-white/[0.06] bg-surface p-6 text-center">
@@ -432,16 +423,7 @@ export default async function DashboardPage() {
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
 
       {/* ===== Header ===== */}
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between px-5 pt-5 pb-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight">
-              Watt<span className="text-mint">Wise</span>
-            </h1>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <PageHeader title={<>Watt<span className="text-mint">Wise</span></>} />
 
       <div className="px-5 pt-[84px] flex flex-col gap-4">
         <DashboardLiveTelemetry initialDevices={devices} canManageDevices={!isTenant}>

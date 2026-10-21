@@ -5,10 +5,9 @@ import {
 
 export default function ReportsLoading() {
   return (
-    <div className="min-h-screen bg-canvas px-5 pt-6 text-white">
-      <div className="mx-auto max-w-[760px]">
-        <LoadingSkeleton className="h-16 rounded-xl" />
-        <div className="mt-6 flex gap-2">
+    <div className="min-h-screen bg-canvas px-5 pt-[84px] text-white">
+      <div>
+        <div className="flex gap-2">
           <LoadingSkeleton className="h-9 w-20 rounded-lg" />
           <LoadingSkeleton className="h-9 w-20 rounded-lg" />
           <LoadingSkeleton className="h-9 w-20 rounded-lg" />

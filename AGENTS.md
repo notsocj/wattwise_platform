@@ -74,6 +74,8 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.
 - Reserve danger red for destructive or safety-critical states only.
 - Reuse shared feedback primitives like `components/ui/LoadingIndicator.tsx` for pending states.
+- Use `components/ui/PageHeader.tsx` (with `pt-[84px]` on the body) for mobile page headers, `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`, and `app/error.tsx` as the route error boundary.
+- Light theme works by overriding `text-white/*`, `bg-white/*`, and `border-white/*` classes in `app/globals.css`. When you introduce a new opacity step, add its light override (the bg/border block is generated from usage). Keep tap targets at least 40px (`h-10 w-10`) and readable copy at `text-white/50` or stronger.
 
 ### React and TypeScript
 

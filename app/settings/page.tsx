@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
+import PageHeader from "@/components/ui/PageHeader";
 import { Settings } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
-import LogoutButton from "@/components/ui/LogoutButton";
 import SettingsClient from "@/components/settings/SettingsClient";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,15 +48,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-canvas pb-24 text-white">
-      <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between px-5 pb-4 pt-5">
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-mint" />
-            <h1 className="text-lg font-bold tracking-tight">Settings</h1>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <PageHeader icon={Settings} title="Settings" />
 
       <main className="flex flex-col gap-4 px-5 pt-[84px]">
         <SettingsClient

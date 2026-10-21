@@ -16,7 +16,7 @@ function getIntensityClasses(intensity: CalendarDailySummary["intensity"]): stri
       return "border-mint/25 bg-mint/10 text-mint";
     case "none":
     default:
-      return "border-white/[0.06] bg-white/[0.03] text-white/35";
+      return "border-white/[0.06] bg-white/[0.03] text-white/50";
   }
 }
 
@@ -49,7 +49,7 @@ export default function WeekSummaryWidget({ days }: WeekSummaryWidgetProps) {
               getIntensityClasses(day.intensity)
             }`}
           >
-            <p className="text-[9px] font-semibold uppercase tracking-[0.18em]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em]">
               {day.weekdayShort}
             </p>
             <p className="mt-1 text-base font-bold">{day.dayNumber}</p>
