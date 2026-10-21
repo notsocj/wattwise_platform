@@ -111,6 +111,10 @@ Each ESP32-S3 unit identifies itself by its Wi-Fi MAC address. Every 5 seconds i
 
 A unit counts as LIVE or online when its latest reading (or `last_seen_at`) is under 20 seconds old; `devices.is_online` is never reset and is not used for status. Firmware timing, field names, and MAC formatting must change together with the migrations. The firmware side of this contract is documented in the [hardware repo](https://github.com/notsocj/wattwise_hardware) (`AGENTS.md` and `docs/`).
 
+## Testing
+
+Automated checks: `npm run lint`, `npx tsc --noEmit -p .`, `npm test`, and `npm run build`. The full manual checklist for the app and the hardware units is in [TESTING.md](TESTING.md).
+
 ## Contributing notes
 
 Project conventions for billing, data access, AI, notifications, and UI live in [AGENTS.md](AGENTS.md). After meaningful changes, keep the docs in `.github/instructions/` in sync.
