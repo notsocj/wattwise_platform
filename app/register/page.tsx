@@ -104,7 +104,7 @@ export default function RegisterPage() {
     setLoading(true);
     const supabase = createClient();
     const normalizedEmail = normalizeEmail(email);
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
@@ -119,17 +119,6 @@ export default function RegisterPage() {
     if (signUpError) {
       setSubmitError(getFriendlyAuthError(signUpError.message, "register"));
       return;
-    }
-
-    // The trigger should persist role metadata. This fallback covers older
-    // trigger versions and races where the profile row already exists.
-    if (signUpData.user) {
-      await supabase.from("profiles").upsert({
-        id: signUpData.user.id,
-        email: normalizedEmail,
-        full_name: fullName.trim(),
-        role: accountType,
-      });
     }
 
     router.push(getHomePathForRole(accountType));

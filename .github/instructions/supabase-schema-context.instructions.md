@@ -389,7 +389,7 @@ Important behavior:
 
 - copies `NEW.email`
 - reads `NEW.raw_user_meta_data->>'full_name'`
-- uses `ON CONFLICT (id) DO NOTHING`
+- reads the requested `role` from metadata but only accepts `user` or `manager` (migration `014`); it is the only signup path that sets `role`
 
 ### `get_latest_device_readings(p_user_id uuid)`
 
@@ -483,7 +483,7 @@ RLS is enabled on:
 
 Users can:
 
-- select, insert, update their own `profiles` row
+- select, insert, update their own `profiles` row, except privileged columns: the `guard_profile_privileged_columns` trigger (migration `032`) rejects `authenticated`/`anon` changes to `role`, `email`, `manager_id`, `disabled_at`, `disabled_reason`, and setting `must_update_password = true`, unless the caller is a super admin. Service-role and `SECURITY DEFINER` writes are unaffected; never write `role` from client code
 - select `meralco_rates`
 - select, insert, update, delete their own `devices`
 - select `energy_logs` that belong to their owned devices, matching by UUID text or MAC
