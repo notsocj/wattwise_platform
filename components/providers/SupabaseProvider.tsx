@@ -18,20 +18,14 @@ export function useSupabase() {
   return useContext(SupabaseContext);
 }
 
-export default function SupabaseProvider({
-  children,
-  session: initialSession,
-  user: initialUser,
-}: {
-  children: React.ReactNode;
-  session?: Session | null;
-  user?: User | null;
-}) {
-  const [session, setSession] = useState<Session | null>(initialSession ?? null);
-  const [user, setUser] = useState<User | null>(initialUser ?? initialSession?.user ?? null);
+export default function SupabaseProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
+    // Fires INITIAL_SESSION immediately with the stored session, then on
+    // every sign-in, sign-out, and token refresh.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {

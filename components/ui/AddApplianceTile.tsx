@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import AddApplianceModal from "@/components/ui/AddApplianceModal";
+import dynamic from "next/dynamic";
 import SuccessToast from "@/components/ui/SuccessToast";
+
+// The onboarding flow (steps, AI profiling, QR scanner) loads on first open.
+const AddApplianceModal = dynamic(() => import("@/components/ui/AddApplianceModal"), {
+  ssr: false,
+});
 
 export default function AddApplianceTile() {
   const router = useRouter();

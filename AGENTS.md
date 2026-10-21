@@ -19,7 +19,6 @@ Wattwise is a mobile-first energy monitoring SaaS platform for Philippine househ
 - `app/`: Next.js App Router pages, layouts, route loading states, and API routes
 - `components/`: reusable UI, admin, insights, provider, and realtime components
 - `lib/`: billing logic, usage helpers, constants, form messaging, and Supabase clients
-- `public/fonts/`: local Space Grotesk font files
 - `supabase/migrations/`: canonical database schema and RPC history
 - `supabase/functions/`: Edge Functions, including Meralco rate sync automation
 - `.github/instructions/`: roadmap, workflow, and schema reference docs that must stay in sync with meaningful implementation changes
@@ -68,7 +67,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 
 ### UI and design system
 
-- Use the existing Space Grotesk typography from `public/fonts` and `app/globals.css`.
+- Use the existing Space Grotesk typography, loaded with `next/font/google` in `app/layout.tsx` (self-hosted woff2, exposed as `--font-sans`).
 - Use Tailwind utility classes and shared theme tokens such as `bg-canvas`, `bg-surface`, `text-mint`, `text-bida`, `text-naku`, and `text-danger`.
 - Use `text-ink` for dark text on mint/bright fills (it stays dark in both themes). Never name a color token after a Tailwind size keyword (`base`, `sm`, `lg`, ...): `--color-base` once turned every `text-base` into a color instead of 16px.
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.

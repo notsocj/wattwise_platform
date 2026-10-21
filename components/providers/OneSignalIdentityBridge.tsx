@@ -10,6 +10,8 @@ type PreferenceResponse = {
 
 export default function OneSignalIdentityBridge({ appId }: { appId: string | null }) {
   const { user } = useSupabase();
+  // Keyed on the id: token refreshes hand out a new user object every time.
+  const userId = user?.id ?? null;
   const previousUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function OneSignalIdentityBridge({ appId }: { appId: string | nul
     const controller = new AbortController();
 
     async function syncIdentity() {
-      if (!user) {
+      if (!userId) {
         if (previousUserId.current) {
           await logoutOneSignal().catch(() => undefined);
           previousUserId.current = null;
@@ -38,12 +40,12 @@ export default function OneSignalIdentityBridge({ appId }: { appId: string | nul
       if (!externalId || controller.signal.aborted) return;
 
       await loginOneSignal(configuredAppId, externalId);
-      previousUserId.current = user.id;
+      previousUserId.current = userId;
     }
 
     void syncIdentity().catch(() => undefined);
     return () => controller.abort();
-  }, [appId, user]);
+  }, [appId, userId]);
 
   return null;
 }

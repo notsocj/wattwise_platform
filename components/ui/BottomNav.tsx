@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FileText, Home, LineChart, Settings } from "lucide-react";
-import CustomerAssistantFab from "@/components/customer-assistant/CustomerAssistantFab";
+import dynamic from "next/dynamic";
+
+// Fixed-position button, so loading it after the page causes no layout shift.
+const CustomerAssistantFab = dynamic(
+  () => import("@/components/customer-assistant/CustomerAssistantFab"),
+  { ssr: false }
+);
 
 const tabs = [
   { href: "/dashboard", label: "HOME", icon: Home },
