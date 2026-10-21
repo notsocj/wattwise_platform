@@ -12,6 +12,7 @@ import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
   getActiveMeralcoRates,
   getMeralcoRatesForRange,
+  computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
@@ -259,7 +260,7 @@ export default async function DeviceDetailPage(props: {
     : variableSpendByDevice.get(deviceData.id) ?? 0;
 
   const estimatedBillPhp =
-    variableSpendPhp + fixedFeeSharePhp * (1 + activeRates.vatRate);
+    variableSpendPhp + computeFixedChargesWithVat(fixedFeeSharePhp, activeRates.vatRate);
 
   const device: DeviceViewModel = {
     id: deviceData.id,

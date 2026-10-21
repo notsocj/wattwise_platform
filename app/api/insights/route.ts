@@ -7,6 +7,7 @@ import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
   computeHistoricalVariableSpendFromDayRows,
   getMeralcoRatesForRange,
+  computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
 import { InsightType } from "@/lib/constants";
 import {
@@ -269,14 +270,14 @@ export async function POST(request: NextRequest) {
     );
     const cycleCostPhp =
       cycleVariableSpendPhp +
-      meralcoData.fixedMonthlyChargesPhp * (1 + meralcoData.vatRate);
+      computeFixedChargesWithVat(meralcoData.fixedMonthlyChargesPhp, meralcoData.vatRate);
     const projectedVariableSpend =
       billingCycle.elapsedDays > 0
         ? (cycleVariableSpendPhp / billingCycle.elapsedDays) * billingCycle.totalDays
         : 0;
     const projectedCycleBill =
       projectedVariableSpend +
-      meralcoData.fixedMonthlyChargesPhp * (1 + meralcoData.vatRate);
+      computeFixedChargesWithVat(meralcoData.fixedMonthlyChargesPhp, meralcoData.vatRate);
     const daysElapsed = billingCycle.elapsedDays;
 
     const deviceNameMap = new Map<string, string>();

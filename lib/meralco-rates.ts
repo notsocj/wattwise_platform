@@ -305,6 +305,11 @@ export function computeHistoricalVariableSpendByDeviceFromDayRows(
   return costByDevice;
 }
 
+/** Fixed monthly charges (metering + supply customer charges) with VAT applied. */
+export function computeFixedChargesWithVat(fixedChargesPhp: number, vatRate: number): number {
+  return Math.max(0, fixedChargesPhp) * (1 + vatRate);
+}
+
 export function computeMeralcoBill(
   kWh: number,
   rates: MeralcoRateComponents,

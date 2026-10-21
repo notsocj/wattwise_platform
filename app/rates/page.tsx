@@ -2,7 +2,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import { CalendarClock, ExternalLink, History } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import { createClient } from "@/lib/supabase/server";
-import { getMeralcoRateHistory, type HistoricalMeralcoRateRow } from "@/lib/meralco-rates";
+import { getMeralcoRateHistory, type HistoricalMeralcoRateRow, computeMeralcoBill } from "@/lib/meralco-rates";
 import { redirect } from "next/navigation";
 
 function formatMonth(value: string): string {
@@ -22,7 +22,7 @@ function formatTimestamp(value: string): string {
 }
 
 function ratePerKwh(rate: HistoricalMeralcoRateRow): number {
-  return Object.values(rate.rates).reduce((sum, value) => sum + value, 0) * (1 + rate.vatRate);
+  return computeMeralcoBill(1, rate.rates, rate.vatRate);
 }
 
 function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {

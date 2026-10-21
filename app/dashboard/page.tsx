@@ -20,6 +20,7 @@ import {
   computeHistoricalVariableSpendFromDayRows,
   getActiveMeralcoRates,
   getMeralcoRatesForRange,
+  computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
 import {
   aggregateUsageByDay,
@@ -319,7 +320,7 @@ export default async function DashboardPage() {
   const homeCycleUsageKwh = cycleUsageByDayRows.reduce((sum, row) => sum + Math.max(0, toNumber(row.usage_kwh)), 0);
   const homeCycleEstimatedBillPhp =
     homeCycleVariableSpendPhp +
-    activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
+    computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate);
   const homeBurnPercent = Math.min(
     (homeCycleEstimatedBillPhp / safeMonthlyBudget) * 100,
     100
@@ -340,7 +341,7 @@ export default async function DashboardPage() {
   );
   const projectedCycleBill =
     (sevenDayVariableSpendPhp / Math.max(1, forecastLookbackDays)) * billingCycle.totalDays +
-    activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
+    computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate);
 
   return (
     <div className="min-h-screen bg-canvas text-white pb-24">

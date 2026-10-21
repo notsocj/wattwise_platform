@@ -19,6 +19,7 @@ import {
   computeHistoricalVariableSpendFromDayRows,
   getActiveMeralcoRates,
   getMeralcoRatesForRange,
+  computeFixedChargesWithVat,
 } from "@/lib/meralco-rates";
 import {
   getCurrentBillingCycle,
@@ -181,7 +182,7 @@ export default async function AnalyticsPage() {
   );
   const cycleEstimatedBill =
     actualCycleVariableSpend +
-    activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
+    computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate);
 
   const kWhByDay = new Map<string, number>();
   for (let index = 0; index < 7; index += 1) {
@@ -218,10 +219,10 @@ export default async function AnalyticsPage() {
   const projectedVariableSpend = avgDailyVariableCost * billingCycle.totalDays;
   const projectedCycleBill =
     projectedVariableSpend +
-    activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate);
+    computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate);
   const remainingBudgetForVariable = Math.max(
     0,
-    monthlyBudget - activeRates.fixedMonthlyChargesPhp * (1 + activeRates.vatRate)
+    monthlyBudget - computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate)
   );
   const projectedHitDay =
     avgDailyVariableCost > 0 && projectedCycleBill >= monthlyBudget
