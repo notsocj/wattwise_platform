@@ -10,7 +10,7 @@ type MobileViewportProps = {
 export default function MobileViewport({ children }: MobileViewportProps) {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/pitch-deck")) {
     return <>{children}</>;
   }
 
