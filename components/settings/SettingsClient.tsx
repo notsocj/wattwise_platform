@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { logoutOneSignal } from "@/lib/onesignal";
@@ -55,6 +56,9 @@ export default function SettingsClient({
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirmDialog();
+  const isDeleteConfirmed = confirmDelete.trim().toUpperCase() === "DELETE";
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const canManageHomeSettings = role !== "tenant";
 
@@ -116,9 +120,12 @@ export default function SettingsClient({
   async function toggleAutoCutoff(deviceId: string, enabled: boolean) {
     if (
       enabled &&
-      !window.confirm(
-        "Enable automatic shutoff? WattWise will interrupt appliance power when this device reaches 100% of its approved limit."
-      )
+      !(await confirm({
+        title: "Enable automatic shutoff?",
+        description:
+          "WattWise will interrupt appliance power when this device reaches 100% of its approved limit.",
+        confirmLabel: "Enable shutoff",
+      }))
     ) {
       return;
     }
@@ -188,7 +195,15 @@ export default function SettingsClient({
   }
 
   async function restorePower(deviceId: string) {
-    if (!window.confirm("Restore power to this appliance now?")) return;
+    if (
+      !(await confirm({
+        title: "Restore power now?",
+        description: "The appliance will turn back on within a few seconds.",
+        confirmLabel: "Restore power",
+      }))
+    ) {
+      return;
+    }
     setPendingDeviceId(deviceId);
     setToast(null);
     try {
@@ -255,43 +270,31 @@ export default function SettingsClient({
   }
 
   async function deleteAccount() {
-    if (confirmDelete.trim().toUpperCase() !== "DELETE") {
-      setToast({
-        type: "error",
-        message: "Type DELETE to confirm account deletion.",
-      });
+    if (!isDeleteConfirmed) {
+      setDeleteError("Type DELETE to confirm account deletion.");
       return;
     }
 
     setIsDeleting(true);
-    setToast(null);
+    setDeleteError(null);
 
     try {
-      await logoutOneSignal().catch(() => undefined);
       const res = await fetch("/api/account", { method: "DELETE" });
 
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        setToast({
-          type: "error",
-          message:
-            typeof payload.error === "string"
-              ? payload.error
-              : "We could not delete your account right now.",
-        });
+        setDeleteError("We could not delete your account right now. Try again in a moment.");
         setIsDeleting(false);
         return;
       }
 
+      // Only drop this browser's push identity once the account is gone.
+      await logoutOneSignal().catch(() => undefined);
       const supabase = createClient();
       await supabase.auth.signOut();
       router.replace("/onboarding");
       router.refresh();
     } catch {
-      setToast({
-        type: "error",
-        message: "Network error while deleting your account.",
-      });
+      setDeleteError("Network error while deleting your account. Check your connection and retry.");
       setIsDeleting(false);
     }
   }
@@ -517,17 +520,25 @@ export default function SettingsClient({
               </p>
             </div>
           </div>
+          <label htmlFor="confirm-delete-account" className="sr-only">
+            Type DELETE to confirm account deletion
+          </label>
           <input
+            id="confirm-delete-account"
             value={confirmDelete}
-            onChange={(event) => setConfirmDelete(event.target.value)}
+            onChange={(event) => {
+              setConfirmDelete(event.target.value);
+              setDeleteError(null);
+            }}
             disabled={isDeleting}
+            autoComplete="off"
             placeholder="Type DELETE to confirm"
             className="mt-3 w-full rounded-lg border border-danger/30 bg-black/10 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-danger"
           />
           <button
             type="button"
             onClick={() => void deleteAccount()}
-            disabled={isDeleting}
+            disabled={isDeleting || !isDeleteConfirmed}
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-danger/40 bg-danger/15 px-4 py-3 text-sm font-bold text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDeleting ? (
@@ -539,9 +550,16 @@ export default function SettingsClient({
               "Delete My Account"
             )}
           </button>
+          {deleteError ? (
+            <p role="alert" className="mt-2 text-xs font-semibold text-danger">
+              {deleteError}
+            </p>
+          ) : null}
           </div>
         ) : null}
       </section>
+
+      {confirmDialog}
 
       {toast ? (
         <div

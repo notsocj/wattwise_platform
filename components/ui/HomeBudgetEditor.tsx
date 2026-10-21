@@ -18,8 +18,15 @@ function formatBudget(value: number): string {
   });
 }
 
+const BUDGET_PATTERN = /^\d+(\.\d{1,2})?$/;
+
+function normalizeBudgetInput(value: string): string {
+  return value.replace(/₱|php/gi, "").replace(/[,\s]/g, "");
+}
+
 function parseBudgetInput(value: string): number {
-  return Number(value.replace(/,/g, "").trim());
+  const normalized = normalizeBudgetInput(value);
+  return BUDGET_PATTERN.test(normalized) ? Number(normalized) : Number.NaN;
 }
 
 function validateBudgetInput(value: string): string | null {
@@ -112,12 +119,15 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
     }
 
     const nextBudget = Number(parsedBudget.toFixed(2));
-    const { error } = await supabase
+    const { data: savedProfile, error } = await supabase
       .from("profiles")
       .update({ monthly_budget_php: nextBudget })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("monthly_budget_php")
+      .maybeSingle();
 
-    if (error) {
+    // RLS can match zero rows without an error; treat that as not saved.
+    if (error || !savedProfile) {
       const message =
         "We could not save your budget right now. Your current budget is unchanged.";
       setErrorMessage(message);

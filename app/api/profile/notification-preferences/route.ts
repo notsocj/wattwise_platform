@@ -52,7 +52,7 @@ export async function GET() {
 
   if (result.error === "not_ready" || !result.preferences) {
     return NextResponse.json(
-      { error: "Notification settings are not ready. Apply the latest database migration first." },
+      { error: "Notification settings are temporarily unavailable. Try again in a few minutes." },
       { status: 503 }
     );
   }
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
 
   if (result.error === "not_ready" || !result.preferences || !result.supabase || !result.user) {
     return NextResponse.json(
-      { error: "Notification settings are not ready. Apply the latest database migration first." },
+      { error: "Notification settings are temporarily unavailable. Try again in a few minutes." },
       { status: 503 }
     );
   }

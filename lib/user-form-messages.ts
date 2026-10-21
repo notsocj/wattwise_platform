@@ -1,6 +1,6 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type AuthFormContext = "login" | "register" | "reset";
+export type AuthFormContext = "login" | "register" | "reset" | "update";
 
 export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
@@ -62,6 +62,26 @@ export function getFriendlyAuthError(
     normalizedMessage.includes("failed to")
   ) {
     return "WattWise could not connect right now. Check your internet connection and try again.";
+  }
+
+  if (context === "update") {
+    if (normalizedMessage.includes("different from the old password")) {
+      return "Choose a new password that is different from your current one.";
+    }
+    if (normalizedMessage.includes("session") || normalizedMessage.includes("jwt")) {
+      return "Your session expired. Open the reset link again or log in, then retry.";
+    }
+    if (
+      normalizedMessage.includes("code verifier") ||
+      normalizedMessage.includes("expired") ||
+      normalizedMessage.includes("invalid")
+    ) {
+      return "This reset link has expired or was already used. Request a new one from the login page.";
+    }
+    if (normalizedMessage.includes("password")) {
+      return "Use a stronger password with at least 8 characters.";
+    }
+    return "We could not update your password. Try again in a moment.";
   }
 
   if (context === "login") {

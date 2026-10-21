@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Tenant creation needs SUPABASE_SERVICE_ROLE_KEY in your server environment.",
+          "Tenant account creation isn't available yet. Contact WattWise support.",
       },
       { status: 500 }
     );
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Tenant creation needs SUPABASE_SERVICE_ROLE_KEY in your server environment.",
+          "Tenant account creation isn't available yet. Contact WattWise support.",
       },
       { status: 500 }
     );

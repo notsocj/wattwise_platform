@@ -105,7 +105,8 @@ export default function LoginPage() {
       profile?.role === "tenant" && profile.must_update_password === true
         ? "/update-password"
         : getHomePathForRole(profile?.role);
-    setLoading(false);
+    // Keep the button in its loading state until the next page replaces this
+    // one, so a second tap can't submit again mid-navigation.
     router.push(destination);
     router.refresh();
   }

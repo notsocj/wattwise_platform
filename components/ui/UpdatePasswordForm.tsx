@@ -12,6 +12,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getFriendlyAuthError } from "@/lib/user-form-messages";
 import { logoutOneSignal } from "@/lib/onesignal";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
@@ -48,7 +49,7 @@ export default function UpdatePasswordForm({
           await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError && isMounted) {
-          setError(exchangeError.message);
+          setError(getFriendlyAuthError(exchangeError.message, "update"));
         }
 
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -102,7 +103,7 @@ export default function UpdatePasswordForm({
       });
 
       if (updateError) {
-        setError(updateError.message);
+        setError(getFriendlyAuthError(updateError.message, "update"));
         return;
       }
 
@@ -112,10 +113,16 @@ export default function UpdatePasswordForm({
         } = await supabase.auth.getUser();
 
         if (user) {
-          await supabase
+          const { error: flagError } = await supabase
             .from("profiles")
             .update({ must_update_password: false })
             .eq("id", user.id);
+
+          // Without clearing the flag the user would loop back to this page.
+          if (flagError) {
+            setError("Your password changed, but we couldn't finish setup. Tap Update Password again.");
+            return;
+          }
         }
       }
 
@@ -134,7 +141,7 @@ export default function UpdatePasswordForm({
 
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred.");
+      setError(getFriendlyAuthError(err instanceof Error ? err.message : undefined, "update"));
     } finally {
       setLoading(false);
     }

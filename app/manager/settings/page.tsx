@@ -33,8 +33,8 @@ export default async function ManagerSettingsPage() {
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-white/60">
               {adminConfigured
-                ? "Supabase service-role configuration is available for manager-created tenant accounts."
-                : "Add SUPABASE_SERVICE_ROLE_KEY to your server environment before creating tenants."}
+                ? "You can create tenant accounts from the Tenants tab."
+                : "Tenant account creation isn't available yet. Contact WattWise support to enable it."}
             </p>
           </div>
         </div>

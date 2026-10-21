@@ -83,7 +83,8 @@ export async function GET(request: NextRequest) {
     : await deviceQuery.or(`owner_id.eq.${user.id},user_id.eq.${user.id}`);
 
   if (deviceError) {
-    return NextResponse.json({ error: deviceError.message }, { status: 500 });
+    console.error("reports: device lookup failed", deviceError);
+    return NextResponse.json({ error: "Report data could not be loaded." }, { status: 500 });
   }
 
   const deviceRows = (devices ?? []) as DeviceRow[];
@@ -100,7 +101,8 @@ export async function GET(request: NextRequest) {
     : { data: [], error: null };
 
   if (logsResponse.error) {
-    return NextResponse.json({ error: logsResponse.error.message }, { status: 500 });
+    console.error("reports: telemetry lookup failed", logsResponse.error);
+    return NextResponse.json({ error: "Report data could not be loaded." }, { status: 500 });
   }
 
   const logs = (logsResponse.data ?? []) as LogRow[];

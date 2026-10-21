@@ -256,7 +256,7 @@ export async function POST(
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "OpenAI API key not configured. Add OPENAI_API_KEY to .env.local." },
+      { error: "AI recommendations are temporarily unavailable. Try again in a few minutes." },
       { status: 500 }
     );
   }

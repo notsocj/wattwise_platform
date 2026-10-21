@@ -55,14 +55,14 @@ export async function PATCH(
 
   if (approvedLimit === null || approvedLimit <= 0 || approvedLimit > 9_999_999.99) {
     return NextResponse.json(
-      { error: "user_approved_limit_php must be a positive peso amount." },
+      { error: "Enter a monthly limit greater than ₱0." },
       { status: 400 }
     );
   }
 
   if (suggestedLimit !== null && suggestedLimit <= 0) {
     return NextResponse.json(
-      { error: "suggested_monthly_limit_php must be positive when provided." },
+      { error: "The suggested limit must be greater than ₱0." },
       { status: 400 }
     );
   }

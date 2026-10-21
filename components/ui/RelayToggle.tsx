@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Power } from "lucide-react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface RelayToggleProps {
   deviceId: string;
@@ -25,6 +26,7 @@ export default function RelayToggle({
   const [isPending, setIsPending] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   // Follow server-side changes (budget cutoff, Restore Power, refreshes).
   if (initialRelayState !== syncedInitialState) {
@@ -49,6 +51,18 @@ export default function RelayToggle({
     e.stopPropagation();
 
     const newState = !relayState;
+
+    if (
+      !newState &&
+      !(await confirm({
+        title: "Turn this appliance off?",
+        description: "Power to the appliance will be cut until you turn it back on.",
+        confirmLabel: "Turn off",
+        tone: "danger",
+      }))
+    ) {
+      return;
+    }
 
     setRelayState(newState);
     setIsPending(true);
@@ -77,7 +91,8 @@ export default function RelayToggle({
         setRelayState(!newState);
         setErrorToast(errorMessage);
       } else {
-        setSuccessMessage(`Device turned ${newState ? "on" : "off"}.`);
+        // The relay row is updated now; the unit applies it on its next sync (~5s).
+        setSuccessMessage(`Turn-${newState ? "on" : "off"} sent to the device.`);
         onRelayChange?.(newState);
         router.refresh();
       }
@@ -136,6 +151,7 @@ export default function RelayToggle({
         </button>
         {errorToastElement}
         {successToastElement}
+        {confirmDialog}
       </>
     );
   }
@@ -201,6 +217,7 @@ export default function RelayToggle({
       </div>
       {errorToastElement}
       {successToastElement}
+      {confirmDialog}
     </>
   );
 }

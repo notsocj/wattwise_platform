@@ -73,20 +73,21 @@ function friendlyTestResult(
   }
 
   if (code === "provider_not_configured") {
-    return `${channel === "push" ? "OneSignal" : "Resend"} keys are not configured yet. The app remains safe to use.`;
+    return `${channel === "push" ? "Push alerts" : "Email alerts"} aren't available yet. Budget alerts still appear in the app.`;
   }
   if (code === "no_push_subscription") {
-    return "OneSignal could not find an active subscription for this browser yet.";
+    return "This browser isn't subscribed to push yet. Turn push alerts off and on again, then retry.";
   }
   if (code === "preference_disabled") {
     return `Turn on ${channel === "push" ? "push alerts" : "critical email"} before testing.`;
   }
-  if (providerMessage) return providerMessage;
-  return `The test ${channel} could not be delivered right now.`;
+  if (providerMessage) console.warn("notification test:", providerMessage);
+  return `The test ${channel} could not be delivered right now. Try again in a few minutes.`;
 }
 
 async function readFunctionInvokeError(error: unknown): Promise<string> {
-  const fallback = error instanceof Error ? error.message : "The notification test could not be completed.";
+  if (error instanceof Error) console.warn("notification test:", error.message);
+  const fallback = "The notification test could not be completed. Try again in a few minutes.";
   const context = error && typeof error === "object" && "context" in error
     ? (error as { context?: unknown }).context
     : null;
@@ -327,7 +328,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
             </div>
 
             {!appId ? (
-              <p className="mt-3 text-[11px] text-naku">OneSignal App ID has not been added yet.</p>
+              <p className="mt-3 text-[11px] text-naku">Push alerts aren&apos;t available yet.</p>
             ) : !capability.supported ? (
               <p className="mt-3 text-[11px] text-naku">This browser does not support web push.</p>
             ) : !capability.secureContext ? (

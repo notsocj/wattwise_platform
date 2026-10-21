@@ -78,7 +78,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         error: missingRelayStateColumn
-          ? "Relay control requires devices.relay_state. Run migration 010_add_device_metadata.sql."
+          ? "Power control isn't available for this device yet. Contact WattWise support."
           : "Failed to update relay state",
       },
       { status: 500 }

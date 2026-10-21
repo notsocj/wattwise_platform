@@ -269,7 +269,7 @@ export default function ManagerRoomsClient({
             }
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl">
             <MacQrScanner
               onScan={(mac) => {
                 setMacAddress(mac);

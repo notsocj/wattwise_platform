@@ -129,9 +129,11 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
         {
           role: "assistant",
           content:
-            error instanceof Error
-              ? error.message
-              : "The assistant could not reply right now.",
+            error instanceof TypeError
+              ? "Couldn't reach WattWise. Check your connection and try again."
+              : error instanceof Error
+                ? error.message
+                : "The assistant could not reply right now.",
         },
       ]);
     } finally {

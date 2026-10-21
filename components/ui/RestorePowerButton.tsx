@@ -3,14 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Power } from "lucide-react";
+import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function RestorePowerButton({ deviceId }: { deviceId: string }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   async function restore() {
-    if (!window.confirm("Restore power to this appliance now?")) return;
+    if (
+      !(await confirm({
+        title: "Restore power now?",
+        description: "The appliance will turn back on within a few seconds.",
+        confirmLabel: "Restore power",
+      }))
+    ) {
+      return;
+    }
     setPending(true);
     setError(null);
     try {
@@ -53,6 +63,7 @@ export default function RestorePowerButton({ deviceId }: { deviceId: string }) {
         {pending ? "Restoring..." : "Restore Power"}
       </button>
       {error ? <p className="mt-2 text-xs font-semibold text-danger">{error}</p> : null}
+      {confirmDialog}
     </div>
   );
 }

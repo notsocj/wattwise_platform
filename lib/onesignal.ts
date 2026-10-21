@@ -7,6 +7,7 @@ type OneSignalApi = {
     serviceWorkerParam: { scope: string };
     notifyButton: { enable: boolean };
     allowLocalhostAsSecureOrigin: boolean;
+    promptOptions: { slidedown: { prompts: Array<{ type: "push"; autoPrompt: boolean }> } };
   }): Promise<void>;
   login(externalId: string): Promise<void>;
   logout(): Promise<void>;
@@ -93,6 +94,9 @@ export async function initializeOneSignal(appId: string): Promise<OneSignalApi> 
           serviceWorkerParam: { scope: "/push/onesignal/" },
           notifyButton: { enable: false },
           allowLocalhostAsSecureOrigin: process.env.NODE_ENV === "development",
+          // Never prompt on load, whatever the dashboard says: permission is
+          // requested only after the user enables push in Settings.
+          promptOptions: { slidedown: { prompts: [{ type: "push", autoPrompt: false }] } },
         });
         activeOneSignal = oneSignal;
         resolve(oneSignal);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 type ReportRow = {
   device_name: string;
@@ -17,6 +18,17 @@ type ReportRow = {
 export default function ReportTable({ period }: { period: string }) {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loadedPeriod, setLoadedPeriod] = useState<string | null>(null);
+  const [requestedPeriod, setRequestedPeriod] = useState(period);
+
+  // Reset when the period changes so stale rows or errors never show.
+  if (period !== requestedPeriod) {
+    setRequestedPeriod(period);
+    setRows([]);
+    setError(null);
+    setLoadedPeriod(null);
+  }
+  const isLoading = loadedPeriod !== period && !error;
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +38,10 @@ export default function ReportTable({ period }: { period: string }) {
         return response.json() as Promise<{ rows: ReportRow[] }>;
       })
       .then((payload) => {
-        if (!cancelled) setRows(payload.rows ?? []);
+        if (!cancelled) {
+          setRows(payload.rows ?? []);
+          setLoadedPeriod(period);
+        }
       })
       .catch((reason: unknown) => {
         if (!cancelled)
@@ -43,7 +58,9 @@ export default function ReportTable({ period }: { period: string }) {
         {period} appliance comparison
       </h2>
       {error ? (
-        <p className="text-sm text-danger">{error}</p>
+        <p role="alert" className="text-sm text-danger">{error}</p>
+      ) : isLoading ? (
+        <LoadingIndicator label="Loading report" />
       ) : rows.length === 0 ? (
         <p className="text-sm text-white/50 print:text-black/60">
           No registered appliances or telemetry for this period.

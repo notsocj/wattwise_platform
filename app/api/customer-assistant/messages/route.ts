@@ -57,7 +57,7 @@ export async function GET() {
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false })
     .limit(CUSTOMER_ASSISTANT_HISTORY_LIMIT);
-  if (error) return NextResponse.json({ error: "Chat history is not ready. Apply the latest database migration." }, { status: 503 });
+  if (error) return NextResponse.json({ error: "The assistant is temporarily unavailable. Try again in a few minutes." }, { status: 503 });
   const messages = ((data ?? []) as CustomerAssistantMessage[]).reverse();
   const expiredIds = messages
     .filter((message) =>
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     role: "user",
     content: message,
   });
-  if (userInsertError) return NextResponse.json({ error: "Chat history is not ready. Apply the latest database migration." }, { status: 503 });
+  if (userInsertError) return NextResponse.json({ error: "The assistant is temporarily unavailable. Try again in a few minutes." }, { status: 503 });
 
   const context = await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
   const grounded = buildGroundedCustomerResponse(message, context);

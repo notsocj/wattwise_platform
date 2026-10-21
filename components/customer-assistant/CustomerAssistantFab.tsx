@@ -3,6 +3,7 @@
 import { Bot, Check, ChevronRight, Send, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
 
@@ -18,6 +19,7 @@ async function readJson(response: Response): Promise<Record<string, unknown>> {
 }
 
 export default function CustomerAssistantFab() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<CustomerAssistantMessage[]>([]);
   const [input, setInput] = useState("");
@@ -58,6 +60,12 @@ export default function CustomerAssistantFab() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen]);
 
+  function toFriendlyError(reason: unknown, fallback: string): string {
+    // fetch rejects with a TypeError ("Failed to fetch") when offline.
+    if (reason instanceof TypeError) return "Couldn't reach WattWise. Check your connection and try again.";
+    return reason instanceof Error ? reason.message : fallback;
+  }
+
   async function sendMessage(text = input) {
     const trimmed = text.trim();
     if (!trimmed || isSending) return;
@@ -85,7 +93,10 @@ export default function CustomerAssistantFab() {
       if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : "The assistant could not reply.");
       setMessages((current) => [...current, body.message as CustomerAssistantMessage].slice(-10));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The assistant could not reply.");
+      // Drop the unsent bubble and give the text back so it can be retried.
+      setMessages((current) => current.filter((message) => message.id !== optimistic.id));
+      setInput((current) => current || trimmed);
+      setError(toFriendlyError(reason, "The assistant could not reply."));
     } finally {
       setIsSending(false);
       inputRef.current?.focus();
@@ -99,14 +110,21 @@ export default function CustomerAssistantFab() {
     try {
       const response = await fetch(`/api/customer-assistant/actions/${messageId}/confirm`, { method: "POST" });
       const body = await readJson(response);
+      if (response.status === 409) {
+        // Already claimed by another tap or tab; it is not a failure.
+        setError("This change is already being applied. It will show up in a moment.");
+        router.refresh();
+        return;
+      }
       if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : "The change could not be applied.");
       setMessages((current) => current.map((message) =>
         message.id === messageId
           ? { ...message, proposal_status: "confirmed", proposal_result: body.result as { message?: string } }
           : message
       ));
+      router.refresh();
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "The change could not be applied.";
+      const message = toFriendlyError(reason, "The change could not be applied.");
       setError(message);
       setMessages((current) => current.map((item) =>
         item.id === messageId ? { ...item, proposal_status: "failed", proposal_result: { message } } : item

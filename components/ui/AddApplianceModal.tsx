@@ -69,7 +69,7 @@ function getApiErrorMessage(raw: string | undefined, fallback: string): string {
   }
 
   if (message.includes("openai")) {
-    return "AI profiling is temporarily unavailable. Check OPENAI_API_KEY and try again.";
+    return "AI profiling is temporarily unavailable. Try again in a few minutes.";
   }
 
   if (message.includes("meralco") || message.includes("rates")) {
