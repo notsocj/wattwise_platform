@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HelpCircle, Power, Refrigerator, Tv, Wind } from "lucide-react";
+import { isFreshReading } from "@/lib/device-telemetry";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RelayToggle from "@/components/ui/RelayToggle";
 import { ApplianceType } from "@/lib/constants";
@@ -37,8 +38,6 @@ type DashboardLiveTelemetryProps = {
   children?: ReactNode;
 };
 
-const ACTIVE_READING_WINDOW_MS = 20 * 1000;
-
 function toNumber(value: number | string | null | undefined): number {
   if (value === null || value === undefined) {
     return 0;
@@ -46,15 +45,6 @@ function toNumber(value: number | string | null | undefined): number {
 
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function isFresh(recordedAt: string | null): boolean {
-  if (!recordedAt) {
-    return false;
-  }
-
-  const timestamp = new Date(recordedAt).getTime();
-  return !Number.isNaN(timestamp) && Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
 function getDeviceIcon(applianceType: string | null, deviceName: string) {
@@ -163,7 +153,7 @@ export default function DashboardLiveTelemetry({
     const freshnessTimer = setInterval(() => {
       setDevices((currentDevices) =>
         currentDevices.map((device) =>
-          isFresh(device.recordedAt)
+          isFreshReading(device.recordedAt)
             ? device
             : { ...device, watts: 0, volts: 0, amps: 0, isOnline: false }
         )

@@ -96,6 +96,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - App Router pages already exist for `/`, `/dashboard`, `/dashboard/calendar`, `/analytics`, `/settings`, `/admin`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/update-password`, and `/onboarding`.
 - Smart Control user routes also exist for `/analytics` and `/settings`.
 - Shared Supabase helpers live under `lib/supabase/`.
+- Shared helpers: telemetry freshness (`ACTIVE_READING_WINDOW_MS`, `isFreshReading`) in `lib/device-telemetry.ts`, peso formatting in `lib/format.ts`, the OpenAI chat model in `lib/openai.ts`, and PostgREST search sanitizing in `lib/postgrest.ts`. Reuse them instead of redefining per file.
 - Reports are served from `/reports` and `/api/reports`; keep period windows bounded and preserve CSV/print parity.
 - Route-level loading UIs are part of the app structure; preserve them when adding slow server-rendered pages.
 - Service worker/PWA work is planned but not fully implemented. Be careful not to document it as complete unless the code actually exists.

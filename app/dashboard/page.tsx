@@ -13,6 +13,7 @@ import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetr
 import BudgetAlertCard from "@/components/insights/BudgetAlertCard";
 import WeekSummaryWidget from "@/components/calendar/WeekSummaryWidget";
 import { redirect } from "next/navigation";
+import { hasMissingRelayStateColumnError, isFreshReading } from "@/lib/device-telemetry";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendFromDayRows,
@@ -83,20 +84,7 @@ type DashboardDevice = {
   budgetStatus: string | null;
 };
 
-const ACTIVE_READING_WINDOW_MS = 20 * 1000; // 4 missed 5-second hardware cycles before offline
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function hasMissingRelayStateColumnError(error: {
-  code?: string;
-  message?: string;
-} | null): boolean {
-  if (!error) {
-    return false;
-  }
-
-  const message = error.message?.toLowerCase() ?? "";
-  return error.code === "42703" || message.includes("relay_state");
-}
 
 async function fetchDashboardDevices(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -141,20 +129,6 @@ function toNumber(value: number | string | null): number {
 
   const numericValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
-}
-
-function isFreshReading(recordedAt: string | null): boolean {
-  if (!recordedAt) {
-    return false;
-  }
-
-  const timestamp = new Date(recordedAt).getTime();
-
-  if (Number.isNaN(timestamp)) {
-    return false;
-  }
-
-  return Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
 function TenantDashboardNotice({

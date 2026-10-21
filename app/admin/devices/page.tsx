@@ -1,2 +1,29 @@
-import { Cpu } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin'; import AdminDevicesTable from '@/components/admin/AdminDevicesTable';
-export default async function AdminDevicesPage(){const admin=createAdminClient();const [{data:devices},{data:people}]=await Promise.all([admin.from('devices').select('id,device_name,mac_address,appliance_type,user_id,owner_id,tenant_id,is_online,last_seen_at,relay_state,budget_status,user_approved_limit_php').order('created_at',{ascending:false}).limit(100),admin.from('profiles').select('id,full_name,email,role').order('full_name')]);return <div><div className="mb-6 flex items-center gap-3"><Cpu className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">Devices</h1></div><p className="mb-6 text-white/50">Configure device metadata, assign owners and tenants, and update approved budget limits. Names are shown instead of account IDs.</p><AdminDevicesTable devices={devices??[]} people={people??[]}/></div>}
+import { Cpu } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import AdminDevicesTable from "@/components/admin/AdminDevicesTable";
+export default async function AdminDevicesPage() {
+  const admin = createAdminClient();
+  const [{ data: devices }, { data: people }] = await Promise.all([
+    admin
+      .from("devices")
+      .select(
+        "id,device_name,mac_address,appliance_type,user_id,owner_id,tenant_id,is_online,last_seen_at,relay_state,budget_status,user_approved_limit_php",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100),
+    admin.from("profiles").select("id,full_name,email,role").order("full_name"),
+  ]);
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <Cpu className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">Devices</h1>
+      </div>
+      <p className="mb-6 text-white/50">
+        Configure device metadata, assign owners and tenants, and update approved budget limits.
+        Names are shown instead of account IDs.
+      </p>
+      <AdminDevicesTable devices={devices ?? []} people={people ?? []} />
+    </div>
+  );
+}

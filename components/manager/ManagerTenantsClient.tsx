@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatPeso } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import { Check, Copy, KeyRound, UserPlus } from "lucide-react";
 import ManagerSelect from "@/components/manager/ManagerSelect";
@@ -11,13 +12,6 @@ type ManagerTenantsClientProps = {
   devices: ManagerDevice[];
   tenants: ManagerTenant[];
 };
-
-function formatPeso(value: number): string {
-  return `₱${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 export default function ManagerTenantsClient({
   devices,

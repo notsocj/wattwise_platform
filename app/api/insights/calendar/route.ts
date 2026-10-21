@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
 import type {
   CalendarAnalyticsDayPayload,
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: OPENAI_CHAT_MODEL,
       temperature: 0.2,
       response_format: { type: "json_object" },
       max_tokens: 350,

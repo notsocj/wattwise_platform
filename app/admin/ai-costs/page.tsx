@@ -1,2 +1,37 @@
-import { Brain } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
-export default async function AdminAiCostsPage(){const {data}=await createAdminClient().from('ai_insights').select('prompt_tokens,completion_tokens,insight_type').limit(10000);const rows=data??[];const tokens=rows.reduce((s,r)=>s+Number(r.prompt_tokens||0)+Number(r.completion_tokens||0),0);return <div><div className="mb-6 flex items-center gap-3"><Brain className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">AI Costs</h1></div><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Insights</p><p className="mt-2 text-3xl font-semibold">{rows.length}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Tokens</p><p className="mt-2 text-3xl font-semibold">{tokens.toLocaleString()}</p></div><div className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">Insight types</p><p className="mt-2 text-3xl font-semibold">{new Set(rows.map(r=>r.insight_type)).size}</p></div></div></div>}
+import { Brain } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+export default async function AdminAiCostsPage() {
+  const { data } = await createAdminClient()
+    .from("ai_insights")
+    .select("prompt_tokens,completion_tokens,insight_type")
+    .limit(10000);
+  const rows = data ?? [];
+  const tokens = rows.reduce(
+    (s, r) => s + Number(r.prompt_tokens || 0) + Number(r.completion_tokens || 0),
+    0,
+  );
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <Brain className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">AI Costs</h1>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-white/10 bg-surface p-5">
+          <p className="text-sm text-white/50">Insights</p>
+          <p className="mt-2 text-3xl font-semibold">{rows.length}</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-surface p-5">
+          <p className="text-sm text-white/50">Tokens</p>
+          <p className="mt-2 text-3xl font-semibold">{tokens.toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-surface p-5">
+          <p className="text-sm text-white/50">Insight types</p>
+          <p className="mt-2 text-3xl font-semibold">
+            {new Set(rows.map((r) => r.insight_type)).size}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

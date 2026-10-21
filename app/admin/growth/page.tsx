@@ -1,2 +1,45 @@
-import { TrendingUp } from 'lucide-react'; import { createAdminClient } from '@/lib/supabase/admin';
-export default async function AdminGrowthPage(){const admin=createAdminClient();const now=new Date().getTime();const [u30,u90,d30,d90]=await Promise.all([admin.from('profiles').select('*',{count:'exact',head:true}).gte('created_at',new Date(now-30*86400000).toISOString()),admin.from('profiles').select('*',{count:'exact',head:true}).gte('created_at',new Date(now-90*86400000).toISOString()),admin.from('devices').select('*',{count:'exact',head:true}).gte('created_at',new Date(now-30*86400000).toISOString()),admin.from('devices').select('*',{count:'exact',head:true}).gte('created_at',new Date(now-90*86400000).toISOString())]);return <div><div className="mb-6 flex items-center gap-3"><TrendingUp className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">Growth</h1></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Users · 30d',u30.count],['Users · 90d',u90.count],['Devices · 30d',d30.count],['Devices · 90d',d90.count]].map(([l,v])=><div key={l} className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">{l}</p><p className="mt-2 text-3xl font-semibold">{v??0}</p></div>)}</div></div>}
+import { TrendingUp } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+export default async function AdminGrowthPage() {
+  const admin = createAdminClient();
+  const now = new Date().getTime();
+  const [u30, u90, d30, d90] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", new Date(now - 30 * 86400000).toISOString()),
+    admin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", new Date(now - 90 * 86400000).toISOString()),
+    admin
+      .from("devices")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", new Date(now - 30 * 86400000).toISOString()),
+    admin
+      .from("devices")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", new Date(now - 90 * 86400000).toISOString()),
+  ]);
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <TrendingUp className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">Growth</h1>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["Users · 30d", u30.count],
+          ["Users · 90d", u90.count],
+          ["Devices · 30d", d30.count],
+          ["Devices · 90d", d90.count],
+        ].map(([l, v]) => (
+          <div key={l} className="rounded-lg border border-white/10 bg-surface p-5">
+            <p className="text-sm text-white/50">{l}</p>
+            <p className="mt-2 text-3xl font-semibold">{v ?? 0}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

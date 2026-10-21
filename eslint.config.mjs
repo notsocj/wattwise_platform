@@ -13,7 +13,9 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "out/**",
     "build/**",
-    "wattwise-survey-video/build/**",
+    "wattwise-survey-video/**", // separate Remotion project with its own config
+    "output/**",
+    "tmp/**",
     "next-env.d.ts",
   ]),
 ]);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeMeralcoBill,
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
   const openai = new OpenAI({ apiKey });
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: OPENAI_CHAT_MODEL,
     max_tokens: 250,
     temperature: 0.7,
     messages: [

@@ -1,63 +1,702 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, Mail, Plus, Power, RefreshCw, Search, Send, Smartphone, TestTube2, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Mail,
+  Plus,
+  Power,
+  RefreshCw,
+  Search,
+  Send,
+  Smartphone,
+  TestTube2,
+  UserRound,
+} from "lucide-react";
 import LoadingIndicator, { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
 
-type Person = { id: string; full_name: string | null; email: string; role: string; billing_cycle_start_day: number | null };
-type Device = { id: string; device_name: string; mac_address: string; relay_state: boolean; budget_status: string | null; user_approved_limit_php: number | null; require_approval_on_expiry: boolean | null; simulation: { simulated_watts: number; simulated_voltage_v: number } | null; usage: { usage_kwh: number; variable_spend_php: number; last_energy_kwh: number } | null };
-type BudgetEvent = { id: string; device_id: string; event_type: string; threshold_percent: number | null; spend_php: number; usage_kwh: number; message: string; created_at: string };
-type Delivery = { id: string; budget_event_id: string | null; channel: string; status: string; attempts: number; error_code: string | null; error_message: string | null; sent_at: string | null; created_at: string };
-type LabData = { people: Person[]; selected: null | { id: string; full_name: string | null; email: string; role: string; cycle_start: string; notification_preferences: { budget_push_enabled: boolean; budget_email_enabled: boolean } | null; devices: Device[]; events: BudgetEvent[]; deliveries: Delivery[] } };
+type Person = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  role: string;
+  billing_cycle_start_day: number | null;
+};
+type Device = {
+  id: string;
+  device_name: string;
+  mac_address: string;
+  relay_state: boolean;
+  budget_status: string | null;
+  user_approved_limit_php: number | null;
+  require_approval_on_expiry: boolean | null;
+  simulation: { simulated_watts: number; simulated_voltage_v: number } | null;
+  usage: { usage_kwh: number; variable_spend_php: number; last_energy_kwh: number } | null;
+};
+type BudgetEvent = {
+  id: string;
+  device_id: string;
+  event_type: string;
+  threshold_percent: number | null;
+  spend_php: number;
+  usage_kwh: number;
+  message: string;
+  created_at: string;
+};
+type Delivery = {
+  id: string;
+  budget_event_id: string | null;
+  channel: string;
+  status: string;
+  attempts: number;
+  error_code: string | null;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+type LabData = {
+  people: Person[];
+  selected: null | {
+    id: string;
+    full_name: string | null;
+    email: string;
+    role: string;
+    cycle_start: string;
+    notification_preferences: {
+      budget_push_enabled: boolean;
+      budget_email_enabled: boolean;
+    } | null;
+    devices: Device[];
+    events: BudgetEvent[];
+    deliveries: Delivery[];
+  };
+};
 
-const initialForm = { device_name: "Presentation Demo Unit", simulated_watts: "500", simulated_voltage_v: "230", limit_php: "100", approval_required: true };
-function peso(value: number | null | undefined) { return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(Number(value ?? 0)); }
+const initialForm = {
+  device_name: "Presentation Demo Unit",
+  simulated_watts: "500",
+  simulated_voltage_v: "230",
+  limit_php: "100",
+  approval_required: true,
+};
+function peso(value: number | null | undefined) {
+  return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
+    Number(value ?? 0),
+  );
+}
 
 export default function AdminTestLabClient() {
-  const [data, setData] = useState<LabData | null>(null); const [userId, setUserId] = useState(""); const [deviceId, setDeviceId] = useState("");
-  const [form, setForm] = useState(initialForm); const [customSpend, setCustomSpend] = useState(""); const [customUsage, setCustomUsage] = useState(""); const [reason, setReason] = useState("Presentation verification"); const [confirmation, setConfirmation] = useState("");
-  const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(true); const [message, setMessage] = useState(""); const [accountPickerOpen, setAccountPickerOpen] = useState(false); const [accountQuery, setAccountQuery] = useState("");
-  async function load(selectedUserId = userId) { setLoading(true); try { const response = await fetch(`/api/admin/test-lab${selectedUserId ? `?userId=${encodeURIComponent(selectedUserId)}` : ""}`, { cache: "no-store" }); const json = await response.json(); if (!response.ok) { setMessage(json.error ?? "Unable to load Test Lab."); return; } setData(json.data); } catch { setMessage("Unable to load Test Lab."); } finally { setLoading(false); } }
+  const [data, setData] = useState<LabData | null>(null);
+  const [userId, setUserId] = useState("");
+  const [deviceId, setDeviceId] = useState("");
+  const [form, setForm] = useState(initialForm);
+  const [customSpend, setCustomSpend] = useState("");
+  const [customUsage, setCustomUsage] = useState("");
+  const [reason, setReason] = useState("Presentation verification");
+  const [confirmation, setConfirmation] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
+  const [accountQuery, setAccountQuery] = useState("");
+  async function load(selectedUserId = userId) {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/test-lab${selectedUserId ? `?userId=${encodeURIComponent(selectedUserId)}` : ""}`,
+        { cache: "no-store" },
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        setMessage(json.error ?? "Unable to load Test Lab.");
+        return;
+      }
+      setData(json.data);
+    } catch {
+      setMessage("Unable to load Test Lab.");
+    } finally {
+      setLoading(false);
+    }
+  }
   useEffect(() => {
     const controller = new AbortController();
     void fetch("/api/admin/test-lab", { cache: "no-store", signal: controller.signal })
       .then((response) => response.json().then((json) => ({ response, json })))
-      .then(({ response, json }) => { if (response.ok) setData(json.data); else setMessage(json.error ?? "Unable to load Test Lab."); })
-      .catch((error: unknown) => { if (!(error instanceof DOMException && error.name === "AbortError")) setMessage("Unable to load Test Lab."); })
+      .then(({ response, json }) => {
+        if (response.ok) setData(json.data);
+        else setMessage(json.error ?? "Unable to load Test Lab.");
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError"))
+          setMessage("Unable to load Test Lab.");
+      })
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, []);
-  async function submit(payload: Record<string, unknown>) { setBusy(true); setMessage(""); const response = await fetch("/api/admin/test-lab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_id: userId, device_id: deviceId, reason, confirm_device_name: confirmation, ...payload }) }); const json = await response.json(); setBusy(false); if (!response.ok) { setMessage(json.error ?? "Test failed."); return; } setData(json.data); setMessage(json.note ?? "Completed. Delivery evidence may take a few seconds to arrive from the database webhook."); }
-  const selected = data?.selected; const device = selected?.devices.find((item) => item.id === deviceId); const physical = Boolean(device && !device.simulation);
-  const readiness = selected ? [
-    !selected.devices.length ? "No device is assigned. Create a virtual demo unit first." : "",
-    !selected.notification_preferences?.budget_email_enabled ? "Critical email is disabled for this account." : "",
-    !selected.notification_preferences?.budget_push_enabled ? "Push is disabled or not subscribed for this account." : "",
-  ].filter(Boolean) : [];
+  async function submit(payload: Record<string, unknown>) {
+    setBusy(true);
+    setMessage("");
+    const response = await fetch("/api/admin/test-lab", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        device_id: deviceId,
+        reason,
+        confirm_device_name: confirmation,
+        ...payload,
+      }),
+    });
+    const json = await response.json();
+    setBusy(false);
+    if (!response.ok) {
+      setMessage(json.error ?? "Test failed.");
+      return;
+    }
+    setData(json.data);
+    setMessage(
+      json.note ??
+        "Completed. Delivery evidence may take a few seconds to arrive from the database webhook.",
+    );
+  }
+  const selected = data?.selected;
+  const device = selected?.devices.find((item) => item.id === deviceId);
+  const physical = Boolean(device && !device.simulation);
+  const readiness = selected
+    ? [
+        !selected.devices.length ? "No device is assigned. Create a virtual demo unit first." : "",
+        !selected.notification_preferences?.budget_email_enabled
+          ? "Critical email is disabled for this account."
+          : "",
+        !selected.notification_preferences?.budget_push_enabled
+          ? "Push is disabled or not subscribed for this account."
+          : "",
+      ].filter(Boolean)
+    : [];
   const selectedPerson = data?.people.find((person) => person.id === userId);
-  const matchingPeople = (data?.people ?? []).filter((person) => `${person.full_name ?? ""} ${person.email} ${person.role}`.toLowerCase().includes(accountQuery.trim().toLowerCase()));
-  function chooseAccount(id: string) { setUserId(id); setDeviceId(""); setConfirmation(""); setAccountQuery(""); setAccountPickerOpen(false); void load(id); }
-  return <div className="space-y-6">
-    <section className="rounded-xl border border-white/10 bg-surface p-5">
-      <div className="relative max-w-xl"><p className="mb-2 text-sm font-medium">Selected account</p><button type="button" disabled={loading} onClick={() => setAccountPickerOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-left text-white transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"><span className="flex min-w-0 items-center gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-mint/10 text-mint"><UserRound className="h-4 w-4" /></span><span className="min-w-0"><span className="block truncate text-sm font-medium">{selectedPerson?.full_name || selectedPerson?.email || (loading && !data ? "Loading WattWise accounts…" : "Choose a WattWise user")}</span>{selectedPerson && <span className="block truncate text-xs text-white/45">{selectedPerson.email} · {selectedPerson.role}</span>}</span></span><ChevronDown className={`h-4 w-4 shrink-0 text-white/45 transition-transform ${accountPickerOpen ? "rotate-180" : ""}`} /></button>{accountPickerOpen && <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#171717] shadow-2xl shadow-black/50"><div className="border-b border-white/10 p-3"><label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2"><Search className="h-4 w-4 text-white/40" /><input autoFocus value={accountQuery} onChange={(event) => setAccountQuery(event.target.value)} placeholder="Search name, email, or role…" className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35" /></label></div><div className="max-h-72 overflow-y-auto p-1.5">{matchingPeople.length ? matchingPeople.map((person) => <button type="button" key={person.id} onClick={() => chooseAccount(person.id)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${person.id === userId ? "bg-mint/10" : "hover:bg-white/5"}`}><span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-white/5 text-xs font-semibold text-white/70">{(person.full_name || person.email).slice(0, 1).toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-white">{person.full_name || person.email}</span><span className="block truncate text-xs text-white/45">{person.email}</span></span><span className="rounded-full bg-white/5 px-2 py-1 text-[11px] capitalize text-white/55">{person.role}</span></button>) : <p className="px-3 py-5 text-center text-sm text-white/45">No accounts match that search.</p>}</div></div>}</div>
-      {loading && <div className="mt-3"><LoadingIndicator size="sm" label={data ? "Loading selected account workspace…" : "Loading accounts…"} /></div>}
-      {loading && !data && <div className="mt-4 grid gap-3 sm:grid-cols-3"><LoadingSkeleton className="h-14" /><LoadingSkeleton className="h-14" /><LoadingSkeleton className="h-14" /></div>}
-      {selected && <div className="mt-4 grid gap-3 sm:grid-cols-3"><Info label="Account" value={selected.full_name || selected.email} /><Info label="Billing cycle" value={`Starts ${selected.cycle_start}`} /><Info label="Notifications" value={`Push: ${selected.notification_preferences?.budget_push_enabled ? "on" : "off"} · Email: ${selected.notification_preferences?.budget_email_enabled !== false ? "on" : "off"}`} /></div>}
-    </section>
-    {selected && <>
-      {readiness.length > 0 && <section className="rounded-xl border border-naku/30 bg-naku/10 p-4 text-sm text-naku"><div className="flex gap-2 font-semibold"><AlertTriangle className="h-5 w-5 shrink-0" />Readiness warnings</div><ul className="mt-2 list-disc space-y-1 pl-7 text-white/70">{readiness.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>}
-      <section className="rounded-xl border border-white/10 bg-surface p-5"><div className="mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-mint" /><h2 className="font-semibold">Create virtual demo unit</h2></div><div className="grid gap-3 md:grid-cols-4"><Field label="Device name" value={form.device_name} onChange={(value) => setForm({ ...form, device_name: value })} /><Field label="Watts" type="number" value={form.simulated_watts} onChange={(value) => setForm({ ...form, simulated_watts: value })} /><Field label="Voltage" type="number" value={form.simulated_voltage_v} onChange={(value) => setForm({ ...form, simulated_voltage_v: value })} /><Field label="Limit (PHP)" type="number" value={form.limit_php} onChange={(value) => setForm({ ...form, limit_php: value })} /></div><label className="mt-3 flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.approval_required} onChange={(event) => setForm({ ...form, approval_required: event.target.checked })} /> Approval required at 100% (leave off to test automatic cutoff)</label><button disabled={busy} onClick={() => submit({ action: "create_demo", ...form })} className="mt-4 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-black disabled:opacity-50">Create demo unit</button></section>
-      <section className="rounded-xl border border-white/10 bg-surface p-5"><div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold">Run a real test</h2><p className="mt-1 text-sm text-white/50">A threshold inserts telemetry once; repeated thresholds are blocked per billing cycle.</p></div><button disabled={loading} onClick={() => void load(userId)} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm disabled:opacity-50"><RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} /> {loading ? "Loading…" : "Refresh evidence"}</button></div>
-        <label className="block text-sm font-medium">Device<select value={deviceId} onChange={(event) => { const id = event.target.value; const next = selected.devices.find((item) => item.id === id); setDeviceId(id); setConfirmation(""); if (next) setForm({ device_name: next.device_name, simulated_watts: String(next.simulation?.simulated_watts ?? 500), simulated_voltage_v: String(next.simulation?.simulated_voltage_v ?? 230), limit_php: String(next.user_approved_limit_php ?? 100), approval_required: next.require_approval_on_expiry === true }); }} className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-white"><option value="">Choose a device…</option>{selected.devices.map((item) => <option key={item.id} value={item.id}>{item.device_name} · {item.simulation ? "Demo" : "Physical"} · {peso(item.usage?.variable_spend_php)} / {peso(item.user_approved_limit_php)}</option>)}</select></label>
-        {device && <div className="mt-4 rounded-lg border border-white/10 bg-black/15 p-4"><div className="grid gap-3 sm:grid-cols-4"><Info label="Device" value={device.device_name} /><Info label="Current usage" value={`${Number(device.usage?.usage_kwh ?? 0).toFixed(4)} kWh`} /><Info label="Current spend" value={peso(device.usage?.variable_spend_php)} /><Info label="State" value={`${device.relay_state ? "Relay on" : "Relay off"} · ${device.budget_status ?? "ok"}`} /></div>{physical && <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-white/80"><div className="flex gap-2 font-semibold text-danger"><AlertTriangle className="h-5 w-5" /> Physical-device safeguards</div><p className="mt-1">Telemetry, events, and a possible cutoff persist. There is no automatic rollback.</p><input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={`Type “${device.device_name}” to confirm`} className="mt-3 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white" /></div>}<label className="mt-3 block text-sm">Audit reason<input value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white" /></label><div className="mt-3 grid gap-3 md:grid-cols-4"><Field label="Limit (PHP)" type="number" value={form.limit_php} onChange={(value) => setForm({ ...form, limit_php: value })} />{device.simulation && <><Field label="Demo watts" type="number" value={form.simulated_watts} onChange={(value) => setForm({ ...form, simulated_watts: value })} /><Field label="Demo voltage" type="number" value={form.simulated_voltage_v} onChange={(value) => setForm({ ...form, simulated_voltage_v: value })} /></>}<label className="flex items-end gap-2 pb-2 text-sm text-white/70"><input type="checkbox" checked={form.approval_required} onChange={(event) => setForm({ ...form, approval_required: event.target.checked })} /> Approval at 100%</label></div><button disabled={busy} onClick={() => submit({ action: "configure_device", limit_php: form.limit_php, approval_required: form.approval_required, ...(device.simulation ? { simulated_watts: form.simulated_watts, simulated_voltage_v: form.simulated_voltage_v } : {}) })} className="mt-3 rounded-lg border border-white/10 px-3 py-2 text-sm">Save configuration</button><div className="mt-4 flex flex-wrap gap-2"><RunButton disabled={busy} label="Test 50%" onClick={() => submit({ action: "run", target: 50 })} /><RunButton disabled={busy} label="Test 80% push" onClick={() => submit({ action: "run", target: 80 })} /><RunButton disabled={busy} label={`Test 100% ${device.require_approval_on_expiry ? "approval" : "cutoff"}`} onClick={() => submit({ action: "run", target: 100 })} /><div className="flex gap-2"><input type="number" value={customSpend} onChange={(event) => setCustomSpend(event.target.value)} placeholder="Target PHP" className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm" /><RunButton disabled={busy || !customSpend} label="Target spend" onClick={() => submit({ action: "run", target: "custom", target_spend_php: customSpend })} /></div><div className="flex gap-2"><input type="number" value={customUsage} onChange={(event) => setCustomUsage(event.target.value)} placeholder="Target kWh" className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm" /><RunButton disabled={busy || !customUsage} label="Target usage" onClick={() => submit({ action: "run", target: "custom", target_usage_kwh: customUsage })} /></div>{device.budget_status === "auto_cutoff" && <button disabled={busy} onClick={() => submit({ action: "restore_power" })} className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint"><Power className="h-4 w-4" /> Manual restore</button>}</div></div>}
+  const matchingPeople = (data?.people ?? []).filter((person) =>
+    `${person.full_name ?? ""} ${person.email} ${person.role}`
+      .toLowerCase()
+      .includes(accountQuery.trim().toLowerCase()),
+  );
+  function chooseAccount(id: string) {
+    setUserId(id);
+    setDeviceId("");
+    setConfirmation("");
+    setAccountQuery("");
+    setAccountPickerOpen(false);
+    void load(id);
+  }
+  return (
+    <div className="space-y-6">
+      <section className="rounded-xl border border-white/10 bg-surface p-5">
+        <div className="relative max-w-xl">
+          <p className="mb-2 text-sm font-medium">Selected account</p>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => setAccountPickerOpen((open) => !open)}
+            className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-left text-white transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-mint/10 text-mint">
+                <UserRound className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium">
+                  {selectedPerson?.full_name ||
+                    selectedPerson?.email ||
+                    (loading && !data ? "Loading WattWise accounts…" : "Choose a WattWise user")}
+                </span>
+                {selectedPerson && (
+                  <span className="block truncate text-xs text-white/45">
+                    {selectedPerson.email} · {selectedPerson.role}
+                  </span>
+                )}
+              </span>
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-white/45 transition-transform ${accountPickerOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {accountPickerOpen && (
+            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#171717] shadow-2xl shadow-black/50">
+              <div className="border-b border-white/10 p-3">
+                <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                  <Search className="h-4 w-4 text-white/40" />
+                  <input
+                    autoFocus
+                    value={accountQuery}
+                    onChange={(event) => setAccountQuery(event.target.value)}
+                    placeholder="Search name, email, or role…"
+                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+                  />
+                </label>
+              </div>
+              <div className="max-h-72 overflow-y-auto p-1.5">
+                {matchingPeople.length ? (
+                  matchingPeople.map((person) => (
+                    <button
+                      type="button"
+                      key={person.id}
+                      onClick={() => chooseAccount(person.id)}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${person.id === userId ? "bg-mint/10" : "hover:bg-white/5"}`}
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-white/5 text-xs font-semibold text-white/70">
+                        {(person.full_name || person.email).slice(0, 1).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-white">
+                          {person.full_name || person.email}
+                        </span>
+                        <span className="block truncate text-xs text-white/45">{person.email}</span>
+                      </span>
+                      <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] capitalize text-white/55">
+                        {person.role}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-5 text-center text-sm text-white/45">
+                    No accounts match that search.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        {loading && (
+          <div className="mt-3">
+            <LoadingIndicator
+              size="sm"
+              label={data ? "Loading selected account workspace…" : "Loading accounts…"}
+            />
+          </div>
+        )}
+        {loading && !data && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <LoadingSkeleton className="h-14" />
+            <LoadingSkeleton className="h-14" />
+            <LoadingSkeleton className="h-14" />
+          </div>
+        )}
+        {selected && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <Info label="Account" value={selected.full_name || selected.email} />
+            <Info label="Billing cycle" value={`Starts ${selected.cycle_start}`} />
+            <Info
+              label="Notifications"
+              value={`Push: ${selected.notification_preferences?.budget_push_enabled ? "on" : "off"} · Email: ${selected.notification_preferences?.budget_email_enabled !== false ? "on" : "off"}`}
+            />
+          </div>
+        )}
       </section>
-      <Timeline events={selected.events} deliveries={selected.deliveries} />
-    </>}
-    {message && <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-white/85">{message}</div>}
-  </div>;
+      {selected && (
+        <>
+          {readiness.length > 0 && (
+            <section className="rounded-xl border border-naku/30 bg-naku/10 p-4 text-sm text-naku">
+              <div className="flex gap-2 font-semibold">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                Readiness warnings
+              </div>
+              <ul className="mt-2 list-disc space-y-1 pl-7 text-white/70">
+                {readiness.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <section className="rounded-xl border border-white/10 bg-surface p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Plus className="h-5 w-5 text-mint" />
+              <h2 className="font-semibold">Create virtual demo unit</h2>
+            </div>
+            <div className="grid gap-3 md:grid-cols-4">
+              <Field
+                label="Device name"
+                value={form.device_name}
+                onChange={(value) => setForm({ ...form, device_name: value })}
+              />
+              <Field
+                label="Watts"
+                type="number"
+                value={form.simulated_watts}
+                onChange={(value) => setForm({ ...form, simulated_watts: value })}
+              />
+              <Field
+                label="Voltage"
+                type="number"
+                value={form.simulated_voltage_v}
+                onChange={(value) => setForm({ ...form, simulated_voltage_v: value })}
+              />
+              <Field
+                label="Limit (PHP)"
+                type="number"
+                value={form.limit_php}
+                onChange={(value) => setForm({ ...form, limit_php: value })}
+              />
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-sm text-white/70">
+              <input
+                type="checkbox"
+                checked={form.approval_required}
+                onChange={(event) => setForm({ ...form, approval_required: event.target.checked })}
+              />{" "}
+              Approval required at 100% (leave off to test automatic cutoff)
+            </label>
+            <button
+              disabled={busy}
+              onClick={() => submit({ action: "create_demo", ...form })}
+              className="mt-4 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+            >
+              Create demo unit
+            </button>
+          </section>
+          <section className="rounded-xl border border-white/10 bg-surface p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">Run a real test</h2>
+                <p className="mt-1 text-sm text-white/50">
+                  A threshold inserts telemetry once; repeated thresholds are blocked per billing
+                  cycle.
+                </p>
+              </div>
+              <button
+                disabled={loading}
+                onClick={() => void load(userId)}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm disabled:opacity-50"
+              >
+                <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />{" "}
+                {loading ? "Loading…" : "Refresh evidence"}
+              </button>
+            </div>
+            <label className="block text-sm font-medium">
+              Device
+              <select
+                value={deviceId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  const next = selected.devices.find((item) => item.id === id);
+                  setDeviceId(id);
+                  setConfirmation("");
+                  if (next)
+                    setForm({
+                      device_name: next.device_name,
+                      simulated_watts: String(next.simulation?.simulated_watts ?? 500),
+                      simulated_voltage_v: String(next.simulation?.simulated_voltage_v ?? 230),
+                      limit_php: String(next.user_approved_limit_php ?? 100),
+                      approval_required: next.require_approval_on_expiry === true,
+                    });
+                }}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-white"
+              >
+                <option value="">Choose a device…</option>
+                {selected.devices.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.device_name} · {item.simulation ? "Demo" : "Physical"} ·{" "}
+                    {peso(item.usage?.variable_spend_php)} / {peso(item.user_approved_limit_php)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {device && (
+              <div className="mt-4 rounded-lg border border-white/10 bg-black/15 p-4">
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <Info label="Device" value={device.device_name} />
+                  <Info
+                    label="Current usage"
+                    value={`${Number(device.usage?.usage_kwh ?? 0).toFixed(4)} kWh`}
+                  />
+                  <Info label="Current spend" value={peso(device.usage?.variable_spend_php)} />
+                  <Info
+                    label="State"
+                    value={`${device.relay_state ? "Relay on" : "Relay off"} · ${device.budget_status ?? "ok"}`}
+                  />
+                </div>
+                {physical && (
+                  <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-white/80">
+                    <div className="flex gap-2 font-semibold text-danger">
+                      <AlertTriangle className="h-5 w-5" /> Physical-device safeguards
+                    </div>
+                    <p className="mt-1">
+                      Telemetry, events, and a possible cutoff persist. There is no automatic
+                      rollback.
+                    </p>
+                    <input
+                      value={confirmation}
+                      onChange={(event) => setConfirmation(event.target.value)}
+                      placeholder={`Type “${device.device_name}” to confirm`}
+                      className="mt-3 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+                    />
+                  </div>
+                )}
+                <label className="mt-3 block text-sm">
+                  Audit reason
+                  <input
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+                  />
+                </label>
+                <div className="mt-3 grid gap-3 md:grid-cols-4">
+                  <Field
+                    label="Limit (PHP)"
+                    type="number"
+                    value={form.limit_php}
+                    onChange={(value) => setForm({ ...form, limit_php: value })}
+                  />
+                  {device.simulation && (
+                    <>
+                      <Field
+                        label="Demo watts"
+                        type="number"
+                        value={form.simulated_watts}
+                        onChange={(value) => setForm({ ...form, simulated_watts: value })}
+                      />
+                      <Field
+                        label="Demo voltage"
+                        type="number"
+                        value={form.simulated_voltage_v}
+                        onChange={(value) => setForm({ ...form, simulated_voltage_v: value })}
+                      />
+                    </>
+                  )}
+                  <label className="flex items-end gap-2 pb-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={form.approval_required}
+                      onChange={(event) =>
+                        setForm({ ...form, approval_required: event.target.checked })
+                      }
+                    />{" "}
+                    Approval at 100%
+                  </label>
+                </div>
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    submit({
+                      action: "configure_device",
+                      limit_php: form.limit_php,
+                      approval_required: form.approval_required,
+                      ...(device.simulation
+                        ? {
+                            simulated_watts: form.simulated_watts,
+                            simulated_voltage_v: form.simulated_voltage_v,
+                          }
+                        : {}),
+                    })
+                  }
+                  className="mt-3 rounded-lg border border-white/10 px-3 py-2 text-sm"
+                >
+                  Save configuration
+                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <RunButton
+                    disabled={busy}
+                    label="Test 50%"
+                    onClick={() => submit({ action: "run", target: 50 })}
+                  />
+                  <RunButton
+                    disabled={busy}
+                    label="Test 80% push"
+                    onClick={() => submit({ action: "run", target: 80 })}
+                  />
+                  <RunButton
+                    disabled={busy}
+                    label={`Test 100% ${device.require_approval_on_expiry ? "approval" : "cutoff"}`}
+                    onClick={() => submit({ action: "run", target: 100 })}
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={customSpend}
+                      onChange={(event) => setCustomSpend(event.target.value)}
+                      placeholder="Target PHP"
+                      className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm"
+                    />
+                    <RunButton
+                      disabled={busy || !customSpend}
+                      label="Target spend"
+                      onClick={() =>
+                        submit({ action: "run", target: "custom", target_spend_php: customSpend })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={customUsage}
+                      onChange={(event) => setCustomUsage(event.target.value)}
+                      placeholder="Target kWh"
+                      className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm"
+                    />
+                    <RunButton
+                      disabled={busy || !customUsage}
+                      label="Target usage"
+                      onClick={() =>
+                        submit({ action: "run", target: "custom", target_usage_kwh: customUsage })
+                      }
+                    />
+                  </div>
+                  {device.budget_status === "auto_cutoff" && (
+                    <button
+                      disabled={busy}
+                      onClick={() => submit({ action: "restore_power" })}
+                      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint"
+                    >
+                      <Power className="h-4 w-4" /> Manual restore
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+          <Timeline events={selected.events} deliveries={selected.deliveries} />
+        </>
+      )}
+      {message && (
+        <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-white/85">
+          {message}
+        </div>
+      )}
+    </div>
+  );
 }
-function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (value: string) => void; type?: string }) { return <label className="text-sm text-white/70">{label}<input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white" /></label>; }
-function Info({ label, value }: { label: string; value: string }) { return <div><p className="text-xs uppercase tracking-wider text-white/40">{label}</p><p className="mt-1 text-sm text-white/85">{value}</p></div>; }
-function RunButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) { return <button disabled={disabled} onClick={onClick} className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint disabled:opacity-50"><Send className="h-4 w-4" />{label}</button>; }
-function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: Delivery[] }) { return <section className="rounded-xl border border-white/10 bg-surface p-5"><div className="mb-4 flex items-center gap-2"><TestTube2 className="h-5 w-5 text-mint" /><h2 className="font-semibold">Result timeline</h2></div><div className="grid gap-5 lg:grid-cols-2"><div><h3 className="mb-2 text-sm font-medium text-white/65">Budget events</h3>{events.length ? <div className="space-y-2">{events.map((event) => <div key={event.id} className="rounded-lg border border-white/10 p-3 text-sm"><div className="flex justify-between"><span className="font-semibold">{event.threshold_percent ?? 100}% · {event.event_type.replace("_", " ")}</span><span className="text-white/45">{new Date(event.created_at).toLocaleTimeString()}</span></div><p className="mt-1 text-white/60">{event.message}</p></div>)}</div> : <Empty text="No current-cycle budget events yet." />}</div><div><h3 className="mb-2 text-sm font-medium text-white/65">Notification deliveries</h3>{deliveries.length ? <div className="space-y-2">{deliveries.map((delivery) => <div key={delivery.id} className="rounded-lg border border-white/10 p-3 text-sm"><div className="flex items-center justify-between"><span className="inline-flex items-center gap-2 font-semibold">{delivery.channel === "push" ? <Smartphone className="h-4 w-4" /> : <Mail className="h-4 w-4" />}{delivery.channel}</span><span className={delivery.status === "sent" ? "text-mint" : delivery.status === "failed" ? "text-danger" : "text-naku"}>{delivery.status}</span></div>{delivery.error_message && <p className="mt-1 text-xs text-danger">{delivery.error_message}</p>}{delivery.error_code && <p className="mt-1 text-[11px] uppercase tracking-wide text-white/40">{delivery.error_code}</p>}</div>)}</div> : <Empty text="No delivery records yet. 50% intentionally stays in-app only." />}</div></div></section>; }
-function Empty({ text }: { text: string }) { return <div className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-white/45"><CheckCircle2 className="mb-2 h-4 w-4" />{text}</div>; }
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <label className="text-sm text-white/70">
+      {label}
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+      />
+    </label>
+  );
+}
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wider text-white/40">{label}</p>
+      <p className="mt-1 text-sm text-white/85">{value}</p>
+    </div>
+  );
+}
+function RunButton({
+  label,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint disabled:opacity-50"
+    >
+      <Send className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: Delivery[] }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-surface p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <TestTube2 className="h-5 w-5 text-mint" />
+        <h2 className="font-semibold">Result timeline</h2>
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-white/65">Budget events</h3>
+          {events.length ? (
+            <div className="space-y-2">
+              {events.map((event) => (
+                <div key={event.id} className="rounded-lg border border-white/10 p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">
+                      {event.threshold_percent ?? 100}% · {event.event_type.replace("_", " ")}
+                    </span>
+                    <span className="text-white/45">
+                      {new Date(event.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-white/60">{event.message}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty text="No current-cycle budget events yet." />
+          )}
+        </div>
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-white/65">Notification deliveries</h3>
+          {deliveries.length ? (
+            <div className="space-y-2">
+              {deliveries.map((delivery) => (
+                <div key={delivery.id} className="rounded-lg border border-white/10 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-2 font-semibold">
+                      {delivery.channel === "push" ? (
+                        <Smartphone className="h-4 w-4" />
+                      ) : (
+                        <Mail className="h-4 w-4" />
+                      )}
+                      {delivery.channel}
+                    </span>
+                    <span
+                      className={
+                        delivery.status === "sent"
+                          ? "text-mint"
+                          : delivery.status === "failed"
+                            ? "text-danger"
+                            : "text-naku"
+                      }
+                    >
+                      {delivery.status}
+                    </span>
+                  </div>
+                  {delivery.error_message && (
+                    <p className="mt-1 text-xs text-danger">{delivery.error_message}</p>
+                  )}
+                  {delivery.error_code && (
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-white/40">
+                      {delivery.error_code}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty text="No delivery records yet. 50% intentionally stays in-app only." />
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+function Empty({ text }: { text: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-white/45">
+      <CheckCircle2 className="mb-2 h-4 w-4" />
+      {text}
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import "server-only";
 
 import OpenAI from "openai";
+import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
 import {
@@ -337,7 +338,7 @@ export async function generateCustomerAssistantReply(
   };
   try {
     const completion = await new OpenAI({ apiKey: process.env.OPENAI_API_KEY }).chat.completions.create({
-      model: "gpt-4o-mini",
+      model: OPENAI_CHAT_MODEL,
       temperature: 0.2,
       max_tokens: 500,
       response_format: { type: "json_object" },

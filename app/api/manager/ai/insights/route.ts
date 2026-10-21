@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { formatPeso } from "@/lib/format";
 import OpenAI from "openai";
+import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import {
   getManagerFleetSnapshot,
   getManagerSession,
@@ -22,13 +24,6 @@ type ManagerInsightCard = {
   message: string;
   severity: "info" | "success" | "warning" | "danger";
 };
-
-function formatPeso(value: number): string {
-  return `₱${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 function getRiskRooms(devices: ManagerDevice[]): ManagerDevice[] {
   return devices
@@ -222,7 +217,7 @@ export async function GET() {
 
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: OPENAI_CHAT_MODEL,
       response_format: { type: "json_object" },
       temperature: 0.2,
       max_tokens: 700,

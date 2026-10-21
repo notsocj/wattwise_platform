@@ -51,3 +51,7 @@ next-env.d.ts
 # survey video audio masters (large binaries kept local)
 /wattwise-survey-video/public/**/*.wav
 /wattwise-survey-video/public/**/*.mp3
+
+# OpenNext / Wrangler build output
+/.open-next/
+/.wrangler/

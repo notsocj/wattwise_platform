@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import {
   classifyProfileTelemetry,
   toFiniteTelemetryNumber,
@@ -263,7 +264,7 @@ export async function POST(
   try {
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: OPENAI_CHAT_MODEL,
       temperature: 0.2,
       max_tokens: 300,
       response_format: { type: "json_object" },

@@ -5,6 +5,7 @@ import {
   Wallet,
   Power,
 } from "lucide-react";
+import { hasMissingRelayStateColumnError, isFreshReading } from "@/lib/device-telemetry";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
@@ -83,20 +84,6 @@ type DeviceViewModel = {
   fixedFeeSharePhp: number;
 };
 
-const ACTIVE_READING_WINDOW_MS = 20 * 1000; // 4 missed 5-second hardware cycles before offline
-
-function hasMissingRelayStateColumnError(error: {
-  code?: string;
-  message?: string;
-} | null): boolean {
-  if (!error) {
-    return false;
-  }
-
-  const message = error.message?.toLowerCase() ?? "";
-  return error.code === "42703" || message.includes("relay_state");
-}
-
 async function fetchOwnedDeviceById(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
@@ -155,20 +142,6 @@ function toFiniteNumber(value: number | string | null): number | null {
 
   const numericValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : null;
-}
-
-function isFreshReading(recordedAt: string | null): boolean {
-  if (!recordedAt) {
-    return false;
-  }
-
-  const timestamp = new Date(recordedAt).getTime();
-
-  if (Number.isNaN(timestamp)) {
-    return false;
-  }
-
-  return Date.now() - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
 // --- Circular gauge component ---

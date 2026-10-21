@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPeso } from "@/lib/format";
 import {
   AlertTriangle,
   Bot,
@@ -14,13 +15,6 @@ import { getBudgetToneClasses } from "@/lib/budget-policy";
 type ManagerFleetDashboardProps = {
   snapshot: ManagerFleetSnapshot;
 };
-
-function formatPeso(value: number): string {
-  return `₱${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 function statusLabel(status: string | null): string {
   if (status === "auto_cutoff") {

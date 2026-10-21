@@ -28,3 +28,13 @@ export function formatReadingAge(recordedAt: string | null | undefined, now: num
   if (hours < 48) return `${hours}h ago`;
   return `${Math.round(hours / 24)}d ago`;
 }
+
+/** True when a query failed because the legacy schema lacks devices.relay_state. */
+export function hasMissingRelayStateColumnError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message?.toLowerCase() ?? "";
+  return error.code === "42703" || message.includes("relay_state");
+}

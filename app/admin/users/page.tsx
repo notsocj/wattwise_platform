@@ -1,4 +1,25 @@
-import { Users } from 'lucide-react';
-import { createAdminClient } from '@/lib/supabase/admin';
-import AdminUsersTable from '@/components/admin/AdminUsersTable';
-export default async function AdminUsersPage() { const { data } = await createAdminClient().from('profiles').select('id,email,full_name,role,manager_id,disabled_at,must_update_password,created_at').order('created_at', { ascending: false }).limit(100); const users = data ?? []; const managers = users.filter((u) => u.role === 'manager' || u.role === 'super_admin'); return <div><div className="mb-6 flex items-center gap-3"><Users className="h-6 w-6 text-mint"/><h1 className="text-2xl font-bold">Users</h1></div><p className="mb-6 text-white/50">Configure roles, manager relationships, password requirements, and account access. Every change is audited.</p><AdminUsersTable users={users} managers={managers} /></div>; }
+import { Users } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import AdminUsersTable from "@/components/admin/AdminUsersTable";
+export default async function AdminUsersPage() {
+  const { data } = await createAdminClient()
+    .from("profiles")
+    .select("id,email,full_name,role,manager_id,disabled_at,must_update_password,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const users = data ?? [];
+  const managers = users.filter((u) => u.role === "manager" || u.role === "super_admin");
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <Users className="h-6 w-6 text-mint" />
+        <h1 className="text-2xl font-bold">Users</h1>
+      </div>
+      <p className="mb-6 text-white/50">
+        Configure roles, manager relationships, password requirements, and account access. Every
+        change is audited.
+      </p>
+      <AdminUsersTable users={users} managers={managers} />
+    </div>
+  );
+}
