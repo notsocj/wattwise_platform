@@ -7,7 +7,6 @@ import {
 import BottomNav from "@/components/ui/BottomNav";
 import PageHeader from "@/components/ui/PageHeader";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
-import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
 import TenantDashboardNotice from "@/components/dashboard/TenantDashboardNotice";
 import BudgetAlertCard from "@/components/insights/BudgetAlertCard";
@@ -135,12 +134,6 @@ export default async function DashboardPage() {
   }
 
   const deviceIds = devicesRows.map((device) => device.id);
-  const realtimeDeviceKeys = Array.from(
-    new Set(
-      devicesRows.flatMap((device) => [device.id, device.mac_address]).filter(Boolean)
-    )
-  );
-
   const now = new Date();
   let billingCycleStartDay = profileData?.billing_cycle_start_day ?? 1;
   if (isTenant) {
@@ -345,7 +338,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-canvas text-white pb-24">
-      <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
 
       {/* ===== Header ===== */}
       <PageHeader title={<>Watt<span className="text-mint">Wise</span></>} />

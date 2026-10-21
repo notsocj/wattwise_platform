@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { HelpCircle, Power, Refrigerator, Tv, Wind } from "lucide-react";
 import { isFreshReading } from "@/lib/device-telemetry";
@@ -82,6 +83,7 @@ export default function DashboardLiveTelemetry({
   canManageDevices = true,
   children,
 }: DashboardLiveTelemetryProps) {
+  const router = useRouter();
   const [devices, setDevices] = useState(initialDevices);
 
   useEffect(() => {
@@ -150,6 +152,46 @@ export default function DashboardLiveTelemetry({
         .subscribe()
     );
 
+    // Relay and budget changes (budget cutoff, toggles from another screen)
+    // arrive as devices UPDATEs. Triggers also touch devices on every reading
+    // (last_seen_at, budget_status = 'ok'), so act only when relay_state or
+    // budget_status actually changed; then apply it and refresh once.
+    const deviceIds = initialDevices.map((device) => device.id);
+    const knownState = new Map(
+      initialDevices.map((device) => [device.id, `${device.relayState}|${device.budgetStatus ?? ""}`])
+    );
+    const devicesChannel = supabase
+      .channel(`dashboard-devices-${sanitizeChannelKey(deviceIds.join("-"))}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "devices",
+          filter: `id=in.(${deviceIds.join(",")})`,
+        },
+        (payload) => {
+          const row = payload.new as { id?: string; relay_state?: boolean | null; budget_status?: string | null };
+          if (!row.id) return;
+          const nextState = `${row.relay_state !== false}|${row.budget_status ?? ""}`;
+          if (knownState.get(row.id) === nextState) return;
+          knownState.set(row.id, nextState);
+          setDevices((currentDevices) =>
+            currentDevices.map((device) =>
+              device.id === row.id
+                ? {
+                    ...device,
+                    relayState: row.relay_state !== false,
+                    budgetStatus: row.budget_status ?? device.budgetStatus,
+                  }
+                : device
+            )
+          );
+          router.refresh();
+        }
+      )
+      .subscribe();
+
     const freshnessTimer = setInterval(() => {
       setDevices((currentDevices) =>
         currentDevices.map((device) =>
@@ -162,11 +204,12 @@ export default function DashboardLiveTelemetry({
 
     return () => {
       clearInterval(freshnessTimer);
+      void supabase.removeChannel(devicesChannel);
       for (const channel of channels) {
         void supabase.removeChannel(channel);
       }
     };
-  }, [initialDevices]);
+  }, [initialDevices, router]);
 
   const totalWatts = devices.reduce((sum, device) => sum + device.watts, 0);
   const onlineDeviceCount = devices.filter((device) => device.isOnline).length;

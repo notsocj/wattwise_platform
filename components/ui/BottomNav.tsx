@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { FileText, Home, LineChart, Settings } from "lucide-react";
 import CustomerAssistantFab from "@/components/customer-assistant/CustomerAssistantFab";
 
@@ -15,17 +14,6 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    const warmRoutes = () => {
-      for (const tab of tabs) {
-        if (tab.href !== pathname) router.prefetch(tab.href);
-      }
-    };
-    const timer = window.setTimeout(warmRoutes, 250);
-    return () => window.clearTimeout(timer);
-  }, [pathname, router]);
 
   return (
     <>
@@ -41,7 +29,6 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              prefetch
               aria-current={isActive ? "page" : undefined}
               className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 transition-colors ${
                 isActive ? "text-mint" : "text-white/50 hover:text-white/60"

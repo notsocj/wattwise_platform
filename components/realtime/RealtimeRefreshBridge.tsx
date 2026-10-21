@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,19 +24,14 @@ export default function RealtimeRefreshBridge({
 }: RealtimeRefreshBridgeProps) {
   const router = useRouter();
 
-  const normalizedKeys = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          deviceKeys
-            .map((key) => key.trim())
-            .filter((key) => key.length > 0)
-        )
-      ),
-    [deviceKeys]
-  );
+  // A string key keeps the subscription stable across router.refresh(), which
+  // hands this component a new array every time.
+  const keySignature = Array.from(
+    new Set(deviceKeys.map((key) => key.trim()).filter((key) => key.length > 0))
+  ).join("|");
 
   useEffect(() => {
+    const normalizedKeys = keySignature ? keySignature.split("|") : [];
     if (normalizedKeys.length === 0) {
       return;
     }
@@ -46,9 +41,16 @@ export default function RealtimeRefreshBridge({
     let intervalId: ReturnType<typeof setInterval> | null = null;
     let disposed = false;
     let lastRefreshAt = 0;
+    let missedWhileHidden = false;
 
     const scheduleRefresh = () => {
       if (disposed) {
+        return;
+      }
+
+      // Hidden tabs skip refreshes and catch up once when shown again.
+      if (document.visibilityState === "hidden") {
+        missedWhileHidden = true;
         return;
       }
 
@@ -101,8 +103,17 @@ export default function RealtimeRefreshBridge({
       intervalId = setInterval(scheduleRefresh, pollMs);
     }
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && missedWhileHidden) {
+        missedWhileHidden = false;
+        scheduleRefresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     return () => {
       disposed = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
 
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
@@ -116,7 +127,7 @@ export default function RealtimeRefreshBridge({
         void supabase.removeChannel(channel);
       }
     };
-  }, [normalizedKeys, pollMs, router, throttleMs]);
+  }, [keySignature, pollMs, router, throttleMs]);
 
   return null;
 }
