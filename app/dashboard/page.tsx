@@ -3,17 +3,18 @@ import {
   TrendingUp,
   Minus,
   Wallet,
-  PlugZap,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import PageHeader from "@/components/ui/PageHeader";
 import HomeBudgetEditor from "@/components/ui/HomeBudgetEditor";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import DashboardLiveTelemetry from "@/components/dashboard/DashboardLiveTelemetry";
+import TenantDashboardNotice from "@/components/dashboard/TenantDashboardNotice";
 import BudgetAlertCard from "@/components/insights/BudgetAlertCard";
 import WeekSummaryWidget from "@/components/calendar/WeekSummaryWidget";
 import { redirect } from "next/navigation";
-import { hasMissingRelayStateColumnError, isFreshReading } from "@/lib/device-telemetry";
+import { isFreshReading } from "@/lib/device-telemetry";
+import { fetchDashboardDevices } from "@/lib/dashboard-data";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendFromDayRows,
@@ -35,19 +36,6 @@ import { isTenantRole } from "@/lib/roles";
 import MeralcoBreakdownCard from "@/components/billing/MeralcoBreakdownCard";
 import BudgetWarningFeed from "@/components/insights/BudgetWarningFeed";
 import { getBudgetToneClasses } from "@/lib/budget-policy";
-
-type DeviceRow = {
-  id: string;
-  device_name: string;
-  mac_address: string;
-  is_online: boolean | null;
-  appliance_type: string | null;
-  relay_state: boolean | null;
-  budget_status: string | null;
-  owner_id: string | null;
-  tenant_id: string | null;
-  user_approved_limit_php: number | string | null;
-};
 
 type LatestReadingRow = {
   device_id: string;
@@ -86,42 +74,6 @@ type DashboardDevice = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-async function fetchDashboardDevices(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-): Promise<DeviceRow[]> {
-  const accessFilter = `owner_id.eq.${userId},user_id.eq.${userId},tenant_id.eq.${userId}`;
-  const withRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type, relay_state, budget_status, owner_id, tenant_id, user_approved_limit_php")
-    .or(accessFilter)
-    .order("created_at", { ascending: true });
-
-  if (!withRelayState.error) {
-    return (withRelayState.data ?? []) as DeviceRow[];
-  }
-
-  if (!hasMissingRelayStateColumnError(withRelayState.error)) {
-    return [];
-  }
-
-  const withoutRelayState = await supabase
-    .from("devices")
-    .select("id, device_name, mac_address, is_online, appliance_type, owner_id, tenant_id, user_approved_limit_php")
-    .or(accessFilter)
-    .order("created_at", { ascending: true });
-
-  if (withoutRelayState.error) {
-    return [];
-  }
-
-  return (withoutRelayState.data ?? []).map((device) => ({
-    ...device,
-    relay_state: true,
-    budget_status: "ok",
-  })) as DeviceRow[];
-}
-
 function toNumber(value: number | string | null): number {
   if (value === null) {
     return 0;
@@ -129,34 +81,6 @@ function toNumber(value: number | string | null): number {
 
   const numericValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
-}
-
-function TenantDashboardNotice({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="min-h-screen bg-canvas pb-24 text-white">
-      <PageHeader title={<>Watt<span className="text-mint">Wise</span></>} />
-
-      <main className="flex min-h-screen items-center px-5 pt-[84px]">
-        <section className="w-full rounded-xl border border-white/[0.06] bg-surface p-6 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/10">
-            <PlugZap className="h-7 w-7 text-mint" />
-          </div>
-          <h2 className="mt-5 text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="mt-3 text-sm leading-relaxed text-white/55">
-            {description}
-          </p>
-        </section>
-      </main>
-
-      <BottomNav />
-    </div>
-  );
 }
 
 export default async function DashboardPage() {
