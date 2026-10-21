@@ -98,7 +98,8 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Smart Control user routes also exist for `/analytics` and `/settings`.
 - Shared Supabase helpers live under `lib/supabase/`.
 - Shared helpers: telemetry freshness (`ACTIVE_READING_WINDOW_MS`, `isFreshReading`) in `lib/device-telemetry.ts`, peso formatting in `lib/format.ts`, the OpenAI chat model in `lib/openai.ts`, and PostgREST search sanitizing in `lib/postgrest.ts`. Reuse them instead of redefining per file.
-- Reports are served from `/reports` and `/api/reports`; keep period windows bounded and preserve CSV/print parity.
+- Reports are built once in `lib/reports.ts` (`buildEnergyReport`) from the per-day usage RPC, `get_average_watts_by_device`, and day-by-day Meralco pricing; `/reports` renders it on the server and `/api/reports` serves the same rows as JSON, CSV, or PDF. Keep period windows bounded and never read raw `energy_logs` rows for totals.
+- Meralco rates are read through `lib/meralco-rates-server.ts` (cached across requests); the signed-in user comes from `getSessionUser()` in `lib/auth-context.ts`, which reads identity the middleware forwards. Do not call `supabase.auth.getUser()` in pages or route handlers.
 - Route-level loading UIs are part of the app structure; preserve them when adding slow server-rendered pages.
 - Service worker/PWA work is planned but not fully implemented. Be careful not to document it as complete unless the code actually exists.
 

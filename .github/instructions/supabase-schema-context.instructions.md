@@ -393,7 +393,7 @@ Important behavior:
 
 ### `get_latest_device_readings(p_user_id uuid)`
 
-Returns the latest telemetry row for each owned device.
+Returns the latest telemetry row for each owned device. Since migration `034` each device does two index probes (UUID and legacy MAC) on `idx_energy_logs_device_time` instead of sorting its whole history, so cost no longer grows with stored readings.
 
 Returned columns:
 
@@ -408,6 +408,10 @@ Use cases:
 
 - dashboard live cards
 - device-detail live metrology
+
+### `get_average_watts_by_device(p_user_id, p_start, p_end)`
+
+Added in migration `034` for reports. Returns `device_id` (devices.id as text), `average_watts` (mean of reported `average_watts`, nulls as 0), and `readings` for each accessible device with telemetry in the window. Security invoker, so `energy_logs` RLS applies. Use it instead of downloading raw rows to average in the app.
 
 ### `get_usage_kwh_by_device(p_user_id, p_start, p_end)`
 

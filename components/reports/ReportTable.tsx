@@ -1,57 +1,26 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import type { EnergyReportRow } from "@/lib/reports";
 
-type ReportRow = {
-  device_name: string;
-  appliance_type: string;
-  measured_kwh: number;
-  estimated_kwh: number | null;
-  difference_kwh: number | null;
-  difference_percent: number | null;
-  average_watts: number;
-  variable_cost_php: number;
-  budget_percent: number | null;
+type ReportTableProps = {
+  period: string;
+  /** null while the report is loading (used as the Suspense fallback). */
+  rows: Pick<
+    EnergyReportRow,
+    | "device_name"
+    | "appliance_type"
+    | "measured_kwh"
+    | "estimated_kwh"
+    | "difference_kwh"
+    | "difference_percent"
+    | "average_watts"
+    | "variable_cost_php"
+    | "budget_percent"
+  >[] | null;
+  error?: string | null;
 };
 
-export default function ReportTable({ period }: { period: string }) {
-  const [rows, setRows] = useState<ReportRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loadedPeriod, setLoadedPeriod] = useState<string | null>(null);
-  const [requestedPeriod, setRequestedPeriod] = useState(period);
-
-  // Reset when the period changes so stale rows or errors never show.
-  if (period !== requestedPeriod) {
-    setRequestedPeriod(period);
-    setRows([]);
-    setError(null);
-    setLoadedPeriod(null);
-  }
-  const isLoading = loadedPeriod !== period && !error;
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/reports?period=${period}`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Report data could not be loaded.");
-        return response.json() as Promise<{ rows: ReportRow[] }>;
-      })
-      .then((payload) => {
-        if (!cancelled) {
-          setRows(payload.rows ?? []);
-          setLoadedPeriod(period);
-        }
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled)
-          setError(reason instanceof Error ? reason.message : "Report data could not be loaded.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [period]);
-
+// Rendered on the server with the report already built (see app/reports/page.tsx).
+export default function ReportTable({ period, rows, error = null }: ReportTableProps) {
   return (
     <section className="overflow-x-auto rounded-xl border border-white/[0.08] bg-surface p-5 print:border-black/10 print:bg-white">
       <h2 className="mb-4 text-sm font-bold uppercase tracking-widest">
@@ -59,7 +28,7 @@ export default function ReportTable({ period }: { period: string }) {
       </h2>
       {error ? (
         <p role="alert" className="text-sm text-danger">{error}</p>
-      ) : isLoading ? (
+      ) : rows === null ? (
         <LoadingIndicator label="Loading report" />
       ) : rows.length === 0 ? (
         <p className="text-sm text-white/50 print:text-black/60">
