@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { formatReadingAge, isFreshReading } from "@/lib/device-telemetry";
 type Device = {
   id: string;
   device_name: string;
@@ -8,7 +9,7 @@ type Device = {
   user_id: string | null;
   owner_id?: string | null;
   tenant_id: string | null;
-  is_online: boolean;
+  last_seen_at: string | null;
   relay_state: boolean;
   budget_status: string | null;
   user_approved_limit_php: number | null;
@@ -100,7 +101,18 @@ export default function AdminDevicesTable({
                 <td className="p-4">
                   {person(d.tenant_id)?.full_name || person(d.tenant_id)?.email || "—"}
                 </td>
-                <td className="p-4">{d.is_online ? "Online" : "Offline"}</td>
+                <td className="p-4">
+                  {isFreshReading(d.last_seen_at) ? (
+                    "Online"
+                  ) : (
+                    <span title={d.last_seen_at ?? undefined}>
+                      Offline
+                      <span className="block text-xs text-white/50">
+                        {d.last_seen_at ? `last seen ${formatReadingAge(d.last_seen_at)}` : "never seen"}
+                      </span>
+                    </span>
+                  )}
+                </td>
                 <td className="p-4">{d.relay_state ? "ON" : "OFF"}</td>
                 <td className="p-4">{d.budget_status || "ok"}</td>
                 <td className="p-4">

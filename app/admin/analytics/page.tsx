@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isFreshReading } from "@/lib/device-telemetry";
 
 // Billing cycles start on any day of the month, so every device's current
 // cycle started within the last 31 days.
@@ -21,7 +22,7 @@ export default async function AdminAnalyticsPage() {
       .select("device_id,month_start,usage_kwh")
       .gte("month_start", lookbackStart)
       .order("month_start", { ascending: false }),
-    admin.from("devices").select("appliance_type,is_online"),
+    admin.from("devices").select("appliance_type,last_seen_at"),
   ]);
 
   const currentCycleKwh = new Map<string, number>();
@@ -31,7 +32,7 @@ export default async function AdminAnalyticsPage() {
     }
   }
   const kwh = [...currentCycleKwh.values()].reduce((sum, value) => sum + value, 0);
-  const activeDevices = (devices ?? []).filter((device) => device.is_online).length;
+  const activeDevices = (devices ?? []).filter((device) => isFreshReading(device.last_seen_at)).length;
   const applianceTypes = new Set(
     (devices ?? []).map((device) => device.appliance_type).filter(Boolean)
   ).size;

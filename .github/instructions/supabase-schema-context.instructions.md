@@ -446,6 +446,10 @@ Use cases:
 
 - Home dashboard hourly chart
 
+### `update_device_last_seen()`
+
+AFTER INSERT trigger on `energy_logs` (`energy_logs_update_device_last_seen`, captured in migration `035`). Sets `devices.last_seen_at = now()` and `is_online = true` for the device whose UUID or MAC the row names, when the device is paired (`user_id IS NOT NULL`). SECURITY DEFINER since migration `036`, because hardware inserts as `anon`, which has no UPDATE policy on `devices`; before that it silently updated nothing for real hardware. Nothing resets `is_online`, so treat a device as online when `last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (`lib/device-telemetry.ts`), not from `is_online`.
+
 ### `handle_energy_log_smart_budget()`
 
 Trigger function executed `AFTER INSERT` on `energy_logs`.

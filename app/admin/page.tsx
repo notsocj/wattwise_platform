@@ -1,12 +1,14 @@
 import { Shield } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getFreshReadingCutoffIso } from '@/lib/device-telemetry';
 
 export default async function AdminPage() {
   const admin = createAdminClient();
   const [users, devices, online, disabled, warnings, cutoffs] = await Promise.all([
     admin.from('profiles').select('*', { count: 'exact', head: true }),
     admin.from('devices').select('*', { count: 'exact', head: true }),
-    admin.from('devices').select('*', { count: 'exact', head: true }).eq('is_online', true),
+    // devices.is_online is never reset, so "online" means reported within the live window.
+    admin.from('devices').select('*', { count: 'exact', head: true }).gte('last_seen_at', getFreshReadingCutoffIso()),
     admin.from('profiles').select('*', { count: 'exact', head: true }).not('disabled_at', 'is', null),
     admin.from('device_budget_events').select('*', { count: 'exact', head: true }).in('event_type', ['budget_warning','approval_required']),
     admin.from('device_budget_events').select('*', { count: 'exact', head: true }).eq('event_type', 'auto_cutoff'),

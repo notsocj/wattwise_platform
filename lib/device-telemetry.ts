@@ -10,6 +10,11 @@ export function isFreshReading(recordedAt: string | null | undefined, now: numbe
   return !Number.isNaN(timestamp) && now - timestamp <= ACTIVE_READING_WINDOW_MS;
 }
 
+/** ISO timestamp before which a reading (or devices.last_seen_at) counts as stale. */
+export function getFreshReadingCutoffIso(now: number = Date.now()): string {
+  return new Date(now - ACTIVE_READING_WINDOW_MS).toISOString();
+}
+
 export function formatReadingAge(recordedAt: string | null | undefined, now: number = Date.now()): string | null {
   if (!recordedAt) {
     return null;
