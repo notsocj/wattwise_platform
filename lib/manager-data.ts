@@ -14,6 +14,7 @@ export type ManagerProfile = {
   email: string | null;
   full_name: string | null;
   billing_cycle_start_day: number | null;
+  meralco_monthly_kwh: number | string | null;
 };
 
 export type ManagerTenant = {
@@ -129,7 +130,7 @@ export const getManagerSession = cache(async (): Promise<{
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, email, full_name, billing_cycle_start_day")
+    .select("role, email, full_name, billing_cycle_start_day, meralco_monthly_kwh")
     .eq("id", user.id)
     .maybeSingle<ManagerProfile>();
 

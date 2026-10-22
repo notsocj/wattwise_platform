@@ -28,13 +28,36 @@ export type MeralcoRateComponents = {
   vatGeneration: number | null;
   vatTransmission: number | null;
   vatAncillary: number | null;
+  // Residential distribution rates for higher monthly consumption. Meralco
+  // charges ONE tier rate on all of a home's kWh, picked by the home's total
+  // monthly consumption. null (older rows) falls back to `distribution`.
+  distribution201To300: number | null;
+  distribution301To400: number | null;
+  distributionOver400: number | null;
+  // Energy tax (BP 36) averaged over all kWh for the household's monthly
+  // consumption; set by applyHouseholdTier, 0 otherwise. Not subject to VAT.
+  energyTax: number;
+  // The monthly household kWh the tier and energy tax were chosen from.
+  household: HouseholdUsage | null;
+};
+
+export type HouseholdUsage = {
+  monthlyKwh: number;
+  /** "bill": the homeowner's Meralco bill setting; "projected": monitored usage this cycle. */
+  source: "bill" | "projected";
 };
 
 export type MeralcoVatClass = "generation" | "transmission" | "ancillary" | "other" | "none";
 
 export type MeralcoComponentKey = Exclude<
   keyof MeralcoRateComponents,
-  "vatGeneration" | "vatTransmission" | "vatAncillary"
+  | "vatGeneration"
+  | "vatTransmission"
+  | "vatAncillary"
+  | "distribution201To300"
+  | "distribution301To400"
+  | "distributionOver400"
+  | "household"
 >;
 
 /**
@@ -67,7 +90,59 @@ export const MERALCO_COMPONENT_LINES: ReadonlyArray<{
   { key: "rptCharge", label: "Real property tax", vat: "none", adjustment: true },
   { key: "geaAll", label: "GEA-All", vat: "none", adjustment: true },
   { key: "lifelineSubsidy", label: "Lifeline subsidy", vat: "none", adjustment: true },
+  { key: "energyTax", label: "Energy tax", vat: "none", adjustment: true },
 ];
+
+/** Distribution rate Meralco charges on every kWh for this monthly consumption. */
+export function distributionRateForHousehold(
+  rates: MeralcoRateComponents,
+  monthlyKwh: number | null
+): number {
+  if (monthlyKwh === null || monthlyKwh <= 200) return rates.distribution;
+  if (monthlyKwh <= 300) return rates.distribution201To300 ?? rates.distribution;
+  if (monthlyKwh <= 400) return rates.distribution301To400 ?? rates.distribution;
+  return rates.distributionOver400 ?? rates.distribution;
+}
+
+/**
+ * Residential energy tax in pesos for a month (Batas Pambansa Blg. 36): none
+ * on the first 650 kWh, then 0.10 on the next 350, 0.20 on the next 500, and
+ * 0.35 per kWh beyond 1,500.
+ */
+export function monthlyEnergyTaxPhp(monthlyKwh: number): number {
+  const block = (from: number, to: number) => Math.min(Math.max(monthlyKwh - from, 0), to - from);
+  return (
+    0.1 * block(650, 1000) +
+    0.2 * block(1000, 1500) +
+    0.35 * Math.max(monthlyKwh - 1500, 0)
+  );
+}
+
+/**
+ * Prices a rate row for one household: the distribution tier and the energy
+ * tax both depend on the home's total monthly kWh. Mirrors
+ * public.meralco_variable_rate_per_kwh(rate, household_kwh) in SQL.
+ */
+export function applyHouseholdTier(
+  rates: MeralcoRateComponents,
+  household: HouseholdUsage | null
+): MeralcoRateComponents {
+  const monthlyKwh = household && household.monthlyKwh > 0 ? household.monthlyKwh : null;
+  return {
+    ...rates,
+    distribution: distributionRateForHousehold(rates, monthlyKwh),
+    energyTax: monthlyKwh ? monthlyEnergyTaxPhp(monthlyKwh) / monthlyKwh : 0,
+    household: monthlyKwh ? household : null,
+  };
+}
+
+/** Human label for the distribution tier a household falls in. */
+export function distributionTierLabel(monthlyKwh: number | null): string {
+  if (monthlyKwh === null || monthlyKwh <= 200) return "up to 200 kWh";
+  if (monthlyKwh <= 300) return "201–300 kWh";
+  if (monthlyKwh <= 400) return "301–400 kWh";
+  return "over 400 kWh";
+}
 
 /** 1 + the VAT rate applied to one component class. */
 export function vatMultiplierFor(

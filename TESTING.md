@@ -64,6 +64,7 @@ Safe load only.
 - [ ] Open a device page. ✅ Gauges and the billing-cycle numbers load in about a second.
 - [ ] Calendar: move to the previous and next month. ✅ Days line up with weekdays, and "today" is correct, including around midnight Manila time.
 - [ ] `/rates` shows the active Meralco breakdown and rate history.
+- [ ] Settings → "Monthly kWh on your Meralco bill": save 350, and the breakdown labels distribution "301–400 kWh tier" with a higher rate; clear it, and the note says the tier is projected from monitored usage. Invalid input (letters, 0) shows an inline error.
 
 ## 7. Reports
 

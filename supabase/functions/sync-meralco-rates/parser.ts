@@ -23,6 +23,11 @@ export type ParsedRates = {
   vat_generation: number | null;
   vat_transmission: number | null;
   vat_ancillary: number | null;
+  // Residential distribution rates for homes above 200 kWh a month (column 4
+  // of the 201-300, 301-400, and over-400 rows). null for other layouts.
+  distribution_201_300: number | null;
+  distribution_301_400: number | null;
+  distribution_over_400: number | null;
 };
 
 function escapeRegExp(value: string): string {
@@ -79,15 +84,18 @@ function findComponentVat(text: string, label: string): number | null {
 }
 
 /**
- * Reads exactly the 101-200 kWh residential row (up to the next row label)
- * when the schedule uses the current column set. Returns null for other
- * layouts so the legacy positional parsing still applies to them.
+ * Reads exactly one residential row (101-200 kWh by default, up to the next
+ * row label) when the schedule uses the current column set. Returns null for
+ * other layouts so the legacy positional parsing still applies to them.
  */
-function parseCurrentScheduleRow(text: string): number[] | null {
+function parseCurrentScheduleRow(text: string, rowLabel = "101 TO 200 KWH"): number[] | null {
   if (!/UC-ME/i.test(text) || !/GEA-All/i.test(text)) return null;
 
   const match = text.match(
-    /101 TO 200 KWH\s+([\s\S]*?)(?=\s+\d+\s+TO\s+\d+\s+KWH|\s+OVER\s+\d+\s+KWH|\s+[A-Za-z]{2,}|$)/i
+    new RegExp(
+      `${escapeRegExp(rowLabel)}\\s+([\\s\\S]*?)(?=\\s+\\d+\\s+TO\\s+\\d+\\s+KWH|\\s+OVER\\s+\\d+\\s+KWH|\\s+[A-Za-z]{2,}|$)`,
+      "i"
+    )
   );
   if (!match) return null;
 
@@ -96,6 +104,10 @@ function parseCurrentScheduleRow(text: string): number[] | null {
     .filter((value): value is number => value !== null);
 
   return values.length === CURRENT_SCHEDULE_COLUMNS.length ? values : null;
+}
+
+function tierDistribution(text: string, rowLabel: string): number | null {
+  return parseCurrentScheduleRow(text, rowLabel)?.[4] ?? null;
 }
 
 function parseResidentialBaseRowValues(text: string): number[] | null {
@@ -301,5 +313,8 @@ export function parseRatesFromText(text: string): ParsedRates {
     vat_generation: currentScheduleRow ? findComponentVat(normalizedText, "Generation") : null,
     vat_transmission: currentScheduleRow ? findComponentVat(normalizedText, "Transmission") : null,
     vat_ancillary: currentScheduleRow ? findComponentVat(normalizedText, "Ancillary Service") : null,
+    distribution_201_300: currentScheduleRow ? tierDistribution(normalizedText, "201 TO 300 KWH") : null,
+    distribution_301_400: currentScheduleRow ? tierDistribution(normalizedText, "301 TO 400 KWH") : null,
+    distribution_over_400: currentScheduleRow ? tierDistribution(normalizedText, "OVER 400 KWH") : null,
   };
 }

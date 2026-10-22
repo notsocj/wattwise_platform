@@ -467,7 +467,7 @@ export default async function DashboardPage() {
           <BudgetWarningFeed />
         </Suspense>
 
-        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
+        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} settingsHref={isTenant ? undefined : "/settings"} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
         </DashboardLiveTelemetry>
 
       </div>

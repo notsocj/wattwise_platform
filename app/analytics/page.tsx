@@ -289,7 +289,7 @@ export default async function AnalyticsPage() {
 
         <AnomalyAlertCard />
 
-        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={cycleUsageKwh} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
+        <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={cycleUsageKwh} settingsHref={isTenant ? undefined : "/settings"} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
 
         <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
           <div className="mb-4 flex items-center justify-between gap-3">

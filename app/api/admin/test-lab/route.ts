@@ -294,7 +294,22 @@ export async function POST(request: NextRequest) {
         { status: 409 },
       );
     }
-    const activeRates = await getActiveMeralcoRates(auth.admin);
+    // Price at the device owner's household tier, exactly as the budget trigger
+    // will (public.household_monthly_kwh_for), not the admin's own household.
+    const ownerId = device.owner_id ?? device.user_id;
+    const { data: ownerHouseholdKwh } = ownerId
+      ? await auth.admin.rpc("household_monthly_kwh_for", {
+          p_owner: ownerId,
+          p_as_of: new Date().toISOString(),
+        })
+      : { data: null };
+    const householdKwh = Number(ownerHouseholdKwh);
+    const activeRates = await getActiveMeralcoRates(auth.admin, {
+      household:
+        Number.isFinite(householdKwh) && householdKwh > 0
+          ? { monthlyKwh: householdKwh, source: "projected" }
+          : null,
+    });
     const customSpend = numberInRange(body.target_spend_php, 0.01, 1_000_000);
     const customUsage = numberInRange(body.target_usage_kwh, 0.0001, 100_000);
     const targetSpend = threshold

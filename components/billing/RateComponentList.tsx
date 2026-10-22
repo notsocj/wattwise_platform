@@ -1,5 +1,7 @@
+import Link from "next/link";
 import {
   MERALCO_COMPONENT_LINES,
+  distributionTierLabel,
   vatMultiplierFor,
   type MeralcoRateComponents,
 } from "@/lib/meralco-bill";
@@ -11,6 +13,8 @@ type RateComponentListProps = {
   /** When set, each line also shows its VAT-inclusive cost for this usage. */
   usageKwh?: number;
   size?: "sm" | "xs";
+  /** Where the viewer can enter their bill kWh; omitted for tenants. */
+  settingsHref?: string;
 };
 
 function formatPercent(value: number): string {
@@ -28,12 +32,14 @@ export default function RateComponentList({
   fixedChargesPhp,
   usageKwh = 0,
   size = "sm",
+  settingsHref,
 }: RateComponentListProps) {
   const lines = MERALCO_COMPONENT_LINES.filter(
     (line) => !line.adjustment || rates[line.key] !== 0
   );
   const textSize = size === "sm" ? "text-sm" : "text-xs";
   const rowPadding = size === "sm" ? "py-2" : "py-1.5";
+  const household = rates.household;
   const vatLines = [
     { label: "Generation", value: rates.vatGeneration ?? vatRate },
     { label: "Transmission", value: rates.vatTransmission ?? vatRate },
@@ -54,6 +60,11 @@ export default function RateComponentList({
             >
               <dt className="min-w-0">
                 {line.label}
+                {line.key === "distribution" ? (
+                  <span className="ml-1.5 text-[11px] text-white/50">
+                    {distributionTierLabel(household?.monthlyKwh ?? null)} tier
+                  </span>
+                ) : null}
                 {line.vat === "none" ? (
                   <span className="ml-1.5 text-[11px] text-white/50">no VAT</span>
                 ) : null}
@@ -73,6 +84,25 @@ export default function RateComponentList({
           );
         })}
       </dl>
+
+      <p className="text-[11px] leading-relaxed text-white/50">
+        {household
+          ? `Meralco picks the distribution rate and energy tax from your whole home's monthly use: ${household.monthlyKwh.toLocaleString("en-PH", { maximumFractionDigits: 0 })} kWh, ${
+              household.source === "bill"
+                ? "from your Meralco bill in Settings."
+                : "projected from your monitored appliances this cycle."
+            }`
+          : "Distribution is shown at the up-to-200 kWh rate. Homes using more pay a higher rate on every kWh."}
+        {settingsHref && household?.source !== "bill" ? (
+          <>
+            {" "}
+            <Link href={settingsHref} className="font-semibold text-mint underline">
+              Add your bill kWh
+            </Link>{" "}
+            for an exact tier.
+          </>
+        ) : null}
+      </p>
 
       <div className="space-y-1.5 border-t border-white/[0.08] pt-3 text-white/60">
         <div className="flex items-baseline justify-between gap-4">

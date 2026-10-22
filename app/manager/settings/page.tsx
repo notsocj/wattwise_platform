@@ -42,6 +42,7 @@ export default async function ManagerSettingsPage() {
 
       <SettingsClient
         billingCycleStartDay={profile.billing_cycle_start_day ?? 1}
+        meralcoMonthlyKwh={profile.meralco_monthly_kwh == null ? null : Number(profile.meralco_monthly_kwh)}
         email={user.email ?? profile.email ?? "Your WattWise account"}
         role="manager"
         devices={snapshot.devices.map((device) => ({

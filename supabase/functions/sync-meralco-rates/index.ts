@@ -32,6 +32,11 @@ type CompleteRates = {
   vat_generation: number | null;
   vat_transmission: number | null;
   vat_ancillary: number | null;
+  // Distribution rates for homes above 200 kWh a month (migration 038); null
+  // falls back to `distribution`.
+  distribution_201_300: number | null;
+  distribution_301_400: number | null;
+  distribution_over_400: number | null;
 };
 
 type SyncRunStatus = "success" | "failed" | "dry_run";
@@ -50,6 +55,9 @@ type ExistingRateRow = {
   fit_all: number;
   metering_charge: number;
   supply_charge: number;
+  distribution_201_300: number | null;
+  distribution_301_400: number | null;
+  distribution_over_400: number | null;
 };
 
 const DEFAULT_RATES_ARCHIVES_URL =
@@ -365,6 +373,15 @@ function validateRanges(rates: CompleteRates): void {
       throw new Error(`Parsed '${key}' value ${value} is outside expected range (0 - 0.3).`);
     }
   }
+  // Higher-usage tiers never cost less than the base distribution rate.
+  for (const key of ["distribution_201_300", "distribution_301_400", "distribution_over_400"] as const) {
+    const value = rates[key];
+    if (value !== null && (value < rates.distribution || value > 10)) {
+      throw new Error(
+        `Parsed '${key}' value ${value} is outside expected range (${rates.distribution} - 10).`
+      );
+    }
+  }
 
   for (const check of checks) {
     const value = rates[check.key];
@@ -641,7 +658,7 @@ Deno.serve(async (req) => {
     const { data: previousRow, error: previousError } = await supabase
       .from("meralco_rates")
       .select(
-        "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge"
+        "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge, distribution_201_300, distribution_301_400, distribution_over_400"
       )
       .order("effective_month", { ascending: false })
       .limit(1)
@@ -690,6 +707,10 @@ Deno.serve(async (req) => {
       vat_generation: parsed.vat_generation,
       vat_transmission: parsed.vat_transmission,
       vat_ancillary: parsed.vat_ancillary,
+      // Tier rates rarely change; keep last month's when this layout has none.
+      distribution_201_300: parsed.distribution_201_300 ?? previousRow?.distribution_201_300 ?? null,
+      distribution_301_400: parsed.distribution_301_400 ?? previousRow?.distribution_301_400 ?? null,
+      distribution_over_400: parsed.distribution_over_400 ?? previousRow?.distribution_over_400 ?? null,
     };
 
     validateRanges(completeRates);
@@ -741,6 +762,9 @@ Deno.serve(async (req) => {
       vat_generation: completeRates.vat_generation,
       vat_transmission: completeRates.vat_transmission,
       vat_ancillary: completeRates.vat_ancillary,
+      distribution_201_300: completeRates.distribution_201_300,
+      distribution_301_400: completeRates.distribution_301_400,
+      distribution_over_400: completeRates.distribution_over_400,
     };
 
     const metadataPayload = {

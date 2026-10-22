@@ -28,7 +28,7 @@ function ratePerKwh(rate: HistoricalMeralcoRateRow): number {
   return computeMeralcoBill(1, rate.rates, rate.vatRate);
 }
 
-function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
+function RateComponents({ rate, settingsHref }: { rate: HistoricalMeralcoRateRow; settingsHref?: string }) {
   const sourceUrl = rate.provenance.sourcePdfUrl ?? rate.provenance.sourceUrl;
 
   return (
@@ -37,6 +37,7 @@ function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
         rates={rate.rates}
         vatRate={rate.vatRate}
         fixedChargesPhp={rate.fixedCharges.meteringCharge + rate.fixedCharges.supplyCharge}
+        settingsHref={settingsHref}
       />
       <div className="rounded-lg bg-white/[0.03] p-3 text-xs leading-relaxed text-white/55">
         <p>
@@ -75,6 +76,8 @@ export default async function RatesPage() {
 
   const history = await getMeralcoRateHistory(supabase);
   const current = history[0];
+  const settingsHref =
+    user.role === "manager" ? "/manager/settings" : user.role === "tenant" ? undefined : "/settings";
 
   return (
     <div className="min-h-screen bg-canvas pb-24 text-white">
@@ -97,7 +100,7 @@ export default async function RatesPage() {
                 </p>
               </div>
             </div>
-            <RateComponents rate={current} />
+            <RateComponents rate={current} settingsHref={settingsHref} />
           </section>
         ) : (
           <section className="rounded-xl border border-naku/30 bg-naku/10 p-5 text-sm text-white/70">

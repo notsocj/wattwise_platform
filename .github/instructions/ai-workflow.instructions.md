@@ -13,7 +13,8 @@ applyTo: "**"
 
 - Generation, Transmission, and Ancillary Service carry their own monthly effective VAT rates (`vat_generation`, `vat_transmission`, `vat_ancillary`; NULL on older rows falls back to `vat_rate`).
 - Distribution, supply, metering, the fixed customer charges, and the AWAT refunds / regulatory reset / lifeline rate / senior citizen adjustments carry the general VAT rate (`vat_rate`, the schedule's "Other Charges").
-- System Loss, Universal Charge (the sum of UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, and UC-SD), FIT-All, GEA-All, RPT, and the lifeline subsidy carry no VAT.
+- System Loss, Universal Charge (the sum of UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, and UC-SD), FIT-All, GEA-All, RPT, the lifeline subsidy, and energy tax carry no VAT.
+- Distribution is one rate on all kWh, picked by the whole home's monthly kWh (up to 200 / 201-300 / 301-400 / over 400). Energy tax applies above 650 kWh a month. `applyHouseholdTier` sets both from the household kWh: the homeowner's bill (`profiles.meralco_monthly_kwh`) or monitored usage projected over the cycle. The server loaders in `lib/meralco-rates-server.ts` apply it for the signed-in user; pass `{ household }` when pricing someone else's home.
 
 ```ts
 // CORRECT
@@ -27,7 +28,7 @@ const cost = computeMeralcoBill(kWh, activeRate.rates, activeRate.vatRate, {
 // const cost = sumOfComponents * kWh * 1.12; // single VAT rate on everything
 ```
 
-The SQL budget trigger uses the same formula through `public.meralco_variable_rate_per_kwh()`; change both together.
+The SQL budget trigger uses the same formula through `public.meralco_variable_rate_per_kwh(rate, household_kwh)` and `household_monthly_kwh_for()`; change both together. Lifeline discounts (100 kWh and below) and the local franchise tax are not modelled.
 
 - In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields with `mapMeralcoRatesRowToComponents` (all components, adjustments, and component VAT columns in `MERALCO_RATE_SELECT`) before calling `computeMeralcoBill`.
 - For automated rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.

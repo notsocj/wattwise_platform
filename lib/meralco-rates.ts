@@ -2,11 +2,14 @@ import { getManilaDayKey } from "@/lib/date-utils";
 import { computeMeralcoBill, type MeralcoRateComponents } from "@/lib/meralco-bill";
 
 export {
+  applyHouseholdTier,
+  distributionTierLabel,
   computeFixedChargesWithVat,
   computeMeralcoBill,
   computeVariableRatePerKwh,
   MERALCO_COMPONENT_LINES,
   vatMultiplierFor,
+  type HouseholdUsage,
   type MeralcoComponentKey,
   type MeralcoRateComponents,
   type MeralcoVatClass,
@@ -39,6 +42,9 @@ export type MeralcoRatesRow = {
   vat_generation: number | string | null;
   vat_transmission: number | string | null;
   vat_ancillary: number | string | null;
+  distribution_201_300: number | string | null;
+  distribution_301_400: number | string | null;
+  distribution_over_400: number | string | null;
   metering_charge: number | string;
   supply_charge: number | string;
   created_at: string;
@@ -72,10 +78,14 @@ export type MeralcoRateProvenance = {
 };
 
 export const MERALCO_RATE_SELECT =
-  "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, awat_adjustment, regulatory_reset_adjustment, lifeline_rate_adjustment, senior_citizen_subsidy, rpt_charge, gea_all, lifeline_subsidy, vat_generation, vat_transmission, vat_ancillary, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
+  "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, awat_adjustment, regulatory_reset_adjustment, lifeline_rate_adjustment, senior_citizen_subsidy, rpt_charge, gea_all, lifeline_subsidy, vat_generation, vat_transmission, vat_ancillary, distribution_201_300, distribution_301_400, distribution_over_400, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
 
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);
+}
+
+function nullableNumber(value: number | string | null | undefined): number | null {
+  return value === null || value === undefined ? null : toNumber(value);
 }
 
 export function mapMeralcoRatesRowToComponents(
@@ -101,6 +111,11 @@ export function mapMeralcoRatesRowToComponents(
     vatGeneration: row.vat_generation === null || row.vat_generation === undefined ? null : toNumber(row.vat_generation),
     vatTransmission: row.vat_transmission === null || row.vat_transmission === undefined ? null : toNumber(row.vat_transmission),
     vatAncillary: row.vat_ancillary === null || row.vat_ancillary === undefined ? null : toNumber(row.vat_ancillary),
+    distribution201To300: nullableNumber(row.distribution_201_300),
+    distribution301To400: nullableNumber(row.distribution_301_400),
+    distributionOver400: nullableNumber(row.distribution_over_400),
+    energyTax: 0,
+    household: null,
   };
 }
 

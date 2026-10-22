@@ -8,6 +8,7 @@ type MeralcoBreakdownCardProps = {
   vatRate: number;
   fixedCharges: { meteringCharge: number; supplyCharge: number };
   usageKwh?: number;
+  settingsHref?: string;
   effectiveMonth?: string;
   provenance?: {
     sourceUrl: string | null;
@@ -39,6 +40,7 @@ export default function MeralcoBreakdownCard({
   vatRate,
   fixedCharges,
   usageKwh = 0,
+  settingsHref,
   effectiveMonth,
   provenance,
 }: MeralcoBreakdownCardProps) {
@@ -64,6 +66,7 @@ export default function MeralcoBreakdownCard({
         fixedChargesPhp={fixedTotal}
         usageKwh={usageKwh}
         size="xs"
+        settingsHref={settingsHref}
       />
       {effectiveMonth && provenance && (
         <div className="mt-4 border-t border-white/[0.08] pt-3 text-[11px] leading-relaxed text-white/45">

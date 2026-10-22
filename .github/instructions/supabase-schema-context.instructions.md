@@ -43,6 +43,7 @@ CREATE TABLE profiles (
   must_update_password BOOLEAN NOT NULL DEFAULT false,
   monthly_budget_php NUMERIC(10, 2) DEFAULT 2000.00,
   billing_cycle_start_day INTEGER NOT NULL DEFAULT 1,
+  meralco_monthly_kwh NUMERIC(8, 2) CHECK (meralco_monthly_kwh IS NULL OR (meralco_monthly_kwh > 0 AND meralco_monthly_kwh <= 100000)),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -56,6 +57,7 @@ Notes:
 - `monthly_budget_php` is the home-level wallet budget edited from the Home dashboard flow only
 - `billing_cycle_start_day` is the user-level Meralco reading day used for billing-cycle windows and Smart Control accumulation
 - `billing_cycle_start_day` must stay between `1` and `28`
+- `meralco_monthly_kwh` (migration `038`) is the optional monthly kWh from the homeowner's Meralco bill, saved through `PATCH /api/profile/billing-cycle`. It picks the distribution tier and energy tax; NULL means "project from monitored usage"
 - `handle_new_user()` auto-creates a `profiles` row after `auth.users` insert
 
 ### `meralco_rates`
@@ -86,6 +88,9 @@ CREATE TABLE meralco_rates (
   vat_generation NUMERIC(6, 4),
   vat_transmission NUMERIC(6, 4),
   vat_ancillary NUMERIC(6, 4),
+  distribution_201_300 NUMERIC(10, 4),
+  distribution_301_400 NUMERIC(10, 4),
+  distribution_over_400 NUMERIC(10, 4),
   metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
   supply_charge NUMERIC(10, 2) NOT NULL DEFAULT 15.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -102,6 +107,7 @@ Notes:
 - `ancillary_service`, `supply_rate`, and `metering_rate` are first-class per-kWh columns as of migration `031`; `supply_charge` and `metering_charge` remain fixed per-customer charges
 - migration `031` corrects the August 2026 row after the previous parser shifted fields at the Ancillary Service column
 - since migration `037`, the adjustment columns hold the schedule's per-kWh AWAT refunds (signed), regulatory reset fees, lifeline rate adjustment, senior citizen subsidy, RPT charge + adjustment, GEA-All, and lifeline subsidy, and `vat_generation` / `vat_transmission` / `vat_ancillary` hold each month's effective VAT rates (NULL on rows before August 2026 falls back to `vat_rate`)
+- `distribution` is the residential rate for homes up to 200 kWh a month; `distribution_201_300` / `_301_400` / `_over_400` (migration `038`) apply to all kWh of homes above that. NULL falls back to `distribution`
 - `universal_charges` is the sum of the four Universal Charge columns (UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, UC-SD)
 - application cost logic must use `lib/meralco-bill.ts`, which applies VAT per component; `public.meralco_variable_rate_per_kwh(meralco_rates)` is the SQL mirror used by the budget trigger
 - do not fall back to hardcoded runtime rates when a row is missing
@@ -462,9 +468,17 @@ Use cases:
 
 AFTER INSERT trigger on `energy_logs` (`energy_logs_update_device_last_seen`, captured in migration `035`). Sets `devices.last_seen_at = now()` and `is_online = true` for the device whose UUID or MAC the row names, when the device is paired (`user_id IS NOT NULL`). SECURITY DEFINER since migration `036`, because hardware inserts as `anon`, which has no UPDATE policy on `devices`; before that it silently updated nothing for real hardware. Nothing resets `is_online`, so treat a device as online when `last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (`lib/device-telemetry.ts`), not from `is_online`.
 
-### `meralco_variable_rate_per_kwh(r meralco_rates)`
+### `meralco_variable_rate_per_kwh(r meralco_rates, p_household_kwh numeric DEFAULT NULL)`
 
-Added in migration `037`. Returns the VAT-inclusive variable cost of one kWh for a rate row, matching `computeVariableRatePerKwh` in `lib/meralco-bill.ts` (October 2026: 14.8761).
+Added in migration `037`, household tiers in `038`. Returns the VAT-inclusive variable cost of one kWh for a rate row and a home's monthly kWh (distribution tier plus averaged energy tax), matching `applyHouseholdTier` + `computeVariableRatePerKwh` in `lib/meralco-bill.ts` (October 2026: 14.8761 at the base tier, 15.2238 at 300 kWh, 16.1235 at 500, 16.1585 at 1,000).
+
+### `household_monthly_kwh_for(p_owner uuid, p_as_of timestamptz)`
+
+Added in migration `038`. SECURITY DEFINER, executable by the service role and trigger only. Returns the owner's `meralco_monthly_kwh`, or their `device_month_usage` for the current billing cycle projected to the full cycle, or NULL when there is no usage yet (base tier).
+
+### `my_household_usage()`
+
+Added in migration `038`. Returns `(monthly_kwh, source)` for the caller's home, where `source` is `bill` or `projected`; tenants get their manager's home. Used by `getHouseholdUsage()` in `lib/meralco-rates-server.ts`.
 
 ### `handle_energy_log_smart_budget()`
 
@@ -475,7 +489,7 @@ Behavior:
 - resolves the target device using either `devices.id::text` or `devices.mac_address`
 - fetches `profiles.billing_cycle_start_day` for the owning user
 - derives the Manila-local billing-cycle start date
-- loads the latest applicable `meralco_rates` row for the reading date
+- loads the latest applicable `meralco_rates` row for the reading date and prices it for the owner's household kWh (`household_monthly_kwh_for`, migration `038`)
 - computes variable spend from the cumulative kWh delta only
 - upserts into `device_month_usage`
 - compares `variable_spend_php` against `devices.user_approved_limit_php`

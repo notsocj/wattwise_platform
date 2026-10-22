@@ -24,36 +24,51 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const body = await request.json().catch(() => ({}));
-  const rawBillingCycleStartDay = (body as { billing_cycle_start_day?: unknown })
-    .billing_cycle_start_day;
-  const billingCycleStartDay =
-    typeof rawBillingCycleStartDay === "number" ? rawBillingCycleStartDay : Number.NaN;
+  const body = (await request.json().catch(() => ({}))) as {
+    billing_cycle_start_day?: unknown;
+    meralco_monthly_kwh?: unknown;
+  };
+  const update: { billing_cycle_start_day?: number; meralco_monthly_kwh?: number | null } = {};
 
-  if (
-    !Number.isInteger(billingCycleStartDay) ||
-    billingCycleStartDay < 1 ||
-    billingCycleStartDay > 28
-  ) {
-    return NextResponse.json(
-      { error: "billing_cycle_start_day must be an integer from 1 to 28." },
-      { status: 400 }
-    );
+  if ("billing_cycle_start_day" in body) {
+    const day = typeof body.billing_cycle_start_day === "number" ? body.billing_cycle_start_day : Number.NaN;
+    if (!Number.isInteger(day) || day < 1 || day > 28) {
+      return NextResponse.json(
+        { error: "Choose a billing start date from 1 to 28." },
+        { status: 400 }
+      );
+    }
+    update.billing_cycle_start_day = day;
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ billing_cycle_start_day: billingCycleStartDay })
-    .eq("id", user.id);
+  // Monthly kWh from the homeowner's Meralco bill; null clears it. It picks
+  // the distribution tier and energy tax (see migration 038).
+  if ("meralco_monthly_kwh" in body) {
+    const kwh = body.meralco_monthly_kwh;
+    if (kwh === null) {
+      update.meralco_monthly_kwh = null;
+    } else if (typeof kwh === "number" && Number.isFinite(kwh) && kwh > 0 && kwh <= 100000) {
+      update.meralco_monthly_kwh = Math.round(kwh * 100) / 100;
+    } else {
+      return NextResponse.json(
+        { error: "Enter your monthly kWh as a number from 1 to 100,000, or clear it." },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: "Nothing to save." }, { status: 400 });
+  }
+
+  const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
 
   if (error) {
     return NextResponse.json(
-      { error: "Failed to save billing cycle start day." },
+      { error: "We could not save your billing settings right now." },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({
-    billing_cycle_start_day: billingCycleStartDay,
-  });
+  return NextResponse.json(update);
 }

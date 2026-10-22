@@ -11,6 +11,7 @@ import type { SettingsDevice, SettingsToast } from "@/components/settings/settin
 
 type SettingsClientProps = {
   billingCycleStartDay: number;
+  meralcoMonthlyKwh: number | null;
   email: string;
   role: string;
   devices: SettingsDevice[];
@@ -19,6 +20,7 @@ type SettingsClientProps = {
 
 export default function SettingsClient({
   billingCycleStartDay,
+  meralcoMonthlyKwh,
   email,
   role,
   devices,
@@ -39,6 +41,7 @@ export default function SettingsClient({
       {canManageHomeSettings ? (
         <BillingCycleSection
           billingCycleStartDay={billingCycleStartDay}
+          meralcoMonthlyKwh={meralcoMonthlyKwh}
           onToast={setToast}
         />
       ) : null}

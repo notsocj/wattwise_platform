@@ -4,6 +4,9 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient, hasAdminClientConfig } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth-context";
+import { applyHouseholdTier, type HouseholdUsage } from "@/lib/meralco-bill";
 import {
   MERALCO_RATE_SELECT,
   selectActiveMeralcoRates,
@@ -55,21 +58,67 @@ async function loadRateRows(supabase: SupabaseClient): Promise<MeralcoRatesRow[]
   return fetchAllRateRows(supabase);
 }
 
-export async function getActiveMeralcoRates(supabase: SupabaseClient): Promise<ActiveMeralcoRates> {
-  return selectActiveMeralcoRates(await loadRateRows(supabase));
+/**
+ * The signed-in user's household monthly kWh (their Meralco bill setting, or
+ * monitored usage projected over the billing cycle), once per request. It
+ * picks the distribution tier and energy tax; null means the base tier.
+ */
+export const getHouseholdUsage = cache(async (): Promise<HouseholdUsage | null> => {
+  const user = await getSessionUser();
+  if (!user) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_household_usage");
+  if (error) {
+    console.warn("household usage unavailable; using the base distribution tier", error.message);
+    return null;
+  }
+
+  const row = (data as Array<{ monthly_kwh: number | string; source: string }> | null)?.[0];
+  const monthlyKwh = Number(row?.monthly_kwh);
+  if (!row || !Number.isFinite(monthlyKwh) || monthlyKwh <= 0) return null;
+  return { monthlyKwh, source: row.source === "bill" ? "bill" : "projected" };
+});
+
+/** Admin callers pass a specific owner's household instead of the viewer's. */
+type HouseholdOption = { household?: HouseholdUsage | null };
+
+async function resolveHousehold(options?: HouseholdOption): Promise<HouseholdUsage | null> {
+  return options && "household" in options ? (options.household ?? null) : getHouseholdUsage();
+}
+
+function withHousehold<T extends { rates: ActiveMeralcoRates["rates"] }>(
+  row: T,
+  household: HouseholdUsage | null
+): T {
+  return { ...row, rates: applyHouseholdTier(row.rates, household) };
+}
+
+export async function getActiveMeralcoRates(
+  supabase: SupabaseClient,
+  options?: HouseholdOption
+): Promise<ActiveMeralcoRates> {
+  const [rows, household] = await Promise.all([loadRateRows(supabase), resolveHousehold(options)]);
+  return withHousehold(selectActiveMeralcoRates(rows), household);
 }
 
 export async function getMeralcoRateHistory(
   supabase: SupabaseClient,
-  limit = 24
+  limit = 24,
+  options?: HouseholdOption
 ): Promise<HistoricalMeralcoRateRow[]> {
-  return selectMeralcoRateHistory(await loadRateRows(supabase), limit);
+  const [rows, household] = await Promise.all([loadRateRows(supabase), resolveHousehold(options)]);
+  return selectMeralcoRateHistory(rows, limit).map((row) => withHousehold(row, household));
 }
 
 export async function getMeralcoRatesForRange(
   supabase: SupabaseClient,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  options?: HouseholdOption
 ): Promise<HistoricalMeralcoRateRow[]> {
-  return selectMeralcoRatesForRange(await loadRateRows(supabase), startDate, endDate);
+  const [rows, household] = await Promise.all([loadRateRows(supabase), resolveHousehold(options)]);
+  return selectMeralcoRatesForRange(rows, startDate, endDate).map((row) =>
+    withHousehold(row, household)
+  );
 }

@@ -35,6 +35,9 @@ test("maps the August 2026 non-lifeline residential row to the matching Meralco 
     vat_generation: null,
     vat_transmission: null,
     vat_ancillary: null,
+    distribution_201_300: null,
+    distribution_301_400: null,
+    distribution_over_400: null,
   });
 });
 
@@ -73,6 +76,9 @@ test("parses the 100 kWh non-lifeline row from Meralco's residential-bills PDF t
     vat_generation: null,
     vat_transmission: null,
     vat_ancillary: null,
+    distribution_201_300: null,
+    distribution_301_400: null,
+    distribution_over_400: null,
   });
 });
 
@@ -88,6 +94,8 @@ function currentScheduleText(row101To200: string): string {
     Residential
     ${row101To200}
     201 TO 300 KWH 9.7032 0.5485 0.7341 0.8898 1.2908 0.4979 16.38 0.3350 5.00 (0.4278) (0.5861) (0.0023) (0.0001) 0.0001 0.0067 0.0015 0.2662 0.0101 0.0025 0.0428 0.3359 0.0000 0.0100
+    301 TO 400 KWH 9.7032 0.5485 0.7341 0.8898 1.5837 0.4979 16.38 0.3350 5.00 (0.4278) (0.5861) (0.0023) (0.0001) 0.0001 0.0067 0.0015 0.2662 0.0101 0.0025 0.0428 0.3359 0.0000 0.0100
+    OVER 400 KWH 9.7032 0.5485 0.7341 0.8898 2.0941 0.4979 16.38 0.3350 5.00 (0.4278) (0.5861) (0.0023) (0.0001) 0.0001 0.0067 0.0015 0.2662 0.0101 0.0025 0.0428 0.3359 0.0000 0.0100
     General Service A
     VAT RATES Generation 9.21% Transmission 11.99% Ancillary Service 9.83% Other Charges 12.00%
   `;
@@ -121,6 +129,9 @@ test("reads FIT-All, not the GEA-All column after it, from the September 2026 sc
     vat_generation: 0.0921,
     vat_transmission: 0.1199,
     vat_ancillary: 0.0983,
+    distribution_201_300: 1.2908,
+    distribution_301_400: 1.5837,
+    distribution_over_400: 2.0941,
   });
 });
 
