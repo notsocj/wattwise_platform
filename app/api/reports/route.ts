@@ -51,7 +51,9 @@ export async function GET(request: NextRequest) {
       variable_cost_php: "", limit_php: "", budget_percent: "", generation_rate: "",
       transmission_rate: "", ancillary_service_rate: "", distribution_rate: "", system_loss_rate: "",
       supply_rate: "", metering_rate: "",
-      universal_charges_rate: "", fit_all_rate: "", vat_rate: "", fixed_charges_php: "",
+      universal_charges_rate: "", fit_all_rate: "", adjustments_rate: "", vat_rate: "",
+      vat_generation_rate: "", vat_transmission_rate: "", vat_ancillary_rate: "",
+      variable_rate_per_kwh: "", fixed_charges_php: "",
     });
     const csv = [headers, ...rows.map((row) => headers.map((header) => row[header as keyof typeof row]))]
       .map((line) => line.map((value) => csvCell(value as string | number | null)).join(","))

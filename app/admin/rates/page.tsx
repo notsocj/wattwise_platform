@@ -1,13 +1,18 @@
 import { DollarSign } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  computeVariableRatePerKwh,
+  mapMeralcoRatesRowToComponents,
+  MERALCO_RATE_SELECT,
+  type MeralcoRatesRow,
+} from "@/lib/meralco-rates";
 export default async function AdminRatesPage() {
   const { data } = await createAdminClient()
     .from("meralco_rates")
-    .select(
-      "effective_month,generation,transmission,ancillary_service,system_loss,distribution,supply_rate,metering_rate,universal_charges,fit_all,vat_rate,metering_charge,supply_charge",
-    )
+    .select(MERALCO_RATE_SELECT)
     .order("effective_month", { ascending: false })
-    .limit(24);
+    .limit(24)
+    .returns<MeralcoRatesRow[]>();
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
@@ -31,8 +36,10 @@ export default async function AdminRatesPage() {
                 "Distribution",
                 "Supply",
                 "Metering",
+                "Adjustments",
                 "VAT",
                 "Fixed charges",
+                "₱/kWh incl. VAT",
               ].map((h) => (
                 <th key={h} className="p-4">
                   {h}
@@ -41,22 +48,44 @@ export default async function AdminRatesPage() {
             </tr>
           </thead>
           <tbody>
-            {(data ?? []).map((r) => (
-              <tr key={r.effective_month} className="border-b border-white/5">
-                <td className="p-4">{r.effective_month}</td>
-                <td className="p-4">₱{Number(r.generation).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.transmission).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.ancillary_service).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.system_loss).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.distribution).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.supply_rate).toFixed(4)}</td>
-                <td className="p-4">₱{Number(r.metering_rate).toFixed(4)}</td>
-                <td className="p-4">{(Number(r.vat_rate) * 100).toFixed(2)}%</td>
-                <td className="p-4">
-                  ₱{(Number(r.metering_charge) + Number(r.supply_charge)).toFixed(2)}
-                </td>
-              </tr>
-            ))}
+            {(data ?? []).map((r) => {
+              const components = mapMeralcoRatesRowToComponents(r);
+              const adjustments =
+                components.awatAdjustment +
+                components.regulatoryResetAdjustment +
+                components.lifelineRateAdjustment +
+                components.seniorCitizenSubsidy +
+                components.rptCharge +
+                components.geaAll +
+                components.lifelineSubsidy;
+              return (
+                <tr key={r.effective_month} className="border-b border-white/5">
+                  <td className="p-4">{r.effective_month}</td>
+                  <td className="p-4">₱{Number(r.generation).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.transmission).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.ancillary_service).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.system_loss).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.distribution).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.supply_rate).toFixed(4)}</td>
+                  <td className="p-4">₱{Number(r.metering_rate).toFixed(4)}</td>
+                  <td className="p-4">₱{adjustments.toFixed(4)}</td>
+                  <td className="p-4">
+                    {(Number(r.vat_rate) * 100).toFixed(2)}%
+                    {components.vatGeneration !== null ? (
+                      <span className="block text-xs text-white/50">
+                        Gen {(components.vatGeneration * 100).toFixed(2)}%
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="p-4">
+                    ₱{(Number(r.metering_charge) + Number(r.supply_charge)).toFixed(2)}
+                  </td>
+                  <td className="p-4 font-semibold">
+                    ₱{computeVariableRatePerKwh(components, Number(r.vat_rate)).toFixed(4)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -1,14 +1,7 @@
-export type TestLabMeralcoRates = {
-  generation: number;
-  transmission: number;
-  ancillaryService: number;
-  systemLoss: number;
-  distribution: number;
-  supplyRate: number;
-  meteringRate: number;
-  universalCharges: number;
-  fitAll: number;
-};
+// Relative .ts import (not @/) so the node test runner can load this module.
+import { computeVariableRatePerKwh, type MeralcoRateComponents } from "./meralco-bill.ts";
+
+export type TestLabMeralcoRates = MeralcoRateComponents;
 
 export const TEST_THRESHOLDS = [50, 80, 100] as const;
 export type TestThreshold = (typeof TEST_THRESHOLDS)[number];
@@ -30,7 +23,7 @@ export function getCycleStartDate(billingStartDay: number, date = new Date()): s
 }
 
 export function getVariableRatePerKwh(rates: TestLabMeralcoRates, vatRate: number): number {
-  return (rates.generation + rates.transmission + rates.ancillaryService + rates.systemLoss + rates.distribution + rates.supplyRate + rates.meteringRate + rates.universalCharges + rates.fitAll) * (1 + vatRate);
+  return computeVariableRatePerKwh(rates, vatRate);
 }
 
 export function targetCumulativeEnergy(input: {

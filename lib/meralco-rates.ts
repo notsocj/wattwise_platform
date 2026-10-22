@@ -1,16 +1,16 @@
 import { getManilaDayKey } from "@/lib/date-utils";
+import { computeMeralcoBill, type MeralcoRateComponents } from "@/lib/meralco-bill";
 
-export type MeralcoRateComponents = {
-  generation: number;
-  transmission: number;
-  ancillaryService: number;
-  systemLoss: number;
-  distribution: number;
-  supplyRate: number;
-  meteringRate: number;
-  universalCharges: number;
-  fitAll: number;
-};
+export {
+  computeFixedChargesWithVat,
+  computeMeralcoBill,
+  computeVariableRatePerKwh,
+  MERALCO_COMPONENT_LINES,
+  vatMultiplierFor,
+  type MeralcoComponentKey,
+  type MeralcoRateComponents,
+  type MeralcoVatClass,
+} from "@/lib/meralco-bill";
 
 export type MeralcoFixedCharges = {
   meteringCharge: number;
@@ -29,6 +29,16 @@ export type MeralcoRatesRow = {
   metering_rate: number | string;
   universal_charges: number | string;
   fit_all: number | string;
+  awat_adjustment: number | string;
+  regulatory_reset_adjustment: number | string;
+  lifeline_rate_adjustment: number | string;
+  senior_citizen_subsidy: number | string;
+  rpt_charge: number | string;
+  gea_all: number | string;
+  lifeline_subsidy: number | string;
+  vat_generation: number | string | null;
+  vat_transmission: number | string | null;
+  vat_ancillary: number | string | null;
   metering_charge: number | string;
   supply_charge: number | string;
   created_at: string;
@@ -62,7 +72,7 @@ export type MeralcoRateProvenance = {
 };
 
 export const MERALCO_RATE_SELECT =
-  "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
+  "effective_month, vat_rate, generation, transmission, ancillary_service, system_loss, distribution, supply_rate, metering_rate, universal_charges, fit_all, awat_adjustment, regulatory_reset_adjustment, lifeline_rate_adjustment, senior_citizen_subsidy, rpt_charge, gea_all, lifeline_subsidy, vat_generation, vat_transmission, vat_ancillary, metering_charge, supply_charge, created_at, source_url, source_pdf_url, fetched_at, auto_updated";
 
 function toNumber(value: number | string): number {
   return typeof value === "number" ? value : Number(value);
@@ -81,6 +91,16 @@ export function mapMeralcoRatesRowToComponents(
     meteringRate: toNumber(row.metering_rate),
     universalCharges: toNumber(row.universal_charges),
     fitAll: toNumber(row.fit_all),
+    awatAdjustment: toNumber(row.awat_adjustment ?? 0),
+    regulatoryResetAdjustment: toNumber(row.regulatory_reset_adjustment ?? 0),
+    lifelineRateAdjustment: toNumber(row.lifeline_rate_adjustment ?? 0),
+    seniorCitizenSubsidy: toNumber(row.senior_citizen_subsidy ?? 0),
+    rptCharge: toNumber(row.rpt_charge ?? 0),
+    geaAll: toNumber(row.gea_all ?? 0),
+    lifelineSubsidy: toNumber(row.lifeline_subsidy ?? 0),
+    vatGeneration: row.vat_generation === null || row.vat_generation === undefined ? null : toNumber(row.vat_generation),
+    vatTransmission: row.vat_transmission === null || row.vat_transmission === undefined ? null : toNumber(row.vat_transmission),
+    vatAncillary: row.vat_ancillary === null || row.vat_ancillary === undefined ? null : toNumber(row.vat_ancillary),
   };
 }
 
@@ -281,35 +301,4 @@ export function computeHistoricalVariableSpendByDeviceFromDayRows(
   }
 
   return costByDevice;
-}
-
-/** Fixed monthly charges (metering + supply customer charges) with VAT applied. */
-export function computeFixedChargesWithVat(fixedChargesPhp: number, vatRate: number): number {
-  return Math.max(0, fixedChargesPhp) * (1 + vatRate);
-}
-
-export function computeMeralcoBill(
-  kWh: number,
-  rates: MeralcoRateComponents,
-  vatRate: number,
-  options?: {
-    fixedChargesPhp?: number;
-  }
-): number {
-  const subtotalPerKWh =
-    rates.generation +
-    rates.transmission +
-    rates.ancillaryService +
-    rates.systemLoss +
-    rates.distribution +
-    rates.supplyRate +
-    rates.meteringRate +
-    rates.universalCharges +
-    rates.fitAll;
-
-  const variableCharges = subtotalPerKWh * kWh;
-  const fixedCharges = Math.max(0, options?.fixedChargesPhp ?? 0);
-  const preVatTotal = variableCharges + fixedCharges;
-
-  return preVatTotal * (1 + vatRate);
 }

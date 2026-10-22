@@ -20,6 +20,18 @@ type CompleteRates = {
   vat_rate: number;
   metering_charge: number;
   supply_charge: number;
+  // Per-kWh adjustments (0 when the schedule layout has no such columns) and
+  // monthly component VAT rates (null falls back to vat_rate). See migration 037.
+  awat_adjustment: number;
+  regulatory_reset_adjustment: number;
+  lifeline_rate_adjustment: number;
+  senior_citizen_subsidy: number;
+  rpt_charge: number;
+  gea_all: number;
+  lifeline_subsidy: number;
+  vat_generation: number | null;
+  vat_transmission: number | null;
+  vat_ancillary: number | null;
 };
 
 type SyncRunStatus = "success" | "failed" | "dry_run";
@@ -333,8 +345,30 @@ function validateRanges(rates: CompleteRates): void {
     { key: "supply_charge", min: 0, max: 100 },
   ];
 
+  // Adjustments are signed (refunds are negative) and can legitimately start
+  // or stop from one month to the next, so they get bounds but no anomaly check.
+  const adjustmentKeys = [
+    "awat_adjustment",
+    "regulatory_reset_adjustment",
+    "lifeline_rate_adjustment",
+    "senior_citizen_subsidy",
+    "rpt_charge",
+    "gea_all",
+    "lifeline_subsidy",
+  ] as const;
+  for (const key of adjustmentKeys) {
+    checks.push({ key, min: -5, max: 5 });
+  }
+  for (const key of ["vat_generation", "vat_transmission", "vat_ancillary"] as const) {
+    const value = rates[key];
+    if (value !== null && (value < 0 || value > 0.3)) {
+      throw new Error(`Parsed '${key}' value ${value} is outside expected range (0 - 0.3).`);
+    }
+  }
+
   for (const check of checks) {
     const value = rates[check.key];
+    if (typeof value !== "number") continue;
     if (value < check.min || value > check.max) {
       throw new Error(
         `Parsed '${check.key}' value ${value} is outside expected range (${check.min} - ${check.max}).`
@@ -358,7 +392,7 @@ function validateAgainstPrevious(
     Deno.env.get("MERALCO_MAX_RELATIVE_CHANGE") ?? "0.5"
   );
 
-  const fields: Array<keyof CompleteRates> = [
+  const fields: Array<keyof CompleteRates & keyof ExistingRateRow> = [
     "generation",
     "transmission",
     "ancillary_service",
@@ -646,6 +680,16 @@ Deno.serve(async (req) => {
             "Missing supply_charge in parsed data and no previous row fallback available."
           );
         })(),
+      awat_adjustment: parsed.awat_adjustment ?? 0,
+      regulatory_reset_adjustment: parsed.regulatory_reset_adjustment ?? 0,
+      lifeline_rate_adjustment: parsed.lifeline_rate_adjustment ?? 0,
+      senior_citizen_subsidy: parsed.senior_citizen_subsidy ?? 0,
+      rpt_charge: parsed.rpt_charge ?? 0,
+      gea_all: parsed.gea_all ?? 0,
+      lifeline_subsidy: parsed.lifeline_subsidy ?? 0,
+      vat_generation: parsed.vat_generation,
+      vat_transmission: parsed.vat_transmission,
+      vat_ancillary: parsed.vat_ancillary,
     };
 
     validateRanges(completeRates);
@@ -687,6 +731,16 @@ Deno.serve(async (req) => {
       fit_all: completeRates.fit_all,
       metering_charge: completeRates.metering_charge,
       supply_charge: completeRates.supply_charge,
+      awat_adjustment: completeRates.awat_adjustment,
+      regulatory_reset_adjustment: completeRates.regulatory_reset_adjustment,
+      lifeline_rate_adjustment: completeRates.lifeline_rate_adjustment,
+      senior_citizen_subsidy: completeRates.senior_citizen_subsidy,
+      rpt_charge: completeRates.rpt_charge,
+      gea_all: completeRates.gea_all,
+      lifeline_subsidy: completeRates.lifeline_subsidy,
+      vat_generation: completeRates.vat_generation,
+      vat_transmission: completeRates.vat_transmission,
+      vat_ancillary: completeRates.vat_ancillary,
     };
 
     const metadataPayload = {

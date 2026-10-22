@@ -49,7 +49,8 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 ### Meralco billing
 
 - Never compute cost with a flat multiplier like `kWh * 10`.
-- Always fetch the active row from `meralco_rates` and compute cost from unbundled components plus fixed charges, then apply VAT last.
+- Always fetch the active row from `meralco_rates` and compute cost with `computeMeralcoBill` / `computeVariableRatePerKwh` from `lib/meralco-bill.ts`, the single implementation. It bills like Meralco's Summary Schedule of Rates: monthly VAT rates on Generation, Transmission, and Ancillary Service (`vat_generation`, `vat_transmission`, `vat_ancillary`); the general rate (`vat_rate`) on distribution, supply, metering, fixed charges, and the AWAT / regulatory reset / lifeline rate / senior citizen adjustments; no VAT on System Loss, Universal Charge, FIT-All, GEA-All, RPT, and the lifeline subsidy.
+- The budget-cutoff trigger uses the same formula in SQL, `public.meralco_variable_rate_per_kwh()` (migration `037`). Change it together with `lib/meralco-bill.ts` and `tests/meralco-bill.test.ts`, and keep the October 2026 check (PHP 14.8761/kWh) passing.
 - Do not fall back to hardcoded runtime defaults if the database rate row is missing.
 
 ### Supabase and data access

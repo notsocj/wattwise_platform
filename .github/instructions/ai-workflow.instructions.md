@@ -9,37 +9,27 @@ applyTo: "**"
 
 **Hard constraint:** Never calculate energy cost with a single flat rate multiplier (e.g., `totalKWh * 10`). This is incorrect and academically indefensible.
 
-**Required pattern:** Always unbundle the Meralco billing components, add fixed monthly charges, then apply VAT last:
+**Required pattern:** Compute every cost with `lib/meralco-bill.ts` (`computeMeralcoBill`, `computeVariableRatePerKwh`, `computeFixedChargesWithVat`). It mirrors Meralco's Summary Schedule of Rates:
+
+- Generation, Transmission, and Ancillary Service carry their own monthly effective VAT rates (`vat_generation`, `vat_transmission`, `vat_ancillary`; NULL on older rows falls back to `vat_rate`).
+- Distribution, supply, metering, the fixed customer charges, and the AWAT refunds / regulatory reset / lifeline rate / senior citizen adjustments carry the general VAT rate (`vat_rate`, the schedule's "Other Charges").
+- System Loss, Universal Charge (the sum of UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, and UC-SD), FIT-All, GEA-All, RPT, and the lifeline subsidy carry no VAT.
 
 ```ts
-// CORRECT — DB-driven unbundled Meralco rate structure
-const activeRate = await getActiveMeralcoRates(supabase); // includes vat_rate + fixed monthly charges
-
-function computeMeralcoBill(
-  kWh: number,
-  rates: MeralcoRateComponents,
-  vatRate: number,
-  fixedChargesPhp: number
-): number {
-  const subtotalPerKWh =
-    rates.generation +
-    rates.transmission +
-    rates.systemLoss +
-    rates.distribution +
-    rates.universalCharges +
-    rates.fitAll;
-
-  const variableSubtotal = subtotalPerKWh * kWh;
-  const preVatTotal = variableSubtotal + fixedChargesPhp;
-
-  return preVatTotal * (1 + vatRate); // VAT applied at the final step only
-}
+// CORRECT
+const activeRate = await getActiveMeralcoRates(supabase); // lib/meralco-rates-server.ts
+const cost = computeMeralcoBill(kWh, activeRate.rates, activeRate.vatRate, {
+  fixedChargesPhp: activeRate.fixedMonthlyChargesPhp,
+});
 
 // WRONG — never do this
 // const cost = kWh * 10;
+// const cost = sumOfComponents * kWh * 1.12; // single VAT rate on everything
 ```
 
-- In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields (`vat_rate`, `ancillary_service`, `system_loss`, `distribution`, `supply_rate`, `metering_rate`, `universal_charges`, `fit_all`, `metering_charge`, `supply_charge`) to the billing component object before calling `computeMeralcoBill`.
+The SQL budget trigger uses the same formula through `public.meralco_variable_rate_per_kwh()`; change both together.
+
+- In app/runtime code, fetch the active row from `meralco_rates` (`effective_month <= current_date`, ordered descending, `limit 1`) and map DB fields with `mapMeralcoRatesRowToComponents` (all components, adjustments, and component VAT columns in `MERALCO_RATE_SELECT`) before calling `computeMeralcoBill`.
 - For automated rate ingestion, use Meralco Rates Archives (`https://company.meralco.com.ph/news-and-advisories/rates-archives`) as discovery source, then select the latest **Summary Schedule of Rates** PDF link for the target month. Avoid hardcoding article slugs like `higher-residential-rates-march-2026`.
 - Customer-facing rate views must distinguish the effective month from the time WattWise fetched the row, and show the recorded Meralco archive/PDF link where available. Never imply a manual legacy row has an official source link.
 - Preferred scheduler cadence is daily around 10:00-12:00 PM PH time. In automatic mode, first check whether the current Manila month (`YYYY-MM-01`) already exists in `meralco_rates`; if present, return a no-op and skip external fetch/upsert.

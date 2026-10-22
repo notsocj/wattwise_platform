@@ -1,4 +1,5 @@
 import PageHeader from "@/components/ui/PageHeader";
+import RateComponentList from "@/components/billing/RateComponentList";
 import { getSessionUser } from "@/lib/auth-context";
 import { CalendarClock, ExternalLink, History } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
@@ -28,42 +29,15 @@ function ratePerKwh(rate: HistoricalMeralcoRateRow): number {
 }
 
 function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
-  const rows = [
-    ["Generation", rate.rates.generation],
-    ["Transmission", rate.rates.transmission],
-    ["Ancillary service", rate.rates.ancillaryService],
-    ["System loss", rate.rates.systemLoss],
-    ["Distribution", rate.rates.distribution],
-    ["Supply", rate.rates.supplyRate],
-    ["Metering", rate.rates.meteringRate],
-    ["Universal charges", rate.rates.universalCharges],
-    ["FIT-All", rate.rates.fitAll],
-  ] as const;
   const sourceUrl = rate.provenance.sourcePdfUrl ?? rate.provenance.sourceUrl;
-  const fixedTotal = rate.fixedCharges.meteringCharge + rate.fixedCharges.supplyCharge;
 
   return (
     <div className="space-y-4">
-      {/* One row per component: two columns are too narrow for a label plus a
-          4-decimal peso value inside the 430px mobile shell. */}
-      <dl className="divide-y divide-white/[0.06] text-sm">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex items-baseline justify-between gap-4 py-2 text-white/60">
-            <dt className="min-w-0">{label}</dt>
-            <dd className="shrink-0 font-semibold tabular-nums text-white">₱{value.toFixed(4)}</dd>
-          </div>
-        ))}
-      </dl>
-      <div className="border-t border-white/[0.08] pt-3 text-sm text-white/60">
-        <div className="flex justify-between">
-          <span>Metering + supply fixed charges</span>
-          <span className="font-semibold text-white">₱{fixedTotal.toFixed(2)}</span>
-        </div>
-        <div className="mt-2 flex justify-between">
-          <span>VAT</span>
-          <span className="font-semibold text-white">{(rate.vatRate * 100).toFixed(2)}%</span>
-        </div>
-      </div>
+      <RateComponentList
+        rates={rate.rates}
+        vatRate={rate.vatRate}
+        fixedChargesPhp={rate.fixedCharges.meteringCharge + rate.fixedCharges.supplyCharge}
+      />
       <div className="rounded-lg bg-white/[0.03] p-3 text-xs leading-relaxed text-white/55">
         <p>
           Effective from{" "}

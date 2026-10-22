@@ -1,18 +1,10 @@
 import Link from "next/link";
 import { ChevronRight, ExternalLink } from "lucide-react";
+import RateComponentList from "@/components/billing/RateComponentList";
+import { computeVariableRatePerKwh, type MeralcoRateComponents } from "@/lib/meralco-bill";
 
 type MeralcoBreakdownCardProps = {
-  rates: {
-    generation: number;
-    transmission: number;
-    ancillaryService: number;
-    systemLoss: number;
-    distribution: number;
-    supplyRate: number;
-    meteringRate: number;
-    universalCharges: number;
-    fitAll: number;
-  };
+  rates: MeralcoRateComponents;
   vatRate: number;
   fixedCharges: { meteringCharge: number; supplyCharge: number };
   usageKwh?: number;
@@ -50,20 +42,8 @@ export default function MeralcoBreakdownCard({
   effectiveMonth,
   provenance,
 }: MeralcoBreakdownCardProps) {
-  const variableSubtotal = Object.values(rates).reduce((sum, value) => sum + value, 0);
-  const variableWithVat = variableSubtotal * (1 + vatRate);
+  const variableWithVat = computeVariableRatePerKwh(rates, vatRate);
   const fixedTotal = fixedCharges.meteringCharge + fixedCharges.supplyCharge;
-  const items = [
-    ["Generation", rates.generation],
-    ["Transmission", rates.transmission],
-    ["Ancillary service", rates.ancillaryService],
-    ["System loss", rates.systemLoss],
-    ["Distribution", rates.distribution],
-    ["Supply", rates.supplyRate],
-    ["Metering", rates.meteringRate],
-    ["Universal charges", rates.universalCharges],
-    ["FIT-All", rates.fitAll],
-  ] as const;
 
   const sourceUrl = provenance?.sourcePdfUrl ?? provenance?.sourceUrl;
 
@@ -73,37 +53,18 @@ export default function MeralcoBreakdownCard({
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider">Meralco rate breakdown</h2>
           <p className="mt-1 text-xs text-white/45">
-            PHP per kWh, VAT applied after variable components
+            PHP per kWh, with VAT applied per component as Meralco bills it
           </p>
         </div>
         <span className="text-xs font-semibold text-mint">₱{variableWithVat.toFixed(4)}/kWh</span>
       </div>
-      {/* One row per component so the rate and its cost never collide on a phone. */}
-      <dl className="divide-y divide-white/[0.06] text-xs">
-        {items.map(([label, value]) => (
-          <div key={label} className="flex items-baseline justify-between gap-4 py-1.5 text-white/60">
-            <dt className="min-w-0">{label}</dt>
-            <dd className="shrink-0 text-right tabular-nums">
-              <span className="font-semibold text-white">₱{value.toFixed(4)}</span>
-              {usageKwh > 0 && (
-                <span className="ml-1.5 text-[11px] text-white/50">
-                  (₱{(value * usageKwh * (1 + vatRate)).toFixed(2)})
-                </span>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="mt-4 border-t border-white/[0.08] pt-3 text-xs text-white/60">
-        <div className="flex justify-between">
-          <span>Metering + supply fixed charges</span>
-          <span className="font-semibold text-white">₱{fixedTotal.toFixed(2)}</span>
-        </div>
-        <div className="mt-1 flex justify-between">
-          <span>VAT</span>
-          <span className="font-semibold text-white">{(vatRate * 100).toFixed(2)}%</span>
-        </div>
-      </div>
+      <RateComponentList
+        rates={rates}
+        vatRate={vatRate}
+        fixedChargesPhp={fixedTotal}
+        usageKwh={usageKwh}
+        size="xs"
+      />
       {effectiveMonth && provenance && (
         <div className="mt-4 border-t border-white/[0.08] pt-3 text-[11px] leading-relaxed text-white/45">
           <p>

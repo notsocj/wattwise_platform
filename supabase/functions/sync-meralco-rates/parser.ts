@@ -11,6 +11,18 @@ export type ParsedRates = {
   vat_rate: number | null;
   metering_charge: number | null;
   supply_charge: number | null;
+  // Per-kWh adjustments and component VAT rates. Read only from the current
+  // summary-schedule layout; null for other layouts.
+  awat_adjustment: number | null;
+  regulatory_reset_adjustment: number | null;
+  lifeline_rate_adjustment: number | null;
+  senior_citizen_subsidy: number | null;
+  rpt_charge: number | null;
+  gea_all: number | null;
+  lifeline_subsidy: number | null;
+  vat_generation: number | null;
+  vat_transmission: number | null;
+  vat_ancillary: number | null;
 };
 
 function escapeRegExp(value: string): string {
@@ -42,10 +54,29 @@ function parseSignedNumberToken(raw: string): number | null {
 //   (UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, UC-SD), 20 FIT-All, 21 GEA-All,
 //   22 Lifeline Subsidy.
 const CURRENT_SCHEDULE_COLUMNS = {
+  awat: [9, 10],
+  regulatoryReset: 11,
+  lifelineRateAdjustment: 12,
+  seniorCitizenSubsidy: 13,
+  rpt: [14, 15],
   universalParts: [16, 17, 18, 19],
   fitAll: 20,
+  geaAll: 21,
+  lifelineSubsidy: 22,
   length: 23,
 } as const;
+
+function sumColumns(row: number[], indexes: readonly number[]): number {
+  return Number(indexes.reduce((sum, index) => sum + row[index], 0).toFixed(4));
+}
+
+/** Monthly effective VAT rate for one component from the schedule's VAT table. */
+function findComponentVat(text: string, label: string): number | null {
+  const match = text.match(new RegExp(`${escapeRegExp(label)}\\s+(\\d{1,2}(?:\\.\\d+)?)\\s*%`, "i"));
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 && value <= 30 ? Number((value / 100).toFixed(4)) : null;
+}
 
 /**
  * Reads exactly the 101-200 kWh residential row (up to the next row label)
@@ -224,11 +255,7 @@ export function parseRatesFromText(text: string): ParsedRates {
       ? typicalResidentialRow.length - 3
       : 21;
   const rowFallbackUniversal = currentScheduleRow
-    ? Number(
-        CURRENT_SCHEDULE_COLUMNS.universalParts
-          .reduce((sum, index) => sum + currentScheduleRow[index], 0)
-          .toFixed(4)
-      )
+    ? sumColumns(currentScheduleRow, CURRENT_SCHEDULE_COLUMNS.universalParts)
     : residentialBaseRow && residentialBaseRow.length > universalIndex
       ? residentialBaseRow[universalIndex]
       : null;
@@ -264,5 +291,15 @@ export function parseRatesFromText(text: string): ParsedRates {
     vat_rate: findVatRate(normalizedText),
     metering_charge: rowFallbackMeteringCharge ?? findByLabels(normalizedText, ["Metering Charge", "Metering Cust Charge"], { min: 0, max: 100, requireDecimal: true }),
     supply_charge: rowFallbackSupplyCharge ?? findByLabels(normalizedText, ["Supply Charge", "Supply Cust Charge"], { min: 0, max: 100, requireDecimal: true }),
+    awat_adjustment: currentScheduleRow ? sumColumns(currentScheduleRow, CURRENT_SCHEDULE_COLUMNS.awat) : null,
+    regulatory_reset_adjustment: currentScheduleRow?.[CURRENT_SCHEDULE_COLUMNS.regulatoryReset] ?? null,
+    lifeline_rate_adjustment: currentScheduleRow?.[CURRENT_SCHEDULE_COLUMNS.lifelineRateAdjustment] ?? null,
+    senior_citizen_subsidy: currentScheduleRow?.[CURRENT_SCHEDULE_COLUMNS.seniorCitizenSubsidy] ?? null,
+    rpt_charge: currentScheduleRow ? sumColumns(currentScheduleRow, CURRENT_SCHEDULE_COLUMNS.rpt) : null,
+    gea_all: currentScheduleRow?.[CURRENT_SCHEDULE_COLUMNS.geaAll] ?? null,
+    lifeline_subsidy: currentScheduleRow?.[CURRENT_SCHEDULE_COLUMNS.lifelineSubsidy] ?? null,
+    vat_generation: currentScheduleRow ? findComponentVat(normalizedText, "Generation") : null,
+    vat_transmission: currentScheduleRow ? findComponentVat(normalizedText, "Transmission") : null,
+    vat_ancillary: currentScheduleRow ? findComponentVat(normalizedText, "Ancillary Service") : null,
   };
 }

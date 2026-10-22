@@ -7,7 +7,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 ## Features
 
 - **Live dashboard** with per-device watts, voltage, and current pushed through Supabase Realtime (no page reloads), plus freshness-aware LIVE/idle/offline states
-- **Meralco billing** computed from the active unbundled rate row (generation, transmission, ancillary, system loss, distribution, supply, metering, universal charges, FIT-All, fixed charges, VAT last), with a public `/rates` transparency page
+- **Meralco billing** that matches the Summary Schedule of Rates: every per-kWh component and adjustment (including AWAT refunds), fixed customer charges, and per-component VAT, synced automatically each month and shown on a public `/rates` transparency page
 - **Smart Control**: per-device monthly budget limits that cut the relay when spend is exceeded, with optional approval-on-expiry
 - **Budget alerts** at 50% (in-app), 80% (push), and 100% (push + email) via OneSignal and Resend
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF

@@ -25,6 +25,16 @@ test("maps the August 2026 non-lifeline residential row to the matching Meralco 
     vat_rate: 0.12,
     metering_charge: 5,
     supply_charge: 16.38,
+    awat_adjustment: null,
+    regulatory_reset_adjustment: null,
+    lifeline_rate_adjustment: null,
+    senior_citizen_subsidy: null,
+    rpt_charge: null,
+    gea_all: null,
+    lifeline_subsidy: null,
+    vat_generation: null,
+    vat_transmission: null,
+    vat_ancillary: null,
   });
 });
 
@@ -53,6 +63,16 @@ test("parses the 100 kWh non-lifeline row from Meralco's residential-bills PDF t
     vat_rate: null,
     metering_charge: 5,
     supply_charge: 16.38,
+    awat_adjustment: null,
+    regulatory_reset_adjustment: null,
+    lifeline_rate_adjustment: null,
+    senior_citizen_subsidy: null,
+    rpt_charge: null,
+    gea_all: null,
+    lifeline_subsidy: null,
+    vat_generation: null,
+    vat_transmission: null,
+    vat_ancillary: null,
   });
 });
 
@@ -69,7 +89,7 @@ function currentScheduleText(row101To200: string): string {
     ${row101To200}
     201 TO 300 KWH 9.7032 0.5485 0.7341 0.8898 1.2908 0.4979 16.38 0.3350 5.00 (0.4278) (0.5861) (0.0023) (0.0001) 0.0001 0.0067 0.0015 0.2662 0.0101 0.0025 0.0428 0.3359 0.0000 0.0100
     General Service A
-    VAT RATES Generation 8.33% Transmission 11.99% Ancillary Service 9.09% Other Charges 12.00%
+    VAT RATES Generation 9.21% Transmission 11.99% Ancillary Service 9.83% Other Charges 12.00%
   `;
 }
 
@@ -91,6 +111,16 @@ test("reads FIT-All, not the GEA-All column after it, from the September 2026 sc
     vat_rate: 0.12,
     metering_charge: 5,
     supply_charge: 16.38,
+    awat_adjustment: -1.0139,
+    regulatory_reset_adjustment: -0.0023,
+    lifeline_rate_adjustment: -0.0001,
+    senior_citizen_subsidy: 0.0001,
+    rpt_charge: 0.0082,
+    gea_all: 0,
+    lifeline_subsidy: 0.01,
+    vat_generation: 0.0921,
+    vat_transmission: 0.1199,
+    vat_ancillary: 0.0983,
   });
 });
 

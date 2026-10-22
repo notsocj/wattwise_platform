@@ -76,6 +76,16 @@ CREATE TABLE meralco_rates (
   metering_rate NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
   universal_charges NUMERIC(10, 4) NOT NULL,
   fit_all NUMERIC(10, 4) NOT NULL DEFAULT 0.0000,
+  awat_adjustment NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  regulatory_reset_adjustment NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  lifeline_rate_adjustment NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  senior_citizen_subsidy NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  rpt_charge NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  gea_all NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  lifeline_subsidy NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  vat_generation NUMERIC(6, 4),
+  vat_transmission NUMERIC(6, 4),
+  vat_ancillary NUMERIC(6, 4),
   metering_charge NUMERIC(10, 2) NOT NULL DEFAULT 5.00,
   supply_charge NUMERIC(10, 2) NOT NULL DEFAULT 15.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -91,7 +101,9 @@ Notes:
 - `fit_all` is a first-class column as of migration `008`
 - `ancillary_service`, `supply_rate`, and `metering_rate` are first-class per-kWh columns as of migration `031`; `supply_charge` and `metering_charge` remain fixed per-customer charges
 - migration `031` corrects the August 2026 row after the previous parser shifted fields at the Ancillary Service column
-- application cost logic must use unbundled components plus fixed charges, then apply VAT last
+- since migration `037`, the adjustment columns hold the schedule's per-kWh AWAT refunds (signed), regulatory reset fees, lifeline rate adjustment, senior citizen subsidy, RPT charge + adjustment, GEA-All, and lifeline subsidy, and `vat_generation` / `vat_transmission` / `vat_ancillary` hold each month's effective VAT rates (NULL on rows before August 2026 falls back to `vat_rate`)
+- `universal_charges` is the sum of the four Universal Charge columns (UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, UC-SD)
+- application cost logic must use `lib/meralco-bill.ts`, which applies VAT per component; `public.meralco_variable_rate_per_kwh(meralco_rates)` is the SQL mirror used by the budget trigger
 - do not fall back to hardcoded runtime rates when a row is missing
 - `effective_month` means when the rate applies; `fetched_at` means when WattWise last obtained it. Do not label legacy `created_at` values as an official Meralco update.
 - `source_url` and `source_pdf_url` preserve the Meralco archive/PDF provenance when `sync-meralco-rates` created the row. Manual legacy rows must disclose that the official source link was not recorded.
@@ -449,6 +461,10 @@ Use cases:
 ### `update_device_last_seen()`
 
 AFTER INSERT trigger on `energy_logs` (`energy_logs_update_device_last_seen`, captured in migration `035`). Sets `devices.last_seen_at = now()` and `is_online = true` for the device whose UUID or MAC the row names, when the device is paired (`user_id IS NOT NULL`). SECURITY DEFINER since migration `036`, because hardware inserts as `anon`, which has no UPDATE policy on `devices`; before that it silently updated nothing for real hardware. Nothing resets `is_online`, so treat a device as online when `last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (`lib/device-telemetry.ts`), not from `is_online`.
+
+### `meralco_variable_rate_per_kwh(r meralco_rates)`
+
+Added in migration `037`. Returns the VAT-inclusive variable cost of one kWh for a rate row, matching `computeVariableRatePerKwh` in `lib/meralco-bill.ts` (October 2026: 14.8761).
 
 ### `handle_energy_log_smart_budget()`
 

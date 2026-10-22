@@ -2,7 +2,10 @@ import "server-only";
 
 import type { SessionUser } from "@/lib/auth-context";
 import { getEndOfManilaDay, getStartOfManilaDay } from "@/lib/date-utils";
-import { computeHistoricalVariableSpendByDeviceFromDayRows } from "@/lib/meralco-rates";
+import {
+  computeHistoricalVariableSpendByDeviceFromDayRows,
+  computeVariableRatePerKwh,
+} from "@/lib/meralco-rates";
 import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import type { createClient } from "@/lib/supabase/server";
 
@@ -50,7 +53,12 @@ export type EnergyReportRow = {
   metering_rate: number;
   universal_charges_rate: number;
   fit_all_rate: number;
+  adjustments_rate: number;
   vat_rate: number;
+  vat_generation_rate: number;
+  vat_transmission_rate: number;
+  vat_ancillary_rate: number;
+  variable_rate_per_kwh: number;
   fixed_charges_php: number;
 };
 
@@ -129,6 +137,15 @@ export async function buildEnergyReport(
     ((averageRes.data ?? []) as AverageWattsRow[]).map((row) => [row.device_id, numberValue(row.average_watts)])
   );
 
+  const r = activeRates.rates;
+  // AWAT refunds, regulatory reset, lifeline rate adjustment, senior citizen
+  // subsidy, RPT, GEA-All, and lifeline subsidy, before VAT.
+  const adjustmentsRate = Number(
+    (r.awatAdjustment + r.regulatoryResetAdjustment + r.lifelineRateAdjustment +
+      r.seniorCitizenSubsidy + r.rptCharge + r.geaAll + r.lifelineSubsidy).toFixed(4)
+  );
+  const variableRatePerKwh = Number(computeVariableRatePerKwh(r, activeRates.vatRate).toFixed(4));
+
   const rows = ((devicesRes.data ?? []) as DeviceRow[]).map((device): EnergyReportRow => {
     const usageKwh = usageByDevice.get(device.id) ?? 0;
     const baselineWatts = numberValue(device.profiled_baseline_watts);
@@ -161,7 +178,12 @@ export async function buildEnergyReport(
       metering_rate: activeRates.rates.meteringRate,
       universal_charges_rate: activeRates.rates.universalCharges,
       fit_all_rate: activeRates.rates.fitAll,
+      adjustments_rate: adjustmentsRate,
       vat_rate: activeRates.vatRate,
+      vat_generation_rate: activeRates.rates.vatGeneration ?? activeRates.vatRate,
+      vat_transmission_rate: activeRates.rates.vatTransmission ?? activeRates.vatRate,
+      vat_ancillary_rate: activeRates.rates.vatAncillary ?? activeRates.vatRate,
+      variable_rate_per_kwh: variableRatePerKwh,
       fixed_charges_php: activeRates.fixedMonthlyChargesPhp,
     };
   });
