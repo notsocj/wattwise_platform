@@ -75,19 +75,38 @@ jobs:
           JSON
           )
 
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$FUNCTION_URL" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            -H "x-sync-secret: $SYNC_SECRET" \
-            --data "$BODY")
+          # PDF text extraction goes through a third-party proxy that fails
+          # intermittently, and the Meralco site occasionally returns 5xx.
+          # Failed attempts write nothing, so retry a few times. Anomaly
+          # rejections are deterministic and are not retried.
+          MAX_ATTEMPTS=3
+          for ATTEMPT in $(seq 1 $MAX_ATTEMPTS); do
+            RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$FUNCTION_URL" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "x-sync-secret: $SYNC_SECRET" \
+              --data "$BODY" || printf '\n000')
 
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+            HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
 
-          echo "HTTP status: $HTTP_STATUS"
-          echo "$RESPONSE_BODY"
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS - HTTP status: $HTTP_STATUS"
+            echo "$RESPONSE_BODY"
 
-          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-            echo "Rate sync failed"
-            exit 1
-          fi
+            if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+              exit 0
+            fi
+
+            if echo "$RESPONSE_BODY" | grep -q "Anomaly validation failed"; then
+              echo "Rate sync rejected by anomaly validation; not retrying."
+              exit 1
+            fi
+
+            if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Retrying in 45 seconds..."
+              sleep 45
+            fi
+          done
+
+          echo "Rate sync failed after $MAX_ATTEMPTS attempts"
+          exit 1
