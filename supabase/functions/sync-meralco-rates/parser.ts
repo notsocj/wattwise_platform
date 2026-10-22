@@ -32,6 +32,41 @@ function parseSignedNumberToken(raw: string): number | null {
   return toNumber(normalized);
 }
 
+// Column order of the residential rows in Meralco's current Summary Schedule
+// of Rates (verified on the August, September, and October 2026 PDFs):
+//   0 Generation, 1 Transmission, 2 Ancillary Service, 3 System Loss,
+//   4 Distribution, 5 Supply (per kWh), 6 Supply (per customer),
+//   7 Metering (per kWh), 8 Metering (per customer), 9 AWAT 1, 10 AWAT 2,
+//   11 Regulatory Reset Fees Adj, 12 Lifeline Rate Adj, 13 Senior Citizen
+//   Subsidy, 14 RPT Charge, 15 RPT Adj, 16-19 Universal Charge parts
+//   (UC-ME NPC-SPUG, UC-ME RED-CI, UC-EC, UC-SD), 20 FIT-All, 21 GEA-All,
+//   22 Lifeline Subsidy.
+const CURRENT_SCHEDULE_COLUMNS = {
+  universalParts: [16, 17, 18, 19],
+  fitAll: 20,
+  length: 23,
+} as const;
+
+/**
+ * Reads exactly the 101-200 kWh residential row (up to the next row label)
+ * when the schedule uses the current column set. Returns null for other
+ * layouts so the legacy positional parsing still applies to them.
+ */
+function parseCurrentScheduleRow(text: string): number[] | null {
+  if (!/UC-ME/i.test(text) || !/GEA-All/i.test(text)) return null;
+
+  const match = text.match(
+    /101 TO 200 KWH\s+([\s\S]*?)(?=\s+\d+\s+TO\s+\d+\s+KWH|\s+OVER\s+\d+\s+KWH|\s+[A-Za-z]{2,}|$)/i
+  );
+  if (!match) return null;
+
+  const values = (match[1].match(/\(\s*-?\d+(?:\.\d+)?\s*\)|-?\d+(?:\.\d+)?/g) ?? [])
+    .map((token) => parseSignedNumberToken(token))
+    .filter((value): value is number => value !== null);
+
+  return values.length === CURRENT_SCHEDULE_COLUMNS.length ? values : null;
+}
+
 function parseResidentialBaseRowValues(text: string): number[] | null {
   const rowAnchors = ["101 TO 200 KWH", "201 TO 300 KWH", "0 TO 20 KWH"];
 
@@ -145,17 +180,20 @@ function findByLabels(
 }
 
 function findVatRate(text: string): number | null {
-  const vatPercentRegex = /vat[\s\S]{0,50}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
-  let vatPercentMatch: RegExpExecArray | null;
-  while ((vatPercentMatch = vatPercentRegex.exec(text)) !== null) {
-    const value = Number(vatPercentMatch[1]);
-    if (Number.isFinite(value) && value > 0 && value <= 100) return value / 100;
-  }
-
+  // The summary schedule's VAT table lists per-component rates (Generation
+  // 8.33%, Transmission 11.99%, ...) before "Other Charges 12.00%", the single
+  // rate WattWise applies. Prefer it over the first percentage near "VAT".
   const otherChargesRegex = /other\s+charges[\s\S]{0,30}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
   let otherChargesMatch: RegExpExecArray | null;
   while ((otherChargesMatch = otherChargesRegex.exec(text)) !== null) {
     const value = Number(otherChargesMatch[1]);
+    if (Number.isFinite(value) && value > 0 && value <= 100) return value / 100;
+  }
+
+  const vatPercentRegex = /vat[\s\S]{0,50}?(\d{1,2}(?:\.\d+)?)\s*%/gi;
+  let vatPercentMatch: RegExpExecArray | null;
+  while ((vatPercentMatch = vatPercentRegex.exec(text)) !== null) {
+    const value = Number(vatPercentMatch[1]);
     if (Number.isFinite(value) && value > 0 && value <= 100) return value / 100;
   }
 
@@ -170,16 +208,30 @@ export function parseRatesFromText(text: string): ParsedRates {
     .replace(/\s+/g, " ")
     .trim();
   const typicalResidentialRow = parseTypicalResidentialRowValues(normalizedText);
-  const residentialBaseRow = typicalResidentialRow ?? parseResidentialBaseRowValues(normalizedText);
+  const currentScheduleRow = typicalResidentialRow ? null : parseCurrentScheduleRow(normalizedText);
+  const residentialBaseRow =
+    typicalResidentialRow ?? currentScheduleRow ?? parseResidentialBaseRowValues(normalizedText);
   const fixedChargeMultiplier = typicalResidentialRow ? 100 : 1;
 
   // Typical-bill rows omit dash-only columns in extracted text, so Universal
   // and FIT-All are most stable relative to the row's final subsidy/total cells.
+  // The current summary schedule splits Universal Charge into four columns
+  // that are summed; GEA-All sits after FIT-All and must not be read as it.
   const universalIndex = typicalResidentialRow ? typicalResidentialRow.length - 4 : 20;
-  const fitAllIndex = typicalResidentialRow ? typicalResidentialRow.length - 3 : 21;
-  const rowFallbackUniversal = residentialBaseRow && residentialBaseRow.length > universalIndex
-    ? residentialBaseRow[universalIndex]
-    : null;
+  const fitAllIndex = currentScheduleRow
+    ? CURRENT_SCHEDULE_COLUMNS.fitAll
+    : typicalResidentialRow
+      ? typicalResidentialRow.length - 3
+      : 21;
+  const rowFallbackUniversal = currentScheduleRow
+    ? Number(
+        CURRENT_SCHEDULE_COLUMNS.universalParts
+          .reduce((sum, index) => sum + currentScheduleRow[index], 0)
+          .toFixed(4)
+      )
+    : residentialBaseRow && residentialBaseRow.length > universalIndex
+      ? residentialBaseRow[universalIndex]
+      : null;
   const rowFallbackGeneration = residentialBaseRow?.[0] ?? null;
   const rowFallbackTransmission = residentialBaseRow?.[1] ?? null;
   const rowFallbackAncillaryService = residentialBaseRow?.[2] ?? null;
