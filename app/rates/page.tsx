@@ -44,14 +44,16 @@ function RateComponents({ rate }: { rate: HistoricalMeralcoRateRow }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+      {/* One row per component: two columns are too narrow for a label plus a
+          4-decimal peso value inside the 430px mobile shell. */}
+      <dl className="divide-y divide-white/[0.06] text-sm">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-2 text-white/60">
-            <span>{label}</span>
-            <span className="font-semibold text-white">₱{value.toFixed(4)}</span>
+          <div key={label} className="flex items-baseline justify-between gap-4 py-2 text-white/60">
+            <dt className="min-w-0">{label}</dt>
+            <dd className="shrink-0 font-semibold tabular-nums text-white">₱{value.toFixed(4)}</dd>
           </div>
         ))}
-      </div>
+      </dl>
       <div className="border-t border-white/[0.08] pt-3 text-sm text-white/60">
         <div className="flex justify-between">
           <span>Metering + supply fixed charges</span>

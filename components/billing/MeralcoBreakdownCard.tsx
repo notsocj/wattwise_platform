@@ -78,21 +78,22 @@ export default function MeralcoBreakdownCard({
         </div>
         <span className="text-xs font-semibold text-mint">₱{variableWithVat.toFixed(4)}/kWh</span>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+      {/* One row per component so the rate and its cost never collide on a phone. */}
+      <dl className="divide-y divide-white/[0.06] text-xs">
         {items.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-2 text-white/60">
-            <span>{label}</span>
-            <span className="font-semibold text-white">
-              ₱{value.toFixed(4)}
+          <div key={label} className="flex items-baseline justify-between gap-4 py-1.5 text-white/60">
+            <dt className="min-w-0">{label}</dt>
+            <dd className="shrink-0 text-right tabular-nums">
+              <span className="font-semibold text-white">₱{value.toFixed(4)}</span>
               {usageKwh > 0 && (
-                <span className="ml-1 text-[10px] text-white/35">
+                <span className="ml-1.5 text-[11px] text-white/50">
                   (₱{(value * usageKwh * (1 + vatRate)).toFixed(2)})
                 </span>
               )}
-            </span>
+            </dd>
           </div>
         ))}
-      </div>
+      </dl>
       <div className="mt-4 border-t border-white/[0.08] pt-3 text-xs text-white/60">
         <div className="flex justify-between">
           <span>Metering + supply fixed charges</span>

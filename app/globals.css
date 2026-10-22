@@ -299,3 +299,6 @@ html[data-theme] * {
 [data-theme="light"] .hover\:border-white\/20:hover {
   border-color: rgba(15, 17, 21, 0.25);
 }
+[data-theme="light"] .divide-white\/\[0\.06\] > :not(:last-child) {
+  border-color: rgba(15, 17, 21, 0.075);
+}
