@@ -53,6 +53,8 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Distribution is tiered by the whole home's monthly kWh: one rate on every kWh (up to 200, 201-300, 301-400, over 400; `distribution*` columns), plus energy tax above 650 kWh (BP 36, no VAT). The household kWh is `profiles.meralco_monthly_kwh` (the homeowner's bill, set in Settings) or, when empty, monitored usage this billing cycle projected to the full cycle. `lib/meralco-rates-server.ts` applies it automatically through `my_household_usage()`; admin code passes `{ household }` for a specific owner (`household_monthly_kwh_for`, service role only).
 - The budget-cutoff trigger uses the same formula in SQL, `public.meralco_variable_rate_per_kwh(rate, household_kwh)` (migrations `037`, `038`). Change it together with `lib/meralco-bill.ts` and `tests/meralco-bill.test.ts`, and keep the October 2026 checks passing (PHP 14.8761/kWh at the base tier; Meralco's typical bills at 300, 500, and 1,000 kWh).
 - Do not fall back to hardcoded runtime defaults if the database rate row is missing.
+- Never round money per reading. `device_month_usage.variable_spend_php` keeps full precision (migration `039`); round only for display. The budget trigger ignores kWh jumps no 10 kW load could make in the elapsed time.
+- Demo units are simulated by `public.simulate_demo_units()` on a 10-second pg_cron job (migration `039`), not by an Edge Function. Start a unit from Admin → Demo units; it backfills its history and pauses itself after 4 hours.
 
 ### Supabase and data access
 

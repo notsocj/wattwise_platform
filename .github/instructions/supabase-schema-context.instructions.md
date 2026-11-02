@@ -24,7 +24,7 @@ Stores super-admin controlled virtual WattWise meters for demos and testing. Eac
 
 - The virtual device uses a locally administered MAC address starting with `02:DE:`.
 - Only the server-side super-admin APIs may create, assign, start, pause, reset, or run a simulation.
-- `simulate-demo-units` runs only active units and advances `energy_kwh` from `simulated_watts` and elapsed time (capped at ten minutes per invocation).
+- `public.simulate_demo_units()` (migration `039`) runs every 10 seconds through pg_cron for active units: one live reading at `simulated_watts` (0 W while the relay is off). After a pause it first fills the gap, up to 14 days, in 15-minute steps that follow the device's `daily_usage_hours` (on in the window ending 22:00 Manila). Live streaming pauses itself 4 hours after `live_since`.
 - Resetting a simulation resets its future meter baseline; it intentionally does not delete historical `energy_logs`.
 
 ## Core Tables

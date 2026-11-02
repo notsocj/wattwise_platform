@@ -67,7 +67,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
       return;
     }
     formElement.reset();
-    setMessage("Demo unit created. Start it, then use Run now to generate its first reading.");
+    setMessage("Demo unit created. Start it to stream readings every 10 seconds.");
     router.refresh();
   }
 
@@ -85,20 +85,6 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
       setMessage(payload.error || "Unable to update the demo unit.");
       return;
     }
-    router.refresh();
-  }
-
-  async function runUnit(deviceId: string) {
-    setRunningId(deviceId);
-    setMessage(null);
-    const response = await fetch(`/api/admin/demo-units/${deviceId}/run`, { method: "POST" });
-    const payload = await response.json();
-    setRunningId(null);
-    if (!response.ok) {
-      setMessage(payload.error || "Unable to generate telemetry.");
-      return;
-    }
-    setMessage("Telemetry generated and stored in energy logs.");
     router.refresh();
   }
 
@@ -132,7 +118,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
           <Zap className="mt-0.5 h-5 w-5 shrink-0 text-mint" />
           <div>
             <h2 className="font-semibold">Virtual WattWise unit</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/60">This creates a normal device and writes the same cumulative telemetry format that ESP hardware uses. It is intended for demos and testing only; it never controls a physical relay.</p>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/60">This creates a normal device and writes the same cumulative telemetry format that ESP hardware uses. It is intended for demos and testing only; it never controls a physical relay. A running unit sends a reading every 10 seconds and pauses itself after 4 hours. Starting a paused unit first fills the time it was away (up to 14 days) using its profiled daily hours, so dashboards have history.</p>
           </div>
         </div>
       </section>
@@ -169,7 +155,6 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
                 <td className="p-4 text-white/60">{unit.last_generated_at ? new Date(unit.last_generated_at).toLocaleString() : "No reading yet"}</td>
                 <td className="p-4"><div className="flex flex-wrap gap-2">
                   <button disabled={busy} onClick={() => updateUnit(unit.device_id, { is_active: !unit.is_active, reason: unit.is_active ? "Paused demo unit" : "Started demo unit" })} className={`${buttonClass} border border-white/15 hover:bg-white/5`}>{unit.is_active ? <><Square className="h-3.5 w-3.5" />Pause</> : <><Play className="h-3.5 w-3.5" />Start</>}</button>
-                  <button disabled={busy || !unit.is_active} onClick={() => runUnit(unit.device_id)} className={`${buttonClass} border border-mint/30 text-mint hover:bg-mint/10`}><Play className="h-3.5 w-3.5" />Run now</button>
                   <button disabled={busy} onClick={async () => {
                     const confirmed = await confirm({
                       title: "Reset this simulated meter to 0 kWh?",

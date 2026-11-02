@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseRatesFromText } from "../supabase/functions/sync-meralco-rates/parser.ts";
+import { parseArchiveEntries, parseRatesFromText } from "../supabase/functions/sync-meralco-rates/parser.ts";
 
 test("maps the August 2026 non-lifeline residential row to the matching Meralco columns", () => {
   const extractedText = `
@@ -147,4 +147,35 @@ test("sums the four Universal Charge columns in the October 2026 schedule", () =
   assert.equal(parsed.supply_charge, 16.38);
   assert.equal(parsed.metering_charge, 5);
   assert.equal(parsed.vat_rate, 0.12);
+});
+
+test("finds Summary of Schedule of Rates PDFs on Meralco's rates archive page", () => {
+  // Trimmed from www.meralco.com.ph/governance/regulatory/rates-archive (November 2026).
+  const card = (category: string, href: string, month: string) => `
+    <li class="rates-archive__document" data-rates-archive-document data-category="x" data-year="2026">
+      <article class="rates-document">
+        <div class="rates-document__main">
+          <p class="rates-document__category">${category}</p>
+          <h3>
+            <a href="${href}">
+              ${month}
+            </a>
+          </h3>
+        </div>
+      </article>
+    </li>`;
+  const html =
+    card("Generation", "/uploads/documents/source-delta/2026-10-25/aaa.pdf?v=1", "October 2026") +
+    card("Summary of Schedule of Rates", "/uploads/documents/source-delta/2026-10-25/9ff0.pdf?v=1793354027", "October 2026") +
+    card("Summary of Schedule of Rates", "/uploads/documents/source-delta/2026-09-25/b12.pdf", "September 2026");
+
+  const entries = parseArchiveEntries(html, "https://www.meralco.com.ph/governance/regulatory/rates-archive");
+
+  assert.equal(entries.length, 3);
+  assert.deepEqual(entries[1], {
+    monthLabel: "October 2026",
+    monthDate: new Date(Date.UTC(2026, 9, 1)),
+    title: "Summary of Schedule of Rates",
+    pdfUrl: "https://www.meralco.com.ph/uploads/documents/source-delta/2026-10-25/9ff0.pdf?v=1793354027",
+  });
 });

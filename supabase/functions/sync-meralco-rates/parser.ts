@@ -30,6 +30,59 @@ export type ParsedRates = {
   distribution_over_400: number | null;
 };
 
+export type ArchiveEntry = {
+  monthLabel: string;
+  monthDate: Date;
+  title: string;
+  pdfUrl: string;
+};
+
+const MONTHS: Record<string, number> = {
+  january: 0,
+  february: 1,
+  march: 2,
+  april: 3,
+  may: 4,
+  june: 5,
+  july: 6,
+  august: 7,
+  september: 8,
+  october: 9,
+  november: 10,
+  december: 11,
+};
+
+function parseMonthLabel(monthLabel: string): Date | null {
+  const match = monthLabel.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  const month = match ? MONTHS[match[1].toLowerCase()] : undefined;
+  return match && month !== undefined ? new Date(Date.UTC(Number(match[2]), month, 1)) : null;
+}
+
+/**
+ * Document cards on Meralco's rates archive (www.meralco.com.ph, since
+ * November 2026): a category line, then a link whose text is the month.
+ * Links are site-relative, so they are resolved against the archive URL.
+ */
+export function parseArchiveEntries(html: string, archiveUrl: string): ArchiveEntry[] {
+  const cardRegex =
+    /<p[^>]*rates-document__category[^>]*>([^<]+)<\/p>\s*<h3>\s*<a[^>]*href="([^"]+?\.pdf(?:\?[^"]*)?)"[^>]*>([^<]+)<\/a>/gi;
+  const entries: ArchiveEntry[] = [];
+
+  for (const match of html.matchAll(cardRegex)) {
+    const monthLabel = match[3].replace(/\s+/g, " ").trim();
+    const monthDate = parseMonthLabel(monthLabel);
+    if (!monthDate) continue;
+    entries.push({
+      monthLabel,
+      monthDate,
+      title: match[1].replace(/\s+/g, " ").trim(),
+      pdfUrl: new URL(match[2], archiveUrl).toString(),
+    });
+  }
+
+  return entries;
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

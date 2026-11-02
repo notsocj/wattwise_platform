@@ -80,7 +80,7 @@ lib/                 Billing, notification, and assistant logic, including:
   supabase/          browser, server, middleware, and service-role clients
 supabase/
   migrations/        Canonical schema, RLS, and RPC history (apply in order)
-  functions/         Edge Functions: sync-meralco-rates, dispatch-budget-notifications, simulate-demo-units
+  functions/         Edge Functions: sync-meralco-rates, dispatch-budget-notifications
 tests/               Node test runner suites
 .github/
   instructions/      Roadmap, AI workflow, and schema reference docs

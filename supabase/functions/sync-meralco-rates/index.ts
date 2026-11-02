@@ -1,11 +1,9 @@
-type ArchiveEntry = {
-  monthLabel: string;
-  monthDate: Date;
-  title: string;
-  pdfUrl: string;
-};
-
-import { parseRatesFromText, type ParsedRates } from "./parser.ts";
+import {
+  parseArchiveEntries,
+  parseRatesFromText,
+  type ArchiveEntry,
+  type ParsedRates,
+} from "./parser.ts";
 
 type CompleteRates = {
   generation: number;
@@ -61,22 +59,7 @@ type ExistingRateRow = {
 };
 
 const DEFAULT_RATES_ARCHIVES_URL =
-  "https://company.meralco.com.ph/news-and-advisories/rates-archives";
-
-const MONTHS: Record<string, number> = {
-  january: 0,
-  february: 1,
-  march: 2,
-  april: 3,
-  may: 4,
-  june: 5,
-  july: 6,
-  august: 7,
-  september: 8,
-  october: 9,
-  november: 10,
-  december: 11,
-};
+  "https://www.meralco.com.ph/governance/regulatory/rates-archive";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -99,59 +82,9 @@ function toIsoMonthStart(date: Date): string {
   return `${yyyy}-${mm}-01`;
 }
 
-function parseMonthLabel(monthLabel: string): Date | null {
-  const cleaned = monthLabel.replace(/\s+/g, " ").trim();
-  const match = cleaned.match(/^([A-Za-z]+)\s+(\d{4})$/);
-
-  if (!match) {
-    return null;
-  }
-
-  const month = MONTHS[match[1].toLowerCase()];
-  const year = Number(match[2]);
-
-  if (month === undefined || Number.isNaN(year)) {
-    return null;
-  }
-
-  return new Date(Date.UTC(year, month, 1));
-}
-
-function normalizeWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
 function isSummaryTitle(title: string): boolean {
   const normalized = title.toLowerCase();
   return /summary\s+(of\s+)?schedule\s+of\s+rates/.test(normalized);
-}
-
-function parseArchiveEntries(html: string): ArchiveEntry[] {
-  const entries: ArchiveEntry[] = [];
-
-  const rowRegex =
-    /<td[^>]*views-field-field-date-created[^>]*>\s*([^<]+?)\s*<\/td>[\s\S]*?<td[^>]*views-field-title[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>[\s\S]*?<td[^>]*views-field-field-downloadable-file[^>]*>[\s\S]*?<a[^>]*href="([^"]+?\.pdf(?:\?[^"]*)?)"/gi;
-
-  let match: RegExpExecArray | null;
-  while ((match = rowRegex.exec(html)) !== null) {
-    const monthLabel = normalizeWhitespace(match[1]);
-    const title = normalizeWhitespace(match[2]);
-    const pdfUrl = match[3].trim();
-    const monthDate = parseMonthLabel(monthLabel);
-
-    if (!monthDate) {
-      continue;
-    }
-
-    entries.push({
-      monthLabel,
-      monthDate,
-      title,
-      pdfUrl,
-    });
-  }
-
-  return entries;
 }
 
 function selectSummaryEntry(entries: ArchiveEntry[], targetMonth?: string): ArchiveEntry {
@@ -574,7 +507,7 @@ Deno.serve(async (req) => {
     }
 
     const archiveHtml = await archiveResponse.text();
-    const archiveEntries = parseArchiveEntries(archiveHtml);
+    const archiveEntries = parseArchiveEntries(archiveHtml, ratesArchivesUrl);
 
     if (archiveEntries.length === 0) {
       throw new Error("No downloadable rate rows found in rates archives HTML.");
