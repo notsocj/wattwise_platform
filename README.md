@@ -13,7 +13,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF
 - **AI insights and a customer assistant**, generated server-side with OpenAI and cached in `ai_insights`
 - **Manager mode** for landlords: rooms, tenants, fleet dashboard, and manager AI
-- **Admin console**: users, devices, rates, analytics, AI costs, audit log, health, demo units, and a hardware test lab
+- **Admin console**: users, devices, rates, analytics, AI costs, audit log, health, a hardware test lab, and demo units (simulated meters that stream a reading every 10 seconds and fill in realistic history, for presentations without hardware)
 
 ## Tech stack
 

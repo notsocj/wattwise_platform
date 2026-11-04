@@ -64,6 +64,7 @@ Safe load only.
 - [ ] Open a device page. ✅ Gauges and the billing-cycle numbers load in about a second.
 - [ ] Calendar: move to the previous and next month. ✅ Days line up with weekdays, and "today" is correct, including around midnight Manila time.
 - [ ] `/rates` shows the active Meralco breakdown and rate history.
+- [ ] GitHub Actions → "Sync Meralco rates" → Run workflow with `dryRun: true` and the latest published month. ✅ It finishes green and logs the parsed rates.
 - [ ] Settings → "Monthly kWh on your Meralco bill": save 350, and the breakdown labels distribution "301–400 kWh tier" with a higher rate; clear it, and the note says the tier is projected from monitored usage. Invalid input (letters, 0) shows an inline error.
 
 ## 7. Reports
@@ -102,6 +103,9 @@ Needs a super admin account.
 - [ ] Devices shows Online for units that reported in the last 20 seconds, and "last seen …" or "never seen" for the rest.
 - [ ] Save a user or device edit that the server rejects. ✅ The error shows inside the edit panel, not a browser popup.
 - [ ] Reset or delete a demo unit. ✅ The app's own confirmation dialog appears.
+- [ ] Start a paused demo unit. ✅ Within about 10 seconds its owner's dashboard shows it LIVE, and the week strip and calendar show up to 14 days of history.
+- [ ] Turn a running demo unit off from the owner's dashboard. ✅ Its watts drop to 0 and its kWh stops growing.
+- [ ] A demo unit started more than 4 hours ago shows Paused. ✅ It pauses itself so it cannot run all day unattended.
 
 ## 12. Security spot checks
 
