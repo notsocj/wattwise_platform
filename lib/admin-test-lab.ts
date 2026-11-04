@@ -36,7 +36,7 @@ export function targetCumulativeEnergy(input: {
   const rate = getVariableRatePerKwh(input.rates, input.vatRate);
   if (!Number.isFinite(rate) || rate <= 0) throw new Error("The active Meralco variable rate is invalid.");
   const neededSpend = Math.max(0, input.targetSpendPhp - input.currentSpendPhp);
-  // The trigger rounds each increment to centavos. Round upward so a threshold is actually crossed.
+  // Round the telemetry counter upward so the target is crossed even at four-decimal kWh precision.
   const incrementKwh = Math.ceil((neededSpend / rate + 0.00005) * 10_000) / 10_000;
   return Math.round((Math.max(0, input.currentEnergyKwh) + incrementKwh) * 10_000) / 10_000;
 }

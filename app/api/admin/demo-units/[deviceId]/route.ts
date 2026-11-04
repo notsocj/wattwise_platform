@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
-
-function numberInRange(value: unknown, minimum: number, maximum: number) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum ? parsed : null;
-}
+import { buildDemoSimulationUpdate } from "@/lib/demo-units";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
   const auth = await requireAdminApi();
@@ -18,23 +14,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   ]);
   if (!beforeSimulation || !beforeDevice) return NextResponse.json({ error: "Demo unit not found." }, { status: 404 });
 
-  const simulationUpdate: Record<string, unknown> = {};
-  if (typeof body.is_active === "boolean") simulationUpdate.is_active = body.is_active;
-  if (body.simulated_watts !== undefined) {
-    const watts = numberInRange(body.simulated_watts, 0, 5000);
-    if (watts === null) return NextResponse.json({ error: "Watts must be between 0 and 5,000." }, { status: 400 });
-    simulationUpdate.simulated_watts = watts;
+  const simulationChange = buildDemoSimulationUpdate(body);
+  if ("error" in simulationChange) {
+    return NextResponse.json({ error: simulationChange.error }, { status: 400 });
   }
-  if (body.simulated_voltage_v !== undefined) {
-    const voltage = numberInRange(body.simulated_voltage_v, 180, 260);
-    if (voltage === null) return NextResponse.json({ error: "Voltage must be between 180 and 260." }, { status: 400 });
-    simulationUpdate.simulated_voltage_v = voltage;
-  }
-  if (body.reset_energy === true) {
-    simulationUpdate.energy_kwh = 0;
-    simulationUpdate.last_generated_at = null;
-  }
-  if (Object.keys(simulationUpdate).length) simulationUpdate.updated_at = new Date().toISOString();
+  const simulationUpdate = simulationChange.update;
 
   const deviceUpdate: Record<string, unknown> = {};
   for (const key of ["owner_id", "tenant_id", "device_name", "appliance_type"]) {

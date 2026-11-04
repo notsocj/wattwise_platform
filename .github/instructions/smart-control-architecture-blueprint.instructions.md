@@ -10,7 +10,7 @@ applyTo: "**"
 Smart Control extends the existing Next.js + Supabase + ESP32-S3 architecture. It keeps Supabase as the system of record, preserves DB-driven Meralco billing, and uses the current hardware contract: ESP32-S3 posts MAC-address telemetry and polls `devices.relay_state`.
 
 Core behavior:
-- Dashboard live W/V/A updates come directly from Supabase Realtime `energy_logs` INSERT payloads, while server refreshes continue to keep RPC-based billing totals accurate.
+- Dashboard live W/V/A updates come directly from Supabase Realtime `energy_logs` INSERT payloads. The dashboard refreshes server data when relay or budget status changes, not on each reading.
 - Add Appliance registers the MAC first with `relay_state = true`, then profiles from a fresh telemetry row within the 20-second freshness window.
 - Per-device monthly limits are stored on `devices.user_approved_limit_php`.
 - `energy_logs` INSERT triggers update `device_month_usage` and can set `devices.relay_state = false` when a device reaches its approved monthly variable spend limit.
@@ -33,13 +33,13 @@ New `devices` columns:
 - `profiled_at`
 
 New tables:
-- `device_month_usage`: calendar-month accumulator per device, storing kWh, variable spend, and the last cumulative meter reading.
+- `device_month_usage`: custom billing-cycle accumulator per device since migration `013`, using the owner's `profiles.billing_cycle_start_day` in Asia/Manila. Stores kWh, variable spend, and the last cumulative meter reading; migration `039` preserves six decimal places of spend without per-reading centavo rounding.
 - `device_budget_events`: user-visible/audit events for `approval_required` and `auto_cutoff`.
 
 Trigger:
 - `handle_energy_log_smart_budget()` runs after `energy_logs` INSERT.
 - It resolves `NEW.device_id` against both `devices.id::text` and `devices.mac_address`.
-- It computes only positive cumulative kWh deltas.
+- It counts meter resets and physically implausible kWh jumps as zero usage (migration `039`).
 - It uses the active `meralco_rates` row and variable Meralco components plus VAT.
 - It excludes fixed charges from per-device shutoff decisions.
 
@@ -78,11 +78,11 @@ Budget warnings:
 
 ## Supabase Cloud Setup
 
-Realtime must be enabled manually for `energy_logs`:
+Keep both `energy_logs` and `devices` in the `supabase_realtime` publication:
 1. Open Supabase Dashboard.
 2. Go to Database > Replication.
-3. Enable Realtime for the `energy_logs` table.
-4. Confirm INSERT events are broadcast to authenticated browser clients.
+3. Enable Realtime for both tables.
+4. Confirm telemetry INSERTs and device UPDATEs are broadcast to authorized browser clients. Ignore heartbeat-only device updates when deciding whether to refresh the dashboard.
 
 Required environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`

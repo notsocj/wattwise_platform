@@ -77,10 +77,10 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - For billing-grade totals, use RPCs that aggregate by minute and sum cumulative deltas (`get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`) instead of raw row loops.
 - Cache idempotent client-side API reads with SWR and the shared `lib/fetcher.ts` JSON fetcher to preserve stale data during back-navigation while revalidating in the background.
 - When correlating `energy_logs.device_id` to devices, normalize and support both key formats (`devices.id` and legacy `devices.mac_address`) to avoid zeroed dashboard totals during schema transition.
-- For "active appliance" status in UI cards, never rely on the latest row alone. Use `recorded_at` freshness (for example, last 1 minute for 10-second telemetry) before showing live/active wattage; stale readings must render as offline or idle to avoid false-active states when a unit is unplugged.
+- For "active appliance" status in UI cards, use `isFreshReading` and `ACTIVE_READING_WINDOW_MS` from `lib/device-telemetry.ts` (20 seconds) before showing live wattage. Stale readings must render as offline or idle; `devices.is_online` is never reset and is not a freshness signal.
 - For Device Detail metrology gauges, query only the latest row with scoped filters and read `average_watts`, `voltage_v`, and `current_a`; if `voltage_v`/`current_a` are null on legacy rows, fall back safely without removing the freshness gate.
 - For Home Dashboard device cards, derive online/offline from telemetry freshness and expose live `average_watts`, `voltage_v`, and `current_a` (with safe voltage/current fallback for legacy rows) so W/V/A stays coherent with live status.
-- For server-rendered dashboard/device pages that must feel live, use a small client-side Supabase Realtime listener (filtered by owned `device_id` keys) to trigger a throttled `router.refresh()` on `energy_logs` INSERT/UPDATE events. This preserves RPC-based billing accuracy while keeping UI telemetry live without periodic polling.
+- On the Home Dashboard, patch telemetry directly and refresh only when `devices.relay_state` or `devices.budget_status` changes. Ignore heartbeat-only device updates; do not add a page refresh per reading. The device-detail page currently uses `RealtimeRefreshBridge` for scoped, throttled server refreshes and skips hidden-tab work.
 - For dashboard cards that show live W/V/A, bind Supabase Realtime INSERT payloads directly into client state so the UI updates immediately without waiting for the server refresh bridge.
 - During schema transitions, avoid hard-failing device lists on optional metadata columns (for example `devices.relay_state`). Use a compatibility fetch path: try full select first, then retry with a reduced column set when PostgreSQL returns undefined-column (`42703`), and map sensible defaults in the view model.
 - Multi-tenant device access is owner/tenant based: managers/users manage `devices.owner_id = auth.uid()` while tenants only read `devices.tenant_id = auth.uid()`. `devices.user_id` is legacy compatibility only.
@@ -102,6 +102,13 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - If automatic cutoff is disabled, the trigger records `budget_status = 'approval_required'` without changing the relay. If enabled, it sets `relay_state = false` and `budget_status = 'auto_cutoff'`.
 - Automatic cutoff is latched: neither a new billing cycle nor a raised limit restores power. Owners/managers must call `POST /api/devices/[deviceId]/restore` with explicit confirmation, and relay ON routes must not bypass an active cutoff.
 - After migration `013_custom_billing_cycles.sql`, `device_month_usage.month_start` stores the billing-cycle start date instead of always representing the first day of a calendar month.
+
+### 2c. Demo-unit lifecycle
+
+- `public.simulate_demo_units()` runs through pg_cron every 10 seconds (migration `039`). The previous Edge Function and manual Run now endpoint are removed.
+- An explicit Start (`PATCH /api/admin/demo-units/[deviceId]` with `is_active: true`) must clear `live_since` in the same update. The simulator establishes the new timestamp on its next tick, preventing an expired run from immediately pausing again. Pause and settings-only edits must not renew the run.
+- Start preserves `energy_kwh` and `last_generated_at`, allowing the SQL simulator to backfill an existing gap in 15-minute steps, capped at 14 days. New or reset meters have no prior timestamp and begin with live readings rather than seeded history. Meter reset retains historical rows.
+- Keep regression coverage for restarting after the four-hour timeout and after a short manual pause. The restart fix changes the admin write contract only; it requires no new migration beyond `039`.
 
 ---
 

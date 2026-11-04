@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `027`. Treat the migration files as the source of truth; this document is the working reference for application and API development.
+This file reflects the current database shape defined by `supabase/migrations/001` through `039`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment.
 
 ## Current Schema Summary
 
@@ -20,11 +20,12 @@ Wattwise currently relies on these core database objects:
 
 ### `demo_device_simulations`
 
-Stores super-admin controlled virtual WattWise meters for demos and testing. Each row belongs to a normal `devices` row and the Edge Function writes the same cumulative payload contract to `energy_logs` as real ESP32 hardware.
+Stores super-admin controlled virtual WattWise meters for demos and testing. Each row belongs to a normal `devices` row and the SQL simulator writes the same cumulative payload contract to `energy_logs` as real ESP32 hardware.
 
 - The virtual device uses a locally administered MAC address starting with `02:DE:`.
-- Only the server-side super-admin APIs may create, assign, start, pause, reset, or run a simulation.
-- `public.simulate_demo_units()` (migration `039`) runs every 10 seconds through pg_cron for active units: one live reading at `simulated_watts` (0 W while the relay is off). After a pause it first fills the gap, up to 14 days, in 15-minute steps that follow the device's `daily_usage_hours` (on in the window ending 22:00 Manila). Live streaming pauses itself 4 hours after `live_since`.
+- Only the server-side super-admin APIs may create, assign, start, pause, or reset a simulation. The SQL simulator is executable by the service role and scheduled by pg_cron.
+- `public.simulate_demo_units()` (migration `039`) runs every 10 seconds for active units: one live reading near `simulated_watts` (0 W while the relay is off). After a pause it fills an existing gap, up to 14 days, in 15-minute steps that follow the device's `daily_usage_hours` (on in the window ending 22:00 Manila). A missing `last_generated_at` starts ten seconds before the current tick, so a new or reset meter has no seeded history. Live streaming pauses itself 4 hours after `live_since`.
+- Start writes `is_active = true` and `live_since = NULL` together, preserving `last_generated_at` and `energy_kwh`. The next simulator tick sets `live_since` from the database clock and starts a fresh four-hour window. This API contract allows expired units to restart without changing the schema or simulator.
 - Resetting a simulation resets its future meter baseline; it intentionally does not delete historical `energy_logs`.
 
 ## Core Tables
@@ -235,7 +236,7 @@ CREATE TABLE device_month_usage (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   month_start DATE NOT NULL,
   usage_kwh NUMERIC(12, 4) NOT NULL DEFAULT 0,
-  variable_spend_php NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  variable_spend_php NUMERIC(14, 6) NOT NULL DEFAULT 0,
   last_energy_kwh NUMERIC(12, 4),
   last_recorded_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -252,6 +253,7 @@ Purpose:
 - avoids rescanning raw `energy_logs` on every insert
 - stores per-device billing-cycle usage and variable Meralco spend
 - budget enforcement excludes fixed monthly charges by design
+- migration `039` preserves six decimal places of spend and removes per-reading centavo rounding; round for display only
 - `month_start` remains the column name for compatibility, but since migration `013` it stores the billing-cycle start date, not necessarily the first day of a calendar month
 
 ### `device_budget_events`
@@ -490,7 +492,7 @@ Behavior:
 - fetches `profiles.billing_cycle_start_day` for the owning user
 - derives the Manila-local billing-cycle start date
 - loads the latest applicable `meralco_rates` row for the reading date and prices it for the owner's household kWh (`household_monthly_kwh_for`, migration `038`)
-- computes variable spend from the cumulative kWh delta only
+- computes variable spend from the cumulative kWh delta without rounding to centavos; a meter reset or jump beyond 10 kW over the elapsed interval plus 0.01 kWh contributes zero usage (migration `039`)
 - upserts into `device_month_usage`
 - compares `variable_spend_php` against `devices.user_approved_limit_php`
 - if `require_approval_on_expiry = true`, records `approval_required`

@@ -54,7 +54,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - The budget-cutoff trigger uses the same formula in SQL, `public.meralco_variable_rate_per_kwh(rate, household_kwh)` (migrations `037`, `038`). Change it together with `lib/meralco-bill.ts` and `tests/meralco-bill.test.ts`, and keep the October 2026 checks passing (PHP 14.8761/kWh at the base tier; Meralco's typical bills at 300, 500, and 1,000 kWh).
 - Do not fall back to hardcoded runtime defaults if the database rate row is missing.
 - Never round money per reading. `device_month_usage.variable_spend_php` keeps full precision (migration `039`); round only for display. The budget trigger ignores kWh jumps no 10 kW load could make in the elapsed time.
-- Demo units are simulated by `public.simulate_demo_units()` on a 10-second pg_cron job (migration `039`), not by an Edge Function. Start a unit from Admin → Demo units; it backfills its history and pauses itself after 4 hours.
+- Demo units are simulated by `public.simulate_demo_units()` on a 10-second pg_cron job (migration `039`), not by an Edge Function. Every explicit Start must set `is_active = true` and `live_since = null` together; the next simulator tick begins a fresh 4-hour window. Preserve `energy_kwh` and `last_generated_at` on Start so existing gaps can be backfilled (up to 14 days). A brand-new or reset meter begins with live readings, without seeded history.
 
 ### Supabase and data access
 
@@ -144,7 +144,7 @@ Document any newly required variables when adding features.
 ## Smart Control Notes
 
 - Add Appliance registers a device before AI profiling so the ESP32-S3 can post MAC-address telemetry under the existing anon RLS guard.
-- Per-device budget shutoff compares calendar-month variable Meralco spend against `devices.user_approved_limit_php`; fixed charges remain home-level context and are excluded from relay cutoff decisions.
+- Per-device budget shutoff compares variable Meralco spend for the owner's custom billing cycle (`profiles.billing_cycle_start_day`, Asia/Manila) against `devices.user_approved_limit_php`; fixed charges remain home-level context and are excluded from relay cutoff decisions.
 - `devices.require_approval_on_expiry = true` records an approval-required event instead of automatically setting `relay_state = false`.
 - Keep `energy_logs` and `devices` in the `supabase_realtime` publication. The dashboard patches live W/V/A from `energy_logs` INSERTs and follows `devices` UPDATEs, but triggers update `devices` on every reading (`last_seen_at`, `budget_status = 'ok'`), so only react when `relay_state` or `budget_status` actually changes. Do not call `router.refresh()` per reading; it re-renders the whole page and its background prefetches.
 - A device is LIVE/online when its latest reading or `devices.last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (20 s). `devices.is_online` is set on every reading but never cleared, so do not use it for status.

@@ -1,23 +1,26 @@
 ---
-description: WattWise 4-Phase Implementation Roadmap — Foundation, Billing & Control, AI & PWA, Super Admin. Load when planning sprint work, checking phase dependencies, or onboarding contributors.
+description: WattWise implementation roadmap — Foundation, Billing & Control, AI & PWA, Super Admin, Multi-Tenant. Load when planning sprint work, checking phase dependencies, or onboarding contributors.
 applyTo: "**"
 ---
 
-# WattWise Platform — 4-Phase Implementation Roadmap
+# WattWise Platform — Implementation Roadmap
 
-> **Last Updated:** August 19, 2026
+> **Last Updated:** November 4, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
-> **Overall Meralco Rate (March 2026):** ₱13.8161/kWh (unbundled)
+> **Billing source:** active `meralco_rates` row, with household distribution tiers and per-component VAT; no fixed runtime rate.
 
 ---
 
 ## Progress Summary
+
+Completion percentages below are earlier planning estimates, not a fresh acceptance-test result. Checked implementation items describe source code; physical acceptance and deployment must be verified separately using `TESTING.md`.
+
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~82% | Design system done, auth UI + Supabase auth wired, user auth forms now show helpful inline validation, DB schema + RLS ready, middleware done, dashboard reads `devices` + bounded `energy_logs`; dashboard and device detail auto-refresh from Supabase Realtime, and dashboard cards now bind Realtime INSERT payloads directly for instant W/V/A updates; reusable `LoadingIndicator` and global route-transition indicator wired in root layout; theme state now uses a global provider; 14 migration files now define the additive manager/tenant architecture; hardware anon RLS policies for ESP32 telemetry INSERT + relay SELECT added; offline freshness window is 20 s |
+| 1 — Foundation | In Progress | ~82% | Auth, middleware, design system, bounded telemetry RPCs, and Realtime are implemented. Dashboard cards patch W/V/A directly and refresh only on relay/budget changes; device detail uses a throttled refresh bridge. Migrations through `039` define the current schema. Hardware firmware samples every 2 s and schedules uploads and relay reads every 5 s; online freshness is 20 s. Physical acceptance remains unrecorded. |
 | 2 — Billing & Control | In Progress | ~92% | Device Detail UI + Home Wallet + Meralco billing implemented; usage is aggregated via bounded RPCs; Smart Control now standardizes 50/80/100 in-app alerts, opt-in per-device automatic cutoff, variable-spend-only control progress, cutoff-safe relay guards, and explicitly confirmed manual power restoration; `billing_cycle_start_day` drives wallet, analytics, alerts, and cutoff windows |
 | 3 — AI & PWA | In Progress | ~88% | AI insights API route and customer AI assistant MVP are implemented; the assistant provides account-scoped Taglish guidance and explicit-confirmation setting proposals. OneSignal web-push and Resend critical-email delivery are implemented for 80%/100% budget events; Serwist offline caching is still pending |
-| 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill history (migration `039`) |
+| 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill existing gaps (migration `039`). Explicit Start resets the run timer so units can restart after the four-hour auto-pause. |
 | 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes; managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
 ---
@@ -29,13 +32,13 @@ applyTo: "**"
 ### Platform Tasks (Web)
 
 - [x] **Supabase Project Bootstrap**
-  - [ ] Create Supabase project and configure `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` *(env vars stubbed — fill in real values from Supabase dashboard)*
+  - [ ] Verify the target environment's Supabase project and `.env.local` configuration (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`); source files do not prove deployment configuration
   - [x] Run SQL migrations to create all 5 tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights` *(migration at `supabase/migrations/001_initial_schema.sql`)*
   - [x] Create all required indexes (`idx_energy_logs_device_time`, `idx_ai_insights_user_type_date`)
   - [x] Enable Row Level Security (RLS) policies on all tables
 
 - [x] **Authentication Flow**
-  - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` in `components/providers/SupabaseProvider.tsx`, session fetched server-side)*
+  - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` reads the browser session; the root layout does not read cookies or headers. Server pages use middleware-verified identity through `getSessionUser()`.)*
   - [x] Add global route-transition loading indicator in root layout using reusable `LoadingIndicator` *(implemented via `components/ui/RouteTransitionIndicator.tsx` + `app/layout.tsx` wiring)*
   - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired)*
   - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired)*
@@ -51,7 +54,7 @@ applyTo: "**"
     - [x] Create setup guide at `FORGOT_PASSWORD_SETUP.md` with Supabase configuration instructions
 
 - [x] **Design System Setup** *(95% complete)*
-  - [x] Load **Space Grotesk** from local TTF files in `public/fonts` via `@font-face` in `app/globals.css`
+  - [x] Load **Space Grotesk** using `next/font/google` in `app/layout.tsx`, self-hosted as variable woff2 and mapped to the shared font token
   - [x] Configure Tailwind 4 custom tokens: `bg-canvas (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
   - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
   - [x] Add light-mode theme tokens + UI toggle (splash remains dark)
@@ -62,11 +65,11 @@ applyTo: "**"
   - [x] Insert new row into `devices` table with `owner_id`/legacy `user_id`, `device_name`, `mac_address`
   - [x] Display paired devices in a grid on the Home Dashboard (`app/dashboard/page.tsx`) *(data now loaded from `devices` table)*
 
-- [ ] **Live Dashboard — Real-time Telemetry**
-  - [x] Subscribe to Supabase Realtime on the `energy_logs` table filtered by `device_id` *(implemented with a client-side realtime bridge that triggers throttled `router.refresh()` for server-rendered dashboard/device-detail data, plus direct dashboard W/V/A state updates from INSERT payloads)*
+- [x] **Live Dashboard — Real-time Telemetry**
+  - [x] Subscribe to scoped `energy_logs` INSERTs for direct dashboard W/V/A updates, and `devices` UPDATEs for relay/budget changes. Ignore heartbeat-only updates; the device-detail page separately uses `RealtimeRefreshBridge` for throttled server refreshes.
   - [x] Display live **Power (W)** gauge on each device card *(cards now show live online/offline state plus W/V/A telemetry with freshness gating)*
   - [x] Display **Total Live Wattage** aggregate across all user devices at the top of the dashboard
-  - [x] Implement time-range filter on all `energy_logs` queries (`.gte('recorded_at', startOfDay)`) with `.limit(100)` guard *(implemented for dashboard + device detail energy queries)*
+  - [x] Load latest readings and usage through bounded, index-backed RPCs (`get_latest_device_readings`, `get_usage_kwh_by_device[_day]`); keep direct telemetry reads scoped and bounded
 
 - [ ] **Historical Charts (Daily View)**
   - [x] Create Supabase RPC function `get_hourly_averages(p_user_id, p_date)` for server-side aggregation *(migration at `supabase/migrations/007_get_hourly_averages.sql` — Asia/Manila timezone, avg_watts per hour-of-day)*
@@ -75,32 +78,32 @@ applyTo: "**"
 
 ### Hardware Tasks (Firmware)
 
-- [ ] **ESP32-S3 PlatformIO Project Setup**
-  - [ ] Initialize PlatformIO project with ESP32-S3 board definition
-  - [ ] Configure serial debug output (115200 baud)
-  - [ ] Set up Wi-Fi connection manager with credentials stored in `secrets.h`
+- [x] **ESP32-S3 PlatformIO Project Setup** *(implemented in `wattwise_hardware`; flashing and physical acceptance are separate)*
+  - [x] Configure ESP32-S3 Arduino target in PlatformIO (`esp32coore` environment)
+  - [x] Configure serial debug output (115200 baud)
+  - [x] Provision Wi-Fi through the branded `WattWise-Setup` WiFiManager portal with stored credentials and a five-second BOOT reset
 
 - [ ] **PZEM-004T Sensor Integration**
-  - [ ] Wire PZEM-004T V3.0 to ESP32-S3 via UART (TX/RX pins)
-  - [ ] Read raw telemetry: Voltage (V), Current (A), Power (W), Energy (kWh), Frequency (Hz), Power Factor
-  - [ ] Validate sensor readings (reject NaN / out-of-range values)
+  - [x] Implement UART setup and pin probing for the PZEM-004T V3.0 (default ESP32 RX/TX GPIO 4/5, Modbus address `0x01`)
+  - [x] Read voltage, current, power, and cumulative energy every 2 seconds; skip failed voltage reads and NaN power/energy samples
+  - [ ] Record physical wiring and sensor acceptance checks; frequency/power factor telemetry and comprehensive range validation are not implemented
 
-- [ ] **1-Minute Aggregation Engine**
-  - [ ] Implement rolling average buffer (60 samples at 1/sec → 1-minute average)
-  - [ ] On each 1-minute tick, prepare a JSON payload: `{ device_id, energy_kwh, average_watts, recorded_at }`
-  - [ ] Ensure no raw per-second data is transmitted to the cloud (Free Tier guardrail)
+- [x] **Telemetry Aggregation**
+  - [x] Accumulate valid 2-second power samples in RAM and upload their average on the 5-second cloud schedule
+  - [x] Send `{ device_id, energy_kwh, average_watts, voltage_v, current_a }`; the database assigns `recorded_at`
+  - [x] Clear the average only after a successful 2xx POST; preserve the cumulative meter counter and pending average across transient upload failures
 
-- [ ] **Supabase REST Ingestion**
-  - [ ] POST aggregated payload to Supabase REST API (`/rest/v1/energy_logs`) using `HTTPClient`
-  - [ ] Include `apikey` and `Authorization: Bearer <anon_key>` headers
-  - [x] Handle HTTP errors gracefully (retry once, then skip and log locally)
+- [x] **Supabase REST Ingestion** *(source implemented; physical acceptance remains pending)*
+  - [x] POST aggregated payload to Supabase REST API (`/rest/v1/energy_logs`) using `HTTPClient`, with the default minimal response
+  - [x] Include `apikey` and `Authorization: Bearer <anon_key>` headers
+  - [x] Back off failed uploads from 10 seconds up to 120 seconds while retaining the pending average; registered units continue scheduled 5-second relay polls independently of upload backoff
   - [x] RLS policies allow anon INSERT to `energy_logs` (MAC-address gated) and anon SELECT on `devices` (relay polling) *(migration 011)*
 
 ### Integration Points
 
 | Channel | Direction | Payload | Purpose |
 |---|---|---|---|
-| Supabase REST API | ESP32-S3 → Supabase | `energy_logs` INSERT (1-min avg) | Telemetry ingestion |
+| Supabase REST API | ESP32-S3 → Supabase | Averaged watts and cumulative kWh on a 5-second schedule | Telemetry ingestion |
 | Supabase Realtime | Supabase → Next.js | `energy_logs` stream | Live dashboard updates and direct W/V/A state |
 | Supabase Auth | Next.js ↔ Supabase | JWT tokens | User authentication |
 
@@ -113,12 +116,8 @@ applyTo: "**"
 ### Platform Tasks (Web)
 
 - [ ] **Unbundled Meralco Billing Module**
-  - [x] Create `lib/meralco-rates.ts` with the rate structure constants (March 2026 values):
-    ```
-    vatRate: 0.12, generation: 5.3727, transmission: 0.8468, systemLoss: 0.5012,
-    distribution: 1.4798, universalCharges: 0.1754, fitAll: 0.0838
-    ```
-  - [x] Implement `computeMeralcoBill(kWh, rates, vatRate, fixedChargesPhp)` — unbundled subtotal + fixed monthly charges, then VAT
+  - [x] Define the rate row mapping and selectors in `lib/meralco-rates.ts`; runtime rates come from the database, not historical seed constants
+  - [x] Implement `computeMeralcoBill` in `lib/meralco-bill.ts` — unbundled charges, household tiers, adjustments, and per-component VAT
   - [x] Add FIT-All as a first-class per-kWh component (`fit_all`) in schema and runtime billing mapper *(migration at `supabase/migrations/008_add_fit_all_to_meralco_rates.sql` + helper update in `lib/meralco-rates.ts`)*
   - [x] Seed the `meralco_rates` table with the March 2026 row (`effective_month: '2026-03-01'`) *(dedicated migration at `supabase/migrations/004_seed_march_2026_meralco_rates.sql`)*
   - [x] Fetch active rates from Supabase (`WHERE effective_month <= CURRENT_DATE ORDER BY effective_month DESC LIMIT 1`) and use them in the billing function *(shared helper in `lib/meralco-rates.ts` — DB-only source)*
@@ -155,9 +154,12 @@ applyTo: "**"
 
 ### Hardware Tasks (Firmware)
 
-- [ ] **Device Heartbeat**
-  - [ ] Every 30 seconds, update `devices.is_online = true` and `last_seen_at = NOW()` via Supabase REST
-  - [ ] If Wi-Fi drops, attempt reconnection with exponential backoff
+- [ ] **Device Heartbeat and Recovery**
+  - [x] Update `devices.last_seen_at` and `is_online` server-side on each accepted telemetry insert (`update_device_last_seen`, migrations `035`/`036`); hardware does not issue a separate heartbeat UPDATE
+  - [x] Derive online state from the shared 20-second freshness window, not the sticky `is_online` column
+  - [ ] Record Wi-Fi outage/recovery and relay acceptance tests on flashed units. Upload backoff is implemented; the firmware does not implement a separate exponential Wi-Fi reconnection loop.
+
+Relay timing is a schedule, not a strict five-second response guarantee: synchronous HTTP requests use an eight-second timeout. Boot starts OFF; after a valid command, network failures preserve the last applied relay state.
 
 ---
 
@@ -168,7 +170,7 @@ applyTo: "**"
 ### Platform Tasks (Web)
 
 - [x] **OpenAI Integration — Server-Side Only**
-  - [ ] Add `OPENAI_API_KEY` to `.env.local` (no `NEXT_PUBLIC_` prefix — server-only) *(env var stubbed — fill in real key)*
+  - [ ] Verify server-only `OPENAI_API_KEY` configuration in the target environment; never use a `NEXT_PUBLIC_` prefix
   - [x] Install `openai` npm package
   - [x] Create `app/api/insights/route.ts` — the single entry point for all AI insight requests
   - [x] Create `app/api/devices/[deviceId]/ai-profile/route.ts` for fresh-telemetry appliance budget profiling with strict JSON output (`estimated_monthly_kwh`, `suggested_monthly_limit_php`, `taglish_advice`)
@@ -232,7 +234,7 @@ applyTo: "**"
 
 - [ ] **Serwist PWA Configuration**
   - [ ] Configure Serwist in `next.config.ts` for offline caching
-  - [ ] Create `manifest.json` with WattWise branding (name, icons, theme color `#121212`, background `#121212`)
+  - [x] Add `public/site.webmanifest` with WattWise branding, icons, and standalone display, linked from root metadata
   - [ ] Implement service worker for static asset caching and API response caching
   - [ ] Add install prompt banner for iOS/Android home screen installation
   - [ ] Test offline behavior: cached dashboard loads, graceful fallback for live data
@@ -244,9 +246,9 @@ applyTo: "**"
 ### Hardware Tasks (Firmware)
 
 - [ ] **Telemetry Enrichment**
-  - [ ] Add Wi-Fi RSSI (signal strength in dBm) to the 1-minute payload
+  - [ ] Add Wi-Fi RSSI (signal strength in dBm) to the telemetry payload
   - [ ] Add ESP32-S3 internal temperature reading to the payload
-  - [ ] Transmit enriched payload: `{ device_id, energy_kwh, average_watts, rssi, board_temp_c, recorded_at }`
+  - [ ] Transmit enriched payload with RSSI and board temperature alongside the existing fields; continue assigning `recorded_at` in the database
 
 - [ ] **OTA (Over-The-Air) Update Preparation**
   - [ ] Implement OTA update listener for future firmware pushes
@@ -258,7 +260,7 @@ applyTo: "**"
 |---|---|---|---|
 | Next.js API Route | Client → Server → OpenAI | Aggregated energy data | AI insight generation |
 | `ai_insights` table | Server → Client | Cached Taglish message | Insight delivery (cache-first) |
-| Service Worker | Browser cache | Static assets + API responses | Offline PWA support |
+| Service Worker (planned) | Browser cache | Static assets + API responses | Offline PWA support; the existing OneSignal worker handles push only |
 | OneSignal + Resend | Budget event → user channels | 80% push; 100% push + email | External budget warnings |
 
 ---
@@ -268,6 +270,8 @@ applyTo: "**"
 **Objective:** Build the "Mission Control" Super Admin dashboard for platform health monitoring, Meralco rate management, OpenAI cost tracking, and system-wide energy impact analytics. By the end of this phase, the platform owner has full visibility into operational metrics and can manage the system globally.
 
 ### Platform Tasks (Web)
+
+- [x] **Demo-unit restart recovery**: explicit Start clears `live_since` alongside `is_active = true`, so the next SQL tick begins a fresh four-hour run after either manual or automatic pause. Preserve the meter and previous timestamp for gap backfill; new units start without seeded history. No new migration is required beyond `039`; live acceptance remains on the `TESTING.md` checklist.
 
 - [x] **Super Admin Route Guard**
   - [x] Create `app/admin/layout.tsx` with role-based access control *(async Server Component, fetches profile + verifies super_admin role, redirects non-admins)*

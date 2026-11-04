@@ -2,7 +2,7 @@
 
 A manual and automated checklist for the web app (`wattwise_platform`) and the ESP32-S3 units (`wattwise_hardware`). Tick items with `[x]` as you go. Each item says what to do and, after ✅, what should happen.
 
-Last updated: October 22, 2026.
+Last updated: November 4, 2026.
 
 ## Before you start
 
@@ -103,9 +103,12 @@ Needs a super admin account.
 - [ ] Devices shows Online for units that reported in the last 20 seconds, and "last seen …" or "never seen" for the rest.
 - [ ] Save a user or device edit that the server rejects. ✅ The error shows inside the edit panel, not a browser popup.
 - [ ] Reset or delete a demo unit. ✅ The app's own confirmation dialog appears.
-- [ ] Start a paused demo unit. ✅ Within about 10 seconds its owner's dashboard shows it LIVE, and the week strip and calendar show up to 14 days of history.
+- [ ] Create and start a new demo unit. ✅ Within about 10 seconds its owner's dashboard shows it LIVE. It begins with live readings; it does not seed 14 days of history.
+- [ ] Start an existing demo unit that has been paused for at least 30 minutes. ✅ It resumes its cumulative meter and fills the existing gap in 15-minute steps, capped at 14 days. Previously recorded history remains intact.
+- [ ] Pause a running demo unit and restart it within one minute. ✅ Its next reading starts a fresh four-hour run, with its cumulative meter and previous history preserved.
 - [ ] Turn a running demo unit off from the owner's dashboard. ✅ Its watts drop to 0 and its kWh stops growing.
 - [ ] A demo unit started more than 4 hours ago shows Paused. ✅ It pauses itself so it cannot run all day unattended.
+- [ ] Start that automatically paused unit again. ✅ It remains Running over multiple simulator ticks, returns to LIVE, and receives a fresh four-hour run instead of immediately pausing again. Its previous meter value and history are preserved.
 
 ## 12. Security spot checks
 

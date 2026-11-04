@@ -118,7 +118,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
           <Zap className="mt-0.5 h-5 w-5 shrink-0 text-mint" />
           <div>
             <h2 className="font-semibold">Virtual WattWise unit</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/60">This creates a normal device and writes the same cumulative telemetry format that ESP hardware uses. It is intended for demos and testing only; it never controls a physical relay. A running unit sends a reading every 10 seconds and pauses itself after 4 hours. Starting a paused unit first fills the time it was away (up to 14 days) using its profiled daily hours, so dashboards have history.</p>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/60">Demo units let you present and test WattWise without physical hardware. Each start begins a new four-hour run, with a reading every 10 seconds. New units build history from their first reading. Restarting an existing unit fills gaps of up to 14 days using its profiled daily hours.</p>
           </div>
         </div>
       </section>

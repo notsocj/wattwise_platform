@@ -13,7 +13,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF
 - **AI insights and a customer assistant**, generated server-side with OpenAI and cached in `ai_insights`
 - **Manager mode** for landlords: rooms, tenants, fleet dashboard, and manager AI
-- **Admin console**: users, devices, rates, analytics, AI costs, audit log, health, a hardware test lab, and demo units (simulated meters that stream a reading every 10 seconds and fill in realistic history, for presentations without hardware)
+- **Admin console**: users, devices, rates, analytics, AI costs, audit log, health, a hardware test lab, and demo units (simulated meters for presentations without hardware). Each Start opens a fresh four-hour run with readings every 10 seconds. Returning units fill existing history gaps up to 14 days; new units begin with live readings.
 
 ## Tech stack
 
@@ -107,7 +107,7 @@ Most of the latency came from round trips between the app server and the databas
 
 ## Hardware integration
 
-Each ESP32-S3 unit identifies itself by its Wi-Fi MAC address. Every 5 seconds it reads `devices.relay_state` and inserts an averaged telemetry row into `energy_logs` using the anon key. RLS allows the insert only when the MAC matches a registered device (migrations `011` and `022`). Database triggers then update monthly usage, may switch the relay off when a budget is exceeded, and set `devices.last_seen_at` (`035`, `036`).
+Each ESP32-S3 unit identifies itself by its Wi-Fi MAC address. It samples the meter every 2 seconds and schedules relay reads and averaged telemetry uploads every 5 seconds using the anon key. Failed uploads back off while relay polling remains scheduled independently; synchronous network requests can still delay either operation. RLS allows the insert only when the MAC matches a registered device (migrations `011` and `022`). Database triggers then update billing-cycle usage, may switch the relay off when a budget is exceeded, and set `devices.last_seen_at` (`035`, `036`).
 
 A unit counts as LIVE or online when its latest reading (or `last_seen_at`) is under 20 seconds old; `devices.is_online` is never reset and is not used for status. Firmware timing, field names, and MAC formatting must change together with the migrations. The firmware side of this contract is documented in the [hardware repo](https://github.com/notsocj/wattwise_hardware) (`AGENTS.md` and `docs/`).
 
