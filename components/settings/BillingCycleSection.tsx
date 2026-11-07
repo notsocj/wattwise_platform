@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, ReceiptText } from "@/components/ui/icons";
+import { CalendarDays, ChevronDown, ReceiptText } from "@/components/ui/icons";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsGroup";
 import type { ShowSettingsToast } from "@/components/settings/settings-types";
 import { distributionTierLabel } from "@/lib/meralco-bill";
@@ -27,6 +27,7 @@ export default function BillingCycleSection({
   const [billingCycleDraft, setBillingCycleDraft] = useState(String(billingCycleStartDay));
   const [billingCycleError, setBillingCycleError] = useState<string | null>(null);
   const [isSavingBillingCycle, setIsSavingBillingCycle] = useState(false);
+  const [dayPickerOpen, setDayPickerOpen] = useState(false);
 
   const [kwhDraft, setKwhDraft] = useState(meralcoMonthlyKwh === null ? "" : String(meralcoMonthlyKwh));
   const [kwhError, setKwhError] = useState<string | null>(null);
@@ -140,31 +141,65 @@ export default function BillingCycleSection({
         description={billingCycleError ?? "The day Meralco reads your meter (1 to 28)."}
         control={
           <div className="flex items-center gap-2">
-            <label htmlFor="billing-cycle-start-day" className="sr-only">
-              Billing cycle start day
-            </label>
-            <select
+            <button
+              type="button"
               id="billing-cycle-start-day"
-              value={billingCycleDraft}
+              aria-expanded={dayPickerOpen}
+              aria-controls="billing-day-grid"
+              aria-label={`Billing cycle start day: day ${billingCycleDraft}`}
               disabled={isSavingBillingCycle}
-              onChange={(event) => {
-                setBillingCycleDraft(event.target.value);
-                if (billingCycleError) setBillingCycleError(null);
-              }}
-              className="h-9 rounded-full border border-fg/10 bg-shade/10 pl-3.5 pr-2 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => setDayPickerOpen((open) => !open)}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-full border bg-shade/10 pl-3.5 pr-2.5 text-sm font-semibold text-fg transition-[border-color,scale] duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${
+                dayPickerOpen ? "border-mint/40" : "border-fg/10"
+              }`}
             >
-              {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
-                <option key={day} value={String(day)} className="bg-surface text-fg">
-                  Day {day}
-                </option>
-              ))}
-            </select>
+              Day {billingCycleDraft}
+              <ChevronDown
+                className={`h-4 w-4 text-fg/50 transition-[rotate] duration-200 ease-out ${dayPickerOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
             {billingDirty || isSavingBillingCycle ? (
               <SaveButton saving={isSavingBillingCycle} onClick={() => void saveBillingCycle()} />
             ) : null}
           </div>
         }
-      />
+      >
+        {dayPickerOpen ? (
+          <div
+            id="billing-day-grid"
+            role="radiogroup"
+            aria-label="Billing cycle start day"
+            className="grid grid-cols-7 gap-1.5 transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0"
+          >
+            {Array.from({ length: 28 }, (_, index) => String(index + 1)).map((day) => {
+              const selected = day === billingCycleDraft;
+              const saved = day === String(billingCycleStartDay);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setBillingCycleDraft(day);
+                    setBillingCycleError(null);
+                    setDayPickerOpen(false);
+                  }}
+                  className={`relative flex aspect-square items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-[background-color,color,scale] duration-150 ease-out active:scale-[0.92] ${
+                    selected ? "bg-mint text-ink" : "text-fg/75 hover:bg-fg/[0.06]"
+                  }`}
+                >
+                  {day}
+                  {saved && !selected ? (
+                    <span className="absolute bottom-1 h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </SettingsRow>
 
       <SettingsRow
         icon={ReceiptText}
