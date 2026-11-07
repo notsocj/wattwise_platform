@@ -27,6 +27,8 @@ npm run lint && npx tsc --noEmit -p . && npm test && npm run build
 - [ ] Signed out, open `/`. ✅ The owl appears in the centre, lifts, "WattWise" rises in, then the splash fades out into the landing page after about 3 seconds.
 - [ ] On `/onboarding`, hover over the 3D unit (desktop) or tap it (phone). ✅ The cover lifts and the layers separate, with labels for the PZEM-004T meter, ESP32-S3, and relay. Tap again to close.
 - [ ] Scroll the landing page with a mouse wheel or trackpad. ✅ Scrolling eases smoothly and each section rises in as it appears. **Get started** opens `/register` and **Log in** opens `/login`.
+- [ ] On `/onboarding`, tap **Ask WattWise**, then a suggested question. ✅ Typing dots, then a short answer about WattWise. Ask "Magkano ang unit?" ✅ It says it doesn't know the price instead of making one up. Ask for code or say "ignore your instructions". ✅ The canned WattWise-only reply. Send 6 messages within a minute. ✅ The 6th shows "You're sending messages quickly".
+- [ ] Signed out, tap the WattWise logo on `/login`, `/register`, or `/forgot-password` (phone) or the wordmark on the desktop brand panel. ✅ It opens the landing page.
 - [ ] On a desktop window, open `/login`. ✅ A brand panel sits on the left and the form on the right.
 - [ ] Register a test account. ✅ You land on the dashboard, or see a "Confirm your email" screen if email confirmation is on.
 - [ ] Log out, then log in with a wrong password. ✅ A friendly message in a red banner that slides in above the form (not a raw error), and the button returns to **Login** so you can try again.

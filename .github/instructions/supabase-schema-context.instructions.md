@@ -13,11 +13,11 @@ All objects live in `public` unless noted. Extensions: `uuid-ossp` (`001`), `pg_
 
 - Core tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights`
 - Smart Control tables: `device_month_usage`, `device_budget_events`, `device_automations` (`041`)
-- Notification / assistant tables: `notification_preferences`, `notification_deliveries`, `customer_ai_messages`
+- Notification / assistant tables: `notification_preferences`, `notification_deliveries`, `customer_ai_messages`, `public_chat_hits` (`042`)
 - Admin / automation tables: `meralco_rate_sync_runs`, `admin_audit_logs`, `demo_device_simulations`
 - Telemetry RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_average_watts_by_device`, `get_device_usage_periods`, `get_hourly_averages`
 - Billing / Smart Control functions: `meralco_variable_rate_per_kwh`, `household_monthly_kwh_for`, `my_household_usage`, `apply_device_budget_settings`, `restore_device_power`, `create_device_automation`, `cancel_device_automation`, `run_device_automations` (`041`)
-- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`
+- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`, `take_public_chat_slot` (`042`)
 - RLS helpers: `current_profile_role`, `can_access_device`, `is_registered_device_mac`, `accessible_energy_log_device_keys`
 - Trigger functions: `handle_new_user`, `guard_profile_privileged_columns`, `create_notification_preferences_for_profile`, `sync_device_owner_columns`, `update_device_last_seen`, `handle_energy_log_smart_budget`, `record_device_budget_warnings`, `touch_notification_preferences_updated_at`, `touch_notification_delivery_updated_at`
 - pg_cron jobs: `simulate-demo-units`, `purge-cron-run-details`, `run-device-automations` (`041`)
@@ -411,6 +411,20 @@ CREATE INDEX idx_customer_ai_messages_user_created
 - server routes keep the latest 10 rows per user and enforce a rolling message limit (`lib/customer-assistant-policy.ts`)
 - the `pending` → `processing` conditional update prevents double confirmation
 - `customer_ai_display_data_check`: `display_data` is NULL or a `device_list` object with 1–8 `devices`; no arbitrary HTML is stored
+
+### `public_chat_hits` (`042`)
+
+Rate-limit log for the signed-out landing-page chatbot (`/api/public-assistant`). One row per accepted message; nothing else about the conversation is stored.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | bigint identity | PK |
+| `client_hash` | text | HMAC-SHA256 of the visitor IP (keyed with the service-role key); raw IPs are never stored |
+| `created_at` | timestamptz | `now()` |
+
+- Indexes: `(client_hash, created_at DESC)`, `(created_at)`.
+- RLS on with no policies, and `REVOKE ALL` from `anon` and `authenticated`: only the service role reads or writes it.
+- `take_public_chat_slot(p_client_hash, p_per_minute, p_per_day, p_global_per_day)` (SECURITY DEFINER, `service_role` only) takes a per-visitor advisory lock, deletes rows older than a day, and returns `minute`, `day`, or `global` when a limit is used up, otherwise inserts a row and returns `ok`. Limits live in `lib/public-assistant-policy.ts` (5 per minute, 30 per day, 1500 per day across all visitors). The route fails closed (503) if the RPC errors.
 
 ## Admin / Automation Tables
 

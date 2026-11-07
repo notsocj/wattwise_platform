@@ -166,23 +166,25 @@ export default function RegisterPage() {
     <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight lg:min-h-0">
       {/* Desktop shows the brand panel beside the form instead. */}
       <div className="flex flex-col items-center px-6 pb-6 pt-16 lg:hidden">
-        <div className="flex h-24 w-24 items-center justify-center">
-          <Image
-            src="/wattwise_mascot.png"
-            alt="WattWise mascot"
-            width={72}
-            height={72}
-            className="h-20 w-20 object-contain"
-          />
-        </div>
+        <Link href="/onboarding" aria-label="WattWise home page" className="flex flex-col items-center rounded-3xl transition-[scale] duration-150 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-mint">
+          <div className="flex h-24 w-24 items-center justify-center">
+            <Image
+              src="/wattwise_mascot.png"
+              alt="WattWise mascot"
+              width={72}
+              height={72}
+              className="h-20 w-20 object-contain"
+            />
+          </div>
 
-        <h1 className="text-3xl font-bold text-fg">
-          Watt<span className="text-accent">Wise</span>
-        </h1>
+          <h1 className="text-3xl font-bold text-fg">
+            Watt<span className="text-accent">Wise</span>
+          </h1>
 
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
-          INTELLIGENT ENERGY
-        </p>
+          <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
+            INTELLIGENT ENERGY
+          </p>
+        </Link>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pt-2">

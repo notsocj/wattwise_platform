@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Activity, Power, ReceiptText } from "@/components/ui/icons";
 
 const FEATURES = [
@@ -11,9 +12,13 @@ const FEATURES = [
 export default function AuthBrandPanel() {
   return (
     <aside className="sticky top-0 hidden h-dvh flex-col justify-between overflow-hidden border-r border-fg/5 bg-surface bg-radial-[at_20%_15%] from-mint/[0.08] to-transparent to-60% px-12 py-10 lg:flex xl:px-16">
-      <p className="ww-rise text-xl font-bold tracking-tight text-fg">
+      <Link
+        href="/onboarding"
+        aria-label="WattWise home page"
+        className="ww-rise self-start rounded-full text-xl font-bold tracking-tight text-fg transition-opacity duration-150 ease-out hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-mint"
+      >
         Watt<span className="text-accent">Wise</span>
-      </p>
+      </Link>
 
       <div className="max-w-md">
         <Image

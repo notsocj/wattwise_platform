@@ -299,6 +299,13 @@ When implementing route or mutation feedback in the app shell and interactive co
 - When calendar-month spend differs from the current billing-cycle accumulator, show both windows explicitly. Calendar-month answers must use the same bounded daily usage plus active Meralco-rate calculation as Calendar Analytics; device-limit progress remains billing-cycle-only.
 - Rich assistant output is an allowlisted `display_data` payload. The current MVP supports only `device_list`, with at most eight server-resolved devices; never render arbitrary model HTML or model-supplied database identifiers.
 
+## 10a. Public Landing Chatbot
+
+- `POST /api/public-assistant` is the only signed-out OpenAI route. It never reads accounts or devices, has no tools or actions, and stores no messages; the client sends the last few turns back.
+- Order of checks: same-origin `Origin`, `parsePublicChatBody`, `take_public_chat_slot()` (rate limit, migration `042`), `publicGuardReply`, then OpenAI with `max_tokens` 300. A rate-limit RPC error returns 503; never skip the limiter.
+- The model may only state facts in `PUBLIC_ASSISTANT_SYSTEM_PROMPT`. It must not invent prices, stock, warranty, delivery, or contact details, must not collect personal data, and sends visitors to log in for anything about their own account.
+- Off-topic detection is shared with the customer assistant (`isClearlyOffTopic` in `lib/customer-assistant-policy.ts`); add prompt-injection phrasings to `INJECTION_PATTERN` with a test.
+
 ## 11. UI Shell, Theme, and Motion
 
 The base rules (tokens, card and grid classes, `pt-[84px] lg:pt-0`, motion naming) are in `AGENTS.md` under "UI and design system". This section covers what agents most often get wrong.
@@ -332,6 +339,7 @@ The base rules (tokens, card and grid classes, `pt-[84px] lg:pt-0`, motion namin
 - three and @react-three/fiber are imported only inside `components/landing/device/`, and `WattWiseCanvas` loads through `next/dynamic` with `ssr: false`. Keep it that way so the 3D code never reaches app routes.
 - `WattWiseStage` must keep its fallbacks: the `DevicePoster` SVG shows until the first 3D frame and stays when WebGL is missing, the canvas throws, or the context is lost; rendering pauses while offscreen; reduced motion is passed to the canvas.
 - Lenis (`components/landing/SmoothScroll.tsx`) is landing-only and skipped under reduced motion; do not mount it in the app shell. `Reveal` handles the scroll reveals.
+- Overlays on the landing page that scroll (the chatbot panel) need `data-lenis-prevent`, or Lenis swallows wheel scrolling inside them.
 
 ---
 

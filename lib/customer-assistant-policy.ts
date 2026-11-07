@@ -88,6 +88,10 @@ export const OFF_TOPIC_REPLY =
  * off-topic requests.
  */
 export function offTopicReply(message: string): string | null {
-  if (ON_TOPIC_PATTERN.test(message)) return null;
-  return OFF_TOPIC_PATTERN.test(message) ? OFF_TOPIC_REPLY : null;
+  return isClearlyOffTopic(message) ? OFF_TOPIC_REPLY : null;
+}
+
+/** True for requests that are clearly not about energy or WattWise (code, homework, essays). */
+export function isClearlyOffTopic(message: string): boolean {
+  return !ON_TOPIC_PATTERN.test(message) && OFF_TOPIC_PATTERN.test(message);
 }

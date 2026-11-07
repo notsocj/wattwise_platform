@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Activity, ArrowRight, BellRing, Plug, Power, ReceiptText, ScanLine, TrendingDown } from "@/components/ui/icons";
+import LandingAssistant from "@/components/landing/LandingAssistant";
 import Reveal from "@/components/landing/Reveal";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import { DevicePoster } from "@/components/landing/device/DevicePoster";
@@ -158,6 +159,7 @@ export default function LandingPage() {
         </p>
         <p>Optimized for sustainable living.</p>
       </footer>
+      <LandingAssistant />
     </main>
   );
 }
