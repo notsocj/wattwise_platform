@@ -3,7 +3,7 @@
 This is the GitHub Copilot version of `AGENTS.md` at the repo root. `AGENTS.md` is the source of truth for conventions; if the two disagree, follow `AGENTS.md` and fix this file. Deeper references live in `.github/instructions/`:
 
 - `ai-workflow.instructions.md`: coding constraints for billing, hardware safety, ingestion, and OpenAI
-- `supabase-schema-context.instructions.md`: tables, RPCs, indexes, and query patterns (migrations `001`-`042`)
+- `supabase-schema-context.instructions.md`: tables, RPCs, indexes, and query patterns (migrations `001`-`043`)
 - `smart-control-architecture-blueprint.instructions.md`: realtime telemetry, AI profiling, budgets, relay shutoff
 - `phases-and-roadmap-plan.instructions.md`: roadmap and what is done
 

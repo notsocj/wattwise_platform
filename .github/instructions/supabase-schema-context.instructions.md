@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `042`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
+This file reflects the current database shape defined by `supabase/migrations/001` through `043`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
 
 ## Current Schema Summary
 
@@ -17,7 +17,7 @@ All objects live in `public` unless noted. Extensions: `uuid-ossp` (`001`), `pg_
 - Admin / automation tables: `meralco_rate_sync_runs`, `admin_audit_logs`, `demo_device_simulations`
 - Telemetry RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_average_watts_by_device`, `get_device_usage_periods`, `get_hourly_averages`
 - Billing / Smart Control functions: `meralco_variable_rate_per_kwh`, `household_monthly_kwh_for`, `my_household_usage`, `apply_device_budget_settings`, `restore_device_power`, `create_device_automation`, `cancel_device_automation`, `run_device_automations` (`041`)
-- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`, `take_public_chat_slot` (`042`)
+- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`, `take_public_chat_slot` (`042`), `admin_platform_daily_kwh`, `admin_storage_stats` (`043`)
 - RLS helpers: `current_profile_role`, `can_access_device`, `is_registered_device_mac`, `accessible_energy_log_device_keys`
 - Trigger functions: `handle_new_user`, `guard_profile_privileged_columns`, `create_notification_preferences_for_profile`, `sync_device_owner_columns`, `update_device_last_seen`, `handle_energy_log_smart_budget`, `record_device_budget_warnings`, `touch_notification_preferences_updated_at`, `touch_notification_delivery_updated_at`
 - pg_cron jobs: `simulate-demo-units`, `purge-cron-run-details`, `run-device-automations` (`041`)
@@ -452,6 +452,14 @@ CREATE INDEX idx_meralco_sync_runs_ran_at
 
 - a failed extraction is recorded with `status = 'failed'`; `meralco_rates` is untouched until all parsed components pass required-field, range, and anomaly validation
 - written with the service role; only `super_admin` can read
+
+### Admin console functions (`043`)
+
+Read-only, `SECURITY DEFINER`, `EXECUTE` granted to `service_role` only (revoked from `PUBLIC`, `anon`, `authenticated`):
+
+- `admin_platform_daily_kwh(p_start, p_end)` returns `(day_key text, usage_kwh numeric)`: platform-wide kWh per Manila day from per-device positive `energy_kwh` deltas (minute-deduplicated, resets count as 0), the same rules as `get_usage_kwh_by_device_day` across every device; the window is capped at 92 days.
+- `admin_storage_stats()` returns `(database_bytes, energy_logs_bytes, energy_logs_rows)`: `pg_database_size`, `pg_total_relation_size('energy_logs')`, and the planner's row estimate (the Health page shows an exact count instead).
+- Manual rate edits from `/admin/rates` upsert `meralco_rates` by `effective_month` with `auto_updated = false` and NULL source fields; audit actions are `meralco_rates_create` / `meralco_rates_update`.
 
 ### `admin_audit_logs`
 

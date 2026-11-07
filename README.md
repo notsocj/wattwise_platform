@@ -17,7 +17,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF
 - **AI insights and a customer assistant**, generated server-side with OpenAI and cached in `ai_insights`
 - **Manager mode** for landlords: fleet dashboard with AI priorities, rooms, tenants (create logins and reissue temporary passwords), and a floating manager assistant
-- **Admin console**: users, devices, rates, analytics, AI costs, audit log, health, a hardware test lab, and demo units (simulated meters for presentations without hardware). Each Start opens a fresh four-hour run with readings every 10 seconds. Returning units fill existing history gaps up to 14 days; new units begin with live readings.
+- **Admin console**: users, devices, a Meralco rate editor (audited), global analytics and growth charts, AI token costs, audit log, system health with database size, a hardware test lab, and demo units (simulated meters for presentations without hardware). Each Start opens a fresh four-hour run with readings every 10 seconds. Returning units fill existing history gaps up to 14 days; new units begin with live readings.
 
 ## Tech stack
 

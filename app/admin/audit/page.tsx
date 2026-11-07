@@ -1,43 +1,20 @@
 import { ScrollText } from "@/components/ui/icons";
+import AuditList, { loadAuditEntries } from "@/components/admin/AuditList";
+import { AdminPageHeader, AdminSection } from "@/components/admin/AdminUi";
 import { createAdminClient } from "@/lib/supabase/admin";
+
 export default async function AdminAuditPage() {
-  const { data } = await createAdminClient()
-    .from("admin_audit_logs")
-    .select("id,actor_id,action,target_type,target_id,reason,created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const entries = await loadAuditEntries(createAdminClient(), 100);
   return (
-    <div>
-      <div className="mb-6 flex items-center gap-3">
-        <ScrollText className="h-6 w-6 text-accent" />
-        <h1 className="text-2xl font-bold">Audit Log</h1>
-      </div>
-      <div className="overflow-x-auto rounded-lg border border-fg/10 bg-surface">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-fg/10 text-fg/50">
-            <tr>
-              {["Time", "Action", "Target", "Reason", "Actor"].map((h) => (
-                <th key={h} className="p-4">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {(data ?? []).map((a) => (
-              <tr key={a.id} className="border-b border-fg/5">
-                <td className="p-4 text-fg/50">{new Date(a.created_at).toLocaleString()}</td>
-                <td className="p-4">{a.action}</td>
-                <td className="p-4">
-                  {a.target_type} {a.target_id || ""}
-                </td>
-                <td className="p-4">{a.reason || "—"}</td>
-                <td className="p-4 text-xs">{a.actor_id}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        icon={ScrollText}
+        title="Audit Log"
+        description="Every admin change: relays, devices, demo units, test lab, and Meralco rates."
+      />
+      <AdminSection title="Latest 100 actions">
+        <AuditList entries={entries} />
+      </AdminSection>
     </div>
   );
 }

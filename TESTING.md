@@ -131,7 +131,10 @@ Needs a manager account.
 
 Needs a super admin account.
 
-- [ ] Overview, Users, Devices, Rates, Analytics, Health, and Demo Units all load.
+- [ ] Overview, Users, Devices, Rates, Growth, AI Costs, Analytics, Health, Audit, and Demo Units all load. Overview lists recent admin actions with the admin's email.
+- [ ] Rates → **Add or correct a month**. ✅ The preview matches the history table's ₱/kWh for the same values. Save without a reason. ✅ "Say briefly why…" and nothing is saved. Save with a reason. ✅ The row shows **Manual**, the Audit Log has a `meralco_rates_create`/`update` entry, and dashboards price usage with the new rates right away.
+- [ ] Health shows the database size out of 500 MB, unit counts by status, and the latest rate sync (not "No runs" when the sync has run).
+- [ ] Analytics shows a 30-day kWh chart; Growth shows sign-ups per day; AI Costs shows an estimated USD cost.
 - [ ] Devices shows Online for units that reported in the last 20 seconds, and "last seen …" or "never seen" for the rest.
 - [ ] Save a user or device edit that the server rejects. ✅ The error shows inside the edit panel, not a browser popup.
 - [ ] Reset or delete a demo unit. ✅ The app's own confirmation dialog appears.

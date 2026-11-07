@@ -20,7 +20,7 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
 | 1 — Foundation | In Progress | ~82% | Auth, middleware, design system, bounded telemetry RPCs, and Realtime are implemented. Dashboard cards patch W/V/A directly and refresh only on relay/budget changes; device detail uses a throttled refresh bridge. Migrations through `042` define the current schema. Desktop layout (sidebar + panel at `lg`), token-based light mode, and motion tokens shipped 2026-11-07 (UI only). Hardware firmware samples every 2 s and schedules uploads and relay reads every 5 s; online freshness is 20 s. Physical acceptance remains unrecorded. |
 | 2 — Billing & Control | In Progress | ~92% | Device Detail UI + Home Wallet + Meralco billing implemented; usage is aggregated via bounded RPCs; Smart Control now standardizes 50/80/100 in-app alerts, opt-in per-device automatic cutoff, variable-spend-only control progress, cutoff-safe relay guards, and explicitly confirmed manual power restoration; `billing_cycle_start_day` drives wallet, analytics, alerts, and cutoff windows. The device diagnostics footer (RSSI, board temperature) is not built. |
 | 3 — AI & PWA | In Progress | ~88% | AI insights API route and customer AI assistant MVP are implemented; the assistant provides account-scoped Taglish guidance and explicit-confirmation setting proposals. OneSignal web-push and Resend critical-email delivery are implemented for 80%/100% budget events; Serwist offline caching, the service worker, and an install prompt are still pending |
-| 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill existing gaps (migration `039`). Explicit Start resets the run timer so units can restart after the four-hour auto-pause. Rates, Growth, AI Costs, Health, and Global Analytics are read-only summary pages (counts and a rate history table); the rate editor, charts, and cost estimates are not built. |
+| 4 — Super Admin | In Progress | ~90% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill existing gaps (migration `039`). Explicit Start resets the run timer so units can restart after the four-hour auto-pause. Rate editor (audited, cache-expiring), Growth, AI Costs (estimated USD), Health (real database size), and Global Analytics (platform daily kWh) are built (migration `043`). Open: MRR and a savings estimate (no pricing or baseline yet), token tracking for chat replies, and a phone layout for the admin console. |
 | 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes and uses the shared desktop sidebar (`MANAGER_DESKTOP_SECTIONS`); managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
 ---
@@ -287,48 +287,45 @@ Relay timing is a schedule, not a strict five-second response guarantee: synchro
   - [x] Update login page with role-based redirect *(super_admin → `/admin`, user → `/dashboard`)*
   - [x] Create super_admin RLS policies *(migration at `supabase/migrations/002_admin_rls_policies.sql` — SELECT on all tables + INSERT/UPDATE on meralco_rates)*
 
-- [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)** *(the page exists as a read-only history table; rates arrive through `sync-meralco-rates`)*
-  - [ ] Build form with base rate fields: Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, VAT, optional Supply Charge, and Metering Charge
-  - [ ] Show computed total rate and total with VAT as live preview
-  - [ ] On save → INSERT new row into `meralco_rates` table with `effective_month`
-  - [x] Display history of past rate entries in a table *(latest 24 rows with components, adjustments, fixed charges, and PHP/kWh incl. VAT from `computeVariableRatePerKwh`)*
-  - [ ] Validate all rate values are numeric and within reasonable bounds
+- [x] **Meralco Rate Editor (`app/admin/rates/page.tsx`)** *(2026-11-07; `components/admin/RateEditor.tsx` → `POST /api/admin/rates`)*
+  - [x] Form for every rate column: per-kWh components, distribution tiers, signed adjustments, VAT (overall and per component), and fixed monthly charges, prefilled from the latest month or any history row
+  - [x] Live preview of PHP/kWh incl. VAT and fixed charges, using the billing formula (`computeVariableRatePerKwh`)
+  - [x] Save upserts the `effective_month` row as a manual entry (`auto_updated = false`), audits before/after with a required reason, and expires the rate cache; the monthly sync replaces it if Meralco later publishes that month
+  - [x] Display history of past rate entries in a table, with a Synced/Manual source chip and an Edit action
+  - [x] Server-side validation of every value and its bounds (`lib/meralco-rate-input.ts`, `tests/meralco-rate-input.test.ts`)
 
-- [ ] **Revenue & Growth Dashboard (`app/admin/growth/page.tsx`)** *(the page shows new users and new devices over 30 and 90 days)*
-  - [ ] Query `profiles` table: total registered users, grouped by `created_at` date
+- [x] **Revenue & Growth Dashboard (`app/admin/growth/page.tsx`)** *(2026-11-07)*
+  - [x] Total users and units, new in 7/30/90 days, and accounts by role
   - [x] Query `devices` table: total paired devices, online vs. offline count *(on the `/admin` overview; online means a reading inside the 20 s freshness window)*
-  - [ ] Build 30-day user growth line chart (Recharts `LineChart`)
-  - [ ] Calculate hypothetical MRR (Monthly Recurring Revenue) based on user count
-  - [ ] Display key metrics: Total Users, Active Devices, New Users (7d), New Users (30d) *(total users and online devices are on `/admin`, 30-day counts on Growth; 7-day counts are missing)*
+  - [x] 30-day chart of daily sign-ups and new units
+  - [ ] Calculate hypothetical MRR (Monthly Recurring Revenue) based on user count *(not built: there is no pricing yet)*
 
-- [ ] **OpenAI Usage & Cost Tracker (`app/admin/ai-costs/page.tsx`)** *(the page shows total insights, total tokens, and the number of insight types)*
-  - [ ] Aggregate `ai_insights` table: `SUM(prompt_tokens)`, `SUM(completion_tokens)` grouped by date
-  - [ ] Calculate estimated USD cost using OpenAI pricing (prompt tokens × rate + completion tokens × rate)
-  - [ ] Build daily token usage bar chart
-  - [ ] Display totals: Total Insights Generated, Total Tokens Used, Estimated Cost (USD) *(the first two are shown; no cost estimate)*
-  - [ ] Show breakdown by `insight_type`
+- [x] **OpenAI Usage & Cost Tracker (`app/admin/ai-costs/page.tsx`)** *(2026-11-07)*
+  - [x] Aggregate `ai_insights` tokens by Manila day
+  - [x] Estimated USD cost from `OPENAI_PRICE_PER_MILLION_TOKENS` in `lib/openai.ts`
+  - [x] 30-day daily token bar chart
+  - [x] Totals: insights, tokens (in/out), estimated cost all time and last 30 days
+  - [x] Breakdown by `insight_type`
+  - [ ] Record tokens for assistant and chatbot replies *(only insights store usage today)*
 
-- [ ] **Database & System Health (`app/admin/health/page.tsx`)** *(the page shows registered devices, devices stale for 15+ minutes, telemetry rows in the last 24 h, and the latest rate-sync status)*
-  - [ ] Query `energy_logs` total row count (monitor approach toward 500MB limit)
-  - [ ] Calculate estimated storage usage (row count × avg row size)
-  - [ ] Display storage usage progress bar with warning threshold at 80%
-  - [ ] Show device fleet status: online count, offline count, last-seen timestamps *(online count on `/admin`, stale count on Health; no combined view)*
+- [x] **Database & System Health (`app/admin/health/page.tsx`)** *(2026-11-07)*
+  - [x] Actual database size and `energy_logs` size from `admin_storage_stats()` (migration `043`), with an exact reading count
+  - [x] Storage progress bar against the 500 MB free tier, amber at 80% and red at 90%
+  - [x] Fleet status: online, idle, stale, and never-reported counts, plus a unit table with last-seen times and demo tags
+  - [x] Latest rate-sync run (status, message, month, time); the old query sorted by a missing `started_at` column and always showed "No runs"
   - [x] Build device health table: MAC address, name, live/last-seen state, owner *(`/admin/devices`, `components/admin/AdminDevicesTable.tsx`)*
 
-- [ ] **Global Energy Analytics (`app/admin/analytics/page.tsx`)** *(the page shows current-billing-cycle kWh from `device_month_usage`, active devices, and appliance types)*
-  - [ ] Total platform kWh monitored *(never sum raw cumulative `energy_kwh`; aggregate deltas through RPCs or `device_month_usage`)*
-  - [ ] Calculate total estimated Pesos saved by all users (compare usage trends week-over-week)
-  - [ ] Build "Big Picture" dashboard cards:
-    - [ ] Total kWh Monitored (all-time)
-    - [x] Total Users *(on `/admin`)*
-    - [x] Total Devices *(on `/admin`)*
-    - [ ] Estimated Total Savings (₱)
-  - [ ] Build platform-wide daily energy consumption chart (Recharts `AreaChart`)
+- [x] **Global Energy Analytics (`app/admin/analytics/page.tsx`)** *(2026-11-07)*
+  - [x] Total platform kWh monitored (all time, from `device_month_usage`) and total variable spend tracked
+  - [x] Week-over-week kWh change for the last 7 full days
+  - [x] Platform-wide daily kWh area chart for 30 days from `admin_platform_daily_kwh()` (migration `043`, meter deltas, capped at 92 days)
+  - [x] Units and current-cycle kWh by appliance type
+  - [ ] Estimated Total Savings (₱) *(not built: needs a baseline to compare against; week-over-week kWh change is shown instead)*
 
-- [ ] **Admin Audit Log**
-  - [x] Log admin actions (timestamp, admin user, action type, target, reason) *(`writeAdminAudit` in the users, devices, relay, demo-unit, and Test Lab admin routes; `admin_audit_logs`)*
-  - [ ] Log rate changes *(there is no admin rate-change path yet)*
-  - [ ] Display recent admin actions in a feed on the admin home page *(the latest 100 are on `/admin/audit`, not on the overview)*
+- [x] **Admin Audit Log**
+  - [x] Log admin actions (timestamp, admin user, action type, target, reason) *(`writeAdminAudit` in the users, devices, relay, demo-unit, Test Lab, and rates admin routes; `admin_audit_logs`)*
+  - [x] Log rate changes *(`meralco_rates_create` / `meralco_rates_update` with before/after rows)*
+  - [x] Display recent admin actions in a feed on the admin home page *(latest 8 on `/admin`, latest 100 on `/admin/audit`, with actor emails)*
 
 ### Hardware Tasks (Firmware)
 
@@ -427,3 +424,4 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
   - Privacy Policy (`/privacy`) and Terms and Conditions (`/terms`), written for the Data Privacy Act (RA 10173), with contact Wattwise888@gmail.com. Registration requires accepting both; the accepted version and time are saved in the user metadata. The landing footer links to both.
   - Manager portal polish: the AI tab became a floating owl button (shared `FloatingChat`, also used by the landing chatbot) and its priority cards moved to Fleet; managers can reissue a tenant's temporary password until the tenant sets their own; restyled tenant cards, room picker, and forms.
   - Security: migration `040` (applied) stops the public anon key from reading `devices`; anon may read only `mac_address` and `relay_state` (the firmware's relay poll), and `can_access_device()` is false without a signed-in user. Still open: per-device secrets so a known MAC can't post fake readings (needs a firmware update).
+  - Admin console: Meralco rate editor with live preview and audit, Growth and AI Costs charts with estimated spend, Health with real database size and unit status, Global Analytics with platform daily kWh, and a recent-actions feed on Overview (migration `043`, applied). Shared `AdminUi` and `AdminChart` components.
