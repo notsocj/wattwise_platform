@@ -16,12 +16,12 @@ export default async function ManagerPage() {
   );
 
   return (
-    <>
+    <div className="space-y-4">
       <RealtimeRefreshBridge deviceKeys={realtimeDeviceKeys} />
       <Suspense fallback={null}>
         <BudgetWarningFeed />
       </Suspense>
       <ManagerFleetDashboard snapshot={snapshot} />
-    </>
+    </div>
   );
 }

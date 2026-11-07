@@ -152,7 +152,7 @@ Example phrasing to steer toward:
 - If a boolean is false, its message must be an empty string. Do not return filler text like "everything looks normal."
 - If an insight payload is non-actionable, render `null` instead of a card. Clean dashboards beat mandatory AI chrome.
 - Calendar habit analysis belongs in `app/api/insights/calendar/route.ts`. It should accept bounded grouped daily rows from the month calendar, keep the same Taglish persona, and return a structured JSON analysis payload suitable for a modal or side panel.
-- Manager AI lives under `/manager/ai` and uses server routes under `/api/manager/ai/*`. It must scope every query to `devices.owner_id = auth.uid()`, cache manager insight cards in `ai_insights`, and keep chatbot behavior advisory-only. The chatbot must never claim it changed relays, limits, tenants, or room assignments.
+- Manager AI is the floating `ManagerAssistantFab` (chat) and `ManagerPriorityCards` on the Fleet page (`/manager/ai` only redirects), backed by server routes under `/api/manager/ai/*`. It must scope every query to `devices.owner_id = auth.uid()`, cache manager insight cards in `ai_insights`, and keep chatbot behavior advisory-only. The chatbot must never claim it changed relays, limits, tenants, or room assignments.
 - Structured insight payloads stored in `ai_insights.message` may include `billing_cycle_start_day`, `cycle_start_date`, and `cycle_end_date`. Cache reuse should validate those values before returning a billing-sensitive cached response.
 
 ### 3c. Trigger & Cache — Mandatory Flow

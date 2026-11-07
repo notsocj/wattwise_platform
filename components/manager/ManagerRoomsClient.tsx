@@ -93,7 +93,7 @@ export default function ManagerRoomsClient({
   return (
     <div className="space-y-4">
       {message ? (
-        <div className="rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">
+        <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm font-semibold text-danger transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0">
           {message}
         </div>
       ) : null}
@@ -110,19 +110,19 @@ export default function ManagerRoomsClient({
             value={deviceName}
             onChange={(event) => setDeviceName(event.target.value)}
             placeholder="Room 3 Sub-meter"
-            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="h-12 rounded-full border border-fg/10 bg-shade/10 px-4 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors duration-150 ease-out focus:border-mint/40"
           />
           <input
             value={macAddress}
             onChange={(event) => setMacAddress(event.target.value)}
             placeholder="AA:BB:CC:DD:EE:FF"
-            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="h-12 rounded-full border border-fg/10 bg-shade/10 px-4 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors duration-150 ease-out focus:border-mint/40"
           />
           <button
             type="button"
             onClick={() => setShowScanner(true)}
             disabled={pending !== null}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/75 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-fg/10 bg-fg/[0.03] px-4 text-sm font-bold text-fg/75 transition-[border-color,color,scale] duration-150 ease-out hover:border-mint/30 hover:text-accent enabled:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <QrCode className="h-4 w-4" />
             Scan QR
@@ -131,10 +131,10 @@ export default function ManagerRoomsClient({
             type="button"
             onClick={() => void pairDevice()}
             disabled={pending !== null || !deviceName || !macAddress}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-mint px-5 text-sm font-bold text-ink transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending === "new-device" ? (
-              <LoadingIndicator size="sm" showLabel={false} />
+              <LoadingIndicator size="sm" showLabel={false} spinnerClassName="border-ink/25 border-t-ink" />
             ) : (
               <PlugZap className="h-4 w-4" />
             )}
@@ -154,7 +154,7 @@ export default function ManagerRoomsClient({
 
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {devices.length === 0 ? (
-            <p className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50 lg:col-span-2">
+            <p className="rounded-2xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50 lg:col-span-2">
               Pair a WattWise unit to start managing tenant sub-meters.
             </p>
           ) : (
@@ -165,7 +165,7 @@ export default function ManagerRoomsClient({
               return (
                 <div
                   key={device.id}
-                  className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
+                  className="rounded-2xl border border-fg/[0.06] bg-fg/[0.03] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -195,7 +195,7 @@ export default function ManagerRoomsClient({
                       }}
                       aria-label={`${device.device_name} power is ${device.relay_state ? "on" : "off"}. Tap to turn ${device.relay_state ? "off" : "on"}.`}
                       disabled={isPending}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
+                      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-[background-color,color,scale] duration-150 ease-out active:scale-[0.95] ${
                         device.relay_state
                           ? "bg-mint/10 text-accent"
                           : "bg-fg/[0.06] text-fg/60"
@@ -225,12 +225,16 @@ export default function ManagerRoomsClient({
                         })
                       }
                     />
+                    <label className="relative block">
+                      <span className="sr-only">Hard limit for {device.device_name}, in pesos</span>
+                      <span aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-fg/40">₱</span>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min="1"
                       step="0.01"
                       defaultValue={limit || ""}
-                      placeholder="Hard limit in PHP"
+                      placeholder="Monthly hard limit"
                       onBlur={(event) => {
                         const value = Number(event.target.value);
                         if (Number.isFinite(value) && value > 0 && value !== limit) {
@@ -241,8 +245,9 @@ export default function ManagerRoomsClient({
                         }
                       }}
                       disabled={isPending}
-                      className="rounded-full border border-fg/10 bg-shade/10 px-4 py-2 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+                      className="h-12 w-full rounded-full border border-fg/10 bg-shade/10 pl-9 pr-4 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors duration-150 ease-out focus:border-mint/40"
                     />
+                    </label>
                   </div>
 
                   <div className="mt-4">
@@ -252,7 +257,7 @@ export default function ManagerRoomsClient({
                     </div>
                     <div className="h-2 rounded-full bg-fg/[0.06]">
                       <div
-                        className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
+                        className={`h-full rounded-full transition-[width] duration-500 ease-out ${getBudgetToneClasses(device.progress_percent).bar}`}
                         style={{ width: `${Math.min(device.progress_percent, 100)}%` }}
                       />
                     </div>

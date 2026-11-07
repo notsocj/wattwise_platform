@@ -1,17 +1,7 @@
-import ManagerAiClient from "@/components/manager/ManagerAiClient";
-import { getManagerFleetSnapshot, requireManagerPage } from "@/lib/manager-data";
+import { redirect } from "next/navigation";
 
-export default async function ManagerAiPage() {
-  const { supabase, user, profile } = await requireManagerPage();
-  const snapshot = await getManagerFleetSnapshot(
-    supabase,
-    user.id,
-    profile.billing_cycle_start_day ?? 1
-  );
-
-  return (
-    <ManagerAiClient
-      snapshot={{ devices: snapshot.devices, totals: snapshot.totals }}
-    />
-  );
+// The manager assistant is now the floating owl button on every manager page,
+// and its priority cards are on the Fleet page.
+export default function ManagerAiPage() {
+  redirect("/manager");
 }

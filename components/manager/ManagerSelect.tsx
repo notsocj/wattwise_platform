@@ -16,6 +16,7 @@ type ManagerSelectProps = {
   ariaLabel: string;
 };
 
+/** In-app picker (no native select): a pill trigger and a menu that scales in from it. */
 export default function ManagerSelect({
   value,
   options,
@@ -31,9 +32,10 @@ export default function ManagerSelect({
     <div
       className="relative"
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setOpen(false);
-        }
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setOpen(false);
       }}
     >
       <button
@@ -44,13 +46,14 @@ export default function ManagerSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((current) => !current)}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-shade/10 px-3 py-2 text-left text-sm text-black outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-fg/10 dark:text-fg"
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-full border bg-shade/10 px-4 text-left text-sm text-fg outline-none transition-[border-color,scale] duration-150 ease-out focus-visible:border-mint/50 enabled:active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+          open ? "border-mint/40" : "border-fg/10 hover:border-fg/20"
+        }`}
       >
-        <span className="min-w-0 truncate">{selected?.label ?? "Select"}</span>
+        <span className={`min-w-0 truncate ${value ? "text-fg" : "text-fg/50"}`}>{selected?.label ?? "Select"}</span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-black/70 transition-transform dark:text-fg/70 ${
-            open ? "rotate-180" : ""
-          }`}
+          aria-hidden="true"
+          className={`h-4 w-4 shrink-0 text-fg/50 transition-[rotate] duration-200 ease-out ${open ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -58,11 +61,11 @@ export default function ManagerSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-56 overflow-y-auto rounded-xl border border-black/10 bg-white p-1 shadow-2xl dark:border-fg/10 dark:bg-surface"
+          aria-label={ariaLabel}
+          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-60 origin-top overflow-y-auto rounded-2xl border border-fg/10 bg-surface p-1.5 shadow-2xl shadow-black/30 transition-[opacity,scale] duration-150 ease-out starting:scale-[0.97] starting:opacity-0"
         >
           {options.map((option) => {
             const isSelected = option.value === value;
-
             return (
               <button
                 key={option.value}
@@ -74,17 +77,11 @@ export default function ManagerSelect({
                   onChange(option.value);
                   setOpen(false);
                 }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
-                  isSelected
-                    ? "bg-mint/10 text-black dark:text-fg"
-                    : "text-black/65 hover:bg-black/[0.04] hover:text-black dark:text-fg/70 dark:hover:bg-fg/[0.06] dark:hover:text-fg"
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors duration-150 ease-out ${
+                  isSelected ? "bg-mint/10 font-semibold text-fg" : "text-fg/70 hover:bg-fg/[0.05] hover:text-fg"
                 }`}
               >
-                <Check
-                  className={`h-4 w-4 shrink-0 ${
-                    isSelected ? "text-accent" : "text-transparent"
-                  }`}
-                />
+                <Check aria-hidden="true" className={`h-4 w-4 shrink-0 ${isSelected ? "text-accent" : "text-transparent"}`} />
                 <span className="min-w-0 truncate">{option.label}</span>
               </button>
             );

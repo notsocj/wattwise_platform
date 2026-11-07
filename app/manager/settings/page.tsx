@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2 } from "@/components/ui/icons";
+import { AlertTriangle } from "@/components/ui/icons";
 import SettingsClient from "@/components/settings/SettingsClient";
 import { hasAdminClientConfig } from "@/lib/supabase/admin";
 import { getManagerFleetSnapshot, requireManagerPage } from "@/lib/manager-data";
@@ -14,31 +14,15 @@ export default async function ManagerSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <section
-        className={`rounded-xl border p-5 ${
-          adminConfigured
-            ? "border-mint/30 bg-mint/10"
-            : "border-naku/30 bg-naku/10"
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          {adminConfigured ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-          ) : (
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-naku" />
-          )}
-          <div>
-            <h2 className="text-base font-semibold tracking-tight">
-              Tenant Creation Config
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-fg/60">
-              {adminConfigured
-                ? "You can create tenant accounts from the Tenants tab."
-                : "Tenant account creation isn't available yet. Contact WattWise support to enable it."}
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Only worth a banner when tenant logins can't be created. */}
+      {adminConfigured ? null : (
+        <section className="flex items-start gap-3 rounded-2xl border border-naku/30 bg-naku/10 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-naku" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-fg/70">
+            Tenant account creation isn&apos;t available yet. Contact WattWise support to enable it.
+          </p>
+        </section>
+      )}
 
       <SettingsClient
         fullName={profile.full_name ?? null}

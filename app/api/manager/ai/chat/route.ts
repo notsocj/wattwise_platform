@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { isClearlyOffTopic } from "@/lib/customer-assistant-policy";
 import { OPENAI_CHAT_MODEL } from "@/lib/openai";
 import {
   getManagerFleetSnapshot,
@@ -91,6 +92,13 @@ export async function POST(request: NextRequest) {
 
     if (messages.length === 0 || messages[messages.length - 1]?.role !== "user") {
       return NextResponse.json({ error: "A user message is required." }, { status: 400 });
+    }
+
+    // Same scope rule as the customer assistant: no code, homework, or essays.
+    if (isClearlyOffTopic(messages[messages.length - 1].content)) {
+      return NextResponse.json({
+        message: "Pang-WattWise lang ako: rooms, tenants, limits, at kuryente ng property mo. Try: \"Which rooms are close to their limit?\"",
+      });
     }
 
     const { supabase, user, profile } = session;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BrandMark from "@/components/ui/BrandMark";
+import ManagerPriorityCards from "@/components/manager/ManagerPriorityCards";
 import { formatPeso } from "@/lib/format";
 import {
   AlertTriangle,
@@ -56,13 +56,9 @@ export default function ManagerFleetDashboard({
               {snapshot.devices.length === 1 ? "" : "s"}
             </p>
           </div>
-          <Link
-            href="/manager/ai"
-            className="inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
-          >
-            <BrandMark className="h-4 w-4" />
-            Ask AI
-          </Link>
+          <span className="rounded-full bg-fg/[0.05] px-3 py-1.5 text-[11px] font-semibold text-fg/55">
+            Day {snapshot.billingCycle.elapsedDays} of {snapshot.billingCycle.totalDays}
+          </span>
         </div>
 
         <div className="mt-5">
@@ -76,7 +72,7 @@ export default function ManagerFleetDashboard({
           </div>
           <div className="h-2 rounded-full bg-fg/[0.06]">
             <div
-              className={`h-full rounded-full ${totalTone.bar}`}
+              className={`h-full rounded-full transition-[width] duration-500 ease-out ${totalTone.bar}`}
               style={{ width: `${totalProgress}%` }}
             />
           </div>
@@ -123,6 +119,8 @@ export default function ManagerFleetDashboard({
         ))}
       </section>
 
+      <ManagerPriorityCards />
+
       <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -135,7 +133,7 @@ export default function ManagerFleetDashboard({
           </div>
           <Link
             href="/manager/rooms"
-            className="text-xs font-bold text-accent transition-colors hover:text-accent/80"
+            className="rounded-full border border-mint/30 px-3 py-1.5 text-xs font-bold text-accent transition-[background-color,scale] duration-150 ease-out hover:bg-mint/10 active:scale-[0.97]"
           >
             Manage
           </Link>
@@ -143,14 +141,14 @@ export default function ManagerFleetDashboard({
 
         <div className="mt-4 space-y-3">
           {topRooms.length === 0 ? (
-            <p className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
+            <p className="rounded-2xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
               Pair a WattWise room unit to start seeing fleet analytics.
             </p>
           ) : (
             topRooms.map((device) => (
               <div
                 key={device.id}
-                className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
+                className="rounded-2xl border border-fg/[0.06] bg-fg/[0.03] p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -184,7 +182,7 @@ export default function ManagerFleetDashboard({
 
                 <div className="mt-3 h-2 rounded-full bg-fg/[0.06]">
                   <div
-                    className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
+                    className={`h-full rounded-full transition-[width] duration-500 ease-out ${getBudgetToneClasses(device.progress_percent).bar}`}
                     style={{ width: `${Math.min(device.progress_percent, 100)}%` }}
                   />
                 </div>

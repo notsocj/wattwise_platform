@@ -33,7 +33,7 @@ Deployment: pushing to `main` deploys production on Vercel (functions pinned to 
 - **Assistant**: a floating WattWise assistant (`components/customer-assistant/CustomerAssistantFab.tsx`) that answers questions and proposes actions the user must confirm.
 
 ### Manager portal `/manager` (role `manager`, e.g. landlords)
-Fleet, Rooms, Tenants (creates tenant accounts), Calendar, AI (chat and insights), Settings. Layout is `components/manager/ManagerShell.tsx`.
+Fleet (with AI priority cards), Rooms, Tenants (creates tenant logins, reissues temporary passwords), Calendar, Settings; the manager assistant is a floating owl button (`ManagerAssistantFab`) on every page. Layout is `components/manager/ManagerShell.tsx`.
 
 ### Super admin console `/admin` (role `super_admin`)
 Overview, Users, Devices, Demo Units, Meralco Rates (read-only history; rates come from the sync job), Growth, AI Costs (token usage from `ai_insights`), System Health, Global Analytics, Audit Log, Test Lab. It has its own layout and `components/admin/AdminSidebar.tsx`.
@@ -125,7 +125,7 @@ Rules:
 ### Layout: phone and desktop
 `components/ui/AppFrame.tsx`, mounted in the root layout, picks the frame from the path:
 
-- **Below `lg` (under 1024px)**: the user app is a 430px phone column (widened to `md:max-w-2xl` on tablets) with a fixed bottom tab bar (`components/ui/BottomNav.tsx`: Home, Burn, Reports, Settings, plus the assistant button). The manager portal uses its own wider column and a six-tab bottom bar.
+- **Below `lg` (under 1024px)**: the user app is a 430px phone column (widened to `md:max-w-2xl` on tablets) with a fixed bottom tab bar (`components/ui/BottomNav.tsx`: Home, Burn, Reports, Settings, plus the assistant button). The manager portal uses its own wider column and a five-tab bottom bar plus the assistant button.
 - **App routes on `lg`+** (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/rates`): `AppSidebar` on the left with groups from `APP_DESKTOP_SECTIONS` (Overview: Home, Burn, Reports; Billing: Calendar, Meralco Rates). Settings, the light/dark toggle, Log out, and an account card sit at the bottom. One highlight glides to the active item. Pages sit on the rounded `DESKTOP_PANEL` (content up to `lg:max-w-6xl`, `2xl:max-w-7xl`). The sidebar is `w-56`, `xl:w-64`.
 - **Manager on `lg`+**: `ManagerShell` uses the same `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and the same `DESKTOP_PANEL`.
 - **Sign-in pages on `lg`+** (`/login`, `/register`, `/forgot-password`): a two-column split with `components/ui/AuthBrandPanel.tsx` beside the form.

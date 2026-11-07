@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-context";
 import { createAdminClient, hasAdminClientConfig } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-
-function generateTempPassword(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(14));
-  const body = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
-  return `${body}!7`;
-}
+import { generateTempPassword } from "@/lib/temp-password";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();

@@ -10,12 +10,11 @@ import {
   Settings,
   Users,
 } from "@/components/ui/icons";
-import BrandMark from "@/components/ui/BrandMark";
 
 export type NavItem = {
   href: string;
   label: string;
-  /** A Lucide icon, or BrandMark for the WattWise assistant. */
+  /** A Solar icon from @/components/ui/icons. */
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
 };
 
@@ -53,7 +52,6 @@ export const MANAGER_TABS: readonly NavItem[] = [
   { href: "/manager/rooms", label: "Rooms", icon: DoorOpen },
   { href: "/manager/tenants", label: "Tenants", icon: Users },
   { href: "/manager/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/manager/ai", label: "AI", icon: BrandMark },
   { href: "/manager/settings", label: "Settings", icon: Settings },
 ];
 

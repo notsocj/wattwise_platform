@@ -122,6 +122,8 @@ Safe load only.
 Needs a manager account.
 
 - [ ] Create a tenant and assign a room unit. ✅ The tenant must change their password on first login, then sees only their assigned unit.
+- [ ] On Tenants, for a tenant who hasn't logged in, tap **Temporary password** and confirm. ✅ A new password appears with **Copy login details**; the old one stops working, and the tenant can log in with the new one. A tenant who already set a password has no button.
+- [ ] On any manager page, tap the owl button. ✅ The Manager Assistant opens as a bottom sheet (corner panel on desktop) and answers about rooms; the bottom bar has five tabs (no AI), and the Fleet page shows **AI priorities**.
 - [ ] As the manager, turn a room's relay off. ✅ It asks for confirmation; OFF shows in grey, not red.
 - [ ] Open the manager pages from the bottom nav (phone) and the sidebar (desktop). ✅ The loading screen appears immediately.
 
