@@ -13,7 +13,7 @@ export default async function ManagerSettingsPage() {
   const adminConfigured = hasAdminClientConfig();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <section
         className={`rounded-xl border p-5 ${
           adminConfigured
@@ -41,6 +41,7 @@ export default async function ManagerSettingsPage() {
       </section>
 
       <SettingsClient
+        fullName={profile.full_name ?? null}
         billingCycleStartDay={profile.billing_cycle_start_day ?? 1}
         meralcoMonthlyKwh={profile.meralco_monthly_kwh == null ? null : Number(profile.meralco_monthly_kwh)}
         email={user.email ?? profile.email ?? "Your WattWise account"}

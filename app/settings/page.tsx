@@ -15,6 +15,7 @@ type SettingsDevice = {
 };
 
 type ProfileRow = {
+  full_name: string | null;
   meralco_monthly_kwh: number | string | null;
   billing_cycle_start_day: number | null;
   role: string | null;
@@ -37,7 +38,7 @@ export default async function SettingsPage() {
       .order("created_at", { ascending: true }),
     supabase
       .from("profiles")
-      .select("billing_cycle_start_day, meralco_monthly_kwh, role")
+      .select("full_name, billing_cycle_start_day, meralco_monthly_kwh, role")
       .eq("id", user.id)
       .maybeSingle<ProfileRow>(),
   ]);
@@ -47,11 +48,12 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas lg:min-h-0 pb-24 text-fg lg:pb-12">
-      <PageHeader icon={Settings} title="Settings" description="Your account, billing cycle, notifications and auto shut-off." />
+    <div className="min-h-screen bg-canvas lg:min-h-0 pb-40 text-fg lg:pb-12">
+      <PageHeader icon={Settings} title="Settings" description="Your account, billing, notifications and safety settings." />
 
-      <main className="ww-stagger flex flex-col gap-4 px-5 pt-[84px] lg:max-w-3xl lg:pt-0">
+      <main className="ww-stagger flex flex-col gap-6 px-5 pt-[84px] lg:max-w-3xl lg:pt-0">
         <SettingsClient
+          fullName={profile?.full_name ?? null}
           billingCycleStartDay={profile?.billing_cycle_start_day ?? 1}
           meralcoMonthlyKwh={profile?.meralco_monthly_kwh == null ? null : Number(profile.meralco_monthly_kwh)}
           email={user.email ?? "Your WattWise account"}

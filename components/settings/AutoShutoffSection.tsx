@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert } from "@/components/ui/icons";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { Power, ShieldAlert } from "@/components/ui/icons";
+import Switch from "@/components/ui/Switch";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsGroup";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatPeso } from "@/lib/format";
 import type { SettingsDevice, ShowSettingsToast } from "@/components/settings/settings-types";
@@ -160,99 +161,65 @@ export default function AutoShutoffSection({
 
   return (
     <>
-      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
-        <h2 className="text-base font-semibold tracking-tight">
-          Automatic Shutoff at 100%
-        </h2>
-        <p className="mt-1 text-xs leading-relaxed text-fg/45">
-          Choose which appliances WattWise may turn off after their approved
-          billing-cycle variable-spend limit is reached.
-        </p>
+      <SettingsGroup
+        title="Safety"
+        footer="When on, WattWise turns an appliance off once it spends its limit for the billing cycle. When off, you get an alert and the power stays on."
+      >
+        {localDevices.length === 0 ? (
+          <p className="px-4 py-4 text-sm text-fg/50">Add an appliance first to set automatic shut-off.</p>
+        ) : (
+          localDevices.map((device) => {
+            const isPending = pendingDeviceId === device.id;
+            const autoCutoffEnabled = device.require_approval_on_expiry !== true;
+            const status =
+              device.budget_status === "approval_required"
+                ? "100% reached, power still on"
+                : device.budget_status === "auto_cutoff"
+                  ? "Turned off at 100%"
+                  : null;
 
-        <div className="mt-4 flex flex-col gap-3">
-          {localDevices.length === 0 ? (
-            <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
-              Add an appliance first to configure safety overrides.
-            </div>
-          ) : (
-            localDevices.map((device) => {
-              const isPending = pendingDeviceId === device.id;
-              const autoCutoffEnabled = device.require_approval_on_expiry !== true;
-
-              return (
-                <div
-                  key={device.id}
-                  className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-bold">{device.device_name}</p>
-                      <p className="mt-1 text-[11px] text-fg/45">
-                        Limit: {formatLimit(device.user_approved_limit_php)}
-                      </p>
-                      {device.budget_status === "approval_required" ? (
-                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
-                          <ShieldAlert className="h-3 w-3" />
-                          100% reached. Power remains on.
-                        </p>
-                      ) : device.budget_status === "auto_cutoff" ? (
-                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-danger">
-                          <ShieldAlert className="h-3 w-3" />
-                          Automatic cutoff active.
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => void toggleAutoCutoff(device.id, !autoCutoffEnabled)}
-                      role="switch"
-                      aria-checked={autoCutoffEnabled}
-                      className={`relative h-7 w-14 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                        autoCutoffEnabled ? "bg-naku" : "bg-fg/15"
-                      }`}
-                      aria-label={`Automatic shutoff for ${device.device_name}`}
-                    >
-                      {isPending ? (
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <LoadingIndicator
-                            size="sm"
-                            label="Saving"
-                            showLabel={false}
-                            spinnerClassName="border-black/30 border-t-black"
-                          />
-                        </span>
-                      ) : (
-                        <span
-                          className={`absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-                            autoCutoffEnabled ? "translate-x-[28px]" : "translate-x-0"
-                          }`}
-                        />
-                      )}
-                    </button>
-                  </div>
-                  <p className="mt-3 text-[11px] text-fg/40">
-                    {autoCutoffEnabled
-                      ? "Enabled: WattWise turns the relay off at 100%."
-                      : "Disabled: WattWise alerts you at 100% and leaves power on."}
-                  </p>
-                  {device.budget_status === "auto_cutoff" ? (
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => void restorePower(device.id)}
-                      className="mt-3 w-full rounded-full border border-danger/35 bg-danger/10 px-3 py-2 text-xs font-bold text-danger disabled:opacity-50"
-                    >
-                      Restore Power
-                    </button>
-                  ) : null}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
+            return (
+              <SettingsRow
+                key={device.id}
+                icon={Power}
+                title={device.device_name}
+                description={
+                  status ? (
+                    <span className="inline-flex items-center gap-1 font-semibold text-danger">
+                      <ShieldAlert className="h-3 w-3" aria-hidden="true" />
+                      {status}
+                    </span>
+                  ) : (
+                    formatLimit(device.user_approved_limit_php) === "No limit set"
+                      ? "No spending limit set yet"
+                      : `Limit: ${formatLimit(device.user_approved_limit_php)} per billing cycle`
+                  )
+                }
+                control={
+                  <Switch
+                    checked={autoCutoffEnabled}
+                    pending={isPending}
+                    tone="warning"
+                    label={`Automatic shut-off for ${device.device_name}`}
+                    onChange={(value) => void toggleAutoCutoff(device.id, value)}
+                  />
+                }
+              >
+                {device.budget_status === "auto_cutoff" ? (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => void restorePower(device.id)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-danger/35 bg-danger/10 px-3 text-xs font-bold text-danger transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.97] disabled:opacity-50"
+                  >
+                    Restore power
+                  </button>
+                ) : null}
+              </SettingsRow>
+            );
+          })
+        )}
+      </SettingsGroup>
 
       {confirmDialog}
     </>

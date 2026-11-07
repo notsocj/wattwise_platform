@@ -10,6 +10,7 @@ import BillingCycleSection from "@/components/settings/BillingCycleSection";
 import type { SettingsDevice, SettingsToast } from "@/components/settings/settings-types";
 
 type SettingsClientProps = {
+  fullName: string | null;
   billingCycleStartDay: number;
   meralcoMonthlyKwh: number | null;
   email: string;
@@ -18,7 +19,15 @@ type SettingsClientProps = {
   oneSignalAppId: string | null;
 };
 
+const ROLE_LABEL: Record<string, string> = { user: "Homeowner", tenant: "Tenant", manager: "Manager" };
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : name.slice(0, 2)).toUpperCase();
+}
+
 export default function SettingsClient({
+  fullName,
   billingCycleStartDay,
   meralcoMonthlyKwh,
   email,
@@ -36,8 +45,26 @@ export default function SettingsClient({
     return () => clearTimeout(timer);
   }, [toast]);
 
+  const displayName = fullName?.trim() || email.split("@")[0];
+
   return (
     <>
+      <div className="flex items-center gap-4 rounded-2xl border border-fg/[0.06] bg-surface p-4">
+        <span
+          aria-hidden="true"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-mint/15 text-lg font-bold text-accent"
+        >
+          {initialsOf(displayName)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold text-fg">{displayName}</p>
+          <p className="truncate text-xs text-fg/50">{email}</p>
+        </div>
+        <span className="shrink-0 rounded-full border border-fg/10 px-2.5 py-1 text-[11px] font-medium text-fg/60">
+          {ROLE_LABEL[role] ?? "Member"}
+        </span>
+      </div>
+
       {canManageHomeSettings ? (
         <BillingCycleSection
           billingCycleStartDay={billingCycleStartDay}

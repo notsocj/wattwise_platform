@@ -1,6 +1,8 @@
 "use client";
 
-import { Bell, Mail, Send, Smartphone } from "@/components/ui/icons";
+import { Mail, Send, Smartphone } from "@/components/ui/icons";
+import Switch from "@/components/ui/Switch";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsGroup";
 import { useEffect, useState } from "react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import {
@@ -27,38 +29,6 @@ type PreferenceResponse = {
 };
 
 type Feedback = { type: "success" | "error" | "info"; message: string } | null;
-
-function Toggle({
-  checked,
-  disabled,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  disabled: boolean;
-  label: string;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative h-7 w-14 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-mint" : "bg-fg/15"
-      }`}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-          checked ? "translate-x-[28px]" : "translate-x-0"
-        }`}
-      />
-    </button>
-  );
-}
 
 function friendlyTestResult(
   channel: "push" | "email",
@@ -290,129 +260,107 @@ export default function NotificationSettings({ appId }: { appId: string | null }
     }
   }
 
-  return (
-    <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
-      <div className="flex items-start gap-3">
-        <Bell className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">Budget Notifications</h2>
-          <p className="mt-1 text-xs leading-relaxed text-fg/45">
-            50% stays in-app. At 80% WattWise can send a push; critical 100% events can also send email.
-          </p>
-        </div>
-      </div>
+  const pushNote = !appId
+    ? "Push alerts aren't available yet."
+    : !capability.supported
+      ? "This browser doesn't support web push."
+      : !capability.secureContext
+        ? "Push needs HTTPS or localhost."
+        : iosNeedsInstall
+          ? "iPhone: Share, Add to Home Screen, open the installed app, then turn this on."
+          : capability.permission === "denied"
+            ? "Notifications are blocked in your browser settings."
+            : preferences?.budget_push_enabled && !capability.subscribed
+              ? "On for your account, but this browser isn't subscribed yet."
+              : null;
 
+  return (
+    <SettingsGroup
+      title="Notifications"
+      footer="50% alerts stay in the app. Push goes out at 80% and 100%; email only for critical 100% events."
+    >
       {isLoading ? (
-        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
+        <div className="px-4 py-4">
           <LoadingIndicator size="sm" label="Loading notification settings" />
         </div>
       ) : preferences ? (
-        <div className="mt-4 flex flex-col gap-3">
-          <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                <div>
-                  <p className="text-sm font-bold">Push alerts at 80% and 100%</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-fg/45">
-                    Permission is requested only when you turn this on.
-                  </p>
-                </div>
-              </div>
-              <Toggle
+        <>
+          <SettingsRow
+            icon={Smartphone}
+            title="Push alerts"
+            description={pushNote ? <span className="text-naku">{pushNote}</span> : "When a budget reaches 80% and 100%."}
+            control={
+              <Switch
                 checked={pushEnabledOnThisBrowser}
-                disabled={pending !== null || !pushAvailable}
+                disabled={!pushAvailable || (pending !== null && pending !== "push")}
+                pending={pending === "push"}
                 label="Budget push notifications"
                 onChange={(value) => void changePush(value)}
               />
-            </div>
-
-            {!appId ? (
-              <p className="mt-3 text-[11px] text-naku">Push alerts aren&apos;t available yet.</p>
-            ) : !capability.supported ? (
-              <p className="mt-3 text-[11px] text-naku">This browser does not support web push.</p>
-            ) : !capability.secureContext ? (
-              <p className="mt-3 text-[11px] text-naku">Push requires HTTPS or localhost.</p>
-            ) : iosNeedsInstall ? (
-              <p className="mt-3 text-[11px] text-naku">
-                iPhone: Share → Add to Home Screen, open the installed WattWise app, then enable alerts.
-              </p>
-            ) : capability.permission === "denied" ? (
-              <p className="mt-3 text-[11px] text-naku">Blocked in browser settings.</p>
-            ) : preferences.budget_push_enabled && !capability.subscribed ? (
-              <p className="mt-3 text-[11px] text-naku">Preference is on, but this browser is not subscribed yet.</p>
+            }
+          >
+            {pushEnabledOnThisBrowser && capability.subscribed && pushAvailable ? (
+              <TestButton sending={pending === "test-push"} disabled={pending !== null} onClick={() => void sendTest("push")}>
+                Send a test push
+              </TestButton>
             ) : null}
+          </SettingsRow>
 
-            <button
-              type="button"
-              disabled={
-                pending !== null ||
-                !pushEnabledOnThisBrowser ||
-                !capability.subscribed ||
-                !pushAvailable
-              }
-              onClick={() => void sendTest("push")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {pending === "test-push" ? (
-                <LoadingIndicator size="sm" label="Sending" showLabel={false} />
-              ) : (
-                <Send className="h-3.5 w-3.5" />
-              )}
-              Send Test Push
-            </button>
-          </div>
-
-          <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                <div>
-                  <p className="text-sm font-bold">Critical email at 100%</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-fg/45">
-                    Enabled by default for approval-required and automatic-cutoff events.
-                  </p>
-                </div>
-              </div>
-              <Toggle
+          <SettingsRow
+            icon={Mail}
+            title="Critical email"
+            description="When a budget reaches 100% and needs your approval or cuts power."
+            control={
+              <Switch
                 checked={preferences.budget_email_enabled}
-                disabled={pending !== null}
+                disabled={pending !== null && pending !== "email"}
+                pending={pending === "email"}
                 label="Critical budget email notifications"
                 onChange={(value) => void changeEmail(value)}
               />
-            </div>
-
-            <button
-              type="button"
-              disabled={pending !== null || !preferences.budget_email_enabled}
-              onClick={() => void sendTest("email")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {pending === "test-email" ? (
-                <LoadingIndicator size="sm" label="Sending" showLabel={false} />
-              ) : (
-                <Send className="h-3.5 w-3.5" />
-              )}
-              Send Test Email
-            </button>
-          </div>
-        </div>
+            }
+          >
+            {preferences.budget_email_enabled ? (
+              <TestButton sending={pending === "test-email"} disabled={pending !== null} onClick={() => void sendTest("email")}>
+                Send a test email
+              </TestButton>
+            ) : null}
+          </SettingsRow>
+        </>
       ) : null}
 
       {feedback ? (
         <p
           role={feedback.type === "error" ? "alert" : "status"}
-          className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${
+          className={`px-4 py-3 text-xs leading-relaxed transition-opacity duration-200 ease-out starting:opacity-0 ${
             feedback.type === "success"
-              ? "border-mint/25 bg-mint/10 text-accent"
+              ? "bg-mint/[0.06] text-accent"
               : feedback.type === "error"
-                ? "border-danger/25 bg-danger/10 text-danger"
-                : "border-naku/25 bg-naku/10 text-naku"
+                ? "bg-danger/[0.06] text-danger"
+                : "bg-naku/[0.06] text-naku"
           }`}
         >
           {feedback.message}
         </p>
       ) : null}
-    </section>
+    </SettingsGroup>
+  );
+}
+
+function TestButton({ sending, disabled, onClick, children }: { sending: boolean; disabled: boolean; onClick: () => void; children: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-fg/10 px-3 text-xs font-semibold text-fg/70 transition-[color,border-color,scale,opacity] duration-150 ease-out hover:border-mint/30 hover:text-accent enabled:active:scale-[0.97] disabled:opacity-50 starting:opacity-0"
+    >
+      {sending ? (
+        <span className="h-3 w-3 animate-spin rounded-full border-2 border-fg/15 border-t-accent" aria-hidden="true" />
+      ) : (
+        <Send className="h-3.5 w-3.5" aria-hidden="true" />
+      )}
+      {sending ? "Sending..." : children}
+    </button>
   );
 }

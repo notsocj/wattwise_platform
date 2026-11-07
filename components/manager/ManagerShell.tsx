@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Building2 } from "@/components/ui/icons";
-import LogoutButton from "@/components/ui/LogoutButton";
 import AppSidebar from "@/components/ui/AppSidebar";
 import { DESKTOP_PANEL } from "@/components/ui/AppFrame";
 import { getActiveHref, MANAGER_DESKTOP_SECTIONS, MANAGER_TABS } from "@/components/ui/app-nav";
@@ -45,10 +44,6 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
                 </h1>
               </div>
               <p className="mt-1.5 hidden text-sm text-fg/50 lg:block">{header.description}</p>
-            </div>
-            {/* On desktop the sidebar has the logout button. */}
-            <div className="lg:hidden">
-              <LogoutButton />
             </div>
           </div>
         </header>

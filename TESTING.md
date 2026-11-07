@@ -95,6 +95,8 @@ Safe load only.
 - [ ] Change the billing-cycle day. ✅ The dashboard's cycle dates update.
 - [ ] Turn on push alerts. ✅ The browser asks for permission only after you tap the toggle, never on page load.
 - [ ] Send a test push and a test email. ✅ They arrive, or you see a plain message explaining why not.
+- [ ] Settings on a phone: groups (Billing, Appearance, Notifications, Safety, Account, Danger zone) rise in one after another. Change the billing day or kWh. ✅ A Save button appears only after you change a value. Switches slide, and the Light/Dark selector's highlight glides.
+- [ ] Settings → Log out, and Log out of all devices. ✅ Each asks first; Cancel keeps you signed in. "All devices" also signs out your other phones and browsers. No page has a logout button in the top right any more (desktop keeps Log out in the sidebar).
 - [ ] **Test account only:** Delete account. ✅ The button stays disabled until you type `DELETE`; deleting signs you out.
 
 ## 10. AI assistant

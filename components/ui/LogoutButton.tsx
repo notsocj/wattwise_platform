@@ -6,6 +6,31 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { logoutOneSignal } from "@/lib/onesignal";
 
+/**
+ * Signs out and returns to /login. `scope: "global"` ends every session of
+ * this account (all phones and browsers); "local" (default) only this one.
+ */
+export function useLogout() {
+  const router = useRouter();
+  const [pending, setPending] = useState<"local" | "global" | null>(null);
+
+  async function logout(scope: "local" | "global" = "local") {
+    if (pending) return;
+    setPending(scope);
+    const supabase = createClient();
+    await logoutOneSignal().catch(() => undefined);
+    const { error } = await supabase.auth.signOut({ scope });
+    if (error && scope === "global") {
+      // Fall back to this device so the user is never left half signed in.
+      await supabase.auth.signOut({ scope: "local" });
+    }
+    router.replace("/login");
+    router.refresh();
+  }
+
+  return { logout, pending };
+}
+
 type LogoutButtonProps = {
   className?: string;
   label?: string;
@@ -18,27 +43,13 @@ export default function LogoutButton({
   label = "Logout",
   showLabel = false,
 }: LogoutButtonProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleLogout() {
-    if (isLoading) {
-      return;
-    }
-
-    setIsLoading(true);
-    const supabase = createClient();
-
-    await logoutOneSignal().catch(() => undefined);
-    await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
+  const { logout, pending } = useLogout();
+  const isLoading = pending !== null;
 
   return (
     <button
       type="button"
-      onClick={handleLogout}
+      onClick={() => void logout()}
       disabled={isLoading}
       aria-label={showLabel ? undefined : isLoading ? "Signing out" : label}
       className={

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, type IconComponent } from "@/components/ui/icons";
-import LogoutButton from "@/components/ui/LogoutButton";
 import { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
 
 type PageHeaderProps = {
@@ -14,7 +13,7 @@ type PageHeaderProps = {
   description?: ReactNode;
   /** Desktop only: replaces `title` (e.g. a greeting instead of the brand). */
   desktopTitle?: ReactNode;
-  /** Replaces the default logout button on the right. */
+  /** Optional controls on the right. Logging out lives in Settings (and the desktop sidebar). */
   actions?: ReactNode;
 };
 
@@ -69,8 +68,7 @@ export default function PageHeader({
             {description ? <p className="mt-1.5 hidden text-sm text-fg/50 lg:block">{description}</p> : null}
           </div>
         </div>
-        {/* On desktop the sidebar has the logout button. */}
-        <div className={actions ? "shrink-0 print:hidden" : "print:hidden lg:hidden"}>{actions ?? <LogoutButton />}</div>
+        {actions ? <div className="shrink-0 print:hidden">{actions}</div> : null}
       </div>
     </header>
   );

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import { CalendarDays, ReceiptText } from "@/components/ui/icons";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsGroup";
 import type { ShowSettingsToast } from "@/components/settings/settings-types";
 import { distributionTierLabel } from "@/lib/meralco-bill";
 
@@ -124,75 +125,62 @@ export default function BillingCycleSection({
     }
   }
 
-  return (
-      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
-        <h2 className="text-base font-semibold tracking-tight">
-          Billing Cycle
-        </h2>
-        <p className="mt-1 text-xs leading-relaxed text-fg/45">
-          Set the Meralco reading date that starts your bill cycle. WattWise will
-          use this for wallet totals, analytics forecasts, and Smart Control cutoffs.
-        </p>
+  const billingDirty = billingCycleDraft !== String(billingCycleStartDay);
+  const kwhSaved = meralcoMonthlyKwh === null ? "" : String(meralcoMonthlyKwh);
+  const kwhDirty = kwhDraft.trim() !== kwhSaved;
 
-        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
-          <label
-            htmlFor="billing-cycle-start-day"
-            className="text-[11px] font-semibold uppercase tracking-wider text-fg/50"
-          >
-            Meralco Billing Start Date
-          </label>
-          <div className="mt-3 flex items-center gap-3">
+  return (
+    <SettingsGroup
+      title="Billing"
+      footer="WattWise uses these for wallet totals, forecasts, and Smart Control cutoffs."
+    >
+      <SettingsRow
+        icon={CalendarDays}
+        title="Billing cycle starts on"
+        description={billingCycleError ?? "The day Meralco reads your meter (1 to 28)."}
+        control={
+          <div className="flex items-center gap-2">
+            <label htmlFor="billing-cycle-start-day" className="sr-only">
+              Billing cycle start day
+            </label>
             <select
               id="billing-cycle-start-day"
               value={billingCycleDraft}
               disabled={isSavingBillingCycle}
               onChange={(event) => {
                 setBillingCycleDraft(event.target.value);
-                if (billingCycleError) {
-                  setBillingCycleError(null);
-                }
+                if (billingCycleError) setBillingCycleError(null);
               }}
-              className="h-11 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 rounded-full border border-fg/10 bg-shade/10 pl-3.5 pr-2 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
                 <option key={day} value={String(day)} className="bg-surface text-fg">
-                  {day}
+                  Day {day}
                 </option>
               ))}
             </select>
-
-            <button
-              type="button"
-              onClick={() => void saveBillingCycle()}
-              disabled={isSavingBillingCycle}
-              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingBillingCycle ? (
-                <>
-                  <LoadingIndicator size="sm" label="Saving" showLabel={false} />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </button>
+            {billingDirty || isSavingBillingCycle ? (
+              <SaveButton saving={isSavingBillingCycle} onClick={() => void saveBillingCycle()} />
+            ) : null}
           </div>
+        }
+      />
 
-          <p className={`mt-3 text-xs ${billingCycleError ? "text-danger" : "text-fg/45"}`}>
-            {billingCycleError
-              ? billingCycleError
-              : "Allowed values are 1 through 28 to match real Meralco reading windows safely."}
-          </p>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
-          <label
-            htmlFor="meralco-monthly-kwh"
-            className="text-[11px] font-semibold uppercase tracking-wider text-fg/50"
-          >
-            Monthly kWh on your Meralco bill (optional)
+      <SettingsRow
+        icon={ReceiptText}
+        title="kWh on your Meralco bill"
+        description={
+          kwhError ??
+          (draftKwh !== null
+            ? `At ${draftKwh.toLocaleString("en-PH")} kWh a month, Meralco charges the ${distributionTierLabel(draftKwh)} distribution rate.`
+            : "Optional. Leave empty and WattWise estimates it from your appliances.")
+        }
+      >
+        <div className="flex items-center gap-2">
+          <label htmlFor="meralco-monthly-kwh" className="sr-only">
+            Monthly kWh on your Meralco bill
           </label>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="relative min-w-0 flex-1">
             <input
               id="meralco-monthly-kwh"
               inputMode="decimal"
@@ -205,35 +193,39 @@ export default function BillingCycleSection({
                 setKwhDraft(event.target.value);
                 if (kwhError) setKwhError(null);
               }}
-              className="h-11 min-w-0 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 text-base font-semibold text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`h-10 w-full rounded-full border bg-shade/10 pl-4 pr-12 text-base font-semibold text-fg outline-none transition-colors placeholder:font-normal placeholder:text-fg/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 ${
+                kwhError ? "border-danger/50" : "border-fg/10"
+              }`}
             />
-            <button
-              type="button"
-              onClick={() => void saveMonthlyKwh(false)}
-              disabled={isSavingKwh}
-              className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingKwh ? <LoadingIndicator size="sm" label="Saving" showLabel={false} /> : "Save"}
-            </button>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-fg/40">kWh</span>
           </div>
-          <p className={`mt-3 text-xs leading-relaxed ${kwhError ? "text-danger" : "text-fg/50"}`}>
-            {kwhError
-              ? kwhError
-              : draftKwh !== null
-                ? `Meralco charges a home using ${draftKwh.toLocaleString("en-PH")} kWh a month the ${distributionTierLabel(draftKwh)} distribution rate on every kWh.`
-                : "Meralco's distribution rate depends on your whole home's monthly kWh. Leave this empty and WattWise estimates it from your monitored appliances."}
-          </p>
-          {meralcoMonthlyKwh !== null ? (
-            <button
-              type="button"
-              onClick={() => void saveMonthlyKwh(true)}
-              disabled={isSavingKwh}
-              className="mt-2 min-h-10 text-xs font-semibold text-fg/60 underline hover:text-fg disabled:opacity-60"
-            >
-              Clear and use monitored usage
-            </button>
-          ) : null}
+          {kwhDirty || isSavingKwh ? <SaveButton saving={isSavingKwh} onClick={() => void saveMonthlyKwh(false)} /> : null}
         </div>
-      </section>
+        {meralcoMonthlyKwh !== null && !kwhDirty ? (
+          <button
+            type="button"
+            onClick={() => void saveMonthlyKwh(true)}
+            disabled={isSavingKwh}
+            className="mt-2 min-h-9 text-xs font-semibold text-fg/55 underline-offset-2 transition-colors hover:text-fg hover:underline disabled:opacity-60"
+          >
+            Clear and use monitored usage
+          </button>
+        ) : null}
+      </SettingsRow>
+    </SettingsGroup>
+  );
+}
+
+/** Appears only when a value changed; eases in so it reads as "you have unsaved changes". */
+function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={saving}
+      className="inline-flex h-9 min-w-16 items-center justify-center rounded-full bg-mint px-3.5 text-sm font-bold text-ink transition-[opacity,scale,translate] duration-200 ease-out enabled:active:scale-[0.96] disabled:opacity-70 starting:translate-x-1 starting:opacity-0"
+    >
+      {saving ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink/25 border-t-ink" aria-label="Saving" /> : "Save"}
+    </button>
   );
 }
