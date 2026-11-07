@@ -129,7 +129,7 @@ Rules:
 - **App routes on `lg`+** (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/rates`): `AppSidebar` on the left with groups from `APP_DESKTOP_SECTIONS` (Overview: Home, Burn, Reports; Billing: Calendar, Meralco Rates). Settings, the light/dark toggle, Log out, and an account card sit at the bottom. One highlight glides to the active item. Pages sit on the rounded `DESKTOP_PANEL` (content up to `lg:max-w-6xl`, `2xl:max-w-7xl`). The sidebar is `w-56`, `xl:w-64`.
 - **Manager on `lg`+**: `ManagerShell` uses the same `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and the same `DESKTOP_PANEL`.
 - **Sign-in pages on `lg`+** (`/login`, `/register`, `/forgot-password`): a two-column split with `components/ui/AuthBrandPanel.tsx` beside the form.
-- `/admin`, `/manager`, `/onboarding`, and `/pitch-deck` lay themselves out.
+- `/admin`, `/manager`, `/onboarding`, `/pitch-deck`, `/privacy`, and `/terms` lay themselves out.
 
 Page building blocks:
 - `components/ui/PageHeader.tsx`: a fixed 64px bar on phones (body needs `pt-[84px] lg:pt-0`, exported as `PAGE_HEADER_OFFSET`); on desktop an in-page title block with no back button. Pass `description` for the desktop intro line and `desktopTitle` to replace the title on desktop. Loading screens start with `PageTitleSkeleton`. There is no logout in the header; pass `actions` only for page-specific buttons.

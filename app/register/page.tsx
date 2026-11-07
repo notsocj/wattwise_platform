@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, Eye, EyeOff, MailCheck } from "@/components/ui/icons";
+import { ArrowLeft, Check, Eye, EyeOff, MailCheck } from "@/components/ui/icons";
 import Link from "next/link";
 import FormAlert from "@/components/ui/FormAlert";
 import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { getHomePathForRole, type UserRole } from "@/lib/roles";
+import { LEGAL_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -20,6 +21,7 @@ type RegisterFieldErrors = Partial<{
   fullName: string;
   email: string;
   password: string;
+  terms: string;
 }>;
 
 type RegisterRole = Extract<UserRole, "user" | "manager">;
@@ -42,6 +44,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [status, setStatus] = useState<SubmitStatus>("idle");
@@ -79,6 +82,7 @@ export default function RegisterPage() {
     if (fullNameError) nextErrors.fullName = fullNameError;
     if (emailError) nextErrors.email = emailError;
     if (passwordError) nextErrors.password = passwordError;
+    if (!acceptedTerms) nextErrors.terms = "Accept the Terms and Privacy Policy to create an account.";
 
     return nextErrors;
   }
@@ -113,6 +117,9 @@ export default function RegisterPage() {
         data: {
           full_name: fullName.trim(),
           role: accountType,
+          // Proof of consent (Data Privacy Act): what was accepted and when.
+          terms_version: LEGAL_VERSION,
+          terms_accepted_at: new Date().toISOString(),
         },
       },
     });
@@ -372,12 +379,60 @@ export default function RegisterPage() {
 
           <p
             id="register-password-message"
-            className={`mb-8 text-xs ${
+            className={`mb-6 text-xs ${
               fieldErrors.password ? "text-danger" : "text-fg/40"
             }`}
           >
             {fieldErrors.password ?? "Must be at least 8 characters long."}
           </p>
+
+          <div className="mb-8">
+            <label htmlFor="register-terms" className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-fg/70">
+              <input
+                id="register-terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => {
+                  setAcceptedTerms(e.target.checked);
+                  clearFieldError("terms");
+                }}
+                aria-invalid={Boolean(fieldErrors.terms)}
+                aria-describedby={fieldErrors.terms ? "register-terms-message" : undefined}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-[background-color,border-color,scale] duration-150 ease-out peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-mint active:scale-90 ${
+                  acceptedTerms
+                    ? "border-mint bg-mint text-ink"
+                    : fieldErrors.terms
+                      ? "border-danger/70"
+                      : "border-mint/40"
+                }`}
+              >
+                <Check
+                  className={`h-3.5 w-3.5 transition-[opacity,scale] duration-150 ease-out ${acceptedTerms ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
+                  strokeWidth={3}
+                />
+              </span>
+              <span>
+                I have read and agree to the{" "}
+                <Link href="/terms" target="_blank" rel="noopener" className="font-semibold text-accent hover:underline">
+                  Terms and Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" rel="noopener" className="font-semibold text-accent hover:underline">
+                  Privacy Policy
+                </Link>
+                , including how WattWise processes my energy data.
+              </span>
+            </label>
+            {fieldErrors.terms ? (
+              <p id="register-terms-message" className="mt-2 pl-8 text-xs text-danger">
+                {fieldErrors.terms}
+              </p>
+            ) : null}
+          </div>
 
           <SubmitButton
             status={status}

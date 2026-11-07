@@ -25,8 +25,8 @@ export default function AppFrame({ children }: { children: ReactNode }) {
   const isUnder = (prefixes: string[]) => prefixes.some((prefix) => matchesPath(pathname, prefix));
 
   // These lay themselves out: admin has its own sidebar, the manager shell its own nav,
-  // and the landing page runs full width.
-  if (isUnder(["/admin", "/pitch-deck", "/manager", "/onboarding"])) {
+  // and the landing page and legal pages run full width.
+  if (isUnder(["/admin", "/pitch-deck", "/manager", "/onboarding", "/privacy", "/terms"])) {
     return <>{children}</>;
   }
 

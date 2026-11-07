@@ -157,7 +157,14 @@ export default function LandingPage() {
           </span>{" "}
           · Built for Philippine households.
         </p>
-        <p>Optimized for sustainable living.</p>
+        <nav aria-label="Legal" className="flex gap-5">
+          <Link href="/privacy" className="transition-colors hover:text-fg/70">
+            Privacy
+          </Link>
+          <Link href="/terms" className="transition-colors hover:text-fg/70">
+            Terms
+          </Link>
+        </nav>
       </footer>
       <LandingAssistant />
     </main>

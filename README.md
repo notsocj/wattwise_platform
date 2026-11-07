@@ -7,6 +7,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 ## Features
 
 - **Landing page** at `/onboarding` with an interactive 3D WattWise unit (hover or tap to see the meter, controller, and relay inside), scroll animations, smooth scrolling, and an **Ask WattWise** chatbot that answers questions about WattWise for signed-out visitors (rate-limited, WattWise topics only)
+- **Privacy Policy and Terms** at `/privacy` and `/terms` (Philippine Data Privacy Act), accepted with a checkbox when registering
 - **Phone and desktop layouts**: a 430px app with a bottom tab bar on phones; on laptops and desktops (1024px+) a sidebar, wider grids, and in-page titles
 - **Dark and light themes**, chosen in the sidebar or Settings and applied before the first paint
 - **Live dashboard** with per-device watts, voltage, and current pushed through Supabase Realtime (no page reloads), plus freshness-aware LIVE/idle/offline states
