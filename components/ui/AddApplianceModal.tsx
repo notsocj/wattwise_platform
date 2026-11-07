@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, X } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import MacQrScanner from "@/components/ui/MacQrScanner";
 import ApplianceTypeStep from "@/components/ui/add-appliance/ApplianceTypeStep";

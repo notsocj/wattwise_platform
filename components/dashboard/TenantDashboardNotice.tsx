@@ -1,4 +1,4 @@
-import { PlugZap } from "lucide-react";
+import { PlugZap } from "@/components/ui/icons";
 import BottomNav from "@/components/ui/BottomNav";
 import PageHeader from "@/components/ui/PageHeader";
 

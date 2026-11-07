@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { ArrowLeft, type IconComponent } from "@/components/ui/icons";
 import LogoutButton from "@/components/ui/LogoutButton";
 import { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
 
 type PageHeaderProps = {
   title: ReactNode;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   eyebrow?: string;
   backHref?: string;
   backLabel?: string;

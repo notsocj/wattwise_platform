@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, X } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type { CalendarDailySummary } from "@/lib/calendar-analytics";
 import type {

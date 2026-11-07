@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatPeso } from "@/lib/format";

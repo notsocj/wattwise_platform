@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Wallet,
   Power,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { isFreshReading } from "@/lib/device-telemetry";
 import { fetchOwnedDeviceById } from "@/lib/dashboard-data";
 import { createClient } from "@/lib/supabase/server";

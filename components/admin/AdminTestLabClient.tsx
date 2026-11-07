@@ -14,7 +14,7 @@ import {
   Smartphone,
   TestTube2,
   UserRound,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import LoadingIndicator, { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
 
 type Person = {

@@ -1,4 +1,4 @@
-import { QrCode } from "lucide-react";
+import { QrCode } from "@/components/ui/icons";
 import type { FieldErrors } from "@/components/ui/add-appliance/useApplianceOnboarding";
 
 export default function MacNameStep({

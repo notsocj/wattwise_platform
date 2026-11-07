@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "@/components/ui/icons";
 import Link from "next/link";
 import FormAlert from "@/components/ui/FormAlert";
 import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";

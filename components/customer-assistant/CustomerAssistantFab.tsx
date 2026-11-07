@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowRight, Check, ChevronRight, Clock, Info, Send, ShieldCheck, X } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, ChevronRight, Clock, Info, Send, ShieldCheck, X } from "@/components/ui/icons";
 import BrandMark from "@/components/ui/BrandMark";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";

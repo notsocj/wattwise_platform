@@ -1,4 +1,4 @@
-import { AlertTriangle, BellRing, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, BellRing, CheckCircle2 } from "@/components/ui/icons";
 import { getBudgetToneClasses } from "@/lib/budget-policy";
 import { createClient } from "@/lib/supabase/server";
 

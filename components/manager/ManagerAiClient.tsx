@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import useSWR from "swr";
-import { AlertTriangle, Send, Sparkles } from "lucide-react";
+import { AlertTriangle, Send, Sparkles } from "@/components/ui/icons";
 import BrandMark from "@/components/ui/BrandMark";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { jsonFetcher } from "@/lib/fetcher";

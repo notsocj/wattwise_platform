@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf } from "lucide-react";
+import { Leaf } from "@/components/ui/icons";
 import ContextualInsightCard from "@/components/insights/ContextualInsightCard";
 import { InsightType } from "@/lib/constants";
 

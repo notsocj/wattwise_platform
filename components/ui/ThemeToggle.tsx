@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "@/components/ui/icons";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 type ThemeMode = "dark" | "light";

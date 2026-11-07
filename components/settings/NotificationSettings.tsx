@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Mail, Send, Smartphone } from "lucide-react";
+import { Bell, Mail, Send, Smartphone } from "@/components/ui/icons";
 import { useEffect, useState } from "react";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import {

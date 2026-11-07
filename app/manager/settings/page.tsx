@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "@/components/ui/icons";
 import SettingsClient from "@/components/settings/SettingsClient";
 import { hasAdminClientConfig } from "@/lib/supabase/admin";
 import { getManagerFleetSnapshot, requireManagerPage } from "@/lib/manager-data";

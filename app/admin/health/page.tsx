@@ -1,4 +1,4 @@
-import { HeartPulse } from "lucide-react";
+import { HeartPulse } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 export default async function AdminHealthPage() {
   const admin = createAdminClient();

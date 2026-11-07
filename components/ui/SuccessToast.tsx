@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "@/components/ui/icons";
 
 type SuccessToastPosition = "bottom-center" | "top-right";
 

@@ -11,7 +11,7 @@ Wattwise is a mobile-first energy monitoring SaaS platform for Philippine househ
 
 - Frontend: Next.js 16.1.7, React 19.2.3, TypeScript 5, Tailwind CSS 4
 - Backend/services: Supabase, Supabase Edge Functions, OpenAI SDK
-- UI/data libs: Lucide React, Recharts, html5-qrcode; three.js + @react-three/fiber and Lenis on the `/onboarding` landing page only
+- UI/data libs: Solar icons from Iconify (generated into `components/ui/icons.tsx`), Recharts, html5-qrcode; three.js + @react-three/fiber and Lenis on the `/onboarding` landing page only
 - Deployment/runtime: Vercel-ready app with OpenNext Cloudflare preview/deploy scripts available
 
 ## Repository Map
@@ -88,6 +88,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Use Tailwind utility classes and shared theme tokens such as `bg-canvas`, `bg-surface`, `text-fg`, `text-accent`, `bg-mint`, `text-bida`, `text-naku`, and `text-danger`. The WattWise owl is `components/ui/BrandMark.tsx` (it takes the text colour); use it for the assistant and brand spots instead of a generic robot icon.
 - Use `text-ink` for dark text on mint/bright fills (it stays dark in both themes). Never name a color token after a Tailwind size keyword (`base`, `sm`, `lg`, ...): `--color-base` once turned every `text-base` into a color instead of 16px.
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.
+- Icons are Solar (Iconify), imported from `@/components/ui/icons` (`Home`, `Check`, `Zap`, ...). To add one, map a component name to a Solar icon in `scripts/build-icons.mjs` and run `npm run icons`; never edit `components/ui/icons.tsx` by hand or add another icon library. Size with `h-*`/`w-*`; `strokeWidth` adjusts line weight.
 - Reserve danger red for destructive or safety-critical states only.
 - Reuse shared feedback primitives: `components/ui/LoadingIndicator.tsx` for pending states, `SubmitButton` (idle, processing, success) and `FormAlert` (form-level errors) for form submits.
 - Use `components/ui/PageHeader.tsx` (with `pt-[84px]` on the body) for mobile page headers, `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`, and `app/error.tsx` as the route error boundary.

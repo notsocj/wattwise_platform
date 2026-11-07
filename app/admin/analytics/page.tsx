@@ -1,4 +1,4 @@
-import { Globe } from "lucide-react";
+import { Globe } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isFreshReading } from "@/lib/device-telemetry";
 

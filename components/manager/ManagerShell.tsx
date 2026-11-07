@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Building2 } from "lucide-react";
+import { Building2 } from "@/components/ui/icons";
 import LogoutButton from "@/components/ui/LogoutButton";
 import AppSidebar from "@/components/ui/AppSidebar";
 import { DESKTOP_PANEL } from "@/components/ui/AppFrame";

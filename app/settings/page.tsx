@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth-context";
 import PageHeader from "@/components/ui/PageHeader";
-import { Settings } from "lucide-react";
+import { Settings } from "@/components/ui/icons";
 import BottomNav from "@/components/ui/BottomNav";
 import SettingsClient from "@/components/settings/SettingsClient";
 import { createClient } from "@/lib/supabase/server";

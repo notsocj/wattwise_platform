@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+import { Shield } from '@/components/ui/icons';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getFreshReadingCutoffIso } from '@/lib/device-telemetry';
 

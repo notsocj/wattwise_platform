@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "@/components/ui/icons";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import AccountSection from "@/components/settings/AccountSection";
 import AppearanceSection from "@/components/settings/AppearanceSection";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, type LucideIcon } from "lucide-react";
+import { X, type IconComponent } from "@/components/ui/icons";
 import { InsightType } from "@/lib/constants";
 import {
   createEmptyStructuredInsights,
@@ -14,7 +14,7 @@ type ContextualInsightCardProps = {
   insightType: InsightType;
   eyebrow: string;
   title: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   accentClassName: string;
   surfaceClassName: string;
   titleClassName?: string;

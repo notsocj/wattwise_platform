@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, RotateCcw, Square, Trash2, Zap } from "lucide-react";
+import { Play, RotateCcw, Square, Trash2, Zap } from "@/components/ui/icons";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Person = { id: string; full_name: string | null; email: string; role: string };

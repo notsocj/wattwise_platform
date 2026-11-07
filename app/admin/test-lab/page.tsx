@@ -1,4 +1,4 @@
-import { TestTube2 } from "lucide-react";
+import { TestTube2 } from "@/components/ui/icons";
 import AdminTestLabClient from "@/components/admin/AdminTestLabClient";
 
 export default function AdminTestLabPage() {

@@ -1,4 +1,4 @@
-import { CircleAlert } from "lucide-react";
+import { CircleAlert } from "@/components/ui/icons";
 
 /** Form-level error banner. Eases in when it appears so a failed submit is noticed. */
 export default function FormAlert({ message }: { message: string | null }) {

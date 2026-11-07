@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Activity, Power, ReceiptText } from "lucide-react";
+import { Activity, Power, ReceiptText } from "@/components/ui/icons";
 
 const FEATURES = [
   { icon: Activity, title: "Live per-appliance usage", body: "Watts, volts, and amps from each WattWise unit, every few seconds." },

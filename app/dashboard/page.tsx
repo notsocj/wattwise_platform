@@ -4,7 +4,7 @@ import {
   Minus,
   PhilippinePeso,
   Wallet,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { CARD, CardHeader, CardPill } from "@/components/ui/Card";
 import BottomNav from "@/components/ui/BottomNav";
 import { Suspense } from "react";

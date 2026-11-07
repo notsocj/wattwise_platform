@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Users } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
 export default async function AdminUsersPage() {

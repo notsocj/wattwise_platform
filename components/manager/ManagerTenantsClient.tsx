@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { formatPeso } from "@/lib/format";
 import { useRouter } from "next/navigation";
-import { Check, Copy, KeyRound, UserPlus } from "lucide-react";
+import { Check, Copy, KeyRound, UserPlus } from "@/components/ui/icons";
 import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type { ManagerDevice, ManagerTenant } from "@/lib/manager-data";

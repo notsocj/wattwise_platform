@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { HelpCircle, Power, Refrigerator, Tv, Wind, Zap } from "lucide-react";
+import { HelpCircle, Power, Refrigerator, Tv, Wind, Zap } from "@/components/ui/icons";
 import { CARD, CardHeader } from "@/components/ui/Card";
 import { isFreshReading } from "@/lib/device-telemetry";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";

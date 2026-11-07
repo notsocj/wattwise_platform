@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Brain } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 export default async function AdminAiCostsPage() {
   const { data } = await createAdminClient()

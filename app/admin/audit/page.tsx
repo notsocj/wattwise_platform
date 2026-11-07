@@ -1,4 +1,4 @@
-import { ScrollText } from "lucide-react";
+import { ScrollText } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 export default async function AdminAuditPage() {
   const { data } = await createAdminClient()

@@ -1,4 +1,4 @@
-import { DollarSign } from "lucide-react";
+import { DollarSign } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   computeVariableRatePerKwh,

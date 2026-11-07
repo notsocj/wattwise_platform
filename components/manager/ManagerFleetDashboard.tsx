@@ -8,7 +8,7 @@ import {
   Power,
   RadioTower,
   Users,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import type { ManagerFleetSnapshot } from "@/lib/manager-data";
 import { getBudgetToneClasses } from "@/lib/budget-policy";
 

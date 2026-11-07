@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Camera } from "lucide-react";
+import { ArrowLeft, Camera } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { MAC_REGEX, normalizeMac } from "@/lib/mac-address";
 

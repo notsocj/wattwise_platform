@@ -1,4 +1,4 @@
-import { TrendingUp } from "lucide-react";
+import { TrendingUp } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 export default async function AdminGrowthPage() {
   const admin = createAdminClient();

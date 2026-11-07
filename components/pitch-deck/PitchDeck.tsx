@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-page-custom-font -- Inter is scoped to this standalone pitch deck route. */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Download, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, ZapSolid } from "@/components/ui/icons";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -67,7 +67,7 @@ export default function PitchDeck() {
 
       <header className="deck-toolbar">
         <Link className="deck-brand" href="/" aria-label="WattWise home">
-          <span className="brand-mark"><Zap size={17} fill="currentColor" strokeWidth={2.5} /></span>
+          <span className="brand-mark"><ZapSolid size={17} /></span>
           <span>WattWise <span className="brand-divider">/</span> PSC XI</span>
         </Link>
         <div className="toolbar-actions">
@@ -152,7 +152,7 @@ function SlideHeading({ eyebrow, title, summary }: { eyebrow: string; title: str
 function CoverSlide({ teamName }: { teamName: string }) {
   return (
     <div className="cover-content">
-      <div className="cover-topline"><span className="cover-icon"><Zap size={22} fill="currentColor" /></span><span>SMART ENERGY MANAGEMENT</span></div>
+      <div className="cover-topline"><span className="cover-icon"><ZapSolid size={22} /></span><span>SMART ENERGY MANAGEMENT</span></div>
       <div className="cover-main">
         <Eyebrow>PHILIPPINE STARTUP CHALLENGE XI</Eyebrow>
         <h1>Watt<span>Wise</span></h1>
@@ -202,7 +202,7 @@ function SolutionSlide() {
         <span className="flow-connector" />
         <FlowStep number="03" title="Manage" detail="Users set budgets, receive alerts, and control a supported connected appliance." />
       </div>
-      <div className="solution-callout"><span className="callout-mark"><Zap size={19} fill="currentColor" /></span><p>One place to monitor appliance use, watch estimated costs, and act on budget limits.</p></div>
+      <div className="solution-callout"><span className="callout-mark"><ZapSolid size={19} /></span><p>One place to monitor appliance use, watch estimated costs, and act on budget limits.</p></div>
       <p className="source-note">Cost figures are budgeting estimates based on stored rate components. WattWise does not replace the utility meter or official bill.</p>
     </div>
   );

@@ -1,4 +1,4 @@
-import { HelpCircle, Refrigerator, Tv, Wind } from "lucide-react";
+import { HelpCircle, Refrigerator, Tv, Wind } from "@/components/ui/icons";
 import { ApplianceType } from "@/lib/constants";
 
 const APPLIANCE_OPTIONS: {

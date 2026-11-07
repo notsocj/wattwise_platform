@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth-context";
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import PageHeader from "@/components/ui/PageHeader";
-import { FileText } from "lucide-react";
+import { FileText } from "@/components/ui/icons";
 import ReportTable from "@/components/reports/ReportTable";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import { Suspense } from "react";

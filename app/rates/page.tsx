@@ -1,7 +1,7 @@
 import PageHeader from "@/components/ui/PageHeader";
 import RateComponentList from "@/components/billing/RateComponentList";
 import { getSessionUser } from "@/lib/auth-context";
-import { ChevronDown, ExternalLink, History } from "lucide-react";
+import { ChevronDown, ExternalLink, History } from "@/components/ui/icons";
 import { CARD, CardHeader } from "@/components/ui/Card";
 import BottomNav from "@/components/ui/BottomNav";
 import { createClient } from "@/lib/supabase/server";

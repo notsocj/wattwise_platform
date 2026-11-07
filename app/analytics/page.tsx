@@ -10,7 +10,7 @@ import {
   LineChart,
   PlugZap,
   TrendingUp,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import BottomNav from "@/components/ui/BottomNav";
 import BurnRateChart, {
   type BurnRatePoint,

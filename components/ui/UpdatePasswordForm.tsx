@@ -10,7 +10,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { createClient } from "@/lib/supabase/client";
 import { getFriendlyAuthError } from "@/lib/user-form-messages";
 import { logoutOneSignal } from "@/lib/onesignal";

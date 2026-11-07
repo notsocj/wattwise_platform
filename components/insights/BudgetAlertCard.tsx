@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "@/components/ui/icons";
 import ContextualInsightCard from "@/components/insights/ContextualInsightCard";
 import { InsightType } from "@/lib/constants";
 

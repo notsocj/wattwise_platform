@@ -58,7 +58,7 @@ Versions are from `package.json`.
 - **Tailwind CSS 4** via `@tailwindcss/postcss`; theme tokens in `app/globals.css`
 - **Supabase**: `@supabase/supabase-js`, `@supabase/ssr` (clients in `lib/supabase/`), Postgres RPCs, RLS, Realtime, Edge Functions (Deno), pg_cron
 - **OpenAI SDK** (`openai`), model `gpt-4o-mini` set once in `lib/openai.ts`; server-side only
-- **UI/data**: `lucide-react` icons, `recharts` charts, `swr` (with `lib/fetcher.ts`), `html5-qrcode`, `pdf-lib`
+- **UI/data**: Solar icons from Iconify, generated into `components/ui/icons.tsx` by `npm run icons` (`scripts/build-icons.mjs`), `recharts` charts, `swr` (with `lib/fetcher.ts`), `html5-qrcode`, `pdf-lib`
 - **Landing only**: `three` 0.186.1, `@react-three/fiber` 9.8.1, `lenis`
 - **Middleware**: `proxy.ts` (Next 16 name for middleware) calls `lib/supabase/middleware.ts`
 

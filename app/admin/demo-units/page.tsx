@@ -1,4 +1,4 @@
-import { FlaskConical } from "lucide-react";
+import { FlaskConical } from "@/components/ui/icons";
 import DemoUnitsClient from "@/components/admin/DemoUnitsClient";
 import { createAdminClient } from "@/lib/supabase/admin";
 

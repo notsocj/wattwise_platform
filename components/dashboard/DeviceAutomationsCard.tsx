@@ -1,4 +1,4 @@
-import { Timer } from "lucide-react";
+import { Timer } from "@/components/ui/icons";
 import { CARD, CardHeader, CardPill } from "@/components/ui/Card";
 import CancelAutomationButton from "@/components/dashboard/CancelAutomationButton";
 import {

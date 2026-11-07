@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap } from "@/components/ui/icons";
 import type { AiProfile } from "@/components/ui/add-appliance/useApplianceOnboarding";
 
 export default function BudgetLimitStep({

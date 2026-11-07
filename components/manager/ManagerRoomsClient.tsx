@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { formatPeso } from "@/lib/format";
 import { useRouter } from "next/navigation";
-import { PlugZap, Power, QrCode, ShieldAlert } from "lucide-react";
+import { PlugZap, Power, QrCode, ShieldAlert } from "@/components/ui/icons";
 import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";

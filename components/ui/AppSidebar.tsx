@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings } from "@/components/ui/icons";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import LogoutButton from "@/components/ui/LogoutButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";

@@ -16,7 +16,7 @@ import {
   FlaskConical,
   TestTube2,
   LogOut,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { createClient } from "@/lib/supabase/client";
 import { logoutOneSignal } from "@/lib/onesignal";
 

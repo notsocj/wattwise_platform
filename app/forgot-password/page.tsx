@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { KeyRound, ArrowLeft } from "lucide-react";
+import { KeyRound, ArrowLeft } from "@/components/ui/icons";
 import FormAlert from "@/components/ui/FormAlert";
 import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { createClient } from "@/lib/supabase/client";

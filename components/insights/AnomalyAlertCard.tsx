@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search } from "@/components/ui/icons";
 import ContextualInsightCard from "@/components/insights/ContextualInsightCard";
 import { InsightType } from "@/lib/constants";
 

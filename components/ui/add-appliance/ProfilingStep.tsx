@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap } from "@/components/ui/icons";
 
 export default function ProfilingStep({
   dailyHours,

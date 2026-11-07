@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { KeyRound, Trash2 } from "lucide-react";
+import { KeyRound, Trash2 } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { createClient } from "@/lib/supabase/client";
 import { logoutOneSignal } from "@/lib/onesignal";

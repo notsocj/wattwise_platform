@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Power } from "lucide-react";
+import { Power } from "@/components/ui/icons";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function RestorePowerButton({ deviceId }: { deviceId: string }) {

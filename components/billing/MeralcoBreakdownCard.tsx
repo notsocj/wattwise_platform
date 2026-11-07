@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, ExternalLink, ReceiptText } from "lucide-react";
+import { ChevronRight, ExternalLink, ReceiptText } from "@/components/ui/icons";
 import { CARD, CardHeader } from "@/components/ui/Card";
 import RateComponentList from "@/components/billing/RateComponentList";
 import { computeVariableRatePerKwh, type MeralcoRateComponents } from "@/lib/meralco-bill";

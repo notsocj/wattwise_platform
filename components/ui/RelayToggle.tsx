@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Power } from "lucide-react";
+import { AlertTriangle, Power } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SuccessToast from "@/components/ui/SuccessToast";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";

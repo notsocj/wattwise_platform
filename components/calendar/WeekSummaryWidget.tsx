@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "@/components/ui/icons";
 import { CARD, CardHeader } from "@/components/ui/Card";
 import type { CalendarDailySummary } from "@/lib/calendar-analytics";
 

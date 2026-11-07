@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { Download } from "@/components/ui/icons";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
 type ExportFormat = "pdf" | "csv";

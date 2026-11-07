@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import SuccessToast from "@/components/ui/SuccessToast";

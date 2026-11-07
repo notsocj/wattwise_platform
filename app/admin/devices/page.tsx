@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { Cpu } from "@/components/ui/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
 import AdminDevicesTable from "@/components/admin/AdminDevicesTable";
 export default async function AdminDevicesPage() {

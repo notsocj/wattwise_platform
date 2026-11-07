@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/ui/icons";
 
 /** The one card surface used across the app. */
 export const CARD = "rounded-2xl border border-fg/[0.06] bg-surface";
@@ -11,7 +11,7 @@ export function CardHeader({
   aside,
   as: Heading = "h2",
 }: {
-  icon?: LucideIcon;
+  icon?: IconComponent;
   title: ReactNode;
   aside?: ReactNode;
   as?: "h2" | "h3" | "p";

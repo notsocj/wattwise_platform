@@ -9,7 +9,7 @@ import {
   ReceiptText,
   Settings,
   Users,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import BrandMark from "@/components/ui/BrandMark";
 
 export type NavItem = {

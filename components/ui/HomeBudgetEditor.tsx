@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, PencilLine, X } from "lucide-react";
+import { AlertTriangle, PencilLine, X } from "@/components/ui/icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
