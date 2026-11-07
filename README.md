@@ -99,9 +99,9 @@ docs/                Research notes and plans (hardware accuracy, light mode)
 
 ## Design system
 
-- **Layout.** `components/ui/AppFrame.tsx` (in the root layout) chooses the frame per route. Below Tailwind's `lg` breakpoint (1024px) every page is a 430px phone column with a bottom tab bar. From `lg` up, app pages get `AppSidebar` and sit on a rounded panel, `PageHeader` becomes an in-page title with a description, and pages lay out on a 12-column grid. Sign-in pages get a brand panel beside the form.
+- **Layout.** `components/ui/AppFrame.tsx` (in the root layout) chooses the frame per route. Below Tailwind's `lg` breakpoint (1024px) every page is a 430px phone column (wider on tablets) with a bottom tab bar; log out is in Settings. From `lg` up, app pages get `AppSidebar` and sit on a rounded panel, `PageHeader` becomes an in-page title with a description, and pages lay out on a 12-column grid. Sign-in pages get a brand panel beside the form.
 - **Colour.** Dark and light themes come from tokens in `app/globals.css`: `canvas`, `surface`, `sidebar`, `fg` (foreground, used with opacity such as `text-fg/60`), `accent` (mint text and icons), `mint` (fills), `shade` (input wells), and the status colours `bida`, `naku`, and `danger`. Components never hard-code white.
-- **Components.** Cards use `CARD` and `CardHeader` (`components/ui/Card.tsx`); form submits use `SubmitButton` (processing and success states) and `FormAlert`; the owl mascot is `BrandMark`.
+- **Components.** Cards use `CARD` and `CardHeader` (`components/ui/Card.tsx`); form submits use `SubmitButton` (processing and success states) and `FormAlert`; the owl mascot is `BrandMark`. Buttons and fields are pill-shaped, toggles use `Switch`, and Settings is built from `SettingsGroup`/`SettingsRow`.
 - **Motion.** Easing tokens, short page entrances, and reduced-motion fallbacks live in `app/globals.css`. Route changes show a thin top progress bar.
 
 The full conventions are in [AGENTS.md](AGENTS.md).

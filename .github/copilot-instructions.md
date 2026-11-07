@@ -3,7 +3,7 @@
 This is the GitHub Copilot version of `AGENTS.md` at the repo root. `AGENTS.md` is the source of truth for conventions; if the two disagree, follow `AGENTS.md` and fix this file. Deeper references live in `.github/instructions/`:
 
 - `ai-workflow.instructions.md`: coding constraints for billing, hardware safety, ingestion, and OpenAI
-- `supabase-schema-context.instructions.md`: tables, RPCs, indexes, and query patterns (migrations `001`-`039`)
+- `supabase-schema-context.instructions.md`: tables, RPCs, indexes, and query patterns (migrations `001`-`041`; `040` is pending)
 - `smart-control-architecture-blueprint.instructions.md`: realtime telemetry, AI profiling, budgets, relay shutoff
 - `phases-and-roadmap-plan.instructions.md`: roadmap and what is done
 
@@ -29,7 +29,7 @@ Deployment: pushing to `main` deploys production on Vercel (functions pinned to 
 - **Reports `/reports`**: usage and cost by period, downloadable as PDF (`pdf-lib`) or CSV through `/api/reports`.
 - **Calendar `/dashboard/calendar`**: day-by-day usage and cost with AI notes.
 - **Meralco Rates `/rates`**: the current rate schedule and rate history.
-- **Settings `/settings`**: billing cycle and household Meralco kWh, appearance (light/dark), auto-shutoff, notifications, account.
+- **Settings `/settings`**: grouped rows for billing cycle (in-app day picker) and household Meralco kWh, appearance (light/dark), notifications, safety (auto-shutoff), and account (change password, reset email, log out, log out of all devices, delete account).
 - **Assistant**: a floating WattWise assistant (`components/customer-assistant/CustomerAssistantFab.tsx`) that answers questions and proposes actions the user must confirm.
 
 ### Manager portal `/manager` (role `manager`, e.g. landlords)
@@ -125,18 +125,20 @@ Rules:
 ### Layout: phone and desktop
 `components/ui/AppFrame.tsx`, mounted in the root layout, picks the frame from the path:
 
-- **Below `lg` (under 1024px)**: the user app is a 430px phone column with a fixed bottom tab bar (`components/ui/BottomNav.tsx`: Home, Burn, Reports, Settings, plus the assistant button). The manager portal uses its own wider column and a six-tab bottom bar.
-- **App routes on `lg`+** (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/rates`): `AppSidebar` on the left with groups from `APP_DESKTOP_SECTIONS` (Overview: Home, Burn, Reports; Billing: Calendar, Meralco Rates). Settings, the light/dark toggle, Log out, and an account card sit at the bottom. One highlight glides to the active item. Pages sit on the rounded `DESKTOP_PANEL`.
+- **Below `lg` (under 1024px)**: the user app is a 430px phone column (widened to `md:max-w-2xl` on tablets) with a fixed bottom tab bar (`components/ui/BottomNav.tsx`: Home, Burn, Reports, Settings, plus the assistant button). The manager portal uses its own wider column and a six-tab bottom bar.
+- **App routes on `lg`+** (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/rates`): `AppSidebar` on the left with groups from `APP_DESKTOP_SECTIONS` (Overview: Home, Burn, Reports; Billing: Calendar, Meralco Rates). Settings, the light/dark toggle, Log out, and an account card sit at the bottom. One highlight glides to the active item. Pages sit on the rounded `DESKTOP_PANEL` (content up to `lg:max-w-6xl`, `2xl:max-w-7xl`). The sidebar is `w-56`, `xl:w-64`.
 - **Manager on `lg`+**: `ManagerShell` uses the same `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and the same `DESKTOP_PANEL`.
 - **Sign-in pages on `lg`+** (`/login`, `/register`, `/forgot-password`): a two-column split with `components/ui/AuthBrandPanel.tsx` beside the form.
 - `/admin`, `/manager`, `/onboarding`, and `/pitch-deck` lay themselves out.
 
 Page building blocks:
-- `components/ui/PageHeader.tsx`: a fixed 64px bar on phones (body needs `pt-[84px] lg:pt-0`, exported as `PAGE_HEADER_OFFSET`); on desktop an in-page title block with no back button. Pass `description` for the desktop intro line and `desktopTitle` to replace the title on desktop. Loading screens start with `PageTitleSkeleton`.
+- `components/ui/PageHeader.tsx`: a fixed 64px bar on phones (body needs `pt-[84px] lg:pt-0`, exported as `PAGE_HEADER_OFFSET`); on desktop an in-page title block with no back button. Pass `description` for the desktop intro line and `desktopTitle` to replace the title on desktop. Loading screens start with `PageTitleSkeleton`. There is no logout in the header; pass `actions` only for page-specific buttons.
 - `components/ui/Card.tsx`: `CARD` (the one card surface class), `CardHeader` (icon chip, title, right slot), `CardPill` (small muted pill).
 - Desktop page grids use `lg:grid lg:grid-cols-12` with `lg:col-span-*`; use `lg:order-*` only to move secondary cards down.
 - Forms: `components/ui/SubmitButton.tsx` (`status` is `idle` | `loading` | `success`) and `components/ui/FormAlert.tsx` for inline errors. Show friendly messages (`lib/user-form-messages.ts`), not raw provider errors.
 - `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`; `components/ui/LoadingIndicator.tsx` for pending states; `SuccessToast` for confirmations.
+- Buttons, inputs, and segmented controls are pills (`rounded-full`). `components/ui/Switch.tsx` is the on/off toggle; use in-app pickers instead of native `<select>`.
+- Settings: `SettingsGroup`, `SettingsRow`, and `SETTINGS_ACTION_ROW` in `components/settings/SettingsGroup.tsx`. Log out (this device, or all devices via `useLogout().logout("global")`) is in Settings → Account and the desktop sidebar only.
 - `components/ui/BrandMark.tsx`: the WattWise owl as a single-colour mark (CSS mask over `/wattwise_mascot.png`), painted in the current text colour. Use it for the AI assistant and brand spots instead of a robot icon.
 
 ### Motion

@@ -308,7 +308,7 @@ The base rules (tokens, card and grid classes, `pt-[84px] lg:pt-0`, motion namin
 - Never add a page-level frame. `components/ui/AppFrame.tsx` (root layout) picks it by path: `APP_SHELL_PREFIXES` get `AppSidebar` plus the rounded `DESKTOP_PANEL`; `/login`, `/register`, and `/forgot-password` get the `AuthBrandPanel` split; `/admin`, `/manager`, `/onboarding`, and `/pitch-deck` lay themselves out; everything else (including `/reset-password` and `/update-password`) stays in the 430px phone column.
 - A new customer route needs its prefix in `APP_SHELL_PREFIXES` and an entry in `APP_TABS` or `APP_DESKTOP_SECTIONS` (`components/ui/app-nav.ts`). Settings is not listed in the sections; the sidebar adds it at the bottom. Active items come from `getActiveHref` (longest match wins).
 - The manager portal reuses `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and `DESKTOP_PANEL` inside `ManagerShell`; admin keeps its own `AdminSidebar`.
-- `PageHeader` is the only page header. On desktop it drops the back button, icon, eyebrow, and logout (the sidebar covers them) and shows `description` and `desktopTitle`. Sub-pages that need a way back on desktop add a breadcrumb, as Device Detail does.
+- `PageHeader` is the only page header. It never shows a logout button (log out is in Settings → Account and the sidebar). On desktop it drops the back button, icon, and eyebrow and shows `description` and `desktopTitle`. Sub-pages that need a way back on desktop add a breadcrumb, as Device Detail does.
 - Fixed elements that should centre on the panel (toasts) use `lg:left-[calc(50%+var(--app-sidebar,0px)/2)]`; `AppFrame` sets `--app-sidebar`.
 - The phone bottom bar (`BottomNav`) is `lg:hidden`; do not render desktop-only navigation inside pages.
 
