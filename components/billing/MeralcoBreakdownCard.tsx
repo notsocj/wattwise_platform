@@ -96,7 +96,7 @@ export default function MeralcoBreakdownCard({
       )}
       <Link
         href="/rates"
-        className="mt-4 flex items-center justify-between rounded-lg border border-fg/[0.08] bg-fg/[0.02] px-3 py-2.5 text-xs font-semibold text-fg/75 transition-colors hover:border-mint/35 hover:text-accent"
+        className="mt-4 flex items-center justify-between rounded-full border border-fg/[0.08] bg-fg/[0.02] px-3 py-2.5 text-xs font-semibold text-fg/75 transition-colors hover:border-mint/35 hover:text-accent"
       >
         <span>View rate details &amp; history</span>
         <ChevronRight className="h-4 w-4" />

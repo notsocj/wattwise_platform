@@ -23,7 +23,7 @@ export default function ThemeToggle({ className, showLabel = false }: ThemeToggl
       title={`Switch to ${nextTheme} mode`}
       className={
         className ??
-        "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-fg/20 hover:text-fg"
+        "inline-flex h-10 w-10 items-center justify-center rounded-full border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-fg/20 hover:text-fg"
       }
     >
       {theme === "dark" ? (

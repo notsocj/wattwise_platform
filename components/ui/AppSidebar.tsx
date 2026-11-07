@@ -17,7 +17,7 @@ type AppSidebarProps = {
 };
 
 const ITEM =
-  "flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
+  "flex h-9 w-full items-center gap-3 rounded-full px-3 text-sm font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
 const ITEM_IDLE = "text-fg/55 hover:bg-fg/[0.04] hover:text-fg";
 const ITEM_ACTIVE = "bg-fg/[0.07] text-fg";
 
@@ -78,7 +78,7 @@ export default function AppSidebar({ sections, homeHref, settingsHref }: AppSide
         <span
           ref={pillRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-3 top-0 h-9 rounded-lg bg-fg/[0.07] opacity-0 transition-[transform,opacity] duration-250 ease-in-out"
+          className="pointer-events-none absolute inset-x-3 top-0 h-9 rounded-full bg-fg/[0.07] opacity-0 transition-[transform,opacity] duration-250 ease-in-out"
         />
         {sections.map((section) => (
           <div key={section.label}>

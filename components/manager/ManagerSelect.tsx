@@ -44,7 +44,7 @@ export default function ManagerSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((current) => !current)}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-shade/10 px-3 py-2 text-left text-sm text-black outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-fg/10 dark:text-fg"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-shade/10 px-3 py-2 text-left text-sm text-black outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-fg/10 dark:text-fg"
       >
         <span className="min-w-0 truncate">{selected?.label ?? "Select"}</span>
         <ChevronDown

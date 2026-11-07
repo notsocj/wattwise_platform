@@ -169,7 +169,7 @@ export default function CustomerAssistantFab() {
                   <p className="text-[11px] text-fg/45">Energy and budget help in Taglish</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close assistant" className="flex h-9 w-9 items-center justify-center rounded-xl border border-fg/10 text-fg/60 hover:text-fg">
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close assistant" className="flex h-9 w-9 items-center justify-center rounded-full border border-fg/10 text-fg/60 hover:text-fg">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </header>
@@ -187,7 +187,7 @@ export default function CustomerAssistantFab() {
               {!isLoadingHistory && messages.length === 0 ? (
                 <div className="grid grid-cols-1 gap-2">
                   {quickPrompts.map((prompt) => (
-                    <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} className="flex items-center justify-between rounded-xl border border-fg/10 bg-surface px-3 py-2.5 text-left text-xs text-fg/75 hover:border-mint/30 hover:text-fg">
+                    <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} className="flex items-center justify-between rounded-full border border-fg/10 bg-surface px-3 py-2.5 text-left text-xs text-fg/75 hover:border-mint/30 hover:text-fg">
                       {prompt}<ChevronRight className="h-4 w-4 text-accent" aria-hidden="true" />
                     </button>
                   ))}
@@ -196,7 +196,7 @@ export default function CustomerAssistantFab() {
 
               {messages.map((message) => (
                 <div key={message.id} className={message.role === "user" ? "ml-10" : "mr-5"}>
-                  <div className={`rounded-2xl px-3.5 py-3 text-sm leading-5 ${message.role === "user" ? "rounded-br-md bg-mint text-black" : "rounded-bl-md border border-fg/10 bg-surface text-fg/80"}`}>
+                  <div className={`rounded-2xl px-3.5 py-3 text-sm leading-5 ${message.role === "user" ? "rounded-br-md bg-mint text-ink" : "rounded-bl-md border border-fg/10 bg-surface text-fg/80"}`}>
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
                   {message.display_data?.type === "device_list" ? (
@@ -261,7 +261,7 @@ export default function CustomerAssistantFab() {
                       </div>
                       <p className="mt-3 text-[11px] leading-4 text-fg/55">{message.proposal.consequence}</p>
                       {message.proposal_status === "pending" ? (
-                        <button type="button" onClick={() => void confirmChange(message.id)} disabled={Boolean(confirmingId)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-mint px-3 py-2.5 text-xs font-bold text-black disabled:opacity-60">
+                        <button type="button" onClick={() => void confirmChange(message.id)} disabled={Boolean(confirmingId)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-mint px-3 py-2.5 text-xs font-bold text-ink disabled:opacity-60">
                           {confirmingId === message.id ? <LoadingIndicator size="sm" label="Confirming" showLabel={false} /> : <Check className="h-4 w-4" aria-hidden="true" />}
                           {confirmingId === message.id ? "Applying..." : "Confirm change"}
                         </button>
@@ -279,9 +279,9 @@ export default function CustomerAssistantFab() {
             </div>
 
             <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="border-t border-fg/[0.07] bg-canvas p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
-              <div className="flex items-center gap-2 rounded-2xl border border-fg/10 bg-surface p-1.5 focus-within:border-mint/40">
+              <div className="flex items-center gap-2 rounded-full border border-fg/10 bg-surface p-1.5 pl-3 transition-colors duration-150 ease-out focus-within:border-mint/40">
                 <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} maxLength={1000} disabled={isSending || isLoadingHistory} placeholder="Ask about your energy use..." aria-label="Message WattWise Assistant" className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-fg outline-none placeholder:text-fg/30 disabled:opacity-50" />
-                <button type="submit" disabled={!input.trim() || isSending || isLoadingHistory} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mint text-black disabled:cursor-not-allowed disabled:opacity-35">
+                <button type="submit" disabled={!input.trim() || isSending || isLoadingHistory} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint text-ink disabled:cursor-not-allowed disabled:opacity-35">
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>

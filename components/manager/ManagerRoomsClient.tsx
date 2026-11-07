@@ -110,19 +110,19 @@ export default function ManagerRoomsClient({
             value={deviceName}
             onChange={(event) => setDeviceName(event.target.value)}
             placeholder="Room 3 Sub-meter"
-            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <input
             value={macAddress}
             onChange={(event) => setMacAddress(event.target.value)}
             placeholder="AA:BB:CC:DD:EE:FF"
-            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="button"
             onClick={() => setShowScanner(true)}
             disabled={pending !== null}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/75 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/75 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             <QrCode className="h-4 w-4" />
             Scan QR
@@ -131,7 +131,7 @@ export default function ManagerRoomsClient({
             type="button"
             onClick={() => void pairDevice()}
             disabled={pending !== null || !deviceName || !macAddress}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending === "new-device" ? (
               <LoadingIndicator size="sm" showLabel={false} />
@@ -241,7 +241,7 @@ export default function ManagerRoomsClient({
                         }
                       }}
                       disabled={isPending}
-                      className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-2 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+                      className="rounded-full border border-fg/10 bg-shade/10 px-4 py-2 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
                     />
                   </div>
 

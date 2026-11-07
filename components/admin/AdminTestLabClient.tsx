@@ -198,7 +198,7 @@ export default function AdminTestLabClient() {
             type="button"
             disabled={loading}
             onClick={() => setAccountPickerOpen((open) => !open)}
-            className="flex w-full items-center justify-between rounded-lg border border-fg/10 bg-shade/20 px-3 py-2.5 text-left text-fg transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-full border border-fg/10 bg-shade/20 px-3 py-2.5 text-left text-fg transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"
           >
             <span className="flex min-w-0 items-center gap-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-mint/10 text-accent">
@@ -349,7 +349,7 @@ export default function AdminTestLabClient() {
             <button
               disabled={busy}
               onClick={() => submit({ action: "create_demo", ...form })}
-              className="mt-4 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+              className="mt-4 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
             >
               Create demo unit
             </button>
@@ -366,7 +366,7 @@ export default function AdminTestLabClient() {
               <button
                 disabled={loading}
                 onClick={() => void load(userId)}
-                className="inline-flex items-center gap-2 rounded-lg border border-fg/10 px-3 py-2 text-sm disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-full border border-fg/10 px-3 py-2 text-sm disabled:opacity-50"
               >
                 <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />{" "}
                 {loading ? "Loading…" : "Refresh evidence"}
@@ -390,7 +390,7 @@ export default function AdminTestLabClient() {
                       approval_required: next.require_approval_on_expiry === true,
                     });
                 }}
-                className="mt-2 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2.5 text-fg"
+                className="mt-2 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2.5 text-fg"
               >
                 <option value="">Choose a device…</option>
                 {selected.devices.map((item) => (
@@ -428,7 +428,7 @@ export default function AdminTestLabClient() {
                       value={confirmation}
                       onChange={(event) => setConfirmation(event.target.value)}
                       placeholder={`Type “${device.device_name}” to confirm`}
-                      className="mt-3 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
+                      className="mt-3 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-fg"
                     />
                   </div>
                 )}
@@ -437,7 +437,7 @@ export default function AdminTestLabClient() {
                   <input
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
+                    className="mt-1 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-fg"
                   />
                 </label>
                 <div className="mt-3 grid gap-3 md:grid-cols-4">
@@ -489,7 +489,7 @@ export default function AdminTestLabClient() {
                         : {}),
                     })
                   }
-                  className="mt-3 rounded-lg border border-fg/10 px-3 py-2 text-sm"
+                  className="mt-3 rounded-full border border-fg/10 px-3 py-2 text-sm"
                 >
                   Save configuration
                 </button>
@@ -515,7 +515,7 @@ export default function AdminTestLabClient() {
                       value={customSpend}
                       onChange={(event) => setCustomSpend(event.target.value)}
                       placeholder="Target PHP"
-                      className="w-28 rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm"
+                      className="w-28 rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-sm"
                     />
                     <RunButton
                       disabled={busy || !customSpend}
@@ -531,7 +531,7 @@ export default function AdminTestLabClient() {
                       value={customUsage}
                       onChange={(event) => setCustomUsage(event.target.value)}
                       placeholder="Target kWh"
-                      className="w-28 rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm"
+                      className="w-28 rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-sm"
                     />
                     <RunButton
                       disabled={busy || !customUsage}
@@ -545,7 +545,7 @@ export default function AdminTestLabClient() {
                     <button
                       disabled={busy}
                       onClick={() => submit({ action: "restore_power" })}
-                      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-accent"
+                      className="inline-flex items-center gap-2 rounded-full border border-mint/30 px-3 py-2 text-sm font-semibold text-accent"
                     >
                       <Power className="h-4 w-4" /> Manual restore
                     </button>
@@ -583,7 +583,7 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
+        className="mt-1 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-fg"
       />
     </label>
   );
@@ -609,7 +609,7 @@ function RunButton({
     <button
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-accent disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-full border border-mint/30 px-3 py-2 text-sm font-semibold text-accent disabled:opacity-50"
     >
       <Send className="h-4 w-4" />
       {label}

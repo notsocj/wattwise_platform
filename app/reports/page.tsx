@@ -42,7 +42,7 @@ export default async function ReportsPage({
     <div className="min-h-screen bg-canvas lg:min-h-0 pb-24 text-fg lg:pb-12 print:bg-white print:text-black">
       <PageHeader icon={FileText} title="Energy Reports" description="Review your usage and cost by period, then download a PDF or CSV." />
       <main className="ww-stagger px-5 pb-6 pt-[84px] lg:pt-0 print:pt-6">
-        <div className="mb-6 inline-flex gap-1 rounded-2xl border border-fg/[0.06] bg-surface p-1 print:hidden">{periods.map((item) => <Link key={item} href={`/reports?period=${item}`} aria-current={item === period ? "page" : undefined} className={`inline-flex min-h-9 items-center rounded-lg px-4 text-sm font-semibold capitalize transition-colors duration-150 ease-out ${item === period ? "bg-fg/[0.08] text-fg" : "text-fg/50 hover:text-fg"}`}>{item}</Link>)}</div>
+        <div className="mb-6 inline-flex gap-1 rounded-full border border-fg/[0.06] bg-surface p-1 print:hidden">{periods.map((item) => <Link key={item} href={`/reports?period=${item}`} aria-current={item === period ? "page" : undefined} className={`inline-flex min-h-9 items-center rounded-full px-4 text-sm font-semibold capitalize transition-colors duration-150 ease-out ${item === period ? "bg-fg/[0.08] text-fg" : "text-fg/50 hover:text-fg"}`}>{item}</Link>)}</div>
         <p className="mb-6 text-sm text-fg/50 lg:hidden print:text-black/60">Choose a period, review the totals, then download a ready-to-share PDF or CSV.</p>
         <ReportExportButtons period={period} />
         <Suspense key={period} fallback={<ReportTable period={period} rows={null} />}>

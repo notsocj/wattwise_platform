@@ -115,7 +115,7 @@ export default async function ManagerCalendarPage(props: {
             href={buildCalendarHref(monthDate, null)}
             className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors ${
               !selectedDeviceId
-                ? "bg-mint text-black"
+                ? "bg-mint text-ink"
                 : "bg-fg/[0.04] text-fg/60 hover:text-fg"
             }`}
           >
@@ -127,7 +127,7 @@ export default async function ManagerCalendarPage(props: {
               href={buildCalendarHref(monthDate, device.id)}
               className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors ${
                 selectedDeviceId === device.id
-                  ? "bg-mint text-black"
+                  ? "bg-mint text-ink"
                   : "bg-fg/[0.04] text-fg/60 hover:text-fg"
               }`}
             >

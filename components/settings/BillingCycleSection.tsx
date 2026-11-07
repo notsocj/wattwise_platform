@@ -152,7 +152,7 @@ export default function BillingCycleSection({
                   setBillingCycleError(null);
                 }
               }}
-              className="h-11 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
                 <option key={day} value={String(day)} className="bg-surface text-fg">
@@ -165,7 +165,7 @@ export default function BillingCycleSection({
               type="button"
               onClick={() => void saveBillingCycle()}
               disabled={isSavingBillingCycle}
-              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingBillingCycle ? (
                 <>
@@ -205,13 +205,13 @@ export default function BillingCycleSection({
                 setKwhDraft(event.target.value);
                 if (kwhError) setKwhError(null);
               }}
-              className="h-11 min-w-0 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 text-base font-semibold text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 min-w-0 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 text-base font-semibold text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="button"
               onClick={() => void saveMonthlyKwh(false)}
               disabled={isSavingKwh}
-              className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingKwh ? <LoadingIndicator size="sm" label="Saving" showLabel={false} /> : "Save"}
             </button>

@@ -43,7 +43,7 @@ export default function MacNameStep({
             spellCheck={false}
             aria-invalid={Boolean(fieldErrors.macAddress)}
             aria-describedby="appliance-mac-address-message"
-            className={`flex-1 rounded-xl border bg-fg/[0.03] px-4 py-3 font-mono text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`flex-1 rounded-full border bg-fg/[0.03] px-4 py-3 font-mono text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
               fieldErrors.macAddress
                 ? "border-danger/40 focus:border-danger focus:ring-danger/30"
                 : "border-fg/10 focus:border-mint focus:ring-mint/30"
@@ -53,7 +53,7 @@ export default function MacNameStep({
             type="button"
             disabled={disabled}
             onClick={onOpenScanner}
-            className="flex min-h-10 w-12 shrink-0 items-center justify-center rounded-xl border border-fg/10 bg-fg/[0.03] text-fg/60 transition-colors hover:border-mint/40 hover:bg-mint/5 hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex min-h-10 w-12 shrink-0 items-center justify-center rounded-full border border-fg/10 bg-fg/[0.03] text-fg/60 transition-colors hover:border-mint/40 hover:bg-mint/5 hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
             title="Scan QR Code"
             aria-label="Scan QR code"
           >
@@ -87,7 +87,7 @@ export default function MacNameStep({
           placeholder="e.g. Living Room Aircon"
           aria-invalid={Boolean(fieldErrors.deviceName)}
           aria-describedby="appliance-device-name-message"
-          className={`rounded-xl border bg-fg/[0.03] px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`rounded-full border bg-fg/[0.03] px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
             fieldErrors.deviceName
               ? "border-danger/40 focus:border-danger focus:ring-danger/30"
               : "border-fg/10 focus:border-mint focus:ring-mint/30"

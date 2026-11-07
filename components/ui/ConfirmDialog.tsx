@@ -93,14 +93,14 @@ function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={() => onSettle(false)}
-            className="h-11 flex-1 rounded-xl border border-fg/10 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5"
+            className="h-11 flex-1 rounded-full border border-fg/10 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={() => onSettle(true)}
-            className={`h-11 flex-1 rounded-xl text-sm font-bold transition-colors ${
+            className={`h-11 flex-1 rounded-full text-sm font-bold transition-colors ${
               tone === "danger"
                 ? "bg-danger text-white hover:bg-danger/90"
                 : "bg-mint text-ink hover:bg-mint/90"

@@ -161,7 +161,7 @@ export default function ManagerTenantsClient({
             <button
               type="button"
               onClick={() => void copyCredential()}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
             >
               {copiedCredential ? (
                 <Check className="h-4 w-4" />
@@ -186,19 +186,19 @@ export default function ManagerTenantsClient({
             value={tenantEmail}
             onChange={(event) => setTenantEmail(event.target.value)}
             placeholder="room3@wattwise.local"
-            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <input
             value={tenantName}
             onChange={(event) => setTenantName(event.target.value)}
             placeholder="Tenant name or room label"
-            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="button"
             onClick={() => void createTenant()}
             disabled={pending !== null || !tenantEmail}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-mint px-4 py-3 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending === "tenant" ? (
               <LoadingIndicator

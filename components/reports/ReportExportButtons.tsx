@@ -56,7 +56,7 @@ export default function ReportExportButtons({ period }: { period: string }) {
             type="button"
             onClick={() => void download(format)}
             disabled={pendingFormat !== null}
-            className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            className={`inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-bold transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
           >
             {pendingFormat === format ? (
               <LoadingIndicator size="sm" label={`Preparing ${format.toUpperCase()}`} showLabel={false} />

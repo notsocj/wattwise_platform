@@ -243,7 +243,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
               <p
                 className={`max-w-[88%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
                   message.role === "user"
-                    ? "bg-mint text-black"
+                    ? "bg-mint text-ink"
                     : "bg-fg/[0.05] text-fg/75"
                 }`}
               >
@@ -265,12 +265,12 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Ask about Room 3 cutoff risk..."
-            className="min-w-0 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
+            className="min-w-0 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="submit"
             disabled={chatLoading || !draft.trim()}
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mint text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mint text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="Send message"
           >
             <Send className="h-4 w-4" />

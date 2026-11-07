@@ -26,9 +26,9 @@ const STEPS = [
 ] as const;
 
 const PRIMARY_CTA =
-  "group inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-mint px-7 text-base font-bold text-black transition-[scale,background-color] duration-150 ease-out hover:bg-mint/90 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
+  "group inline-flex h-13 items-center justify-center gap-2 rounded-full bg-mint px-7 text-base font-bold text-ink transition-[scale,background-color] duration-150 ease-out hover:bg-mint/90 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
 const SECONDARY_CTA =
-  "inline-flex h-13 items-center justify-center rounded-xl border border-fg/15 px-7 text-base font-bold text-fg transition-[scale,background-color,border-color] duration-150 ease-out hover:border-fg/30 hover:bg-fg/5 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
+  "inline-flex h-13 items-center justify-center rounded-full border border-fg/15 px-7 text-base font-bold text-fg transition-[scale,background-color,border-color] duration-150 ease-out hover:border-fg/30 hover:bg-fg/5 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint";
 
 function CallToAction() {
   return (

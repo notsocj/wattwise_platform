@@ -43,7 +43,7 @@ export default function PageHeader({
           {backHref ? (
             <Link
               href={backHref}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-fg/[0.06] bg-fg/[0.03] text-fg/70 transition-colors hover:text-accent lg:hidden print:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-fg/[0.06] bg-fg/[0.03] text-fg/70 transition-colors hover:text-accent lg:hidden print:hidden"
               aria-label={backLabel}
             >
               <ArrowLeft className="h-4 w-4" />

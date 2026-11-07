@@ -35,13 +35,13 @@ export default function RouteError({
             <button
               type="button"
               onClick={reset}
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-mint px-5 text-sm font-semibold text-ink transition hover:brightness-110"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-mint px-5 text-sm font-semibold text-ink transition hover:brightness-110"
             >
               Try again
             </button>
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-fg/10 px-5 text-sm font-semibold text-fg/80 transition hover:bg-fg/5"
+              className="inline-flex h-11 items-center justify-center rounded-full border border-fg/10 px-5 text-sm font-semibold text-fg/80 transition hover:bg-fg/5"
             >
               Return to App
             </Link>

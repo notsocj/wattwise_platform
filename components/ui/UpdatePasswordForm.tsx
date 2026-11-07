@@ -179,7 +179,7 @@ export default function UpdatePasswordForm({
         ) : (
           <Link
             href={backHref}
-            className="inline-flex w-full max-w-sm items-center justify-center rounded-xl bg-mint px-4 py-4 text-[17px] font-bold text-black transition-transform active:scale-95"
+            className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-mint px-4 py-4 text-[17px] font-bold text-ink transition-transform active:scale-95"
           >
             Continue
           </Link>
@@ -202,13 +202,13 @@ export default function UpdatePasswordForm({
         <div className="flex w-full max-w-sm flex-col gap-3">
           <Link
             href="/forgot-password"
-            className="inline-flex items-center justify-center rounded-xl bg-mint px-4 py-4 text-[17px] font-bold text-black transition-transform active:scale-95"
+            className="inline-flex items-center justify-center rounded-full bg-mint px-4 py-4 text-[17px] font-bold text-ink transition-transform active:scale-95"
           >
             Request Reset Link
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-fg/10 px-4 py-4 text-sm font-semibold text-accent transition-colors hover:border-mint/40"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-fg/10 px-4 py-4 text-sm font-semibold text-accent transition-colors hover:border-mint/40"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Login
@@ -252,7 +252,7 @@ export default function UpdatePasswordForm({
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
+                className="w-full rounded-full border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
               />
               <button
                 type="button"
@@ -282,7 +282,7 @@ export default function UpdatePasswordForm({
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
+                className="w-full rounded-full border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
               />
               <button
                 type="button"

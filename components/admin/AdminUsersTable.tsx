@@ -89,7 +89,7 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                 <td className="p-4">
                   <button
                     onClick={() => openEdit(u)}
-                    className="rounded-md border border-mint/30 px-3 py-1.5 text-xs font-semibold text-accent hover:bg-mint/10"
+                    className="rounded-full border border-mint/30 px-3 py-1.5 text-xs font-semibold text-accent hover:bg-mint/10"
                   >
                     Configure
                   </button>
@@ -117,7 +117,7 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                 <select
                   value={editing.role}
                   onChange={(e) => setEditing({ ...editing, role: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
+                  className="mt-1 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2"
                 >
                   <option value="user">User</option>
                   <option value="manager">Manager</option>
@@ -130,7 +130,7 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                 <select
                   value={editing.manager_id || ""}
                   onChange={(e) => setEditing({ ...editing, manager_id: e.target.value || null })}
-                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
+                  className="mt-1 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2"
                 >
                   <option value="">No manager</option>
                   {managers
@@ -171,7 +171,7 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Why is this change being made?"
-                  className="mt-1 min-h-20 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
+                  className="mt-1 min-h-20 w-full rounded-2xl border border-fg/10 bg-shade/20 px-3 py-2"
                 />
               </label>
             </div>
@@ -186,14 +186,14 @@ export default function AdminUsersTable({ users, managers }: { users: User[]; ma
                   setEditing(null);
                   setSaveError(null);
                 }}
-                className="rounded-lg border border-fg/10 px-4 py-2 text-sm"
+                className="rounded-full border border-fg/10 px-4 py-2 text-sm"
               >
                 Cancel
               </button>
               <button
                 disabled={saving}
                 onClick={save}
-                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+                className="rounded-full bg-mint px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save changes"}
               </button>

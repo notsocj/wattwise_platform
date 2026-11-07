@@ -94,7 +94,7 @@ export default function AddApplianceModal({
                 type="button"
                 onClick={handleCloseModal}
                 disabled={isSavingDevice || isSavingProfile}
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10 hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10 hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -177,7 +177,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={goBack}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1 rounded-full border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Back
                   </button>
@@ -186,7 +186,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={handleCloseModal}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex-1 rounded-full border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Cancel
                   </button>
@@ -195,7 +195,7 @@ export default function AddApplianceModal({
                 <button
                   type="submit"
                   disabled={isBusy}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-mint px-4 py-3 text-sm font-bold text-ink transition-all hover:bg-mint/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-mint px-4 py-3 text-sm font-bold text-ink transition-all hover:bg-mint/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isBusy ? (
                     <>

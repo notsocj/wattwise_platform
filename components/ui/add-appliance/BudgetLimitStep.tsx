@@ -79,7 +79,7 @@ export default function BudgetLimitStep({
           onChange={(event) => onApprovedLimitChange(event.target.value)}
           aria-invalid={Boolean(errorMessage)}
           aria-describedby="approved-limit-message"
-          className={`rounded-xl border bg-fg/[0.03] px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`rounded-full border bg-fg/[0.03] px-4 py-3 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 ${
             errorMessage
               ? "border-danger/40 focus:border-danger focus:ring-danger/30"
               : "border-fg/10 focus:border-mint focus:ring-mint/30"

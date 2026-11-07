@@ -39,7 +39,7 @@ export default function CancelAutomationButton({ deviceId, automationId }: { dev
         type="button"
         onClick={cancel}
         disabled={pending}
-        className="inline-flex h-8 items-center rounded-lg border border-fg/10 px-3 text-xs font-semibold text-fg/70 transition-[color,border-color,scale] duration-150 ease-out hover:border-fg/20 hover:text-fg active:scale-[0.97] disabled:opacity-60"
+        className="inline-flex h-8 items-center rounded-full border border-fg/10 px-3 text-xs font-semibold text-fg/70 transition-[color,border-color,scale] duration-150 ease-out hover:border-fg/20 hover:text-fg active:scale-[0.97] disabled:opacity-60"
       >
         {pending ? "Cancelling..." : "Cancel"}
       </button>

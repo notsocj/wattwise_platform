@@ -352,7 +352,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
                 !pushAvailable
               }
               onClick={() => void sendTest("push")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending === "test-push" ? (
                 <LoadingIndicator size="sm" label="Sending" showLabel={false} />
@@ -386,7 +386,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
               type="button"
               disabled={pending !== null || !preferences.budget_email_enabled}
               onClick={() => void sendTest("email")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending === "test-email" ? (
                 <LoadingIndicator size="sm" label="Sending" showLabel={false} />

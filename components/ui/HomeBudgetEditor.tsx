@@ -159,7 +159,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               onClick={openEditor}
               disabled={isSaving}
               aria-label="Edit home budget"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
             >
               <PencilLine className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -177,7 +177,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
                 onClick={closeEditor}
                 disabled={isSaving}
                 aria-label="Close budget editor"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-fg/10 bg-fg/[0.03] text-fg/60 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-fg/10 bg-fg/[0.03] text-fg/60 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -205,7 +205,7 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
               onBlur={() => setErrorMessage(validateBudgetInput(inputValue))}
               aria-invalid={Boolean(errorMessage)}
               aria-describedby="home-budget-message"
-              className={`w-full rounded-lg border bg-fg/[0.03] px-3 py-2 text-sm text-fg outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+              className={`w-full rounded-full border bg-fg/[0.03] px-4 py-2 text-sm text-fg outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 errorMessage
                   ? "border-danger/70 focus:border-danger"
                   : "border-fg/10 focus:border-mint/40"
@@ -227,14 +227,14 @@ export default function HomeBudgetEditor({ initialBudget }: HomeBudgetEditorProp
                   type="button"
                   onClick={closeEditor}
                   disabled={isSaving}
-                  className="rounded-lg border border-fg/10 bg-fg/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-fg/70 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-fg/10 bg-fg/[0.03] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-fg/70 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-mint/30 bg-mint/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-mint/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSaving ? (
                     <>

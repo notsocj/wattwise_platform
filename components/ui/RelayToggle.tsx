@@ -130,7 +130,7 @@ export default function RelayToggle({
           role="switch"
           aria-checked={relayState}
           aria-label={relayState ? "Power is on. Turn appliance off" : "Power is off. Turn appliance on"}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
             relayState
               ? "bg-mint/15 text-accent hover:bg-mint/25"
               : "bg-fg/[0.06] text-fg/60 hover:bg-fg/10"

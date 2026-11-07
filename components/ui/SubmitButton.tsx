@@ -35,7 +35,7 @@ export default function SubmitButton({
       type="submit"
       disabled={busy || disabled}
       aria-busy={status === "loading"}
-      className={`grid w-full rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-[scale,opacity] duration-150 ease-out enabled:active:scale-[0.97] ${
+      className={`grid w-full rounded-full bg-mint py-4 text-[17px] font-bold text-ink transition-[scale,opacity] duration-150 ease-out enabled:active:scale-[0.97] ${
         busy ? "cursor-progress" : "disabled:cursor-not-allowed disabled:opacity-60"
       } ${className}`}
     >
@@ -43,7 +43,7 @@ export default function SubmitButton({
         {idleLabel}
       </span>
       <span aria-hidden="true" className={`${LAYER} ${status === "loading" ? "" : HIDDEN}`}>
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/25 border-t-black" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/25 border-t-ink" />
         {loadingLabel}
       </span>
       <span aria-hidden="true" className={`${LAYER} ${status === "success" ? "" : HIDDEN}`}>

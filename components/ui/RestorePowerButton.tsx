@@ -57,7 +57,7 @@ export default function RestorePowerButton({ deviceId }: { deviceId: string }) {
         type="button"
         disabled={pending}
         onClick={() => void restore()}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-danger px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
       >
         <Power className="h-4 w-4" />
         {pending ? "Restoring..." : "Restore Power"}

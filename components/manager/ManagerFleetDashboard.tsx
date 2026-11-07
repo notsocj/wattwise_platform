@@ -58,7 +58,7 @@ export default function ManagerFleetDashboard({
           </div>
           <Link
             href="/manager/ai"
-            className="inline-flex items-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
+            className="inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
           >
             <BrandMark className="h-4 w-4" />
             Ask AI

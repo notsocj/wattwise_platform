@@ -43,7 +43,7 @@ export default function LogoutButton({
       aria-label={showLabel ? undefined : isLoading ? "Signing out" : label}
       className={
         className ??
-        "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
+        "inline-flex h-10 w-10 items-center justify-center rounded-full border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-fg/20 hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
       }
     >
       <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />

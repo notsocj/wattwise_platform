@@ -137,7 +137,7 @@ export default function MacQrScanner({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10"
           aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />

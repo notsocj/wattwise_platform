@@ -88,7 +88,7 @@ export default function AccountSection({
 
       <Link
         href="/update-password"
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/70 transition-colors hover:border-mint/30 hover:bg-mint/10 hover:text-accent"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/70 transition-colors hover:border-mint/30 hover:bg-mint/10 hover:text-accent"
       >
         <KeyRound className="h-4 w-4" aria-hidden="true" />
         Update Password
@@ -98,7 +98,7 @@ export default function AccountSection({
         type="button"
         onClick={() => void sendPasswordReset()}
         disabled={isSendingReset || isDeleting}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSendingReset ? (
           <>
@@ -135,13 +135,13 @@ export default function AccountSection({
             disabled={isDeleting}
             autoComplete="off"
             placeholder="Type DELETE to confirm"
-            className="mt-3 w-full rounded-lg border border-danger/30 bg-shade/10 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-danger"
+            className="mt-3 w-full rounded-full border border-danger/30 bg-shade/10 px-4 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-danger"
           />
           <button
             type="button"
             onClick={() => void deleteAccount()}
             disabled={isDeleting || !isDeleteConfirmed}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-danger/40 bg-danger/15 px-4 py-3 text-sm font-bold text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-danger/40 bg-danger/15 px-4 py-3 text-sm font-bold text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDeleting ? (
               <>

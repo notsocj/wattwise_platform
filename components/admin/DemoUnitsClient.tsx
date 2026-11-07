@@ -25,8 +25,8 @@ type Unit = {
   } | null;
 };
 
-const fieldClass = "mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm text-fg";
-const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+const fieldClass = "mt-1 w-full rounded-full border border-fg/10 bg-shade/20 px-4 py-2 text-sm text-fg";
+const buttonClass = "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 function displayPerson(person: Person | undefined) {
   return person ? person.full_name || person.email : "Unassigned";
@@ -132,7 +132,7 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
           <label className="text-sm">Appliance type<input name="appliance_type" defaultValue="aircon" className={fieldClass} /></label>
           <label className="text-sm">Simulated watts<input required name="simulated_watts" type="number" min="0" max="5000" step="1" defaultValue="100" className={fieldClass} /></label>
           <label className="text-sm">Simulated voltage<input required name="simulated_voltage_v" type="number" min="180" max="260" step="0.1" defaultValue="230" className={fieldClass} /></label>
-          <div className="flex items-end"><button disabled={submitting} className={`${buttonClass} w-full bg-mint text-black hover:bg-mint/90`}>{submitting ? "Creating…" : "Create demo unit"}</button></div>
+          <div className="flex items-end"><button disabled={submitting} className={`${buttonClass} w-full bg-mint text-ink hover:bg-mint/90`}>{submitting ? "Creating…" : "Create demo unit"}</button></div>
         </form>
       </section>
 

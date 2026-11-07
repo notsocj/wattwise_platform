@@ -25,7 +25,7 @@ type RegisterFieldErrors = Partial<{
 type RegisterRole = Extract<UserRole, "user" | "manager">;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-fg placeholder-fg/30 text-base focus:outline-none transition-colors";
+  "w-full bg-transparent rounded-full px-5 py-4 text-fg placeholder-fg/30 text-base focus:outline-none transition-colors";
 
 function getInputClass(hasError: boolean, extraClass = ""): string {
   const stateClass = hasError
