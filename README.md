@@ -6,8 +6,11 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 
 ## Features
 
+- **Landing page** at `/onboarding` with an interactive 3D WattWise unit (hover or tap to see the meter, controller, and relay inside), scroll animations, and smooth scrolling
+- **Phone and desktop layouts**: a 430px app with a bottom tab bar on phones; on laptops and desktops (1024px+) a sidebar, wider grids, and in-page titles
+- **Dark and light themes**, chosen in the sidebar or Settings and applied before the first paint
 - **Live dashboard** with per-device watts, voltage, and current pushed through Supabase Realtime (no page reloads), plus freshness-aware LIVE/idle/offline states
-- **Meralco billing** that matches the Summary Schedule of Rates: every per-kWh component and adjustment (including AWAT refunds), the distribution tier and energy tax for the home's monthly usage, fixed customer charges, and per-component VAT, synced automatically each month and shown on a public `/rates` transparency page
+- **Meralco billing** that matches the Summary Schedule of Rates: every per-kWh component and adjustment (including AWAT refunds), the distribution tier and energy tax for the home's monthly usage, fixed customer charges, and per-component VAT, synced automatically each month and shown in full on the `/rates` page for signed-in users
 - **Smart Control**: per-device monthly budget limits that cut the relay when spend is exceeded, with optional approval-on-expiry
 - **Budget alerts** at 50% (in-app), 80% (push), and 100% (push + email) via OneSignal and Resend
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF
@@ -20,6 +23,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 | Layer | Tools |
 | --- | --- |
 | Frontend | Next.js 16 (App Router, React Compiler), React 19, TypeScript, Tailwind CSS 4, Recharts, Lucide; Space Grotesk via `next/font` |
+| Landing page | three.js with React Three Fiber (3D unit), Lenis (smooth scrolling) |
 | Backend | Supabase (Postgres, Auth, Realtime, RLS, Edge Functions) |
 | AI | OpenAI SDK (server-side only) |
 | Notifications | OneSignal Web Push, Resend email |
@@ -48,6 +52,7 @@ Open [http://localhost:3000](http://localhost:3000). Use port `3001` (`npm run d
 | `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY` | server only | Admin client: tenant creation, account deletion, admin console, and the cross-request Meralco rate cache (without it, rates are read directly on every request) |
 | `MERALCO_SYNC_SECRET`, `MERALCO_SYNC_FUNCTION_URL` | server / CI | Triggering the Meralco rate sync function |
 | `MERALCO_MAX_RELATIVE_CHANGE` | Edge Function | Anomaly guardrail for rate sync (default `0.5`) |
+| `PDF_TEXT_EXTRACTOR_URL`, `PDF_TEXT_EXTRACTOR_SECRET` | Edge Function (optional) | External PDF-to-text service for rate sync; without it the function extracts text itself and fails if the result is too short to parse |
 
 Edge Function secrets (`ONESIGNAL_APP_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `APP_BASE_URL`, `NOTIFICATION_WEBHOOK_SECRET`) are set with `supabase secrets set`. See [NOTIFICATION_SETUP.md](NOTIFICATION_SETUP.md).
 
@@ -72,6 +77,9 @@ app/                 App Router pages, loading states, and API routes
   manager/           Landlord / manager mode
   api/               Route handlers (insights, reports, devices, hardware, ...)
 components/          UI, admin, manager, billing, analytics, and provider components
+  ui/                Shared UI: AppFrame (picks the phone/desktop frame), AppSidebar,
+                     PageHeader, Card, SubmitButton, FormAlert, BrandMark, ...
+  landing/           /onboarding landing page and the 3D unit (device/)
 lib/                 Billing, notification, and assistant logic, including:
   auth-context.ts    getSessionUser(): the signed-in user, forwarded by the middleware
   meralco-rates*.ts  rate selectors (client-safe) and the cached server loader
@@ -82,10 +90,20 @@ supabase/
   migrations/        Canonical schema, RLS, and RPC history (apply in order)
   functions/         Edge Functions: sync-meralco-rates, dispatch-budget-notifications
 tests/               Node test runner suites
+docs/                Research notes and plans (hardware accuracy, light mode)
 .github/
   instructions/      Roadmap, AI workflow, and schema reference docs
   workflows/         Daily Meralco rate sync (11:00 Manila)
 ```
+
+## Design system
+
+- **Layout.** `components/ui/AppFrame.tsx` (in the root layout) chooses the frame per route. Below Tailwind's `lg` breakpoint (1024px) every page is a 430px phone column with a bottom tab bar. From `lg` up, app pages get `AppSidebar` and sit on a rounded panel, `PageHeader` becomes an in-page title with a description, and pages lay out on a 12-column grid. Sign-in pages get a brand panel beside the form.
+- **Colour.** Dark and light themes come from tokens in `app/globals.css`: `canvas`, `surface`, `sidebar`, `fg` (foreground, used with opacity such as `text-fg/60`), `accent` (mint text and icons), `mint` (fills), `shade` (input wells), and the status colours `bida`, `naku`, and `danger`. Components never hard-code white.
+- **Components.** Cards use `CARD` and `CardHeader` (`components/ui/Card.tsx`); form submits use `SubmitButton` (processing and success states) and `FormAlert`; the owl mascot is `BrandMark`.
+- **Motion.** Easing tokens, short page entrances, and reduced-motion fallbacks live in `app/globals.css`. Route changes show a thin top progress bar.
+
+The full conventions are in [AGENTS.md](AGENTS.md).
 
 ## How it stays fast
 

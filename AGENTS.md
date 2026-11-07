@@ -11,7 +11,7 @@ Wattwise is a mobile-first energy monitoring SaaS platform for Philippine househ
 
 - Frontend: Next.js 16.1.7, React 19.2.3, TypeScript 5, Tailwind CSS 4
 - Backend/services: Supabase, Supabase Edge Functions, OpenAI SDK
-- UI/data libs: Lucide React, Recharts, html5-qrcode
+- UI/data libs: Lucide React, Recharts, html5-qrcode; three.js + @react-three/fiber and Lenis on the `/onboarding` landing page only
 - Deployment/runtime: Vercel-ready app with OpenNext Cloudflare preview/deploy scripts available
 
 ## Repository Map
@@ -35,7 +35,7 @@ Wattwise is a mobile-first energy monitoring SaaS platform for Philippine househ
 - `npm run deploy`: OpenNext Cloudflare deploy build
 - `npm run cf-typegen`: refresh Cloudflare env typings
 
-Default local URL is `http://localhost:3000`. If you need to avoid a port conflict with related Wattwise projects, prefer port `3001`.
+Default local URL is `http://localhost:3000`. If you need to avoid a port conflict with related Wattwise projects, prefer port `3001`. After editing theme tokens in `app/globals.css`, restart the dev server if new colour utilities don't appear; it can keep serving a stale stylesheet.
 
 ## Deployment and Database Changes
 
@@ -89,7 +89,7 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 - Use `text-ink` for dark text on mint/bright fills (it stays dark in both themes). Never name a color token after a Tailwind size keyword (`base`, `sm`, `lg`, ...): `--color-base` once turned every `text-base` into a color instead of 16px.
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.
 - Reserve danger red for destructive or safety-critical states only.
-- Reuse shared feedback primitives like `components/ui/LoadingIndicator.tsx` for pending states.
+- Reuse shared feedback primitives: `components/ui/LoadingIndicator.tsx` for pending states, `SubmitButton` (idle, processing, success) and `FormAlert` (form-level errors) for form submits.
 - Use `components/ui/PageHeader.tsx` (with `pt-[84px]` on the body) for mobile page headers, `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`, and `app/error.tsx` as the route error boundary.
 - Desktop (Tailwind `lg`, 1024px+) is laid out by `components/ui/AppFrame.tsx` in the root layout: app routes (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`) get `AppSidebar` (groups from `APP_DESKTOP_SECTIONS`) and pages sit on the rounded `DESKTOP_PANEL`; sign-in pages get `AuthBrandPanel` beside the form. Below `lg`, everything stays in the 430px phone column with the bottom bar. On desktop `PageHeader` is an in-page title block (pass `description`; no back button), so page bodies use `pt-[84px] lg:pt-0` and loading screens start with `PageTitleSkeleton`. Cards use `CARD` / `CardHeader` from `components/ui/Card.tsx`. Pages use `lg:grid lg:grid-cols-12` with `lg:col-span-*`, and `lg:order-*` only to move secondary cards down.
 - Colors are theme tokens (`app/globals.css`), never hard-coded white: `text-fg/60`, `border-fg/[0.06]`, `bg-fg/[0.04]` for foreground, `text-accent` for mint text and icons (darker in light mode for contrast), `bg-mint`/`border-mint` for fills, `bg-shade/10` for inset wells. Literal `text-white`/`bg-white` only on surfaces that stay coloured in both themes (red buttons, toggle knobs, print). The saved theme is applied before paint by the script in `app/layout.tsx`.
@@ -109,13 +109,13 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 2. Preserve the current architecture instead of introducing parallel patterns for billing, telemetry, caching, or auth.
 3. For user-facing forms, prefer inline validation and friendly recovery messages over raw provider errors or browser default popups.
 4. Keep live telemetry freshness-aware. Stale readings should render offline or idle rather than active.
-5. Keep `profiles.monthly_budget_php` editable only from the Home Dashboard wallet flow.
+5. Keep `profiles.monthly_budget_php` editable only from the Home Dashboard wallet flow (`HomeBudgetEditor`) and the customer assistant's user-confirmed actions (`app/api/customer-assistant/actions/[messageId]/confirm`). Do not add other writers.
 6. Run `npm run lint` and `npm run build` before handoff when the change is substantial enough to justify validation.
 
 ## Known Project Conventions
 
-- App Router pages already exist for `/`, `/dashboard`, `/dashboard/calendar`, `/analytics`, `/settings`, `/admin`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/update-password`, and `/onboarding`.
-- Smart Control user routes also exist for `/analytics` and `/settings`.
+- App Router pages exist for `/` (splash that redirects to `/onboarding` or the signed-in home), `/onboarding` (public landing page), `/login`, `/register`, `/forgot-password`, `/reset-password`, `/update-password`, `/dashboard`, `/dashboard/[deviceId]`, `/dashboard/calendar`, `/analytics` (Burn), `/reports`, `/rates`, `/settings`, `/manager/*`, `/admin/*`, and `/pitch-deck`.
+- The landing page's 3D unit (`components/landing/device/`) is ported from the owner's gsap-portfolio repo; it loads client-side only, pauses rendering off screen, and falls back to an SVG drawing without WebGL. The pitch deck keeps its own fixed dark styling.
 - Shared Supabase helpers live under `lib/supabase/`.
 - Shared helpers: telemetry freshness (`ACTIVE_READING_WINDOW_MS`, `isFreshReading`) in `lib/device-telemetry.ts`, peso formatting in `lib/format.ts`, the OpenAI chat model in `lib/openai.ts`, and PostgREST search sanitizing in `lib/postgrest.ts`. Reuse them instead of redefining per file.
 - Reports are built once in `lib/reports.ts` (`buildEnergyReport`) from the per-day usage RPC, `get_average_watts_by_device`, and day-by-day Meralco pricing; `/reports` renders it on the server and `/api/reports` serves the same rows as JSON, CSV, or PDF. Keep period windows bounded and never read raw `energy_logs` rows for totals.
@@ -130,6 +130,14 @@ After meaningful implementation work, update the relevant files in `.github/inst
 - `phases-and-roadmap-plan.instructions.md`: roadmap status and completion notes
 - `ai-workflow.instructions.md`: new implementation patterns or guardrails
 - `supabase-schema-context.instructions.md`: schema, RPC, index, or query-pattern changes
+- `smart-control-architecture-blueprint.instructions.md`: telemetry, budget, relay, and Smart Control surfaces
+
+Also keep these current when the work touches them:
+
+- `README.md` (features, stack, structure, environment variables) and `TESTING.md` (manual checklist; update its date)
+- `.github/copilot-instructions.md`, the Copilot counterpart of this file
+- `NOTIFICATION_SETUP.md` for notification providers, secrets, and webhooks
+- `docs/` for longer notes and plans, such as `docs/light-mode-plan.md` (theme tokens and open work)
 
 Skip this sync only for trivial edits that do not materially affect workflow, architecture, or progress tracking.
 

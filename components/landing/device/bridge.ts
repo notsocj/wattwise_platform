@@ -1,5 +1,7 @@
-// One mutable proxy per experience instance. The WattWise GSAP timeline writes it;
-// the R3F frame adapter reads it. Neither React state nor module globals carry progress.
+// One mutable proxy per experience instance. WattWiseCanvas eases it toward the open or
+// closed pose each frame; the R3F frame adapter (DeviceRig.apply) reads it. Neither React
+// state nor module globals carry progress. (Ported from the gsap-portfolio repo, where a
+// GSAP timeline drove it; GSAP is not used here.)
 
 export interface WattWiseProxy {
   /** Absolute radians. */

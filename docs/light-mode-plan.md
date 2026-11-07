@@ -1,65 +1,41 @@
-# Light mode plan
+# Light mode
 
-> **Status (2026-11-07):** steps 1–3 are done, plus the pre-paint script and the splash fix from step 5:
-> - The `fg`, `accent` and `shade` tokens exist.
-> - A codemod renamed 981 classes.
-> - The 46 override rules are deleted.
->
-> Still open:
-> - A "System" theme option.
-> - A light-mode shadow on cards.
-> - A full QA pass, including signed-out pages, the manager portal and admin.
+Status as of November 7, 2026: **light mode is live** for every page that uses the shared tokens. What remains is listed under [Still open](#still-open).
 
+## How theming works
 
-## Where it stands
+- **Choosing a theme.** Phones switch in Settings → Appearance; desktop has **Light mode** / **Dark mode** in the sidebar. `ThemeProvider` (`components/providers/ThemeProvider.tsx`) saves the choice in `localStorage` under `wattwise-theme` and sets `data-theme` on `<html>`.
+- **No flash on load.** A tiny inline script in `app/layout.tsx` reads `wattwise-theme` and sets `data-theme` before the first paint. The provider does not write `data-theme` on mount: hydration briefly renders the server's `"dark"`, and writing it then would flash dark. Changes from another tab arrive through the `storage` event.
+- **Tokens, not overrides.** Colours are defined once per theme in `app/globals.css` (`@theme`, then `:root,[data-theme="dark"]` and `[data-theme="light"]`). Tailwind utilities read the variables, so every opacity step works in both themes.
 
-- A theme toggle exists (sidebar on desktop, Settings → Appearance). `ThemeProvider` stores the choice in `localStorage` (`wattwise-theme`) and sets `data-theme` on `<html>`.
-- Light mode works by **patching class names**. `app/globals.css` has 46 `[data-theme="light"] .text-white\/60 { … }` style overrides that repaint dark-mode utilities.
-- Components hard-code dark colours: about 476 `text-white*`, 216 `border-white/*`, 122 `bg-white/*`, 44 `bg-black/*` and 21 raw hex values. Any new opacity step (for example `text-white/35`, `bg-white/[0.04]`) has no override, so it breaks in light mode. The new desktop sidebar and cards already use some of these.
-- Known bugs:
-  - The page always renders dark first and switches after hydration, so light-mode users see a dark flash.
-  - The splash (`app/page.tsx`) forces `data-theme="dark"`.
+| Token | Dark | Light | Use |
+| --- | --- | --- | --- |
+| `canvas` | #121212 | #F5F6F8 | Page and desktop panel |
+| `surface` | #1E1E1E | #FFFFFF | Cards |
+| `sidebar` | #0B0B0B | #E9EBEF | Desktop sidebar rail |
+| `fg` | #FFFFFF | #0F1115 | Foreground, always with opacity: `text-fg/60`, `border-fg/[0.06]`, `bg-fg/[0.04]` |
+| `accent` | #00E66F | #007E3C | Mint text and icons (passes WCAG AA on white and on the canvas) |
+| `mint` | #00E66F | #00E66F | Fills: buttons (with `text-ink`), chips (`bg-mint/10`), borders |
+| `shade` | #000000 | ink at 40% | Inset wells such as inputs: `bg-shade/10` (darkens in dark, a soft 4% tint in light) |
+| `bida` / `naku` / `danger` | #10B981 / #F59E0B / #EF4444 | #047857 / #B45309 / #B91C1C | Good / warning / danger, darker in light for contrast |
+| `ink` | #121212 | #121212 | Dark text on bright mint, in both themes |
 
-## Approach: semantic tokens, not overrides
+Charts read `--chart-axis`, `--chart-grid`, `--chart-track`, and `--chart-muted-bar`, which also switch per theme.
 
-1. **Define tokens once, per theme** (in `@theme` plus `[data-theme]` blocks):
+## Rules for new code
 
-   | Token | Dark | Light | Replaces |
-   | --- | --- | --- | --- |
-   | `canvas` | #121212 | #F5F6F8 | page / panel |
-   | `surface` | #1E1E1E | #FFFFFF | cards |
-   | `sidebar` | #0B0B0B | #E9EBEF | desktop rail |
-   | `fg` | #FFFFFF | #0F1115 | `text-white` |
-   | `fg-muted` | white 60% | ink 62% | `text-white/50–70` |
-   | `fg-subtle` | white 40% | ink 45% | `text-white/30–45` |
-   | `line` | white 6% | ink 8% | `border-white/5–10` |
-   | `fill` | white 4% | ink 4% | `bg-white/[0.02–0.08]`, hovers |
-   | `accent` | #00E66F | #00A653 | mint *text and icons* (#00E66F fails contrast on white) |
-   | `accent-fill` | #00E66F | #00E66F | mint buttons (black text works in both) |
+- Never hard-code `text-white`, `border-white/*`, or `bg-white/*`. Use `fg` with an opacity, `text-accent` for mint text, and `bg-shade/*` for wells.
+- Literal white is allowed only on surfaces that stay coloured in both themes: white text on red buttons (`ConfirmDialog`, `RestorePowerButton`), toggle knobs, and print styles.
+- The pitch deck (`components/pitch-deck/`) is a fixed dark presentation and keeps literal colours.
+- After editing tokens in `app/globals.css`, restart the dev server if new utilities do not appear; it can keep serving a stale stylesheet.
 
-   Light cards also get a soft shadow (`0 1px 2px rgb(0 0 0 / 0.04)`), because borders alone look flat on white.
+## How we got here
 
-2. **Codemod the class names.** Map each opacity bucket to its token: `text-white/60` → `text-fg-muted`, `border-white/[0.06]` → `border-line`, and so on. Run it one area at a time and review each diff:
-   1. Shell: `AppSidebar`, `PageHeader`, `Card`, `BottomNav`
-   2. Dashboard and device pages
-   3. Burn, Rates, Reports, Calendar
-   4. Settings and insight cards
-   5. Manager portal
-   6. Admin
-   7. Auth pages and landing
-3. **Delete the 46 override rules** once nothing depends on them.
-4. **Special cases**
-   - Charts: Recharts already reads `--chart-*` variables; check the light values.
-   - Status colours (`bida`, `naku`, `danger`): need darker light-mode text shades for contrast.
-   - Landing 3D unit: the canvas is transparent, so it works on light. Check that the ambient glow and the poster still read well.
-   - Print and PDF are already black on white; no change needed.
-5. **Theme choice**
-   - Add a "System" option that follows `prefers-color-scheme`.
-   - Add a tiny inline script in `<head>` that sets `data-theme` before first paint, so there's no flash.
-   - Stop the splash from forcing dark.
-6. **QA**: screenshot every page in both themes, on phone and desktop. Check WCAG AA contrast for text and for mint on white.
+Light mode used to work by repainting dark-mode classes with 46 `[data-theme="light"] .text-white\/60 { … }` rules. Any new opacity step had no rule and broke in light mode. On November 7, 2026 a codemod renamed about 980 class usages to the tokens above (`white` → `fg`, `text-mint` → `text-accent`, `bg-black/10–20` → `bg-shade/*`), and the override rules were deleted. Dark mode resolves to the same colours as before.
 
-## Order of work
+## Still open
 
-Tokens and pre-paint script → shell → dashboard → the rest by area → delete overrides → QA pass.
-Each step ships on its own: dark mode keeps looking the same because the tokens resolve to today's values.
+1. **"System" option** that follows the device's light/dark setting (`prefers-color-scheme`), alongside Dark and Light.
+2. **Light-mode review** of the manager portal, the admin console, and the signed-out pages (landing, login, register). They use the tokens but have not been checked page by page.
+3. **Card shadow in light mode.** Cards rely on a 6% border; a soft `0 1px 2px` shadow may read better on white.
+4. **Contrast pass** with a checker on every page in both themes, phone and desktop.

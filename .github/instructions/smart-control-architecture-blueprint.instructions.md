@@ -40,7 +40,7 @@ Trigger:
 - `handle_energy_log_smart_budget()` runs after `energy_logs` INSERT.
 - It resolves `NEW.device_id` against both `devices.id::text` and `devices.mac_address`.
 - It counts meter resets and physically implausible kWh jumps as zero usage (migration `039`).
-- It uses the active `meralco_rates` row and variable Meralco components plus VAT.
+- It prices kWh with `public.meralco_variable_rate_per_kwh(rate, household_kwh)` on the active `meralco_rates` row (migrations `037`, `038`, `039`): per-component VAT, the home's distribution tier, and energy tax, with the household kWh from `household_monthly_kwh_for()`. It must match `lib/meralco-bill.ts`.
 - It excludes fixed charges from per-device shutoff decisions.
 
 ## App Surfaces
@@ -65,11 +65,11 @@ Settings and recovery routes:
 
 Analytics route:
 - `app/analytics/page.tsx`
-- Uses bounded usage RPCs and active Meralco rates to render 7-day financial velocity and projected monthly bill.
+- Uses bounded usage RPCs and active Meralco rates to render the projected bill for the billing cycle, the forecast, and the "Daily spend, last 7 days" chart.
 
 Reports route:
 - `app/reports/page.tsx` and `app/api/reports/route.ts`
-- Supports bounded daily, weekly, and monthly measured-versus-estimated appliance reports, CSV download, and print-to-PDF.
+- Supports bounded daily, weekly, and monthly measured-versus-estimated appliance reports built once by `buildEnergyReport()` (`lib/reports.ts`), with CSV and PDF downloads (`lib/report-pdf.ts`) and print styles.
 
 Budget warnings:
 - Migration `025_budget_alert_policy.sql` records deduplicated 50% green and 80% amber warning events. The terminal approval/cutoff event supplies the one red 100% alert.
@@ -88,7 +88,7 @@ Required environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `OPENAI_API_KEY`
-- `SUPABASE_SECRET_KEY` for account deletion through `supabase.auth.admin.deleteUser()`.
+- `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) for account deletion through `supabase.auth.admin.deleteUser()`, tenant creation, the admin console, and the cross-request rate cache.
 
 ## Hardware Contract
 

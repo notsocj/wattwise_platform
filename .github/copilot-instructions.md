@@ -1,83 +1,66 @@
 # Wattwise Platform — AI Agent Instructions
 
-## Project Overview
+This is the GitHub Copilot version of `AGENTS.md` at the repo root. `AGENTS.md` is the source of truth for conventions; if the two disagree, follow `AGENTS.md` and fix this file. Deeper references live in `.github/instructions/`:
 
-**Wattwise** is a modern SaaS platform for energy management and monitoring. The platform is built with a Next.js 16 frontend using React 19 and TypeScript 5, with a Supabase backend for data persistence and authentication.
-
-**Repository:** `wattwise_platform`  
-**Status:** Active development  
-**Deployment:** Vercel-ready  
+- `ai-workflow.instructions.md`: coding constraints for billing, hardware safety, ingestion, and OpenAI
+- `supabase-schema-context.instructions.md`: tables, RPCs, indexes, and query patterns (migrations `001`-`039`)
+- `smart-control-architecture-blueprint.instructions.md`: realtime telemetry, AI profiling, budgets, relay shutoff
+- `phases-and-roadmap-plan.instructions.md`: roadmap and what is done
 
 ---
 
-## Platform Features & Architecture Overview
+## Project Overview
 
-### Part 1: Core Web App Features (The User PWA)
+WattWise is a mobile-first energy monitoring app for Philippine households. A WattWise unit (ESP32-S3 smart plug) sits between the outlet and an appliance and posts watts, volts, and amps to Supabase every few seconds. The app prices that usage exactly like a Meralco bill, sets per-appliance peso budgets, can switch the appliance off through the unit's relay, and gives casual Taglish tips written by OpenAI.
 
-#### 1. Unbundled Meralco Billing Engine
-- **Description:** Translates raw kWh into exact Philippine Pesos using unbundled Meralco formulas (Generation, Transmission, System Loss) plus the 12% VAT.
-- **User Value:** Users see exactly how much their appliance is costing them right now, eliminating "bill shock" at the end of the month.
+Deployment: pushing to `main` deploys production on Vercel (functions pinned to Seoul, `icn1`, next to the Supabase project). OpenNext Cloudflare scripts also exist.
 
-#### 2. Taglish AI "Tipid" Advisor (OpenAI Powered)
-- **Description:** Analyzes aggregated daily usage and delivers hyper-personalized, casual Taglish insights (e.g., Budget "Naku!" Alerts and Weekly "Bida" Recaps).
-- **User Value:** Transforms raw data into actionable financial advice that feels like a text message from a friend, increasing user engagement.
+---
 
-#### 3. Live Power Gauge & Analytics Dashboard
-- **Description:** Displays real-time telemetry (Watts, Volts, Amps) pulled via Supabase Realtime, alongside historical bar charts for daily and weekly consumption.
-- **User Value:** Gives users a visual understanding of their appliance's power draw and historical usage trends.
+## Features (what exists today)
 
-#### 4. Mobile-First Progressive Web App (PWA)
-- **Description:** Powered by Serwist, the web app can be installed directly to a user's phone home screen (iOS/Android) without going through the App Store, featuring caching for fast load times even on slow networks.
-- **User Value:** Feels exactly like a native mobile app without the overhead of app store deployment.
+### Homeowner app (role `user`; `tenant` sees a limited version)
+- **Splash `/`**: about 3 seconds of CSS-animated intro, then redirects to `/onboarding` (guest) or `/dashboard` (signed in).
+- **Landing `/onboarding`**: a full-width marketing page with a 3D WattWise unit, scroll reveals, and smooth scrolling (see "Landing page" below).
+- **Sign-in pages**: `/login`, `/register`, `/forgot-password`, `/reset-password` (email reset link), `/update-password` (tenants who must change their first password are forced here by the middleware).
+- **Home `/dashboard`**: household budget wallet (`HomeBudgetEditor`, the only place `profiles.monthly_budget_php` is edited), device cards with live W/V/A over Supabase Realtime, Taglish insight and budget alert cards, and Add Appliance (QR scan of the unit's MAC with `html5-qrcode`, then AI appliance profiling).
+- **Device detail `/dashboard/[deviceId]`**: gauges, per-device budget limit, relay on/off, restore power.
+- **Burn `/analytics`**: how fast the billing cycle budget is being spent and the projection.
+- **Reports `/reports`**: usage and cost by period, downloadable as PDF (`pdf-lib`) or CSV through `/api/reports`.
+- **Calendar `/dashboard/calendar`**: day-by-day usage and cost with AI notes.
+- **Meralco Rates `/rates`**: the current rate schedule and rate history.
+- **Settings `/settings`**: billing cycle and household Meralco kWh, appearance (light/dark), auto-shutoff, notifications, account.
+- **Assistant**: a floating WattWise assistant (`components/customer-assistant/CustomerAssistantFab.tsx`) that answers questions and proposes actions the user must confirm.
 
-### Part 2: System-Wide & Hardware Features (The IoT Architecture)
+### Manager portal `/manager` (role `manager`, e.g. landlords)
+Fleet, Rooms, Tenants (creates tenant accounts), Calendar, AI (chat and insights), Settings. Layout is `components/manager/ManagerShell.tsx`.
 
-#### 1. Aggregated Data Throttling
-- **Description:** Instead of hammering the database every second, the system averages telemetry data (e.g., every 1 minute or 1 hour) before inserting it into Supabase.
-- **System Value:** Ensures the platform remains fully operational and highly scalable within the 500MB Supabase Free Tier limit.
+### Super admin console `/admin` (role `super_admin`)
+Overview, Users, Devices, Demo Units, Meralco Rates (read-only history; rates come from the sync job), Growth, AI Costs (token usage from `ai_insights`), System Health, Global Analytics, Audit Log, Test Lab. It has its own layout and `components/admin/AdminSidebar.tsx`.
 
-### Part 3: Super Admin "Mission Control" (Owner Dashboard)
+### Background systems
+- **Meralco rate sync**: Edge Function `supabase/functions/sync-meralco-rates`, triggered daily at 03:00 UTC by `.github/workflows/sync-meralco-rates.yml`.
+- **Budget notifications**: Edge Function `dispatch-budget-notifications` sends OneSignal push and Resend email from `device_budget_events` (50% in-app only, 80% push, 100% push plus email).
+- **Demo units**: simulated in SQL by `public.simulate_demo_units()` on a 10-second pg_cron job.
+- **Budget cutoff**: a database trigger compares variable Meralco spend for the billing cycle against each device's limit.
 
-#### 1. Meralco Rate Editor (Global System Variable)
-- **Function:** A single form to update the unbundled Meralco rates (Generation, Transmission, System Loss, etc.).
-- **Mechanism:** Updates the active row in the `meralco_rates` table. This acts as the single source of truth for all users' cost calculations across the platform.
-
-#### 2. Revenue & Growth (Sales & Adoption)
-- **Function:** Tracks total registered users, active devices, and hypothetical MRR (Monthly Recurring Revenue).
-- **Mechanism:** Counts rows in the `profiles` and `devices` tables grouped by account creation date to generate a 30-day growth chart.
-
-#### 3. OpenAI Usage & Cost Tracker
-- **Function:** Monitors the exact token usage and estimated USD cost of your Taglish AI advisor.
-- **Mechanism:** Every time an insight is generated, the backend saves the `prompt_tokens` and `completion_tokens` into the `ai_insights` table. The dashboard aggregates these to calculate real-time API costs.
-
-#### 4. Database & System Health (Free Tier Monitor)
-- **Function:** Tracks the volume of telemetry data being ingested to ensure you do not hit the Supabase 500MB limit.
-- **Mechanism:** Monitors the total row count in the `energy_logs` table and tracks how many ESP32-S3 devices are currently "Online" based on their last ping.
-
-#### 5. Global Energy Analytics (The "Big Picture")
-- **Function:** Calculates the total kWh monitored by the entire WattWise platform and the total estimated Pesos saved by all users.
-- **Mechanism:** Runs an aggregated sum of all `energy_logs` across the entire database to prove the macro-level impact of your thesis.
+### Not built
+- No offline mode and no app service worker. There is no Serwist or any PWA caching. The app has a web manifest (`public/site.webmanifest`) so it can be added to a home screen, and the only service worker is OneSignal's push worker under `public/push/onesignal/`. Do not describe offline/PWA caching as done.
+- `/pitch-deck` is a standalone presentation page, not part of the product.
 
 ---
 
 ## Technology Stack
 
-### Frontend
-- **Next.js 16.1.7** — App Router (file-based routing in `app/` directory)
-- **React 19.2.3** — UI library with React Compiler enabled for optimization
-- **TypeScript 5** — Strict mode enabled; project uses path aliases (`@/*` → project root)
-- **Tailwind CSS 4** — Utility-first styling with `@tailwindcss/postcss`
-- **Lucide React** — Icon library for UI components
-- **Recharts 3.8.0** — Charts and data visualization library
+Versions are from `package.json`.
 
-### Backend & Services
-- **Supabase** — PostgreSQL database, authentication, and real-time API (`@supabase/supabase-js`)
-- **Environment Variables** — Configured in `.env.local` (contains Supabase credentials, API keys)
-
-### DevOps & PWA
-- **Serwist 9.5.7** — Service Worker integration for offline-first PWA features
-- **ESLint 9** — Linting with Next.js web vitals and TypeScript config
-- **PostCSS 4** — CSS preprocessing for Tailwind
+- **Next.js 16.1.7** App Router, **React 19.2.3** with the React Compiler (`reactCompiler: true` in `next.config.ts`), **TypeScript 5** strict, `@/*` path alias to the repo root
+- **Tailwind CSS 4** via `@tailwindcss/postcss`; theme tokens in `app/globals.css`
+- **Supabase**: `@supabase/supabase-js`, `@supabase/ssr` (clients in `lib/supabase/`), Postgres RPCs, RLS, Realtime, Edge Functions (Deno), pg_cron
+- **OpenAI SDK** (`openai`), model `gpt-4o-mini` set once in `lib/openai.ts`; server-side only
+- **UI/data**: `lucide-react` icons, `recharts` charts, `swr` (with `lib/fetcher.ts`), `html5-qrcode`, `pdf-lib`
+- **Landing only**: `three` 0.186.1, `@react-three/fiber` 9.8.1, `lenis`
+- **Middleware**: `proxy.ts` (Next 16 name for middleware) calls `lib/supabase/middleware.ts`
 
 ---
 
@@ -85,304 +68,169 @@
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start local dev server (http://localhost:3000) with hot reload |
-| `npm run build` | Production build; validates TypeScript and runs ESLint |
-| `npm run start` | Run production build locally |
-| `npm run lint` | Run ESLint checks; fix issues with `npm run lint -- --fix` |
+| `npm run dev` | Local dev server at http://localhost:3000 (use `-- -p 3001` to avoid clashing with other Wattwise projects) |
+| `npm run build` | Production build (`next build --webpack`); type-checks the app |
+| `npm run start` | Run the production build locally |
+| `npm run lint` | ESLint |
+| `npm test` | Unit tests in `tests/` (`node --test --experimental-strip-types`; needs Node 22.6+) |
+| `npx tsc --noEmit -p .` | Type-check, including `tests/` |
+| `npm run preview` / `npm run deploy` | OpenNext Cloudflare build and preview / deploy |
+| `npm run cf-typegen` | Refresh Cloudflare env typings |
+
+Database: deploys do not apply migrations. Check `supabase migration list --linked`, then `supabase db push --linked`. See `AGENTS.md` for how to verify RLS, trigger, and RPC changes first.
 
 ---
 
-## Design System (Neo-Utility — 2026)
+## Directory Layout
+
+- `app/`: routes, layouts, `loading.tsx` screens, `error.tsx` (route error boundary), `not-found.tsx`, and `app/api/**/route.ts` handlers
+- `components/ui/`: shared UI (frame, sidebar, header, cards, buttons, dialogs, loaders, nav config)
+- `components/<area>/`: feature components (`admin`, `analytics`, `billing`, `calendar`, `customer-assistant`, `dashboard`, `insights`, `landing`, `manager`, `reports`, `settings`, `providers`, `realtime`)
+- `lib/`: billing (`meralco-bill.ts`, `meralco-rates-server.ts`), auth (`auth-context.ts`, `roles.ts`), data helpers, reports, OpenAI, Supabase clients
+- `supabase/migrations/`: schema and RPC history (source of truth for the database)
+- `supabase/functions/`: Edge Functions
+- `tests/`: unit tests
+
+Naming: components are `PascalCase.tsx`; helpers in `lib/` are `kebab-case.ts`.
+
+---
+
+## Design System
 
 ### Typography
-All UI uses **Space Grotesk** for its technical, modern personality and stable number rendering.
+Space Grotesk, loaded with `next/font/google` in `app/layout.tsx` (self-hosted at build time) and exposed to Tailwind as `--font-sans`. There are no font files in `public/`.
 
-| Role | Size | Weight | Usage |
-|------|------|--------|-------|
-| Heading 1 | 32px | Bold | Household overview values |
-| Heading 2 | 24px | Semi-Bold | Section headers |
-| Body Text | 16px | Regular | Device names, descriptions |
-| Technical/Mono | 14px | Medium | Voltage readings, amperage thresholds |
+### Colour tokens (`app/globals.css`)
+The app has dark and light themes. Tokens switch value under `[data-theme="light"]`, so components never need per-theme classes, and `dark:` follows the app's toggle, not the OS.
 
-### Color Palette (High-Contrast Dark Mode)
+| Token | Use |
+|-------|-----|
+| `fg` | Foreground. Use with opacity: `text-fg/60`, `border-fg/[0.06]`, `bg-fg/[0.04]`. |
+| `accent` | Mint for text and icons (`text-accent`); darker in light mode for contrast. |
+| `mint` | Bright brand fill in both themes: `bg-mint`, `border-mint`, `bg-mint/10`. |
+| `ink` | Dark text on mint or bright fills (`text-ink`); stays dark in both themes. |
+| `canvas` | Page background. |
+| `surface` | Card background. |
+| `shade` | Inset wells such as inputs and nested panels: `bg-shade/10`. |
+| `sidebar` | Desktop sidebar rail. |
+| `bida` / `naku` / `danger` | Status: good news / warning / destructive or safety-critical only. |
 
-#### Core Foundation
-| Token | Hex | Purpose |
-|-------|-----|---------|
-| Background Base | `#121212` | True dark — reduces eye strain, optimizes OLED battery |
-| Surface / Cards | `#1E1E1E` | Soft charcoal — subtle depth for interactive elements |
+Rules:
+- Never hard-code white (`text-white`, `border-white/5`, ...). Literal white is only for surfaces that are coloured in both themes (red buttons, toggle knobs, print).
+- Do not add hex colours in JSX when a token fits.
+- Never name a colour token after a Tailwind size keyword (`base`, `sm`, `lg`): `--color-base` once turned every `text-base` into a colour.
+- Keep readable copy at `text-fg/50` or stronger and tap targets at least 40px (`h-10 w-10`).
+- The saved theme (localStorage `wattwise-theme`) is applied before first paint by an inline script in `app/layout.tsx`; `components/providers/ThemeProvider.tsx` and `ThemeToggle` handle switching.
 
-#### Action & Status Colors
-| Token | Hex | Purpose |
-|-------|-----|---------|
-| Primary Action (Neon Mint) | `#00E66F` | Active states, primary buttons, electricity logo glow |
-| Bida (Success Green) | `#10B981` | Savings celebrations, "Under Budget" states |
-| Naku! (Warning Amber) | `#F59E0B` | Usage spikes, approaching budget limits |
-| Danger (High-Alert Red) | `#EF4444` | Critical alerts, failures, destructive actions |
+### Layout: phone and desktop
+`components/ui/AppFrame.tsx`, mounted in the root layout, picks the frame from the path:
 
-### Visual Effects
-- **Glow:** `box-shadow` with 20–40px blur using `#00E66F` at 40–60% opacity — applied to the electricity logo and active Neon Mint elements.
-- **Accent Bars:** Left-side pill-shaped mint accent bars on stat cards and device cards — `w-1 bg-mint/60` (stat cards) or `w-1 bg-mint/50` (device cards) with `rounded-r-full` to create a rounded right edge.
-- **Borders:** Neutral dark borders using `border-white/5` (normal) or `border-white/[0.06]` (slightly more visible) for card separators; status colors only for interactive elements (mint for buttons, danger for destructive actions).
-- **Glassmorphism:** Device Detail sub-cards use a slightly transparent surface (`bg-white/5` + `backdrop-blur`) to create a "Liquid Glass" layered effect.
-- **Roundness:** `rounded-xl` (12px) for main card containers; `rounded-lg` (8px) for icon backgrounds; `rounded-full` for circular elements and pill toggles.
+- **Below `lg` (under 1024px)**: the user app is a 430px phone column with a fixed bottom tab bar (`components/ui/BottomNav.tsx`: Home, Burn, Reports, Settings, plus the assistant button). The manager portal uses its own wider column and a six-tab bottom bar.
+- **App routes on `lg`+** (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/rates`): `AppSidebar` on the left with groups from `APP_DESKTOP_SECTIONS` (Overview: Home, Burn, Reports; Billing: Calendar, Meralco Rates). Settings, the light/dark toggle, Log out, and an account card sit at the bottom. One highlight glides to the active item. Pages sit on the rounded `DESKTOP_PANEL`.
+- **Manager on `lg`+**: `ManagerShell` uses the same `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and the same `DESKTOP_PANEL`.
+- **Sign-in pages on `lg`+** (`/login`, `/register`, `/forgot-password`): a two-column split with `components/ui/AuthBrandPanel.tsx` beside the form.
+- `/admin`, `/manager`, `/onboarding`, and `/pitch-deck` lay themselves out.
 
-### Implementation Notes for AI Agent
-- Load **Space Grotesk** from local TTF files in `public/fonts` using `@font-face` declarations in `app/globals.css`, mapping weights (`300/400/500/600/700`) and applying it as the default sans font through `--font-sans`.
-- Define all palette tokens as Tailwind CSS custom colors in `app/globals.css` with `@theme` (e.g., `--color-mint: #00E66F`, `--color-surface: #1E1E1E`) so they are available as utility classes across the codebase.
-- Never hard-code hex values in component JSX — always use the Tailwind token (e.g., `bg-surface`, `text-mint`, `shadow-mint-glow`).
-- For card/container borders and subtle backgrounds, use neutral white opacity (e.g., `border-white/5`, `bg-white/[0.04]`) to avoid green tint on non-interactive surfaces.
-- The `#EF4444` Danger color must **only** appear on destructive or safety-critical actions. Do not use it for decorative purposes.
-- Large metric numbers (watts, cost) use `text-mint` with unit labels in `text-white/50` for visual hierarchy.
+Page building blocks:
+- `components/ui/PageHeader.tsx`: a fixed 64px bar on phones (body needs `pt-[84px] lg:pt-0`, exported as `PAGE_HEADER_OFFSET`); on desktop an in-page title block with no back button. Pass `description` for the desktop intro line and `desktopTitle` to replace the title on desktop. Loading screens start with `PageTitleSkeleton`.
+- `components/ui/Card.tsx`: `CARD` (the one card surface class), `CardHeader` (icon chip, title, right slot), `CardPill` (small muted pill).
+- Desktop page grids use `lg:grid lg:grid-cols-12` with `lg:col-span-*`; use `lg:order-*` only to move secondary cards down.
+- Forms: `components/ui/SubmitButton.tsx` (`status` is `idle` | `loading` | `success`) and `components/ui/FormAlert.tsx` for inline errors. Show friendly messages (`lib/user-form-messages.ts`), not raw provider errors.
+- `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`; `components/ui/LoadingIndicator.tsx` for pending states; `SuccessToast` for confirmations.
+- `components/ui/BrandMark.tsx`: the WattWise owl as a single-colour mark (CSS mask over `/wattwise_mascot.png`), painted in the current text colour. Use it for the AI assistant and brand spots instead of a robot icon.
 
----
+### Motion
+- Easing tokens: `ease-out`, `ease-in-out`, `ease-drawer` (CSS vars `--ease-out`, `--ease-in-out`, `--ease-drawer`). The default transition timing is the strong ease-out.
+- Utilities in `app/globals.css`: `ww-rise` (one-time brand entrance), `ww-enter` (title blocks, used as `lg:ww-enter`), `ww-stagger` (page bodies: each child rises in, 40ms apart), and `ww-splash-*` (splash screen). Each has a `prefers-reduced-motion` fallback to a plain fade, and the theme colour fade is turned off for reduced motion.
+- Transition `translate`/`scale`/`opacity` by name (Tailwind 4 sets those properties, not `transform`). Use `starting:` for mount entrances.
+- `ww-enter` and `ww-stagger` use `backwards` fill so no transform lingers to trap `fixed` children (modals inside cards).
+- The theme colour fade lives in `@layer base` so `transition-*` utilities override it. Keep it there.
+- Client navigations show a thin mint progress bar at the top (`components/ui/RouteTransitionIndicator.tsx`, in the root layout under `<Suspense>`).
 
-## Screen Specifications (2026 Fleet-Scale Edition)
-
-### 1. Onboarding Flow (The Entry)
-
-#### Splash Screen
-- **Core Branding:** Centralized WattWise electricity bolt logo with the signature circular green glow on a true dark background.
-- **Visuals:** Minimalist and high-impact to establish the energy-saving aesthetic immediately.
-- **Function:** Initial load and brand establishment.
-
-#### Welcome Screen
-- **Value Proposition:** "Smart Energy. Real Savings."
-- **Branding:** Unified logo and glow matching the Splash screen for visual continuity.
-- **Actions:** Dual high-contrast buttons — *Login* (Solid Neon Mint fill) and *Register* (Outlined variant).
-- **Footnote:** "Optimized for sustainable living."
-
-#### Login Screen
-- **Branding:** Consistent glow-logo at the top.
-- **Inputs:** Email and Password fields with internal iconography and "Forgot Password?" link.
-- **Action:** Primary tactile "Login" button with the signature neon mint glow.
-- **Navigation:** "Register" link for new users.
-
-#### Registration Screen
-- **Branding:** Consistent glow-logo at the top.
-- **Inputs:**
-  - *Home Name:* (e.g., "Santos Residence") to personalize the multi-device hub.
-  - *Email Address:* Primary account identifier.
-  - *Password:* Secure entry with visibility toggle.
-- **Action:** Primary "Sign Up" button.
-- **Navigation:** "Log In" link for existing users.
+### Landing page
+`app/onboarding/page.tsx` is full width. The 3D unit lives in `components/landing/device/`: `WattWiseStage` loads `WattWiseCanvas` (three.js + React Three Fiber) client-side only and falls back to the SVG `DevicePoster` when WebGL, JavaScript, or motion is unavailable. `components/landing/Reveal.tsx` reveals sections on scroll; `components/landing/SmoothScroll.tsx` enables Lenis wheel smoothing on this page only (skipped for reduced motion). Keep three.js and Lenis out of app routes.
 
 ---
 
-### 2. Multi-Device Command Center
+## Architecture and Key Patterns
 
-#### Home Dashboard (The Fleet View)
-- **Unified Branding:** "WattWise" header with the electricity icon.
-- **Household Pulse:**
-  - *Total Live Wattage:* Real-time aggregate power draw across all devices.
-  - *Total Daily Cost (₱):* Live financial conversion using Meralco unbundled rates.
-- **Device Grid:**
-  - *Active Device Cards:* Solid surface cards for units like "Aircon" or "Fridge."
-  - *Live Metrology:* Shows individual wattage per card.
-- **Expansion:** "Add Appliance" tile (dashed border) with a large "+" icon.
-- **Mascot Tip:** Sticky AI tip banner (e.g., "Overall usage is 10% lower today. Bida!").
+Short versions of the rules in `AGENTS.md`; read it before changing billing, telemetry, auth, or notifications.
 
-#### Device Detail (The Hardware Inspector)
-- **Focus Mode:** No bottom navigation to keep the user focused on the specific hardware unit.
-- **Metrology Gauges:** Three "Liquid Glass" circular progress rings for Power (W), Voltage (V), and Current (A).
-- **Device Wallet:**
-  - *Monthly Budget:* Interactive slider to set a PHP limit.
-  - *Burn Rate:* Progress bar visualizing consumption against the budget.
-- **Diagnostics:** Wi-Fi RSSI and Board Temp readings at the bottom.
+### Meralco billing
+- Never use a flat multiplier like `kWh * 10`. Compute cost with `computeMeralcoBill` / `computeVariableRatePerKwh` from `lib/meralco-bill.ts` using the active `meralco_rates` row, read through `lib/meralco-rates-server.ts`.
+- The SQL twin `public.meralco_variable_rate_per_kwh` (budget trigger) must change together with `lib/meralco-bill.ts` and `tests/meralco-bill.test.ts`.
+- No hardcoded fallback rates. Never round money per reading; round only for display.
 
----
+### Auth and data access
+- Pages and route handlers get the user from `getSessionUser()` (`lib/auth-context.ts`). The middleware verifies the session once and forwards identity in `x-wattwise-*` headers. Do not call `supabase.auth.getUser()` in pages or handlers, and never set or read those headers elsewhere.
+- Roles (`lib/roles.ts`): `user`, `tenant`, `manager`, `super_admin`. In the middleware, non-admins on `/admin` go to `/login?error=unauthorized` and non-managers on `/manager` go to their role's home (`getHomePathForRole`); `app/admin/layout.tsx` checks the role again.
+- The root layout must not read cookies or headers (that would make every public page dynamic). `SupabaseProvider` reads the session in the browser.
+- Never query `energy_logs` without a limit or bounded time range (about 17,000 rows per unit per day). Use the RPCs `get_latest_device_readings`, `get_usage_kwh_by_device[_day]`, `get_average_watts_by_device`.
+- Start independent queries together (`startQuery` in `lib/start-query.ts`, `Promise.all`) and put secondary server components under `<Suspense>`.
+- Keep RLS on large tables cheap (see migration `033`). `SUPABASE_SECRET_KEY` and `OPENAI_API_KEY` are server-only.
 
-### 3. The Strategy Center
+### Live telemetry and Smart Control
+- A device is live when its latest reading or `devices.last_seen_at` is within `ACTIVE_READING_WINDOW_MS` (20 s, `lib/device-telemetry.ts`). Do not use `devices.is_online`. Stale readings render offline or idle.
+- The dashboard patches W/V/A from `energy_logs` INSERTs and reacts to `devices` UPDATEs only when `relay_state` or `budget_status` changes. Never call `router.refresh()` per reading.
+- Relay changes are commands the unit picks up on its next 5 s poll: confirm before turning a device off and word the result as "sent".
 
-#### Insights Dashboard (The Analytics Hub)
-- **Device Performance Leaderboard:** Ranked list from "Expensive" to "Efficient."
-- **Coaching Feed (Bento Layout):**
-  - *Naku! Alert (Orange/Red):* High-priority cards for spikes (e.g., "Critical Spike!").
-  - *Bida Recap (Green):* Positive reinforcement for staying under budget.
-  - *Strategy Tip:* Actionable advice (e.g., "Shift laundry to off-peak hours").
-- **Trend Comparison:** Interactive weekly bar charts comparing "This Wk" vs. "Last Wk."
-- **Financial Forecast:** Bold readout showing predicted bill and projected savings percentage.
+### OpenAI
+- Server-side only. Insights go through `app/api/insights/route.ts` and reuse a recent cached `ai_insights` row before generating. Tone: casual, practical Taglish grounded in the user's real numbers (Bida recaps, Naku alerts).
+
+### Reports
+- Built once in `lib/reports.ts` (`buildEnergyReport`); `/reports` renders it and `/api/reports` serves the same rows as JSON, CSV, or PDF.
 
 ---
 
-### 4. Navigation Architecture
-- **Standardized 2-Tab Navbar:** Persistent navigation on Home and Insights screens:
-  - *Home Tab:* Fleet View & Device Grid.
-  - *Insights Tab:* Analytics, Mascot Feed, and Leaderboards.
-- **Visual State:** Active tab is highlighted with a green glow indicator.
+## Environment Variables
+
+Stored in `.env.local` (not committed). Restart `npm run dev` after changing them.
+
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `OPENAI_API_KEY` (server-only)
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` (server-only): admin console, tenant creation, account deletion, the cross-request rate cache
+- `NEXT_PUBLIC_ONESIGNAL_APP_ID`: web push; push is skipped without it
+
+Document any new variable when you add one.
 
 ---
 
-### App Directory (Next.js App Router)
-- **`app/layout.tsx`** — Root layout; wraps all pages with global providers (Supabase client, theme, etc.)
-- **`app/page.tsx`** — Homepage (`/` route); start editing here for UI changes
-- **`app/globals.css`** — Global styles (imported in layout); Tailwind directives go here
-- **New pages/routes:** Create folders/files in `app/` following Next.js conventions:
-  - `app/dashboard/page.tsx` → `/dashboard` route
-  - `app/api/route.ts` → `/api` endpoint
-  - `app/(auth)/login/page.tsx` → `/login` route with optional layout grouping
+## Common Pitfalls
 
-### Code Organization
-- **Components:** Place reusable React components in a `components/` directory (create if needed)
-- **Utilities:** Helper functions, constants, and services in `lib/` or `utils/` directories
-- **API Routes:** Backend logic in `app/api/route.ts` files (Next.js server functions)
-- **Styling:** Use Tailwind CSS classes directly in JSX; avoid inline styles unless necessary
-
-### Naming Conventions
-- **Page components:** `PascalCase` (e.g., `Dashboard.tsx`)
-- **Utility files:** `camelCase` (e.g., `authService.ts`, `formatDate.ts`)
-- **Component files:** `PascalCase` (e.g., `Button.tsx`, `DataTable.tsx`)
-- **CSS files:** `kebab-case` if custom; prefer Tailwind classes in JSX
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| A colour looks wrong in light mode | Hard-coded `white`/hex instead of a token | Use `fg`, `accent`, `shade`, `surface`, ... |
+| `text-base` stops setting 16px | A colour token named after a size keyword | Rename the token |
+| A transition does nothing | Transitioning `transform` in Tailwind 4 | Name `translate`/`scale`/`opacity` |
+| A modal inside an animated card is mispositioned | An animation left a transform behind | Use `backwards` fill, as `ww-enter`/`ww-stagger` do |
+| Public pages became dynamic | Root layout read cookies or headers | Read the session in the browser via `SupabaseProvider` |
+| Dashboard re-renders constantly | `router.refresh()` or state updates on every reading | Patch values; react only to `relay_state`/`budget_status` changes |
+| Device shows online when it is not | Used `devices.is_online` | Use `isFreshReading` / `ACTIVE_READING_WINDOW_MS` |
+| Slow or timed-out query | Unbounded `energy_logs` read | Use the bounded RPCs |
+| Schema change missing in production | Deploys do not run migrations | `supabase db push --linked` |
+| `npm test` fails to parse TypeScript | Node older than 22.6 | Upgrade Node |
 
 ---
 
-## Architecture & Key Patterns
+## Agent Guidelines
 
-### React Compiler Mode
-- **Enabled in `next.config.ts`** — Automatically optimizes component re-renders
-- **Benefit:** Reduces need for manual `useMemo`/`useCallback` optimization
-- **Best Practice:** Write components naturally; the compiler handles memoization
+1. Read the route, component, helper, and migration you are changing first. Reuse existing helpers (`lib/format.ts`, `lib/device-telemetry.ts`, `lib/openai.ts`, `lib/postgrest.ts`) instead of redefining them.
+2. Keep the existing patterns for billing, telemetry, caching, and auth; do not add parallel ones.
+3. Write components naturally; the React Compiler handles memoization, so skip defensive `useMemo`/`useCallback`.
+4. Type all props; avoid `any`; import with `@/`.
+5. Keep route `loading.tsx` screens when adding slow server pages.
+6. No emojis in UI text or logs.
+7. Run `npm run lint` and `npm run build` (and `npm test` for logic changes) before handing off substantial work.
 
-### Supabase Integration
-- Client initializes in `layout.tsx` or a dedicated auth provider
-- Use Supabase client for:
-  - Real-time subscriptions (`on('*')` listeners)
-  - Query data with `.from('table').select()` syntax
-  - Handle authentication via `auth.signInWithPassword()`, etc.
-- **Security:** Never expose `SUPABASE_SECRET_KEY` in client code; server-only use in API routes
+## Documentation Sync
 
-### Data Visualization
-- Use **Recharts** for charts; components are lightweight and responsive
-- Common patterns: `LineChart`, `BarChart`, `PieChart` with responsive container
+After meaningful implementation work, update `.github/instructions/`:
 
-### PWA & Service Workers (via Serwist)
-- Configured in `next.config.ts`; provides offline caching and background sync
-- Impact on development: Service Workers cache assets aggressively; hard-refresh in dev if needed
+- `phases-and-roadmap-plan.instructions.md`: tick completed items and update the progress summary
+- `ai-workflow.instructions.md`: new patterns or guardrails
+- `supabase-schema-context.instructions.md`: table, column, index, RPC, or query-pattern changes
+- `smart-control-architecture-blueprint.instructions.md`: telemetry, budget, relay, and Smart Control surfaces
 
-### Resource Optimization (Supabase Free Tier)
-- **Database Throttling:** Prioritize logic that aggregates hardware data. Avoid frequent, high-volume inserts; prefer batched updates or averaged data points (e.g., 1-minute intervals).
-- **Query Efficiency:** Always include `limit()` on fetch requests to prevent over-fetching.
-- **Edge Function Usage:** Use Edge Functions for heavy Meralco calculations to keep the database size lean (storing only final results, not raw calculation steps).
+Also keep `README.md`, `TESTING.md`, `NOTIFICATION_SETUP.md`, and `docs/` (for example `docs/light-mode-plan.md`) current when the work touches them.
 
----
-
-## Development Practices
-
-### TypeScript Standards
-- **Strict Mode:** All files must pass TypeScript strict checks
-- **Type Safety:** Avoid `any` types; use proper interfaces/generics
-- **Imports:** Use path aliases (`import { ... } from '@/components/...'`)
-
-### Linting & Code Quality
-- Run **ESLint** before committing: `npm run lint`
-- Fix auto-fixable issues: `npm run lint -- --fix`
-- Linter checks: Next.js web vitals, TypeScript safety, best practices
-
-### Git Workflow
-- Feature branches: `feature/feature-name`
-- Development branch: `dev` (main integration branch)
-- Production branch: `main` (stable releases)
-- Commit messages: Descriptive, present tense (e.g., "Add user authentication flow")
-
-### Environment Variables
-- Store in `.env.local` (not committed to git)
-- Required variables:
-  - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Public API key
-  - Additional keys as project grows (API endpoints, feature flags, etc.)
-- **Note:** `NEXT_PUBLIC_*` prefix makes variables available to browser; other vars server-only
-
----
-
-## Common Pitfalls & Solutions
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Page doesn't update after env var change | `.env.local` requires dev server restart | Stop `npm run dev`, then restart |
-| Service Worker caching old assets | Serwist aggressive caching in production | Hard-refresh (Cmd+Shift+R) to clear cache |
-| TypeScript build fails unexpectedly | Strict mode catches unused/untyped code | Run `npm run build` locally before push |
-| Form state not reactive | Missing `useState` or dependency array | Use proper React hooks; check dependency arrays |
-| Supabase queries fail silently | Missing error handling or auth token expired | Add `.catch()` handlers; check console logs |
-| Slow initial page load | Over-fetching data or missing route caching | Use Next.js `revalidate` for static generation (`next/cache`) |
-
----
-
-## Debugging & Troubleshooting
-
-### Dev Server Issues
-- **Clear cache:** `rm -rf .next && npm run dev`
-- **Hot reload not working:** Ensure file is in watched directory (`app/`, `components/`, etc.)
-- **Port conflict (3000 in use):** Change port with `npm run dev -- -p 3001`
-
-### TypeScript Errors at Build
-- Run `npm run build` to catch all issues before push
-- Check for implicit `any` types or missing type definitions
-
-### Supabase Connection Issues
-- Verify `.env.local` has correct `SUPABASE_URL` and `ANON_KEY`
-- Check Supabase dashboard for active sessions and rate limits
-- Use browser DevTools Network tab to debug API calls
-
----
-
-## AI Agent Guidelines
-
-When working on this codebase:
-
-1. **Start with `npm run dev`** to see live changes
-2. **Always run `npm run lint`** and **`npm run build`** before marking work complete
-3. **Prefer component-driven development:** Extract reusable components early
-4. **Use Tailwind CSS utilities** exclusively; avoid custom CSS unless necessary
-5. **Type all React props** with TypeScript; use generics for reusable patterns
-6. **Handle async/await properly:** Wrap Supabase calls in error boundaries or try-catch
-7. **Respect the React Compiler:** Avoid patterns that defeat static analysis (e.g., inline function definitions in props where possible)
-8. **Document complex logic:** Add comments for non-obvious Supabase queries or algorithms
-9. **Keep env vars organized:** Document all required env vars in a `.env.example` file as project grows
-10. **Optimize for Free Tier:** Every database interaction must be "lean." Avoid creating large audit logs or redundant history rows that consume the 500MB storage limit.
-11. **Aggressive Caching:** Use SWR or TanStack Query patterns to cache energy data in the browser, reducing the number of direct API calls to Supabase.
-12. **Meralco Logic Location:** Ensure all Philippine-specific billing logic (VAT, System Loss, etc.) is modularized so it can be easily moved to a Supabase Edge Function to maintain a single source of truth.
-13. **Professional Aesthetic (No Unnecessary Emojis):** Do not use emojis in console logs, terminal output, or UI elements (buttons, labels, headers) unless specifically requested for a "Status Icon" (e.g., a green circle for 'Live'). Keep the interface and logs professional and text-based.
-14. **Environment Parity:** If suggesting a port change for development (to avoid conflicts with `wattwise_web`), default to `3001` for the platform while keeping `3000` for the hardware local bridge if necessary.
-
----
-
-## Automatic Documentation Sync (Mandatory)
-
-**After every implementation task** (new feature, bug fix, refactor, or file creation), you **must** update the following instruction files in `.github/instructions/` to reflect the current state of the codebase:
-
-### 1. `phases-and-roadmap-plan.instructions.md`
-- **Check off completed items:** Change `- [ ]` to `- [x]` for any task that was just implemented.
-- **Update the Progress Summary table** at the top with the new completion percentage and notes.
-- **Add partial-completion annotations** (e.g., `*(UI complete — no backend logic yet)*`) when a task is only partially done.
-- **Never uncheck a previously completed item** unless the feature was reverted.
-
-### 2. `ai-workflow.instructions.md`
-- If the implementation introduces a **new pattern** (e.g., a new Supabase query pattern, a new API route convention, a new component structure), add it to the relevant section.
-- If a **constraint was violated** during implementation and corrected, add a note to the "Quick Reference — What NOT to Do" table.
-
-### 3. `supabase-schema-context.instructions.md`
-- If the implementation **adds or modifies a database table, column, index, or RPC function**, update the schema documentation to match.
-- If a **new common query pattern** was introduced, add it to the "Common Query Patterns" section.
-
-### When to Skip
-- Do **not** update instruction files for trivial changes (e.g., fixing a typo, adjusting padding, renaming a CSS class) that don't affect roadmap progress or architectural patterns.
-
-### How to Update
-- Read the current file contents before editing to avoid overwriting recent changes.
-- Keep edits minimal and surgical — only change what's necessary to reflect the new state.
-
----
-
-## Useful Resources
-
-- [Next.js 16 Docs](https://nextjs.org/docs)
-- [React 19 Docs](https://react.dev)
-- [Tailwind CSS 4 Docs](https://tailwindcss.com)
-- [Supabase Docs](https://supabase.io/docs)
-- [Recharts Docs](https://recharts.org)
-- [Lucide Icons](https://lucide.dev)
-
----
-
-**Last Updated:** March 19, 2026  
-**Maintained By:** Wattwise Dev Team
+Skip it for trivial edits (typos, spacing). Read each file before editing and change only what is needed. If a convention changes, update `AGENTS.md` and this file too.

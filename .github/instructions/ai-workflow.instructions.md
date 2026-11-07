@@ -53,19 +53,21 @@ The SQL budget trigger uses the same formula through `public.meralco_variable_ra
 **Required pattern — always scope queries:**
 
 ```ts
-// CORRECT — time-range filter with a limit guard
+// CORRECT — time-range filter with a limit guard (energy_logs is timed by recorded_at)
 const { data } = await supabase
   .from('energy_logs')
-  .select('*')
-  .gte('created_at', startOfDay.toISOString())
-  .lte('created_at', endOfDay.toISOString())
-  .order('created_at', { ascending: false })
+  .select('device_id,average_watts,voltage_v,current_a,recorded_at')
+  .eq('device_id', deviceId)
+  .gte('recorded_at', startOfDay.toISOString())
+  .lte('recorded_at', endOfDay.toISOString())
+  .order('recorded_at', { ascending: false })
   .limit(100);
 
-// CORRECT — aggregated query using date_trunc (prefer this for charts)
-const { data } = await supabase.rpc('get_hourly_averages', {
+// CORRECT — server-side aggregation (prefer this for totals and charts)
+const { data } = await supabase.rpc('get_usage_kwh_by_device', {
   p_user_id: userId,
-  p_date: targetDate,
+  p_start: startOfDay.toISOString(),
+  p_end: now.toISOString(),
 });
 
 // WRONG — never do this
@@ -93,7 +95,7 @@ const { data } = await supabase.rpc('get_hourly_averages', {
 - A duplicate MAC owned by the same user may resume setup only when `devices.profiled_at` is still null. A completed device must continue to reject duplicate registration.
 - The Smart Appliance profiler route is `POST /api/devices/[deviceId]/ai-profile`. It must run server-side only, verify device ownership, and send OpenAI the exact persona: "Act as an expert energy consultant in the Philippines. You speak in a casual, practical Taglish tone."
 - Appliance profiling prompts must include `appliance_type`, fresh baseline watts, and `estimated_daily_hours`, and must force raw JSON output with exactly `estimated_monthly_kwh`, `suggested_monthly_limit_php`, and `taglish_advice`.
-- When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
+- When live Meralco prompt context is unavailable, the profiler may fall back to PHP 12/kWh for AI copy only. The suggested limit is always `estimated_monthly_kwh` × a fixed PHP 12/kWh safety factor; it is a starting limit the user approves, not a bill. Billing-grade cost logic must still come from the DB-backed unbundled Meralco computation path.
 - Per-device shutoff compares current billing-cycle variable Meralco spend against `devices.user_approved_limit_php`. The cycle boundary comes from `profiles.billing_cycle_start_day` in Asia/Manila. Fixed monthly charges are home-level billing context and must not be assigned to one appliance for cutoff decisions.
 - For tenant-assigned devices, `devices.user_approved_limit_php` is the manager hard limit. Tenant UI and APIs must hide or reject edits to hard limits, relay controls, pairing, billing-cycle settings, and account deletion.
 - Budget automation runs in PostgreSQL via the `energy_logs` INSERT trigger from `012_smart_budget_controls.sql`; do not duplicate cutoff decisions in client code.
@@ -165,9 +167,10 @@ Client requests insight
         ▼
 Next.js API Route (app/api/insights/route.ts)
         │
-        ├─► Query ai_insights WHERE user_id = ? AND insight_type = ? AND created_at > week_start
+        ├─► Query ai_insights WHERE user_id = ? AND insight_type = ? AND created_at >= now() - cache window
+        │     (CACHE_WINDOW_DAYS: 1 day budget_alert/anomaly_alert, 7 days weekly_recap/cost_optimizer)
         │
-        ├─[Row found]──► Return cached message string → Done
+        ├─[Row found and its billing-cycle metadata matches]──► Return cached payload → Done
         │
         └─[No row]
               │
@@ -188,11 +191,13 @@ Next.js API Route (app/api/insights/route.ts)
 
 ```sql
 CREATE TABLE ai_insights (
-  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id       UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  insight_type  VARCHAR(50) NOT NULL, -- 'budget_alert' or 'weekly_recap'
-  message       TEXT NOT NULL,
-  created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id           UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  insight_type      VARCHAR(50) NOT NULL, -- any type in 3b
+  message           TEXT NOT NULL,        -- structured JSON payload for contextual cards
+  prompt_tokens     INTEGER NOT NULL DEFAULT 0,
+  completion_tokens INTEGER NOT NULL DEFAULT 0,
+  created_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Index for fast cache-hit lookups
@@ -229,14 +234,23 @@ User-side forms must show helpful inline validation before submit and friendly r
 - Normalize auth email input before Supabase calls, and map Supabase/Auth/API failures to user-facing guidance. Do not display raw database or provider error strings in user forms.
 - User form helpers live in `lib/user-form-messages.ts`; dashboard-specific forms may keep local validators when the rules are tightly scoped.
 
+### 5a. Form submit states
+
+- Full-width form submits use `components/ui/SubmitButton.tsx` with a `SubmitStatus` of `"idle" | "loading" | "success"` and three labels (`idleLabel`, `loadingLabel`, `successLabel`). The labels share one grid cell and crossfade, so the button never changes size; a polite `role="status"` region announces the processing and done states. Do not hand-roll a spinner-in-button for these forms.
+- Flow: validate first (field errors, no status change) → `setStatus("loading")` → on failure, set a friendly message and return to `"idle"` → on success, `"success"`. When success navigates away, leave the button in `"success"` (it stays disabled) so a second tap cannot resubmit mid-navigation.
+- Leave the `disabled` prop unset so the button stays tappable and validation can explain what is missing. `UpdatePasswordForm` currently passes `disabled` until both password fields are filled; do not copy that.
+- Show the submit-level error with `components/ui/FormAlert.tsx` (`message={string | null}`), placed above the form. It renders nothing for `null`, has `role="alert"`, and eases in. Field-level messages stay inline under each field.
+- Used today in login, register, forgot-password, and `UpdatePasswordForm` (reset and update password).
+
 ---
 
 ## 6. Loading & Mutation Feedback Pattern
 
 When implementing route or mutation feedback in the app shell and interactive controls, use the shared loading primitives and consistent pending/error behavior.
 
-- Reuse `components/ui/LoadingIndicator.tsx` for all inline spinners (buttons, compact control states, and app-level route indicators).
-- For slow server-rendered routes, add per-route `loading.tsx` files and compose skeleton layout blocks with `LoadingSkeleton` / `LoadingSkeletonText` to match page structure.
+- Reuse `components/ui/LoadingIndicator.tsx` for inline spinners in compact controls (relay toggles, budget saves, panels). Full-width form submits use `SubmitButton` (5a).
+- Route loading is shown once, app-wide, by `components/ui/RouteTransitionIndicator.tsx` (a thin top progress bar mounted in `app/layout.tsx`). Do not add per-page navigation spinners.
+- For slow server-rendered routes, add per-route `loading.tsx` files and compose skeleton layout blocks with `LoadingSkeleton` / `LoadingSkeletonText` to match page structure. Start them with `PageTitleSkeleton` (from `components/ui/PageHeader.tsx`) so the desktop title block has a placeholder; it renders nothing on phones.
 - For API mutations (for example relay toggles and home budget saves), always disable actionable controls while the request is in-flight.
 - For mutation failures, surface a visible toast-style error near the bottom safe area and auto-dismiss it after a short interval.
 - Keep feedback local to the control context: inline spinner for pending state, toast for recoverable errors, and preserve optimistic UI rollback when the mutation fails.
@@ -283,17 +297,54 @@ When implementing route or mutation feedback in the app shell and interactive co
 - When calendar-month spend differs from the current billing-cycle accumulator, show both windows explicitly. Calendar-month answers must use the same bounded daily usage plus active Meralco-rate calculation as Calendar Analytics; device-limit progress remains billing-cycle-only.
 - Rich assistant output is an allowlisted `display_data` payload. The current MVP supports only `device_list`, with at most eight server-resolved devices; never render arbitrary model HTML or model-supplied database identifiers.
 
+## 11. UI Shell, Theme, and Motion
+
+The base rules (tokens, card and grid classes, `pt-[84px] lg:pt-0`, motion naming) are in `AGENTS.md` under "UI and design system". This section covers what agents most often get wrong.
+
+### 11a. Desktop layout (Tailwind `lg`, 1024px+)
+
+- Never add a page-level frame. `components/ui/AppFrame.tsx` (root layout) picks it by path: `APP_SHELL_PREFIXES` get `AppSidebar` plus the rounded `DESKTOP_PANEL`; `/login`, `/register`, and `/forgot-password` get the `AuthBrandPanel` split; `/admin`, `/manager`, `/onboarding`, and `/pitch-deck` lay themselves out; everything else (including `/reset-password` and `/update-password`) stays in the 430px phone column.
+- A new customer route needs its prefix in `APP_SHELL_PREFIXES` and an entry in `APP_TABS` or `APP_DESKTOP_SECTIONS` (`components/ui/app-nav.ts`). Settings is not listed in the sections; the sidebar adds it at the bottom. Active items come from `getActiveHref` (longest match wins).
+- The manager portal reuses `AppSidebar` with `MANAGER_DESKTOP_SECTIONS` and `DESKTOP_PANEL` inside `ManagerShell`; admin keeps its own `AdminSidebar`.
+- `PageHeader` is the only page header. On desktop it drops the back button, icon, eyebrow, and logout (the sidebar covers them) and shows `description` and `desktopTitle`. Sub-pages that need a way back on desktop add a breadcrumb, as Device Detail does.
+- Fixed elements that should centre on the panel (toasts) use `lg:left-[calc(50%+var(--app-sidebar,0px)/2)]`; `AppFrame` sets `--app-sidebar`.
+- The phone bottom bar (`BottomNav`) is `lg:hidden`; do not render desktop-only navigation inside pages.
+
+### 11b. Theme tokens
+
+- Light mode is tokens only: `[data-theme="light"]` redefines `fg`, `accent`, `shade`, `sidebar`, `canvas`, `surface`, and darker `bida`/`naku`/`danger` in `app/globals.css`. Never add per-class overrides such as `[data-theme="light"] .text-white\/60`; they were deleted.
+- `dark:` follows `data-theme` on `<html>` (custom variant), not the OS setting. There is no "System" option yet.
+- Charts read `var(--chart-axis)`, `var(--chart-grid)`, `var(--chart-track)`, `var(--chart-muted-bar)`, and `var(--color-mint)` rather than literal colours.
+- The saved theme (`localStorage` key `wattwise-theme`) is applied before paint by `THEME_BOOT_SCRIPT` in `app/layout.tsx`; change it only through `ThemeProvider` (`setTheme` / `toggleTheme`). Pages, including the splash, must not force `data-theme`.
+- The owl is `BrandMark` (CSS mask, painted in the current text colour). Size it with `h-*`/`w-*` and colour it with `text-*`; do not swap in a robot or generic bot icon for the assistant or manager AI.
+- Remaining light-mode work (System option, card shadow, QA of manager, admin, and signed-out pages) is tracked in `docs/light-mode-plan.md`.
+
+### 11c. Motion
+
+- Every new keyframe or entrance needs a `prefers-reduced-motion` fallback (see the `ww-fade` swaps in `app/globals.css`). Under reduced motion all transitions under `html[data-theme]` are already turned off.
+- Use `starting:` for mount entrances (for example budget bars: `origin-left starting:scale-x-0` with `transition-[width,scale]`). Keep `ww-stagger` on page bodies and `lg:ww-enter` on title blocks; both are `backwards`-filled, so do not change them to `both`/`forwards` (a lingering transform traps fixed children).
+- `ww-splash-*` belongs to the `/` splash and `ww-rise` to decorative brand content (sign-in panel). Do not reuse them for app content.
+
+### 11d. Landing page (`/onboarding`)
+
+- three and @react-three/fiber are imported only inside `components/landing/device/`, and `WattWiseCanvas` loads through `next/dynamic` with `ssr: false`. Keep it that way so the 3D code never reaches app routes.
+- `WattWiseStage` must keep its fallbacks: the `DevicePoster` SVG shows until the first 3D frame and stays when WebGL is missing, the canvas throws, or the context is lost; rendering pauses while offscreen; reduced motion is passed to the canvas.
+- Lenis (`components/landing/SmoothScroll.tsx`) is landing-only and skipped under reduced motion; do not mount it in the app shell. `Reveal` handles the scroll reveals.
+
 ---
 
 ## Quick Reference — What NOT to Do
 
 | Situation | Forbidden | Required instead |
 |---|---|---|
-| Computing energy cost | `kWh * 10` | Unbundled rates + 12% VAT |
-| Fetching energy data | `.from('energy_logs').select('*')` | Add `.limit(100)` or date filter |
+| Computing energy cost | `kWh * 10`, or one VAT rate on everything | `computeMeralcoBill` from `lib/meralco-bill.ts` with the active `meralco_rates` row (per-component VAT, household tiers) |
+| Fetching energy data | `.from('energy_logs').select('*')` | Bounded RPCs, or a `recorded_at` range plus `.limit(100)` |
 | Generating AI insights | Call OpenAI from client on page load | Check `ai_insights` cache first via API route |
 | OpenAI API key | `NEXT_PUBLIC_OPENAI_API_KEY` | `OPENAI_API_KEY` (server-only) |
 | Editing home budget | Unconfirmed or tenant-side writes | Home wallet editor, or a homeowner-confirmed assistant proposal that updates only their profile |
-| User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages plus friendly submit-level guidance |
+| User form errors | Raw provider/DB messages, alerts, or disabled empty-submit buttons | Inline field messages, `FormAlert` for the submit-level message, `SubmitButton` for state |
 | API mutation feedback | Keep controls active and silent on errors | Disable pending controls, show inline `LoadingIndicator`, and display auto-dismiss error toast |
 | Appliance shutoff | Client-side cutoff math | PostgreSQL trigger updates `devices.relay_state` from `device_month_usage` |
+| Colours | `text-white`, `bg-white/5`, new hex values, `[data-theme="light"]` class overrides | `fg`/`accent`/`shade` tokens (`text-fg/60`, `bg-fg/[0.04]`, `text-accent`) |
+| Desktop layout | A page-level sidebar or frame, or a desktop back button | `AppFrame` + `app-nav.ts` entries, `PageHeader` `description`, breadcrumb for sub-pages |
+| 3D / smooth scroll | Importing three or Lenis outside `components/landing/` | Keep them in `components/landing/` on `/onboarding`; the 3D canvas loads with `next/dynamic` (`ssr: false`) |

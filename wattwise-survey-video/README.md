@@ -2,7 +2,7 @@
 
 156 seconds · 1600 × 900 · 30 fps. English narration with Taglish examples.
 
-This is a neutral orientation for end-user research, not evidence of usability, accuracy, or savings. Interface illustrations are enlarged reconstructions of existing routes; all numbers and AI copy are illustrative. The hardware drawing is conceptual, not a final enclosure or wiring guide. No production accounts or private telemetry are used.
+This is a neutral orientation for end-user research, not evidence of usability, accuracy, or savings. Interface illustrations are enlarged reconstructions of existing routes; all numbers and AI copy are illustrative. The hardware drawing is conceptual, not a final enclosure or wiring guide. No production accounts or private telemetry are used. The illustrations show the app as of October 2026, before the November 2026 desktop layout, landing page, and light mode.
 
 ## Preview and export
 

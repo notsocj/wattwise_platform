@@ -5,7 +5,7 @@ applyTo: "**"
 
 # WattWise Platform — Implementation Roadmap
 
-> **Last Updated:** November 4, 2026
+> **Last Updated:** November 7, 2026
 > **Architecture:** Next.js 16.1.7 (React 19) + Supabase + ESP32-S3 + OpenAI
 > **Billing source:** active `meralco_rates` row, with household distribution tiers and per-component VAT; no fixed runtime rate.
 
@@ -17,11 +17,11 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
 
 | Phase | Status | Completion | Notes |
 |---|---|---|---|
-| 1 — Foundation | In Progress | ~82% | Auth, middleware, design system, bounded telemetry RPCs, and Realtime are implemented. Dashboard cards patch W/V/A directly and refresh only on relay/budget changes; device detail uses a throttled refresh bridge. Migrations through `039` define the current schema. Hardware firmware samples every 2 s and schedules uploads and relay reads every 5 s; online freshness is 20 s. Physical acceptance remains unrecorded. |
-| 2 — Billing & Control | In Progress | ~92% | Device Detail UI + Home Wallet + Meralco billing implemented; usage is aggregated via bounded RPCs; Smart Control now standardizes 50/80/100 in-app alerts, opt-in per-device automatic cutoff, variable-spend-only control progress, cutoff-safe relay guards, and explicitly confirmed manual power restoration; `billing_cycle_start_day` drives wallet, analytics, alerts, and cutoff windows |
-| 3 — AI & PWA | In Progress | ~88% | AI insights API route and customer AI assistant MVP are implemented; the assistant provides account-scoped Taglish guidance and explicit-confirmation setting proposals. OneSignal web-push and Resend critical-email delivery are implemented for 80%/100% budget events; Serwist offline caching is still pending |
-| 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill existing gaps (migration `039`). Explicit Start resets the run timer so units can restart after the four-hour auto-pause. |
-| 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes; managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
+| 1 — Foundation | In Progress | ~82% | Auth, middleware, design system, bounded telemetry RPCs, and Realtime are implemented. Dashboard cards patch W/V/A directly and refresh only on relay/budget changes; device detail uses a throttled refresh bridge. Migrations through `039` define the current schema. Desktop layout (sidebar + panel at `lg`), token-based light mode, and motion tokens shipped 2026-11-07 (UI only). Hardware firmware samples every 2 s and schedules uploads and relay reads every 5 s; online freshness is 20 s. Physical acceptance remains unrecorded. |
+| 2 — Billing & Control | In Progress | ~92% | Device Detail UI + Home Wallet + Meralco billing implemented; usage is aggregated via bounded RPCs; Smart Control now standardizes 50/80/100 in-app alerts, opt-in per-device automatic cutoff, variable-spend-only control progress, cutoff-safe relay guards, and explicitly confirmed manual power restoration; `billing_cycle_start_day` drives wallet, analytics, alerts, and cutoff windows. The device diagnostics footer (RSSI, board temperature) is not built. |
+| 3 — AI & PWA | In Progress | ~88% | AI insights API route and customer AI assistant MVP are implemented; the assistant provides account-scoped Taglish guidance and explicit-confirmation setting proposals. OneSignal web-push and Resend critical-email delivery are implemented for 80%/100% budget events; Serwist offline caching, the service worker, and an install prompt are still pending |
+| 4 — Super Admin | In Progress | ~65% | Admin layout, guards, users/devices/audit pages, and demo-unit controls implemented; demo units stream every 10 s through pg_cron and backfill existing gaps (migration `039`). Explicit Start resets the run timer so units can restart after the four-hour auto-pause. Rates, Growth, AI Costs, Health, and Global Analytics are read-only summary pages (counts and a rate history table); the rate editor, charts, and cost estimates are not built. |
+| 5 — Multi-Tenant | In Progress | ~55% | Additive `owner_id`/`tenant_id` schema and RLS added; public registration can choose home user or property manager; manager portal now has dedicated Fleet, Rooms, Tenants, Calendar, AI, and Settings routes and uses the shared desktop sidebar (`MANAGER_DESKTOP_SECTIONS`); managers can create tenants, pair hardware, assign rooms, set hard limits, override relays, and consult scoped manager AI; tenant dashboard/settings/analytics use assigned devices and hide owner controls |
 
 ---
 
@@ -39,10 +39,11 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
 
 - [x] **Authentication Flow**
   - [x] Implement Supabase Auth provider wrapper in `app/layout.tsx` *(`SupabaseProvider` reads the browser session; the root layout does not read cookies or headers. Server pages use middleware-verified identity through `getSessionUser()`.)*
-  - [x] Add global route-transition loading indicator in root layout using reusable `LoadingIndicator` *(implemented via `components/ui/RouteTransitionIndicator.tsx` + `app/layout.tsx` wiring)*
-  - [x] Build Registration page (`app/register/page.tsx`) — fields: Home Name, Email, Password *(UI complete + Supabase `signUp` wired)*
+  - [x] Add global route-transition loading indicator in root layout *(`components/ui/RouteTransitionIndicator.tsx`, wired in `app/layout.tsx`; a thin top progress bar since 2026-11-07)*
+  - [x] Build Registration page (`app/register/page.tsx`) — fields: account type (home user or property manager), Full Name, Email, Password *(UI complete + Supabase `signUp` wired)*
   - [x] Build Login page (`app/login/page.tsx`) — fields: Email, Password + "Forgot Password" link *(UI complete + Supabase `signInWithPassword` wired)*
-  - [x] Build Onboarding/Splash page (`app/onboarding/page.tsx`) with WattWise branding and glow logo
+  - [x] Shared auth form states: `SubmitButton` (idle → processing → success) and `FormAlert` in login, register, forgot-password, and `UpdatePasswordForm`; desktop split layout with `AuthBrandPanel` on login, register, and forgot-password
+  - [x] Build Splash (`app/page.tsx`, CSS keyframe intro that prefetches and redirects) and the Onboarding landing page (`app/onboarding/page.tsx`: full-width, 3D WattWise unit, scroll reveals, Lenis smooth scrolling)
   - [x] Implement auth middleware to protect `/dashboard` and other authenticated routes *(`proxy.ts` — uses Next.js 16 `proxy` convention)*
   - [x] Auto-create `profiles` row on sign-up via Supabase trigger or client-side insert *(PostgreSQL trigger `handle_new_user` in migration)*
   - [x] **Password Reset Flow** *(fully functional with Supabase email integration)*
@@ -51,14 +52,17 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
     - [x] Implement `supabase.auth.resetPasswordForEmail()` for sending recovery emails
     - [x] Implement `supabase.auth.updateUser()` for password update with token validation
     - [x] Add error handling for expired/invalid tokens and password validation
-    - [x] Create setup guide at `FORGOT_PASSWORD_SETUP.md` with Supabase configuration instructions
+    - [ ] Setup guide for the Supabase reset-email configuration *(`FORGOT_PASSWORD_SETUP.md` is no longer in the repo; only the manual checks in `TESTING.md` cover this flow)*
 
 - [x] **Design System Setup** *(95% complete)*
   - [x] Load **Space Grotesk** using `next/font/google` in `app/layout.tsx`, self-hosted as variable woff2 and mapped to the shared font token
-  - [x] Configure Tailwind 4 custom tokens: `bg-canvas (#121212)`, `bg-surface (#1E1E1E)`, `text-mint (#00E66F)`, `text-bida (#10B981)`, `text-naku (#F59E0B)`, `text-danger (#EF4444)`
-  - [x] Define `mint-glow` box-shadow utility (20–40px blur, `#00E66F` at 40–60% opacity)
-  - [x] Add light-mode theme tokens + UI toggle (splash remains dark)
-  - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons
+  - [x] Configure Tailwind 4 custom tokens in `app/globals.css`: `canvas (#121212)`, `surface (#1E1E1E)`, `mint (#00E66F)`, `bida (#10B981)`, `naku (#F59E0B)`, `danger (#EF4444)`, plus `fg`, `accent`, `shade`, `sidebar`, and `ink` (dark values shown)
+  - [x] Define `mint-glow` utilities *(`shadow-mint-glow` / `text-mint-glow` still exist but are no-ops: the glow was removed globally)*
+  - [x] Light mode through theme tokens: `fg`, `accent`, `shade`, `sidebar`, and darker `bida`/`naku`/`danger` switch under `[data-theme="light"]`; hard-coded white classes and the 46 per-class light overrides are gone; a boot script in `app/layout.tsx` applies the saved theme before paint; the splash follows the theme; toggle in Settings and the desktop sidebar *(2026-11-07)*
+  - [ ] Light mode follow-ups: a "System" theme option, a light-mode card shadow, and a light-mode QA pass of manager, admin, and signed-out pages *(see `docs/light-mode-plan.md`)*
+  - [x] Desktop layout (Tailwind `lg`, 1024px+): `components/ui/AppFrame.tsx` picks the frame by path; app routes get `AppSidebar` (groups from `APP_DESKTOP_SECTIONS` in `components/ui/app-nav.ts`) and sit on the rounded `DESKTOP_PANEL`; `PageHeader` becomes an in-page title block; shared cards from `components/ui/Card.tsx` *(2026-11-07)*
+  - [x] Motion tokens: `ease-out` / `ease-in-out` / `ease-drawer` easings, `ww-enter` / `ww-stagger` page entrances, budget bars that fill in on load, each with a reduced-motion fallback *(2026-11-07)*
+  - [ ] Set global `border-radius: 8px` (Round Eight) default for cards and buttons *(not adopted: cards use `CARD` with `rounded-2xl`, buttons use `rounded-xl`)*
 
 - [x] **Device Pairing & Registration**
   - [x] Build "Add Appliance" UI flow — user enters device name + MAC address *(four-step registration, type, live telemetry, and budget approval flow; unfinished same-owner MAC setup is resumable)*
@@ -131,8 +135,8 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
   - [x] Follow Meralco's site move (November 2026): the sync reads the new rates archive cards *(`parseArchiveEntries` with a fixture test)*
   - [x] Keep budget spend at full precision instead of rounding each 5-second reading to centavos, and ignore physically impossible kWh jumps *(migration `039`)*
 
-- [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; hardware diagnostics still placeholder-derived)*
-  - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav (focus mode)
+- [x] **Device Detail Screen** *(UI + core Supabase wiring complete; voltage/current now read from `energy_logs` telemetry when available, with compatibility fallback for legacy rows; no hardware diagnostics yet)*
+  - [x] Build Device Detail page (`app/dashboard/[deviceId]/page.tsx`) — no bottom nav on phones (focus mode); on desktop it keeps the sidebar and shows a breadcrumb back to Home
   - [x] Implement three "Liquid Glass" gauge rings: Power (W), Voltage (V), Current (A)
   - [x] Build **Appliance Budget/Burn** section *(view-only budget on Device Detail; editing moved to Home Wallet to keep a single budget control point)*:
     - [x] Home budget editor (PHP) is available on Home Dashboard via icon-triggered card and updates `profiles.monthly_budget_php`
@@ -145,12 +149,12 @@ Completion percentages below are earlier planning estimates, not a fresh accepta
   - [x] Split manager command center into dedicated portal routes for fleet dashboard, rooms, tenants, calendar, AI assistant, and settings
   - [x] Add manager AI assistant and cached manager insight cards scoped to manager-owned rooms
   - [x] Add frontend instant-load pass: verified internal navigation uses `next/link`, added manager route skeleton, and moved manager AI insight-card GET reads to SWR with shared JSON fetcher
-  - [x] Display diagnostics footer: Wi-Fi RSSI and Board Temperature
+  - [ ] Display diagnostics footer: Wi-Fi RSSI and Board Temperature *(not in the page or the schema; blocked on Phase 3 telemetry enrichment)*
 
 - [ ] **Weekly Trend Charts**
   - [x] Create Supabase RPC aggregation functions for accurate weekly/device usage *(implemented as `get_usage_kwh_by_device` and `get_usage_kwh_by_device_day` in `supabase/migrations/006_accuracy_usage_rpcs.sql`)*
   - [ ] Build "This Week vs. Last Week" comparison bar chart using Recharts
-  - [ ] Display projected monthly bill based on current daily average
+  - [x] Display projected monthly bill based on current daily average *(Burn Analytics projects the billing-cycle bill from the cycle's average daily variable cost, up to 7 days, plus fixed charges with VAT)*
 
 ### Hardware Tasks (Firmware)
 
@@ -176,7 +180,7 @@ Relay timing is a schedule, not a strict five-second response guarantee: synchro
   - [x] Create `app/api/devices/[deviceId]/ai-profile/route.ts` for fresh-telemetry appliance budget profiling with strict JSON output (`estimated_monthly_kwh`, `suggested_monthly_limit_php`, `taglish_advice`)
 
 - [x] **Trigger & Cache Flow Implementation**
-  - [x] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at > (current_date - interval '7 days')` with `LIMIT 1`
+  - [x] On insight request, query `ai_insights` table: `WHERE user_id = ? AND insight_type = ? AND created_at >= now() - cache window` with `LIMIT 1` *(window per type in `app/api/insights/route.ts`: 1 day for `budget_alert`/`anomaly_alert`, 7 days for `weekly_recap`/`cost_optimizer`; a hit must also match the current billing cycle)*
   - [x] If cache hit → return cached `message` immediately (no OpenAI call)
   - [x] If cache miss:
     1. [x] Aggregate user data from `energy_logs` (with `.limit()` guard and date filter)
@@ -228,9 +232,10 @@ Relay timing is a schedule, not a strict five-second response guarantee: synchro
   - [x] Add production OneSignal/Resend credentials, verify the sending domain, deploy the Edge Function, and activate the Database Webhook *(verified with a real OneSignal provider message and Resend delivery on 2026-08-22)*
 
 - [x] **Bottom Navigation Bar**
-  - [x] Implement persistent navbar: **Home**, **Burn**, and **Settings**
-  - [x] Active tab highlighted with green glow indicator
+  - [x] Implement persistent navbar: **Home**, **Burn**, **Reports**, and **Settings** (`APP_TABS` in `components/ui/app-nav.ts`); hidden at `lg`, where `AppSidebar` takes over
+  - [x] Active tab highlighted *(accent colour plus a mint dot; the glow was removed)*
   - [x] Navigation bar hidden on Device Detail page (focus mode)
+  - [x] Desktop sidebar: Overview (Home, Burn, Reports) and Billing (Calendar, Meralco Rates) groups, then Settings, light/dark toggle, log out, and an account card; one highlight glides to the clicked item *(2026-11-07)*
 
 - [ ] **Serwist PWA Configuration**
   - [ ] Configure Serwist in `next.config.ts` for offline caching
@@ -277,52 +282,53 @@ Relay timing is a schedule, not a strict five-second response guarantee: synchro
   - [x] Create `app/admin/layout.tsx` with role-based access control *(async Server Component, fetches profile + verifies super_admin role, redirects non-admins)*
   - [x] Check `profiles.role === 'super_admin'` on every admin page load *(defense-in-depth: middleware + layout both verify role)*
   - [x] Redirect non-admin users to `/dashboard` with unauthorized toast *(middleware redirects to `/login?error=unauthorized`, layout redirects to `/dashboard`)*
-  - [x] Create admin navigation sidebar (separate from user 2-tab nav) *(`components/admin/AdminSidebar.tsx` — client component with active nav state, sign-out, 6 nav links)*
+  - [x] Create admin navigation sidebar (separate from the user nav) *(`components/admin/AdminSidebar.tsx` — client component with active nav state, sign-out, 11 nav links)*
   - [x] Update middleware to gate `/admin` routes by `super_admin` role *(queries `profiles` table for `/admin` paths only)*
   - [x] Update login page with role-based redirect *(super_admin → `/admin`, user → `/dashboard`)*
   - [x] Create super_admin RLS policies *(migration at `supabase/migrations/002_admin_rls_policies.sql` — SELECT on all tables + INSERT/UPDATE on meralco_rates)*
 
-- [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)**
+- [ ] **Meralco Rate Editor (`app/admin/rates/page.tsx`)** *(the page exists as a read-only history table; rates arrive through `sync-meralco-rates`)*
   - [ ] Build form with base rate fields: Generation, Transmission, System Loss, Distribution, Universal Charges, FIT-All, VAT, optional Supply Charge, and Metering Charge
   - [ ] Show computed total rate and total with VAT as live preview
   - [ ] On save → INSERT new row into `meralco_rates` table with `effective_month`
-  - [ ] Display history of past rate entries in a table below the form
+  - [x] Display history of past rate entries in a table *(latest 24 rows with components, adjustments, fixed charges, and PHP/kWh incl. VAT from `computeVariableRatePerKwh`)*
   - [ ] Validate all rate values are numeric and within reasonable bounds
 
-- [ ] **Revenue & Growth Dashboard (`app/admin/growth/page.tsx`)**
+- [ ] **Revenue & Growth Dashboard (`app/admin/growth/page.tsx`)** *(the page shows new users and new devices over 30 and 90 days)*
   - [ ] Query `profiles` table: total registered users, grouped by `created_at` date
-  - [ ] Query `devices` table: total paired devices, online vs. offline count
+  - [x] Query `devices` table: total paired devices, online vs. offline count *(on the `/admin` overview; online means a reading inside the 20 s freshness window)*
   - [ ] Build 30-day user growth line chart (Recharts `LineChart`)
   - [ ] Calculate hypothetical MRR (Monthly Recurring Revenue) based on user count
-  - [ ] Display key metrics: Total Users, Active Devices, New Users (7d), New Users (30d)
+  - [ ] Display key metrics: Total Users, Active Devices, New Users (7d), New Users (30d) *(total users and online devices are on `/admin`, 30-day counts on Growth; 7-day counts are missing)*
 
-- [ ] **OpenAI Usage & Cost Tracker (`app/admin/ai-costs/page.tsx`)**
+- [ ] **OpenAI Usage & Cost Tracker (`app/admin/ai-costs/page.tsx`)** *(the page shows total insights, total tokens, and the number of insight types)*
   - [ ] Aggregate `ai_insights` table: `SUM(prompt_tokens)`, `SUM(completion_tokens)` grouped by date
   - [ ] Calculate estimated USD cost using OpenAI pricing (prompt tokens × rate + completion tokens × rate)
   - [ ] Build daily token usage bar chart
-  - [ ] Display totals: Total Insights Generated, Total Tokens Used, Estimated Cost (USD)
-  - [ ] Show breakdown by `insight_type` (budget_alert vs. weekly_recap)
+  - [ ] Display totals: Total Insights Generated, Total Tokens Used, Estimated Cost (USD) *(the first two are shown; no cost estimate)*
+  - [ ] Show breakdown by `insight_type`
 
-- [ ] **Database & System Health (`app/admin/health/page.tsx`)**
+- [ ] **Database & System Health (`app/admin/health/page.tsx`)** *(the page shows registered devices, devices stale for 15+ minutes, telemetry rows in the last 24 h, and the latest rate-sync status)*
   - [ ] Query `energy_logs` total row count (monitor approach toward 500MB limit)
   - [ ] Calculate estimated storage usage (row count × avg row size)
   - [ ] Display storage usage progress bar with warning threshold at 80%
-  - [ ] Show device fleet status: online count, offline count, last-seen timestamps
-  - [ ] Build device health table: MAC address, name, is_online, last_seen_at, owner email
+  - [ ] Show device fleet status: online count, offline count, last-seen timestamps *(online count on `/admin`, stale count on Health; no combined view)*
+  - [x] Build device health table: MAC address, name, live/last-seen state, owner *(`/admin/devices`, `components/admin/AdminDevicesTable.tsx`)*
 
-- [ ] **Global Energy Analytics (`app/admin/analytics/page.tsx`)**
-  - [ ] Run aggregated `SUM(energy_kwh)` across all `energy_logs` — total platform kWh monitored
+- [ ] **Global Energy Analytics (`app/admin/analytics/page.tsx`)** *(the page shows current-billing-cycle kWh from `device_month_usage`, active devices, and appliance types)*
+  - [ ] Total platform kWh monitored *(never sum raw cumulative `energy_kwh`; aggregate deltas through RPCs or `device_month_usage`)*
   - [ ] Calculate total estimated Pesos saved by all users (compare usage trends week-over-week)
   - [ ] Build "Big Picture" dashboard cards:
     - [ ] Total kWh Monitored (all-time)
-    - [ ] Total Users
-    - [ ] Total Devices
+    - [x] Total Users *(on `/admin`)*
+    - [x] Total Devices *(on `/admin`)*
     - [ ] Estimated Total Savings (₱)
   - [ ] Build platform-wide daily energy consumption chart (Recharts `AreaChart`)
 
 - [ ] **Admin Audit Log**
-  - [ ] Log all rate changes, admin actions (timestamp, admin user, action type)
-  - [ ] Display recent admin actions in a feed on the admin home page
+  - [x] Log admin actions (timestamp, admin user, action type, target, reason) *(`writeAdminAudit` in the users, devices, relay, demo-unit, and Test Lab admin routes; `admin_audit_logs`)*
+  - [ ] Log rate changes *(there is no admin rate-change path yet)*
+  - [ ] Display recent admin actions in a feed on the admin home page *(the latest 100 are on `/admin/audit`, not on the overview)*
 
 ### Hardware Tasks (Firmware)
 
@@ -379,10 +385,10 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 
 | Phase | Key Platform Files | Key Firmware Files |
 |---|---|---|
-| 1 | `app/layout.tsx`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/page.tsx` | `main.cpp`, `wifi_manager.cpp`, `pzem_reader.cpp`, `supabase_client.cpp` |
-| 2 | `lib/meralco-rates.ts`, `app/dashboard/[deviceId]/page.tsx` | None |
-| 3 | `app/api/insights/route.ts`, `app/api/insights/calendar/route.ts`, `components/insights/ContextualInsightCard.tsx`, `app/dashboard/page.tsx`, `app/dashboard/calendar/page.tsx`, `app/analytics/page.tsx`, `app/dashboard/[deviceId]/page.tsx`, `manifest.json`, `sw.ts` | `config_handler.cpp`, `ota_updater.cpp` |
-| 4 | `app/admin/layout.tsx`, `app/admin/rates/page.tsx`, `app/admin/ai-costs/page.tsx`, `app/admin/health/page.tsx`, `app/admin/analytics/page.tsx` | `diagnostics.cpp`, `offline_buffer.cpp` |
+| 1 | `app/layout.tsx`, `app/globals.css`, `components/ui/AppFrame.tsx`, `components/ui/app-nav.ts`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/page.tsx` | `wattwise_hardware/src/main.cpp` (all current firmware) |
+| 2 | `lib/meralco-bill.ts`, `lib/meralco-rates.ts`, `lib/meralco-rates-server.ts`, `app/dashboard/[deviceId]/page.tsx` | None |
+| 3 | `app/api/insights/route.ts`, `app/api/insights/calendar/route.ts`, `components/insights/ContextualInsightCard.tsx`, `app/dashboard/page.tsx`, `app/dashboard/calendar/page.tsx`, `app/analytics/page.tsx`, `app/dashboard/[deviceId]/page.tsx`, `public/site.webmanifest`, `sw.ts` (planned) | `config_handler.cpp`, `ota_updater.cpp` (planned) |
+| 4 | `app/admin/layout.tsx`, `app/admin/rates/page.tsx`, `app/admin/ai-costs/page.tsx`, `app/admin/health/page.tsx`, `app/admin/analytics/page.tsx` | `diagnostics.cpp`, `offline_buffer.cpp` (planned) |
 
 ### Completion note: Admin Test Lab
 
@@ -401,3 +407,12 @@ Phase 4 (Super Admin) ◄──── Requires all Phase 1–3 tables populated
 - 2026-09-27: Integrated the supplied ElevenLabs recording into the survey walkthrough (~156 seconds), with local word-aligned captions, per-scene narration splits, and a quiet instrumental bed that ducks beneath speech and fades at the ends. Earlier MP4 cuts are retained.
 
 - 2026-09-27: Added a separate 1080p Remotion motion graphics edition of the survey video (`WattwiseMotionFilm`): 33 narration-aligned shots, conceptual hardware reveal, kinetic type, live metrics, animated budget dial, usage charts, and reports. The finished ElevenLabs narration/music master and earlier walkthrough composition are preserved; this research asset does not alter feature implementation status.
+
+- 2026-11-07: UI-only week (no migrations; the schema still ends at `039`):
+  - Desktop layout at `lg` (1024px+): `AppFrame` in the root layout picks the frame by path. App routes get `AppSidebar` (`APP_DESKTOP_SECTIONS`: Overview = Home/Burn/Reports, Billing = Calendar/Meralco Rates; Settings, theme toggle, log out, and an account card at the bottom) and sit on `DESKTOP_PANEL`. `PageHeader` is an in-page title block on desktop (`description`, `desktopTitle`, no back button); loading screens use `PageTitleSkeleton`; cards use `CARD`/`CardHeader`/`CardPill`; Device Detail shows a breadcrumb. The manager portal uses the same sidebar (`MANAGER_DESKTOP_SECTIONS`) and panel.
+  - Auth pages: desktop split layout with `AuthBrandPanel`; shared `SubmitButton` and `FormAlert` in login, register, forgot-password, and `UpdatePasswordForm`.
+  - `/onboarding` is a full-width landing page with the 3D WattWise unit (three 0.186.1 + @react-three/fiber 9.8.1 in `components/landing/device/`, ported from the owner's gsap-portfolio repo), scroll reveals, and Lenis smooth scrolling (landing only). The `/` splash plays CSS keyframes (`ww-splash-*`), prefetches, fades out, then redirects.
+  - Light mode moved to theme tokens (about 980 class changes; the 46 per-class overrides are deleted), with a pre-paint theme script; the splash no longer forces dark. Still open: a "System" option and a light-mode QA pass of manager, admin, and signed-out pages.
+  - Motion: easing tokens, `ww-enter`/`ww-stagger` entrances, budget bars that fill in on load, and a top progress bar for route loading (`RouteTransitionIndicator`).
+  - `components/ui/BrandMark.tsx` (the owl as a CSS-mask mark) replaces the robot icon for the customer assistant and manager AI.
+  - New dependencies: `three`, `@react-three/fiber`, `@types/three`, `lenis`. PWA/service-worker work is unchanged and still pending.

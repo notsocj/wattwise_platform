@@ -2,13 +2,13 @@
 
 A manual and automated checklist for the web app (`wattwise_platform`) and the ESP32-S3 units (`wattwise_hardware`). Tick items with `[x]` as you go. Each item says what to do and, after ✅, what should happen.
 
-Last updated: November 4, 2026.
+Last updated: November 7, 2026.
 
 ## Before you start
 
 - **Use a separate test account** for anything destructive, such as deleting an account. Register one at `/register`; don't test deletion on your real account.
 - **Use a safe load for relay tests**, like a lamp or a fan. Never a refrigerator or an aircon, since the relay cuts power.
-- **Test on a phone** at <https://www.wattwise-app.site>, in both dark and light theme (toggle in the header). To get an app-like experience, add it to the home screen: Safari → Share → **Add to Home Screen** on iPhone, or Chrome → **Install app** on Android. Offline support is not built yet, so it still needs a connection.
+- **Test on a phone and on a laptop or desktop window** (1024px or wider changes the layout) at <https://www.wattwise-app.site>, in both dark and light theme. Switch the theme in Settings → Appearance on a phone, or with **Light mode** / **Dark mode** in the desktop sidebar. To get an app-like experience, add it to the home screen: Safari → Share → **Add to Home Screen** on iPhone, or Chrome → **Install app** on Android. Offline support is not built yet, so it still needs a connection.
 - **The first load after a deploy can be slower** while the Seoul servers start up. Judge speed on the second load.
 
 ## 1. Automated checks
@@ -24,13 +24,29 @@ npm run lint && npx tsc --noEmit -p . && npm test && npm run build
 ## 2. Sign-in and public pages
 
 - [ ] Signed out, open `/`, `/login`, `/register`, and `/onboarding`. ✅ Each appears almost instantly (they are static pages).
+- [ ] Signed out, open `/`. ✅ The owl appears in the centre, lifts, "WattWise" rises in, then the splash fades out into the landing page after about 3 seconds.
+- [ ] On `/onboarding`, hover over the 3D unit (desktop) or tap it (phone). ✅ The cover lifts and the layers separate, with labels for the PZEM-004T meter, ESP32-S3, and relay. Tap again to close.
+- [ ] Scroll the landing page with a mouse wheel or trackpad. ✅ Scrolling eases smoothly and each section rises in as it appears. **Get started** opens `/register` and **Log in** opens `/login`.
+- [ ] On a desktop window, open `/login`. ✅ A brand panel sits on the left and the form on the right.
 - [ ] Register a test account. ✅ You land on the dashboard, or see a "Confirm your email" screen if email confirmation is on.
-- [ ] Log out, then log in with a wrong password. ✅ A friendly message, not a raw error.
-- [ ] Log in and tap the button twice quickly. ✅ It submits only once and stays in its loading state until the dashboard opens.
+- [ ] Log out, then log in with a wrong password. ✅ A friendly message in a red banner that slides in above the form (not a raw error), and the button returns to **Login** so you can try again.
+- [ ] Log in and tap the button twice quickly. ✅ It submits only once: the button shows a spinner with "Logging in...", then a check with "Logged in! Opening WattWise...", and stays that way until the dashboard opens.
+- [ ] Forgot password: request a link. ✅ The button shows "Sending...", then "Link sent!", then the "Check your email" screen.
 - [ ] Forgot password: request a link, open it from your email, then tap **Back to Login** without changing the password. ✅ You end up signed out on the login page, not inside the app.
 - [ ] While signed in, open `/login`. ✅ You are redirected to your dashboard.
 
-## 3. Live hardware
+## 3. Layout, themes, and motion
+
+- [ ] Open the app in a window at least 1024px wide. ✅ A sidebar shows **Overview** (Home, Burn, Reports) and **Billing** (Calendar, Meralco Rates), with Settings, the theme switch, Log out, and your account card at the bottom. Pages have a title and a one-line description, and there are no back buttons.
+- [ ] Click between sidebar items. ✅ The highlight moves to the clicked item at once and glides there, a thin green bar runs along the top while the page loads, and the page's cards rise in quickly.
+- [ ] Open a device from the dashboard on desktop. ✅ A breadcrumb (Home › device name) replaces the back button.
+- [ ] Narrow the window below 1024px. ✅ The layout switches to the phone column with the bottom tab bar.
+- [ ] Switch to light mode, then reload. ✅ No dark flash before the page appears. Text is readable everywhere, mint text shows as a darker green, and input fields are a soft grey.
+- [ ] Check every page in both themes, including manager and admin pages. Light mode has not been reviewed yet on manager, admin, and signed-out pages, so look closely there.
+- [ ] Turn on your device's "Reduce motion" setting. ✅ Elements fade instead of sliding, and the landing page uses normal scrolling.
+- [ ] Open the AI assistant. ✅ The WattWise owl is on the floating button and in the assistant header.
+
+## 4. Live hardware
 
 Needs a registered, powered unit.
 
@@ -39,7 +55,7 @@ Needs a registered, powered unit.
 - [ ] Disconnect the unit's Wi-Fi. ✅ Within about 20 seconds the card shows IDLE, and the device page header shows "OFFLINE · last reading Xs ago".
 - [ ] Reconnect it. ✅ It returns to LIVE on its next reading.
 
-## 4. Relay and budgets
+## 5. Relay and budgets
 
 Safe load only.
 
@@ -49,7 +65,7 @@ Safe load only.
 - [ ] Let usage cross the limit. ✅ The relay cuts off, and the dashboard shows "Auto cutoff active" without a manual reload.
 - [ ] Tap **Restore Power**. ✅ It asks before restoring, and the relay turns back on.
 
-## 5. Add Appliance
+## 6. Add Appliance
 
 - [ ] Tap **Add Appliance**, enter a MAC by hand, continue, go back, change the name, then continue again. ✅ The changed name is the one saved.
 - [ ] Open the QR scanner and allow the camera. ✅ Scanning a WattWise label fills in the MAC.
@@ -57,7 +73,7 @@ Safe load only.
 - [ ] Deny camera access. ✅ A friendly message with the option to enter the MAC manually.
 - [ ] Enter a MAC that belongs to another account. ✅ "This device is already linked to another WattWise account."
 
-## 6. Dashboard, analytics, calendar, and rates
+## 7. Dashboard, analytics, calendar, and rates
 
 - [ ] The dashboard wallet, burn rate, week strip, and Meralco breakdown all load with plausible numbers.
 - [ ] Switch between Home, Burn, Reports, and Settings. ✅ Each shows a skeleton briefly, then loads in about a second.
@@ -67,13 +83,13 @@ Safe load only.
 - [ ] GitHub Actions → "Sync Meralco rates" → Run workflow with `dryRun: true` and the latest published month. ✅ It finishes green and logs the parsed rates.
 - [ ] Settings → "Monthly kWh on your Meralco bill": save 350, and the breakdown labels distribution "301–400 kWh tier" with a higher rate; clear it, and the note says the tier is projected from monitored usage. Invalid input (letters, 0) shows an inline error.
 
-## 7. Reports
+## 8. Reports
 
 - [ ] Switch between Daily, Weekly, and Monthly. ✅ The table arrives already filled in.
 - [ ] Compare a device's monthly variable cost with the dashboard's variable spend. ✅ They agree.
 - [ ] Download the PDF and the CSV. ✅ Both download. A failure shows an inline error, never a raw JSON page.
 
-## 8. Settings
+## 9. Settings
 
 - [ ] Edit the home budget from the dashboard wallet. ✅ Values like `₱2,500` and `2500.50` are accepted; `1e3` is rejected.
 - [ ] Change the billing-cycle day. ✅ The dashboard's cycle dates update.
@@ -81,21 +97,21 @@ Safe load only.
 - [ ] Send a test push and a test email. ✅ They arrive, or you see a plain message explaining why not.
 - [ ] **Test account only:** Delete account. ✅ The button stays disabled until you type `DELETE`; deleting signs you out.
 
-## 9. AI assistant
+## 10. AI assistant
 
 - [ ] Ask about your bill or a device. ✅ The answer uses your real numbers.
 - [ ] Ask it to change a device limit, then confirm. ✅ The dashboard reflects the change.
 - [ ] Turn on airplane mode and send a message. ✅ Your text stays in the box and a friendly error appears.
 
-## 10. Manager and tenant
+## 11. Manager and tenant
 
 Needs a manager account.
 
 - [ ] Create a tenant and assign a room unit. ✅ The tenant must change their password on first login, then sees only their assigned unit.
 - [ ] As the manager, turn a room's relay off. ✅ It asks for confirmation; OFF shows in grey, not red.
-- [ ] Open the manager pages from the bottom nav. ✅ The loading screen appears immediately.
+- [ ] Open the manager pages from the bottom nav (phone) and the sidebar (desktop). ✅ The loading screen appears immediately.
 
-## 11. Admin
+## 12. Admin
 
 Needs a super admin account.
 
@@ -110,12 +126,12 @@ Needs a super admin account.
 - [ ] A demo unit started more than 4 hours ago shows Paused. ✅ It pauses itself so it cannot run all day unattended.
 - [ ] Start that automatically paused unit again. ✅ It remains Running over multiple simulator ticks, returns to LIVE, and receives a fresh four-hour run instead of immediately pausing again. Its previous meter value and history are preserved.
 
-## 12. Security spot checks
+## 13. Security spot checks
 
 - [ ] As a regular user, open `/admin` and `/manager`. ✅ You are redirected away.
 - [ ] As a tenant, check the dashboard, reports, and analytics. ✅ Only the assigned unit's data appears.
 
-## 13. Hardware acceptance
+## 14. Hardware acceptance
 
 From `wattwise_hardware/docs/panelist-feature-and-hardware-hardening-plan.md`. These have not yet been recorded as run on physical units.
 
