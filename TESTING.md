@@ -107,6 +107,9 @@ Safe load only.
 - [ ] Cancel a scheduled turn-off from the device page. ✅ It asks first, then shows "Cancelled"; the device keeps running.
 - [ ] Ask it to turn a device **on** at a time, or to turn it off right now. ✅ It declines; scheduled rules only turn devices off.
 - [ ] As a tenant, ask to schedule a turn-off. ✅ It explains only the owner can.
+- [ ] Open the assistant with an existing conversation. ✅ It opens already at the newest message (no scrolling from the top); a first open shows placeholder bubbles while history loads.
+- [ ] Send a message. ✅ An owl with bouncing dots appears, with a status line ("Reading your devices...", "Checking Meralco rates...", "Writing a reply..."), and the reply eases in.
+- [ ] Ask for something off-topic, like "give me C programming code for bubble sort" or "Who won the NBA finals?". ✅ It says it only helps with energy and WattWise and suggests an energy question, with no card.
 - [ ] Turn on airplane mode and send a message. ✅ Your text stays in the box and a friendly error appears.
 
 ## 11. Manager and tenant

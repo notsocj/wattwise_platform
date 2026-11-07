@@ -1,22 +1,33 @@
 "use client";
 
-import { Check, ChevronRight, Send, X } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, ChevronRight, Clock, Info, Send, ShieldCheck, X } from "lucide-react";
 import BrandMark from "@/components/ui/BrandMark";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
+import { LoadingSkeleton } from "@/components/ui/LoadingIndicator";
+import type { CustomerAssistantMessage, CustomerAssistantProposal } from "@/lib/customer-assistant-types";
 
 const quickPrompts = [
   "Why is my bill high?",
   "Check my budget",
   "Help me save energy",
-  "Change a device limit",
+  "Turn off my aircon at 1 AM",
 ] as const;
+
+/** What the server is doing while a reply is written (context, rates, then the model). */
+const thinkingSteps = ["Reading your devices", "Checking Meralco rates", "Writing a reply"] as const;
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
   return (await response.json().catch(() => ({}))) as Record<string, unknown>;
+}
+
+function Avatar() {
+  return (
+    <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint/10 text-accent">
+      <BrandMark className="h-4 w-4" />
+    </span>
+  );
 }
 
 export default function CustomerAssistantFab() {
@@ -26,31 +37,52 @@ export default function CustomerAssistantFab() {
   const [input, setInput] = useState("");
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [thinkingStep, setThinkingStep] = useState(0);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Messages that came from history; only messages added after it animate in.
+  const historyIdsRef = useRef<Set<string>>(new Set());
+  // True until the panel has been shown at the latest message once per open.
+  const jumpToLatestRef = useRef(true);
 
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
+    jumpToLatestRef.current = true;
     setIsLoadingHistory(true);
     setError(null);
     fetch("/api/customer-assistant/messages")
       .then(async (response) => {
         const body = await readJson(response);
         if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : "Could not load chat history.");
-        if (active) setMessages((body.messages as CustomerAssistantMessage[]) ?? []);
+        const history = (body.messages as CustomerAssistantMessage[]) ?? [];
+        historyIdsRef.current = new Set(history.map((message) => message.id));
+        if (active) setMessages(history);
       })
       .catch((reason: unknown) => active && setError(reason instanceof Error ? reason.message : "Could not load chat history."))
       .finally(() => active && setIsLoadingHistory(false));
     return () => { active = false; };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isOpen, isSending]);
+  // Open at the newest message with no visible scroll; later messages glide in.
+  useLayoutEffect(() => {
+    const list = scrollRef.current;
+    if (!isOpen) {
+      // Next open starts at the latest message again.
+      jumpToLatestRef.current = true;
+      return;
+    }
+    if (!list) return;
+    if (jumpToLatestRef.current) {
+      list.scrollTop = list.scrollHeight;
+      if (!isLoadingHistory) jumpToLatestRef.current = false;
+      return;
+    }
+    list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+  }, [messages, isOpen, isSending, isLoadingHistory]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -60,6 +92,19 @@ export default function CustomerAssistantFab() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen]);
+
+  // Keeps proposal countdowns current while the panel is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isSending) return;
+    const timer = setInterval(() => setThinkingStep((step) => Math.min(step + 1, thinkingSteps.length - 1)), 1400);
+    return () => clearInterval(timer);
+  }, [isSending]);
 
   function toFriendlyError(reason: unknown, fallback: string): string {
     // fetch rejects with a TypeError ("Failed to fetch") when offline.
@@ -72,6 +117,7 @@ export default function CustomerAssistantFab() {
     if (!trimmed || isSending) return;
     setInput("");
     setError(null);
+    setThinkingStep(0);
     setIsSending(true);
     const optimistic: CustomerAssistantMessage = {
       id: `temporary-${Date.now()}`,
@@ -92,6 +138,7 @@ export default function CustomerAssistantFab() {
       });
       const body = await readJson(response);
       if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : "The assistant could not reply.");
+      setNow(Date.now());
       setMessages((current) => [...current, body.message as CustomerAssistantMessage].slice(-10));
     } catch (reason) {
       // Drop the unsent bubble and give the text back so it can be retried.
@@ -135,6 +182,8 @@ export default function CustomerAssistantFab() {
     }
   }
 
+  const showSkeleton = isLoadingHistory && messages.length === 0;
+
   return (
     <>
       <div className="pointer-events-none fixed bottom-[82px] left-1/2 z-[60] w-full max-w-[430px] -translate-x-1/2 lg:bottom-8 lg:left-auto lg:right-8 lg:w-auto lg:max-w-none lg:translate-x-0">
@@ -161,127 +210,178 @@ export default function CustomerAssistantFab() {
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-fg/20 lg:hidden" />
             <header className="flex items-center justify-between border-b border-fg/[0.07] px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-mint/10 text-accent">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-mint/10 text-accent">
                   <BrandMark className="h-6 w-6" />
                 </div>
                 <div>
                   <h2 id="customer-assistant-title" className="text-sm font-bold text-fg">WattWise Assistant</h2>
-                  <p className="text-[11px] text-fg/45">Energy and budget help in Taglish</p>
+                  <p className="flex items-center gap-1.5 text-[11px] text-fg/45">
+                    <span className={`h-1.5 w-1.5 rounded-full ${isSending ? "animate-pulse bg-mint" : "bg-mint/70"}`} aria-hidden="true" />
+                    {isSending ? "Writing a reply..." : "Energy and budget help in Taglish"}
+                  </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close assistant" className="flex h-9 w-9 items-center justify-center rounded-full border border-fg/10 text-fg/60 hover:text-fg">
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close assistant" className="flex h-9 w-9 items-center justify-center rounded-full border border-fg/10 text-fg/60 transition-colors duration-150 ease-out hover:text-fg">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </header>
 
-            <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
-              {isLoadingHistory ? (
-                <div className="flex min-h-40 items-center justify-center"><LoadingIndicator label="Loading conversation" /></div>
-              ) : messages.length === 0 ? (
-                <div className="rounded-2xl border border-mint/15 bg-mint/[0.06] p-4">
-                  <p className="text-sm font-semibold text-fg">Kumusta! How can I help?</p>
-                  <p className="mt-1 text-xs leading-5 text-fg/55">I can explain your current usage and prepare safe setting changes for your review.</p>
+            <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4" aria-live="polite" aria-busy={isLoadingHistory || isSending}>
+              {showSkeleton ? (
+                <div className="space-y-4" aria-label="Loading conversation">
+                  <div className="flex items-end gap-2">
+                    <LoadingSkeleton className="h-7 w-7 shrink-0 rounded-full" />
+                    <LoadingSkeleton className="h-14 w-3/5 rounded-2xl rounded-bl-md" />
+                  </div>
+                  <div className="flex justify-end">
+                    <LoadingSkeleton className="h-10 w-2/5 rounded-2xl rounded-br-md" />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <LoadingSkeleton className="h-7 w-7 shrink-0 rounded-full" />
+                    <LoadingSkeleton className="h-20 w-4/5 rounded-2xl rounded-bl-md" />
+                  </div>
                 </div>
               ) : null}
 
               {!isLoadingHistory && messages.length === 0 ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {quickPrompts.map((prompt) => (
-                    <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} className="flex items-center justify-between rounded-full border border-fg/10 bg-surface px-3 py-2.5 text-left text-xs text-fg/75 hover:border-mint/30 hover:text-fg">
-                      {prompt}<ChevronRight className="h-4 w-4 text-accent" aria-hidden="true" />
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="flex items-end gap-2 transition-[opacity,translate] duration-300 ease-out starting:translate-y-2 starting:opacity-0">
+                    <Avatar />
+                    <div className="rounded-2xl rounded-bl-md border border-fg/10 bg-surface px-3.5 py-3">
+                      <p className="text-sm font-semibold text-fg">Kumusta! How can I help?</p>
+                      <p className="mt-1 text-xs leading-5 text-fg/55">I can explain your usage and bill, and prepare safe changes, like scheduling a device to turn off, for you to review.</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 pl-9">
+                    {quickPrompts.map((prompt, index) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => void sendMessage(prompt)}
+                        style={{ transitionDelay: `${80 + index * 40}ms` }}
+                        className="flex items-center justify-between rounded-full border border-fg/10 bg-surface px-4 py-2.5 text-left text-xs text-fg/75 transition-[opacity,translate,border-color,color] duration-300 ease-out hover:border-mint/30 hover:text-fg starting:translate-y-2 starting:opacity-0"
+                      >
+                        {prompt}<ChevronRight className="h-4 w-4 text-accent" aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+                </>
               ) : null}
 
-              {messages.map((message) => (
-                <div key={message.id} className={message.role === "user" ? "ml-10" : "mr-5"}>
-                  <div className={`rounded-2xl px-3.5 py-3 text-sm leading-5 ${message.role === "user" ? "rounded-br-md bg-mint text-ink" : "rounded-bl-md border border-fg/10 bg-surface text-fg/80"}`}>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                  {message.display_data?.type === "device_list" ? (
-                    <div className="mt-2 space-y-2 rounded-2xl border border-fg/10 bg-surface p-3">
-                      <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg/45">
-                        {message.display_data.title}
-                      </p>
-                      {message.display_data.devices.map((device) => {
-                        const progress = Math.max(0, Math.min(100, device.progress_percent));
-                        const isAtRisk = device.progress_percent >= 80;
-                        return (
-                          <Link
-                            key={device.id}
-                            href={`/dashboard/${device.id}`}
-                            onClick={() => setIsOpen(false)}
-                            className="block rounded-xl border border-fg/[0.08] bg-shade/20 p-3 transition-colors hover:border-mint/30"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-fg">{device.name}</p>
-                                {typeof device.calendar_month_spend_php === "number" ? (
-                                  <p className="mt-0.5 text-[11px] text-fg/45">
-                                    This month: PHP {device.calendar_month_spend_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </p>
-                                ) : null}
-                                <p className="mt-0.5 text-[11px] text-fg/45">
-                                  Current cycle: PHP {device.spend_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  {device.limit_php > 0
-                                    ? ` / PHP ${device.limit_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : " · no limit set"}
-                                </p>
-                              </div>
-                              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-fg/35" aria-hidden="true" />
-                            </div>
-                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-fg/[0.07]">
-                              <div
-                                className={`h-full rounded-full ${isAtRisk ? "bg-bida" : "bg-mint"}`}
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                            <div className="mt-2 flex items-center justify-between text-[10px]">
-                              <span className={isAtRisk ? "font-semibold text-bida" : "text-fg/45"}>
-                                {device.limit_php > 0 ? `${device.progress_percent < 1 ? device.progress_percent.toFixed(1) : device.progress_percent.toFixed(0)}% of limit` : "Limit not configured"}
-                              </span>
-                              <span className={device.telemetry_state === "fresh" ? "text-accent" : "text-fg/35"}>
-                                {device.telemetry_state === "fresh" ? `${device.current_watts} W live` : "Live reading stale"}
-                              </span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                  {message.proposal ? (
-                    <div className="mt-2 overflow-hidden rounded-2xl border border-bida/30 bg-bida/[0.07] p-3.5">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-bida">Review required</p>
-                      <h3 className="mt-1 text-sm font-bold text-fg">{message.proposal.title}</h3>
-                      <p className="text-xs text-fg/50">{message.proposal.subject}</p>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-lg bg-shade/20 p-2"><span className="block text-fg/40">Current</span><strong className="text-fg/75">{message.proposal.current_value}</strong></div>
-                        <div className="rounded-lg bg-shade/20 p-2"><span className="block text-fg/40">Proposed</span><strong className="text-bida">{message.proposal.proposed_value}</strong></div>
+              {messages.map((message) => {
+                const enter = historyIdsRef.current.has(message.id)
+                  ? ""
+                  : "transition-[opacity,translate] duration-300 ease-out starting:translate-y-2 starting:opacity-0";
+                if (message.role === "user") {
+                  return (
+                    <div key={message.id} className={`ml-10 flex justify-end ${enter}`}>
+                      <div className="rounded-2xl rounded-br-md bg-mint px-3.5 py-2.5 text-sm leading-5 text-ink">
+                        <p className="whitespace-pre-wrap">{message.content}</p>
                       </div>
-                      <p className="mt-3 text-[11px] leading-4 text-fg/55">{message.proposal.consequence}</p>
-                      {message.proposal_status === "pending" ? (
-                        <button type="button" onClick={() => void confirmChange(message.id)} disabled={Boolean(confirmingId)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-mint px-3 py-2.5 text-xs font-bold text-ink disabled:opacity-60">
-                          {confirmingId === message.id ? <LoadingIndicator size="sm" label="Confirming" showLabel={false} /> : <Check className="h-4 w-4" aria-hidden="true" />}
-                          {confirmingId === message.id ? "Applying..." : "Confirm change"}
-                        </button>
-                      ) : (
-                        <p className={`mt-3 text-xs font-semibold ${message.proposal_status === "confirmed" ? "text-accent" : "text-danger"}`}>
-                          {message.proposal_result?.message ?? (message.proposal_status === "confirmed" ? "Change confirmed." : "This proposal is no longer available.")}
-                        </p>
-                      )}
                     </div>
-                  ) : null}
+                  );
+                }
+                return (
+                  <div key={message.id} className={`mr-4 ${enter}`}>
+                    <div className="flex items-end gap-2">
+                      <Avatar />
+                      <div className="rounded-2xl rounded-bl-md border border-fg/10 bg-surface px-3.5 py-2.5 text-sm leading-5 text-fg/80">
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    </div>
+                    {message.display_data?.type === "device_list" ? (
+                      <div className="ml-9 mt-2 space-y-2 rounded-2xl border border-fg/10 bg-surface p-3">
+                        <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg/45">
+                          {message.display_data.title}
+                        </p>
+                        {message.display_data.devices.map((device) => {
+                          const progress = Math.max(0, Math.min(100, device.progress_percent));
+                          const isAtRisk = device.progress_percent >= 80;
+                          return (
+                            <Link
+                              key={device.id}
+                              href={`/dashboard/${device.id}`}
+                              onClick={() => setIsOpen(false)}
+                              className="block rounded-xl border border-fg/[0.08] bg-shade/20 p-3 transition-colors hover:border-mint/30"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-bold text-fg">{device.name}</p>
+                                  {typeof device.calendar_month_spend_php === "number" ? (
+                                    <p className="mt-0.5 text-[11px] text-fg/45">
+                                      This month: PHP {device.calendar_month_spend_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
+                                  ) : null}
+                                  <p className="mt-0.5 text-[11px] text-fg/45">
+                                    Current cycle: PHP {device.spend_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {device.limit_php > 0
+                                      ? ` / PHP ${device.limit_php.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                      : " · no limit set"}
+                                  </p>
+                                </div>
+                                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-fg/35" aria-hidden="true" />
+                              </div>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-fg/[0.07]">
+                                <div
+                                  className={`h-full rounded-full ${isAtRisk ? "bg-bida" : "bg-mint"}`}
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-[10px]">
+                                <span className={isAtRisk ? "font-semibold text-bida" : "text-fg/45"}>
+                                  {device.limit_php > 0 ? `${device.progress_percent < 1 ? device.progress_percent.toFixed(1) : device.progress_percent.toFixed(0)}% of limit` : "Limit not configured"}
+                                </span>
+                                <span className={device.telemetry_state === "fresh" ? "text-accent" : "text-fg/35"}>
+                                  {device.telemetry_state === "fresh" ? `${device.current_watts} W live` : "Live reading stale"}
+                                </span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {message.proposal ? (
+                      <ProposalCard
+                        proposal={message.proposal}
+                        status={message.proposal_status}
+                        result={message.proposal_result?.message}
+                        now={now}
+                        applying={confirmingId === message.id}
+                        disabled={Boolean(confirmingId)}
+                        onConfirm={() => void confirmChange(message.id)}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+
+              {isSending ? (
+                <div className="flex items-end gap-2 transition-[opacity,translate] duration-200 ease-out starting:translate-y-2 starting:opacity-0">
+                  <Avatar />
+                  <div className="rounded-2xl rounded-bl-md border border-fg/10 bg-surface px-3.5 py-3">
+                    <span className="flex items-center gap-1" aria-hidden="true">
+                      {[0, 150, 300].map((delay) => (
+                        <span key={delay} className="ww-typing-dot h-1.5 w-1.5 rounded-full bg-accent" style={{ animationDelay: `${delay}ms` }} />
+                      ))}
+                    </span>
+                    <p key={thinkingStep} className="mt-2 text-[11px] text-fg/45 transition-opacity duration-300 ease-out starting:opacity-0">
+                      {thinkingSteps[thinkingStep]}...
+                    </p>
+                  </div>
                 </div>
-              ))}
-              {isSending ? <div className="mr-20 rounded-2xl rounded-bl-md border border-fg/10 bg-surface px-4 py-3"><LoadingIndicator size="sm" label="Thinking" /></div> : null}
-              {error ? <p className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">{error}</p> : null}
+              ) : null}
+              {error ? (
+                <p role="alert" className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-xs text-danger transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0">
+                  <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {error}
+                </p>
+              ) : null}
             </div>
 
             <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="border-t border-fg/[0.07] bg-canvas p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
               <div className="flex items-center gap-2 rounded-full border border-fg/10 bg-surface p-1.5 pl-3 transition-colors duration-150 ease-out focus-within:border-mint/40">
                 <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} maxLength={1000} disabled={isSending || isLoadingHistory} placeholder="Ask about your energy use..." aria-label="Message WattWise Assistant" className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-fg outline-none placeholder:text-fg/30 disabled:opacity-50" />
-                <button type="submit" disabled={!input.trim() || isSending || isLoadingHistory} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint text-ink disabled:cursor-not-allowed disabled:opacity-35">
+                <button type="submit" disabled={!input.trim() || isSending || isLoadingHistory} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint text-ink transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.94] disabled:cursor-not-allowed disabled:opacity-35">
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
@@ -291,5 +391,99 @@ export default function CustomerAssistantFab() {
         </div>
       ) : null}
     </>
+  );
+}
+
+type ProposalCardProps = {
+  proposal: CustomerAssistantProposal;
+  status: CustomerAssistantMessage["proposal_status"];
+  result: string | undefined;
+  now: number;
+  applying: boolean;
+  disabled: boolean;
+  onConfirm: () => void;
+};
+
+/** "Review required" card: what changes, from what to what, and one Confirm. */
+function ProposalCard({ proposal, status, result, now, applying, disabled, onConfirm }: ProposalCardProps) {
+  const msLeft = new Date(proposal.expires_at).getTime() - now;
+  const isPending = status === "pending" && msLeft > 0;
+  const expiredLocally = status === "pending" && msLeft <= 0;
+
+  return (
+    <div className="ml-9 mt-2 overflow-hidden rounded-2xl border border-mint/20 bg-surface">
+      <div className="flex items-center justify-between gap-2 border-b border-fg/[0.06] px-3.5 py-2.5">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent">
+          <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+          Review required
+        </span>
+        {isPending ? (
+          <span className="inline-flex items-center gap-1 text-[11px] text-fg/40">
+            <Clock className="h-3 w-3" aria-hidden="true" />
+            {Math.max(1, Math.ceil(msLeft / 60_000))} min left
+          </span>
+        ) : null}
+      </div>
+
+      <div className="p-3.5">
+        <h3 className="text-sm font-semibold text-fg">{proposal.title}</h3>
+        <p className="text-xs text-fg/50">{proposal.subject}</p>
+
+        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-stretch gap-1.5 text-xs">
+          <div className="rounded-xl border border-fg/[0.06] bg-shade/10 p-2.5">
+            <span className="block text-[10px] uppercase tracking-wider text-fg/40">Current</span>
+            <span className="mt-0.5 block font-semibold text-fg/75">{proposal.current_value}</span>
+          </div>
+          <ArrowRight className="h-4 w-4 self-center text-fg/30" aria-hidden="true" />
+          <div className="rounded-xl border border-mint/25 bg-mint/[0.06] p-2.5">
+            <span className="block text-[10px] uppercase tracking-wider text-fg/40">Proposed</span>
+            <span className="mt-0.5 block font-semibold text-accent">{proposal.proposed_value}</span>
+          </div>
+        </div>
+
+        <p className="mt-3 flex gap-2 text-[11px] leading-4 text-fg/55">
+          <Info className="mt-px h-3.5 w-3.5 shrink-0 text-fg/35" aria-hidden="true" />
+          {proposal.consequence}
+        </p>
+
+        {isPending ? (
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={disabled}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-mint px-3 py-2.5 text-xs font-bold text-ink transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.97] disabled:opacity-60"
+          >
+            {applying ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink/25 border-t-ink" aria-hidden="true" />
+            ) : (
+              <Check className="h-4 w-4" aria-hidden="true" />
+            )}
+            {applying ? "Applying..." : "Confirm change"}
+          </button>
+        ) : status === "confirmed" ? (
+          <p className="mt-3 flex items-center gap-2 rounded-2xl bg-mint/10 px-3 py-2 text-xs font-semibold text-accent transition-[opacity,scale] duration-200 ease-out starting:scale-95 starting:opacity-0">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent text-surface">
+              <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
+            </span>
+            {result ?? "Done."}
+          </p>
+        ) : status === "processing" ? (
+          <p className="mt-3 text-xs text-fg/50">Applying this change...</p>
+        ) : (
+          <p className={`mt-3 flex items-start gap-2 text-xs ${status === "failed" ? "text-danger" : "text-fg/45"}`}>
+            {status === "failed" ? (
+              <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            ) : (
+              <Clock className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            )}
+            {status === "failed"
+              ? result ?? "This change couldn't be applied."
+              : expiredLocally || status === "expired"
+                ? "This expired. Ask again for a fresh one."
+                : result ?? "This proposal is no longer available."}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

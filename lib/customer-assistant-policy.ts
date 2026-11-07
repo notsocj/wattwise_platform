@@ -68,3 +68,26 @@ export function isCustomerAssistantProposal(value: unknown): value is CustomerAs
     Number.isFinite(new Date(proposal.expires_at).getTime())
   );
 }
+
+// Words that tie a message to energy or WattWise. A message containing any of
+// them always goes to the assistant, even if it also mentions code.
+const ON_TOPIC_PATTERN =
+  /\b(bills?|kwh|watts?|meralco|kuryente|koryente|aircon|ref|fridge|tv|fan|devices?|units?|appliances?|budgets?|limits?|energy|power|electric(?:ity)?|rates?|spend|gastos|singil|bayarin|wattwise|turn\s+(?:it\s+)?off|patay(?:in)?|schedule|cutoff|relay|notifications?|alerts?|usage|consumption|save|tipid)\b/i;
+
+// Requests that are clearly outside WattWise: writing code, homework, essays.
+const OFF_TOPIC_PATTERN =
+  /(```|#include|\bint\s+main\b|\bprintf\s*\(|\bconsole\.log\b|\bdef\s+\w+\s*\(|\bpublic\s+static\s+void\b|\b(?:c\+\+|c#|c|python|java(?:script)?|typescript|php|ruby|golang|rust|kotlin|swift|sql|html|css)\s+(?:code|codes|program|programs|programming|script|function|tutorial|homework|assignment)\b|\b(?:write|gawa(?:n|in)?|create|make)\s+(?:me\s+)?(?:a\s+|an\s+|ng\s+)?(?:program|code|script|essay|poem|story|song|letter)\b|\b(?:homework|assignment|essay)\b)/i;
+
+export const OFF_TOPIC_REPLY =
+  "Pasensya na, pang-WattWise lang ako: kuryente, bill, budget, at devices mo. Subukan mo: \"Bakit mataas ang bill ko?\" o \"Turn off my aircon at 1 AM.\"";
+
+/**
+ * A canned refusal for requests that are clearly not about energy or WattWise
+ * (code, homework, essays), so they never reach OpenAI. Anything borderline
+ * returns null and is left to the model, whose instructions also refuse
+ * off-topic requests.
+ */
+export function offTopicReply(message: string): string | null {
+  if (ON_TOPIC_PATTERN.test(message)) return null;
+  return OFF_TOPIC_PATTERN.test(message) ? OFF_TOPIC_REPLY : null;
+}

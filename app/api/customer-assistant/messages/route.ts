@@ -8,6 +8,7 @@ import {
   CUSTOMER_ASSISTANT_RATE_LIMIT,
   CUSTOMER_ASSISTANT_RATE_WINDOW_MS,
   isCustomerRole,
+  offTopicReply,
 } from "@/lib/customer-assistant-policy";
 import {
   buildCustomerAssistantContext,
@@ -119,14 +120,21 @@ export async function POST(request: NextRequest) {
   });
   if (userInsertError) return NextResponse.json({ error: "The assistant is temporarily unavailable. Try again in a few minutes." }, { status: 503 });
 
-  const context = await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
-  const grounded = buildGroundedCustomerResponse(message, context);
-  const generated = grounded
-    ? { reply: grounded.reply, rawAction: null, rawDisplay: null, fallback: false }
-    : await generateCustomerAssistantReply(message, history, context);
-  const resolved = resolveModelProposal(generated.rawAction, context);
+  // Clearly off-topic requests (code, homework) get a fixed reply without
+  // loading account data or calling OpenAI.
+  const offTopic = offTopicReply(message);
+  const context = offTopic ? null : await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
+  const grounded = context ? buildGroundedCustomerResponse(message, context) : null;
+  const generated = offTopic
+    ? { reply: offTopic, rawAction: null, rawDisplay: null, fallback: false }
+    : grounded
+      ? { reply: grounded.reply, rawAction: null, rawDisplay: null, fallback: false }
+      : await generateCustomerAssistantReply(message, history, context!);
+  const resolved: ReturnType<typeof resolveModelProposal> = context
+    ? resolveModelProposal(generated.rawAction, context)
+    : { proposal: null };
   const content = resolved.refusal ?? generated.reply;
-  const displayData = grounded?.display ?? resolveModelDisplay(generated.rawDisplay, context);
+  const displayData = grounded?.display ?? (context ? resolveModelDisplay(generated.rawDisplay, context) : null);
   const { data: assistant, error } = await admin
     .from("customer_ai_messages")
     .insert({
