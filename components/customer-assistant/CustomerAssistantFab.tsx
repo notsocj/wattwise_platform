@@ -186,7 +186,7 @@ export default function CustomerAssistantFab() {
 
   return (
     <>
-      <div className="pointer-events-none fixed bottom-[82px] left-1/2 z-[60] w-full max-w-[430px] -translate-x-1/2 lg:bottom-8 lg:left-auto lg:right-8 lg:w-auto lg:max-w-none lg:translate-x-0">
+      <div className="pointer-events-none fixed bottom-[82px] left-1/2 z-[60] w-full max-w-[430px] -translate-x-1/2 md:max-w-2xl lg:bottom-8 lg:left-auto lg:right-8 lg:w-auto lg:max-w-none lg:translate-x-0">
         <button
           type="button"
           onClick={() => setIsOpen(true)}

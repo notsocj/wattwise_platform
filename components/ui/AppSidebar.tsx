@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import LogoutButton from "@/components/ui/LogoutButton";
@@ -43,27 +43,45 @@ export default function AppSidebar({ sections, homeHref, settingsHref }: AppSide
 
   // One highlight that glides to the active item (the sidebar stays mounted
   // across navigations). It appears in place, without gliding, on first
-  // paint or when coming back from a page that isn't in this list.
-  useLayoutEffect(() => {
+  // paint, when coming back from a page that isn't in this list, and when the
+  // sidebar itself appears or resizes.
+  function placeHighlight(glide: boolean) {
     const pill = pillRef.current;
-    if (!pill) return;
     const active = navRef.current?.querySelector<HTMLElement>('[data-highlighted="true"]');
-    if (!active) {
+    if (!pill) return;
+    // No active item, or the sidebar is hidden (below lg): an unrendered link
+    // measures 0, so hide the pill rather than park it at the top.
+    if (!active || active.offsetParent === null) {
       pill.style.opacity = "0";
       return;
     }
     const wasHidden = pill.style.opacity !== "1";
-    pill.style.transitionDuration = wasHidden ? "0ms" : "";
+    pill.style.transitionDuration = glide && !wasHidden ? "" : "0ms";
     pill.style.transform = `translateY(${active.offsetTop}px)`;
     pill.style.opacity = "1";
-  }, [highlightedHref]);
+  }
+
+  useLayoutEffect(() => {
+    placeHighlight(true);
+  });
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    // The sidebar appearing (window widened past lg), resizing, or late font
+    // loading moves the items without a re-render; follow them without a glide.
+    const observer = new ResizeObserver(() => placeHighlight(false));
+    observer.observe(nav);
+    for (const section of nav.querySelectorAll(":scope > div")) observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   const email = user?.email ?? "";
   const metadataName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name.trim() : "";
   const displayName = metadataName || email.split("@")[0] || "Your account";
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-sidebar lg:flex print:hidden">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col bg-sidebar lg:flex xl:w-64 print:hidden">
       <Link
         href={homeHref}
         className="mx-3 mt-4 flex h-11 items-center gap-2.5 rounded-lg px-2 focus-visible:outline-2 focus-visible:outline-mint"

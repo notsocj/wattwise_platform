@@ -34,10 +34,10 @@ export default function AppFrame({ children }: { children: ReactNode }) {
     return (
       // Desktop: pages sit on a rounded panel beside the sidebar rail.
       // --app-sidebar lets fixed elements (toasts) centre on the panel.
-      <div className="lg:min-h-dvh lg:bg-sidebar lg:py-2 lg:pl-64 lg:pr-2 lg:[--app-sidebar:16rem]">
+      <div className="lg:min-h-dvh lg:bg-sidebar lg:py-2 lg:pl-56 lg:pr-2 lg:[--app-sidebar:14rem] xl:pl-64 xl:[--app-sidebar:16rem]">
         <AppSidebar sections={APP_DESKTOP_SECTIONS} homeHref="/dashboard" settingsHref="/settings" />
         <div className={DESKTOP_PANEL}>
-          <div className={`${PHONE_COLUMN} lg:min-h-0 lg:max-w-6xl lg:px-6`}>{children}</div>
+          <div className={`${PHONE_COLUMN} md:max-w-2xl lg:min-h-0 lg:max-w-6xl lg:px-6 2xl:max-w-7xl`}>{children}</div>
         </div>
       </div>
     );

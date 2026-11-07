@@ -365,7 +365,7 @@ export default async function DeviceDetailPage(props: {
         </div>
 
         {/* ===== Metrology Gauges ===== */}
-        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-fg/[0.06] bg-surface px-2 py-8 lg:col-span-7 lg:row-span-2 lg:self-stretch lg:px-6">
+        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-fg/[0.06] bg-surface px-2 py-8 lg:col-span-12 xl:col-span-7 xl:row-span-2 lg:self-stretch lg:px-6">
           <CircularGauge
             value={device.watts}
             max={device.maxWatts}
@@ -401,7 +401,7 @@ export default async function DeviceDetailPage(props: {
 
         {/* ===== Power Control (Relay) ===== */}
         {isTenant ? null : (
-          <div className="flex flex-col gap-5 lg:col-span-5">
+          <div className="flex flex-col gap-5 lg:col-span-6 xl:col-span-5">
             {deviceData.budget_status === "auto_cutoff" ? (
               <RestorePowerButton deviceId={device.id} />
             ) : null}
@@ -415,9 +415,9 @@ export default async function DeviceDetailPage(props: {
         )}
 
         {/* ===== Appliance Burn Rate ===== */}
-        <section className={`${CARD} p-5 lg:col-span-5 lg:p-6`}>
+        <section className={`${CARD} p-5 lg:col-span-6 lg:p-6 xl:col-span-5`}>
           <div className="mb-4">
-            <CardHeader icon={Wallet} title="Appliance billing cycle" aside={<CardPill>Device limit</CardPill>} />
+            <CardHeader icon={Wallet} title="Billing cycle" aside={<CardPill>Device limit</CardPill>} />
           </div>
 
           {/* Budget row */}

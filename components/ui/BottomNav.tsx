@@ -20,7 +20,7 @@ export default function BottomNav() {
     <CustomerAssistantFab />
     <nav
       aria-label="Main"
-      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t lg:hidden border-fg/5 bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 md:max-w-2xl border-t lg:hidden border-fg/5 bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
     >
       <div className="flex items-center justify-around px-4 py-2">
         {APP_TABS.map(({ href, label, icon: Icon }) => {

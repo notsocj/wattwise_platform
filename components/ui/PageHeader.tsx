@@ -37,7 +37,7 @@ export default function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-b border-fg/5 bg-canvas/95 backdrop-blur-sm lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-0 lg:bg-transparent lg:backdrop-blur-none print:static print:translate-x-0 print:border-black/10 print:bg-transparent">
+    <header className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 md:max-w-2xl border-b border-fg/5 bg-canvas/95 backdrop-blur-sm lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-0 lg:bg-transparent lg:backdrop-blur-none print:static print:translate-x-0 print:border-black/10 print:bg-transparent">
       <div className="flex h-16 items-center justify-between gap-3 px-5 lg:ww-enter lg:h-auto lg:items-end lg:gap-6 lg:pb-8 lg:pt-10">
         <div className="flex min-w-0 items-center gap-3">
           {backHref ? (

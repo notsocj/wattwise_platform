@@ -29,7 +29,7 @@ export default function ManagerShell({ children }: { children: ReactNode }) {
   const activeHref = getActiveHref(pathname, MANAGER_TABS);
 
   return (
-    <div className="min-h-screen bg-canvas pb-28 text-fg lg:min-h-dvh lg:bg-sidebar lg:py-2 lg:pl-64 lg:pr-2">
+    <div className="min-h-screen bg-canvas pb-28 text-fg lg:min-h-dvh lg:bg-sidebar lg:py-2 lg:pl-56 lg:pr-2 xl:pl-64">
       <AppSidebar sections={MANAGER_DESKTOP_SECTIONS} homeHref="/manager" settingsHref="/manager/settings" />
       <div className={DESKTOP_PANEL}>
         <header className="sticky top-0 z-40 border-b border-fg/5 bg-canvas/95 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent lg:backdrop-blur-none">

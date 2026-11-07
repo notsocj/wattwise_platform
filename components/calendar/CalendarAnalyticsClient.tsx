@@ -135,7 +135,7 @@ export default function CalendarAnalyticsClient({
   return (
     <>
       <div className="flex flex-col gap-5 pb-28 lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:items-start lg:pb-0">
-        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5 lg:col-span-4 lg:col-start-1 lg:row-start-1">
+        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5 lg:col-span-7 lg:row-start-1 xl:col-span-4 xl:col-start-1">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg/45">
@@ -182,7 +182,7 @@ export default function CalendarAnalyticsClient({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-4 lg:col-span-8 lg:col-start-5 lg:row-span-2 lg:row-start-1 lg:p-6">
+        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-4 lg:col-span-12 lg:row-start-2 lg:p-6 xl:col-span-8 xl:col-start-5 xl:row-span-2 xl:row-start-1">
           <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-fg/45">
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((label) => (
               <span key={label}>{label}</span>
@@ -234,7 +234,7 @@ export default function CalendarAnalyticsClient({
           </div>
         </section>
 
-        <div className="sticky bottom-24 z-10 pt-1 lg:static lg:col-span-4 lg:col-start-1 lg:row-start-2 lg:self-start lg:pt-0">
+        <div className="sticky bottom-24 z-10 pt-1 lg:static lg:col-span-5 lg:row-start-1 lg:self-end lg:pt-0 xl:col-span-4 xl:col-start-1 xl:row-start-2 xl:self-start">
           <button
             type="button"
             onClick={() => void handleConsultAi()}

@@ -217,7 +217,7 @@ export default function DashboardLiveTelemetry({
 
   return (
     <>
-      <div className={`${CARD} p-5 lg:col-span-6 lg:self-stretch lg:p-6`}>
+      <div className={`${CARD} p-5 md:self-stretch lg:col-span-6 lg:p-6`}>
         <CardHeader
           icon={Zap}
           title="Live wattage"
@@ -239,12 +239,12 @@ export default function DashboardLiveTelemetry({
 
       {children}
 
-      <section className="mt-2 lg:col-span-12 lg:mt-3">
+      <section className="mt-2 md:col-span-2 lg:col-span-12 lg:mt-3">
         <div className="mb-3 flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-fg">Connected units</h2>
           <span className="text-sm text-fg/40">{devices.length}</span>
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {devices.map((device) => {
             const Icon = getDeviceIcon(device.applianceType, device.name);
 

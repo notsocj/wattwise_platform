@@ -381,11 +381,11 @@ export default async function DashboardPage() {
         description={new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", weekday: "long", month: "long", day: "numeric" }).format(now)}
       />
 
-      <div className="ww-stagger px-5 pt-[84px] flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:pt-0">
+      <div className="ww-stagger px-5 pt-[84px] flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start lg:grid-cols-12 lg:items-start lg:gap-5 lg:pt-0">
         <DashboardLiveTelemetry initialDevices={devices} canManageDevices={!isTenant}>
 
         {/* ===== Total Daily Cost Card ===== */}
-        <div className={`${CARD} p-5 lg:col-span-6 lg:self-stretch lg:p-6`}>
+        <div className={`${CARD} p-5 md:self-stretch lg:col-span-6 lg:p-6`}>
           <CardHeader
             icon={PhilippinePeso}
             title="Today's cost"
@@ -406,7 +406,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* ===== Home Wallet Card ===== */}
-        <div className={`${CARD} p-5 lg:col-span-7 lg:self-stretch lg:p-6`}>
+        <div className={`${CARD} p-5 md:col-span-2 lg:col-span-12 lg:self-stretch lg:p-6 xl:col-span-7`}>
           <div className="mb-4">
             <CardHeader icon={Wallet} title={isTenant ? "Room wallet" : "Home wallet"} aside={<CardPill>Billing cycle</CardPill>} />
           </div>
@@ -451,21 +451,21 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-5 lg:self-stretch lg:[&>*]:h-full">
+        <div className="md:col-span-2 lg:col-span-12 lg:self-stretch lg:[&>*]:h-full xl:col-span-5">
           <WeekSummaryWidget days={weekSummaries} />
         </div>
         {/* Alerts render nothing when there is nothing to say; empty wrappers collapse. */}
-        <div className="empty:hidden lg:col-span-12">
+        <div className="empty:hidden md:col-span-2 lg:col-span-12">
           <BudgetAlertCard />
         </div>
-        <div className="empty:hidden lg:col-span-12">
+        <div className="empty:hidden md:col-span-2 lg:col-span-12">
           <Suspense fallback={null}>
             <BudgetWarningFeed />
           </Suspense>
         </div>
 
         {/* Desktop shows connected units first; this detail card moves below them. */}
-        <div className="lg:order-last lg:col-span-12">
+        <div className="md:col-span-2 lg:order-last lg:col-span-12">
         <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} settingsHref={isTenant ? undefined : "/settings"} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
         </div>
         </DashboardLiveTelemetry>
