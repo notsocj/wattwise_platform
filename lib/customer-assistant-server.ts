@@ -21,6 +21,7 @@ import {
   buildDeviceDisplay,
   type CustomerAssistantDisplay,
 } from "@/lib/customer-assistant-grounding";
+import { describeAutomation, resolveAutomationRequest, type AutomationRule } from "@/lib/device-automations";
 
 type ProfileRow = {
   role: string | null;
@@ -40,6 +41,7 @@ type DeviceRow = {
 };
 
 type UsageRow = { device_id: string; variable_spend_php: number | string | null };
+type AutomationRow = AutomationRule & { device_id: string };
 type UsageByDayRow = {
   device_id: string;
   day_key: string;
@@ -54,6 +56,8 @@ type ReadingRow = {
 
 export type CustomerAssistantContext = {
   role: CustomerRole;
+  /** "Sat, Nov 7, 9:14 PM" in Manila, so the model can read "tonight" and "1 AM". */
+  now_manila: string;
   home_budget_php: number;
   billing_cycle: { start: string; end: string };
   calendar_month_label: string;
@@ -72,6 +76,8 @@ export type CustomerAssistantContext = {
     budget_status: string;
     current_watts: number;
     telemetry_state: "fresh" | "stale";
+    /** Active scheduled turn-offs, described in plain words. */
+    scheduled_turn_offs: string[];
   }>;
 };
 
@@ -110,7 +116,7 @@ export async function buildCustomerAssistantContext(
   const [year, month] = nowKey.split("-");
   const calendarMonthStart = new Date(`${year}-${month}-01T00:00:00+08:00`);
   const calendarMonthEnd = new Date();
-  const [usageResult, readingsResult, preferencesResult, calendarUsageResult, calendarRates] = await Promise.all([
+  const [usageResult, readingsResult, preferencesResult, calendarUsageResult, calendarRates, automationsResult] = await Promise.all([
     supabase
       .from("device_month_usage")
       .select("device_id,variable_spend_php")
@@ -133,7 +139,25 @@ export async function buildCustomerAssistantContext(
     devices.length
       ? getMeralcoRatesForRange(supabase, calendarMonthStart, calendarMonthEnd)
       : Promise.resolve([]),
+    // RLS returns only automations on devices the caller owns (none for tenants).
+    devices.length
+      ? supabase
+          .from("device_automations")
+          .select("device_id,trigger_type,run_at,threshold,ends_at")
+          .eq("status", "active")
+          .in("device_id", devices.map((device) => device.id))
+      : Promise.resolve({ data: [] }),
   ]);
+  const automationsByDevice = new Map<string, string[]>();
+  for (const row of (automationsResult.data ?? []) as Array<Omit<AutomationRow, "trigger" | "threshold"> & { trigger_type: AutomationRule["trigger"]; threshold: number | string | null }>) {
+    const text = describeAutomation({
+      trigger: row.trigger_type,
+      run_at: row.run_at,
+      threshold: row.threshold == null ? null : Number(row.threshold),
+      ends_at: row.ends_at,
+    });
+    automationsByDevice.set(row.device_id, [...(automationsByDevice.get(row.device_id) ?? []), text]);
+  }
   const spendByDevice = new Map(
     ((usageResult.data ?? []) as UsageRow[]).map((row) => [row.device_id, numberValue(row.variable_spend_php)])
   );
@@ -152,6 +176,14 @@ export async function buildCustomerAssistantContext(
 
   return {
     role: profile.role,
+    now_manila: new Intl.DateTimeFormat("en-PH", {
+      timeZone: "Asia/Manila",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date()),
     home_budget_php: numberValue(profile.monthly_budget_php),
     billing_cycle: { start: cycleStart, end: getManilaDayKey(cycle.endDate) },
     calendar_month_label: new Intl.DateTimeFormat("en-PH", { month: "long", year: "numeric", timeZone: "Asia/Manila" }).format(new Date()),
@@ -178,6 +210,7 @@ export async function buildCustomerAssistantContext(
         budget_status: device.budget_status ?? "ok",
         current_watts: Math.max(0, Math.round(numberValue(reading?.average_watts))),
         telemetry_state: readingTime > 0 && now - readingTime <= 20_000 ? "fresh" : "stale",
+        scheduled_turn_offs: automationsByDevice.get(device.id) ?? [],
       };
     }),
   };
@@ -189,6 +222,11 @@ type ModelAction = {
   device_ref?: unknown;
   channel?: unknown;
   enabled?: unknown;
+  trigger?: unknown;
+  time?: unknown;
+  php?: unknown;
+  kwh?: unknown;
+  until?: unknown;
 };
 
 function peso(value: number): string {
@@ -239,6 +277,29 @@ export function resolveModelProposal(
         current_value: peso(context.home_budget_php),
         proposed_value: peso(value),
         consequence: "This changes your dashboard budget target. It does not directly change device limits or relay power.",
+        expires_at,
+      },
+    };
+  }
+
+  if (action.type === "schedule_turn_off") {
+    if (typeof action.device_ref !== "string") return { proposal: null };
+    const device = context.devices.find((item) => item.ref === action.device_ref);
+    if (!device) return { proposal: null, refusal: "Hindi ko matukoy kung aling device. Sabihin ang exact device name bago tayo mag-schedule ng turn-off." };
+    if (!device.manageable) return { proposal: null, refusal: `Ang may-ari lang ng ${device.name} ang puwedeng mag-schedule ng turn-off.` };
+    const rule = resolveAutomationRequest(action, now);
+    if (!rule) return { proposal: null, refusal: "Kailangan ko ng malinaw na oras (e.g. 1:00 AM) o halaga (e.g. ₱50 or 2 kWh) para ma-schedule ito." };
+    const counted = rule.trigger === "time"
+      ? "WattWise will switch the relay off at that time. The unit applies it within about 5 seconds, and you turn it back on yourself."
+      : `Counting starts when you confirm. If it doesn't reach the amount before the end time, nothing happens. The unit turns off within about 20 seconds of reaching it.`;
+    return {
+      proposal: {
+        action: { type: "schedule_turn_off", device_id: device.id, ...rule },
+        title: "Schedule a turn-off",
+        subject: device.name,
+        current_value: device.scheduled_turn_offs.length ? `${device.scheduled_turn_offs.length} already scheduled` : "Nothing scheduled",
+        proposed_value: describeAutomation(rule),
+        consequence: counted,
         expires_at,
       },
     };
@@ -318,6 +379,7 @@ export async function generateCustomerAssistantReply(
   }
   const safeContext = {
     role: context.role,
+    now_manila: context.now_manila,
     home_budget_php: context.home_budget_php,
     billing_cycle: context.billing_cycle,
     calendar_month_label: context.calendar_month_label,
@@ -334,6 +396,7 @@ export async function generateCustomerAssistantReply(
       budget_status: device.budget_status,
       current_watts: device.current_watts,
       telemetry_state: device.telemetry_state,
+      scheduled_turn_offs: device.scheduled_turn_offs,
     })),
   };
   try {
@@ -345,7 +408,7 @@ export async function generateCustomerAssistantReply(
       messages: [
         {
           role: "system",
-          content: `You are WattWise Customer Assistant. Speak concise, casual, practical Taglish. Use only the supplied account context. When the answer concerns usage, bills, budgets, or devices, cite exact device names and current numbers instead of asking the user to guess. Return strict JSON with all three keys: {"reply":"...","action":null,"display":null}. To show device cards, use "display":{"type":"device_list","title":"...","device_refs":["device_1"]}. Use cards when listing, comparing, or discussing specific devices. Action may be null or one of: {"type":"update_home_budget","value":number}, {"type":"update_device_limit","device_ref":"device_1","value":number}, {"type":"set_auto_cutoff","device_ref":"device_1","enabled":boolean}, {"type":"set_notification_preference","channel":"push|email","enabled":boolean}. Never guess a device or peso amount; ask a clarifying question only when the requested target is genuinely absent or ambiguous. A proposal is only a review request, never claim it was applied. Tenants may only propose notification preference changes. Never propose relay control, account/password changes, billing-cycle changes, Wi-Fi/pairing, deletion, or power restoration. Peso values must be > 0 and <= ${MAX_PESO_VALUE}.`,
+          content: `You are WattWise Customer Assistant. Speak concise, casual, practical Taglish. Use only the supplied account context. When the answer concerns usage, bills, budgets, or devices, cite exact device names and current numbers instead of asking the user to guess. Return strict JSON with all three keys: {"reply":"...","action":null,"display":null}. To show device cards, use "display":{"type":"device_list","title":"...","device_refs":["device_1"]}. Use cards when listing, comparing, or discussing specific devices. Action may be null or one of: {"type":"update_home_budget","value":number}, {"type":"update_device_limit","device_ref":"device_1","value":number}, {"type":"set_auto_cutoff","device_ref":"device_1","enabled":boolean}, {"type":"set_notification_preference","channel":"push|email","enabled":boolean}, or a scheduled turn-off: {"type":"schedule_turn_off","device_ref":"device_1","trigger":"time","time":"HH:MM"} (turn off at that Manila time, 24-hour, the next time it comes around), {"type":"schedule_turn_off","device_ref":"device_1","trigger":"spend","php":number,"until":"HH:MM"|null} (turn off after it spends that many more pesos from now), or {"type":"schedule_turn_off","device_ref":"device_1","trigger":"usage","kwh":number,"until":"HH:MM"|null} (after that many more kWh from now). "until" ends the rule at that Manila time; use "06:00" for "tonight", null for no end (24 hours). now_manila in the context is the current time. Spend and usage count from when the user confirms, not from the start of the billing cycle; say so. Never guess a device or peso amount; ask a clarifying question only when the requested target is genuinely absent or ambiguous. A proposal is only a review request, never claim it was applied or scheduled. Tenants may only propose notification preference changes. Scheduled turn-offs only ever turn devices off. Never propose turning a device on, immediate relay control, account/password changes, billing-cycle changes, Wi-Fi/pairing, deletion, or power restoration. Peso values must be > 0 and <= ${MAX_PESO_VALUE}.`,
         },
         { role: "user", content: `Current account context:\n${JSON.stringify(safeContext)}` },
         ...history.slice(-6).map((item) => ({ role: item.role, content: item.content.slice(0, 1000) })),

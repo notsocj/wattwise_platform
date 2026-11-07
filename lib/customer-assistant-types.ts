@@ -1,4 +1,5 @@
 import type { CustomerAssistantDisplay } from "@/lib/customer-assistant-grounding";
+import type { AutomationRule } from "@/lib/device-automations";
 
 export type CustomerRole = "user" | "tenant";
 
@@ -10,7 +11,8 @@ export type CustomerAssistantAction =
       type: "set_notification_preference";
       channel: "push" | "email";
       enabled: boolean;
-    };
+    }
+  | ({ type: "schedule_turn_off"; device_id: string } & AutomationRule);
 
 export type CustomerAssistantProposal = {
   action: CustomerAssistantAction;

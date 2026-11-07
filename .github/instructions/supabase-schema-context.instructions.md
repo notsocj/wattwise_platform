@@ -12,15 +12,15 @@ This file reflects the current database shape defined by `supabase/migrations/00
 All objects live in `public` unless noted. Extensions: `uuid-ossp` (`001`), `pg_cron` (`039`).
 
 - Core tables: `profiles`, `meralco_rates`, `devices`, `energy_logs`, `ai_insights`
-- Smart Control tables: `device_month_usage`, `device_budget_events`
+- Smart Control tables: `device_month_usage`, `device_budget_events`, `device_automations` (`041`)
 - Notification / assistant tables: `notification_preferences`, `notification_deliveries`, `customer_ai_messages`
 - Admin / automation tables: `meralco_rate_sync_runs`, `admin_audit_logs`, `demo_device_simulations`
 - Telemetry RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_average_watts_by_device`, `get_device_usage_periods`, `get_hourly_averages`
-- Billing / Smart Control functions: `meralco_variable_rate_per_kwh`, `household_monthly_kwh_for`, `my_household_usage`, `apply_device_budget_settings`, `restore_device_power`
+- Billing / Smart Control functions: `meralco_variable_rate_per_kwh`, `household_monthly_kwh_for`, `my_household_usage`, `apply_device_budget_settings`, `restore_device_power`, `create_device_automation`, `cancel_device_automation`, `run_device_automations` (`041`)
 - Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`
 - RLS helpers: `current_profile_role`, `can_access_device`, `is_registered_device_mac`, `accessible_energy_log_device_keys`
 - Trigger functions: `handle_new_user`, `guard_profile_privileged_columns`, `create_notification_preferences_for_profile`, `sync_device_owner_columns`, `update_device_last_seen`, `handle_energy_log_smart_budget`, `record_device_budget_warnings`, `touch_notification_preferences_updated_at`, `touch_notification_delivery_updated_at`
-- pg_cron jobs: `simulate-demo-units`, `purge-cron-run-details`
+- pg_cron jobs: `simulate-demo-units`, `purge-cron-run-details`, `run-device-automations` (`041`)
 
 Configured outside migrations (not reproducible from `supabase/migrations/`):
 
@@ -299,6 +299,29 @@ Notes:
 - each INSERT triggers external delivery through the Database Webhook (see Notification Tables)
 - `apply_device_budget_settings()` deletes and re-inserts the current cycle's terminal event when a new limit is already reached
 
+### `device_automations`
+
+Scheduled turn-offs (`041`). A rule turns one device OFF: at a time (`time`), or after it spends PHP `threshold` (`spend`) or uses `threshold` kWh (`usage`) more, counted from when the rule was created, until `ends_at`. Rules never turn a device on.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | uuid PK | `gen_random_uuid()` |
+| `device_id` | uuid NOT NULL | FK `devices(id)` ON DELETE CASCADE |
+| `created_by` | uuid NOT NULL | FK `profiles(id)` ON DELETE CASCADE |
+| `trigger_type` | text NOT NULL | `time`, `spend`, `usage` |
+| `run_at` | timestamptz | `time` rules only |
+| `threshold` | numeric(14,6) | PHP or kWh; `spend`/`usage` only, > 0 |
+| `ends_at` | timestamptz NOT NULL | window end; `time` rules get `run_at + 1 hour` |
+| `status` | text NOT NULL DEFAULT `active` | `active`, `done`, `cancelled`, `expired` |
+| `consumed_kwh`, `consumed_php` | numeric(14,6) DEFAULT 0 | progress since creation |
+| `last_usage_kwh`, `last_spend_php`, `last_month_start` | | last `device_month_usage` snapshot the scheduler saw |
+| `created_at`, `executed_at`, `ended_at` | timestamptz | |
+
+- CHECK `device_automations_trigger_fields`: `time` needs `run_at` and no `threshold`; `spend`/`usage` need `threshold > 0` and no `run_at`
+- indexes: partial `(created_at) WHERE status = 'active'`, and `(device_id, created_at DESC)`
+- RLS on; `owners_select_device_automations` lets `authenticated` read rules on devices they own (`owner_id` or `user_id`). No insert/update/delete policies; all writes go through the functions below. `anon` has no table privileges
+- progress reads `device_month_usage` deltas, which the budget trigger already prices with `meralco_variable_rate_per_kwh`; when the billing cycle rolls over, the new cycle's row counts from zero
+
 ## Notification Tables
 
 ### `notification_preferences`
@@ -549,6 +572,10 @@ All are `LANGUAGE sql STABLE` and SECURITY INVOKER, so `devices`/`energy_logs` R
 | `apply_device_budget_settings(p_device_id uuid, p_limit_php numeric, p_auto_cutoff_enabled boolean)` | SECURITY DEFINER; `authenticated` | Returns `device_id, auto_cutoff_enabled, relay_state, budget_status, current_spend_php`. Owner/`user_id` or super admin only (never tenants); limit 0 < x ≤ 9,999,999.99. Sets the limit and `require_approval_on_expiry = NOT p_auto_cutoff_enabled`, then reconciles with current-cycle spend (may cut power now, record a terminal event, or reset to `ok`) |
 | `restore_device_power(p_device_id uuid, p_confirmed boolean)` | SECURITY DEFINER; `authenticated` | Returns `device_id, relay_state, budget_status, current_spend_php`. The only recovery path from `auto_cutoff`; requires `p_confirmed = true`, same access rules, and refuses while auto-cutoff is enabled and the limit is still reached. Sets `relay_state = true` and `approval_required` or `ok` |
 
+| `create_device_automation(p_device_id uuid, p_trigger text, p_run_at timestamptz, p_threshold numeric, p_ends_at timestamptz)` | SECURITY DEFINER; `authenticated` (revoked from PUBLIC, anon) | Returns the new rule's id. Caller must have role `user` and own the device. `time`: `run_at` within the next 7 days (`ends_at` is set to `run_at + 1 hour`). `spend`: 0 < PHP ≤ 9,999,999.99; `usage`: 0 < kWh ≤ 100,000; `ends_at` within 7 days. At most 5 active rules per device. Snapshots the device's latest `device_month_usage` row so progress counts from now. Errors use SQLSTATE `42501`, `22023`, or `P0001` with user-facing messages. Called by the customer-assistant confirm route |
+| `cancel_device_automation(p_automation_id uuid)` | SECURITY DEFINER; `authenticated` (revoked from PUBLIC, anon) | Sets an active rule on a device the caller owns to `cancelled`; returns false when there was nothing to cancel. Called by `DELETE /api/devices/[deviceId]/automations/[automationId]` |
+| `run_device_automations()` | SECURITY DEFINER; `service_role` only | The scheduler (pg_cron, every 15 s). For each active rule (`FOR UPDATE SKIP LOCKED`): time rules fire when `run_at <= now() < ends_at`; spend/usage rules add the `device_month_usage` delta and fire at the threshold. Firing sets `devices.relay_state = false` and the rule to `done`; a rule whose window passed becomes `expired` |
+
 `026` qualifies `device_month_usage` columns in both budget RPCs to avoid `RETURNS TABLE` name conflicts.
 
 ### RLS helper functions
@@ -575,12 +602,13 @@ SECURITY DEFINER, EXECUTE for `service_role` only (also checks `auth.role()`). R
 - a NULL `last_generated_at` starts ten seconds before the current tick, so a new or reset meter has no seeded history
 - updates `energy_kwh` (full precision), `last_generated_at`, and sets `live_since` when the unit came back online or `live_since` was NULL
 
-### Scheduled jobs (pg_cron, `039`)
+### Scheduled jobs (pg_cron, `039`, `041`)
 
 | Job | Schedule | Command |
 | --- | --- | --- |
 | `simulate-demo-units` | `10 seconds` | `SELECT public.simulate_demo_units()` |
 | `purge-cron-run-details` | `17 3 * * *` (daily, pg_cron clock) | `DELETE FROM cron.job_run_details WHERE end_time < now() - interval '1 day'` |
+| `run-device-automations` (`041`) | `15 seconds` | `SELECT public.run_device_automations()` |
 
 ## RLS Summary
 

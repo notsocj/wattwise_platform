@@ -20,6 +20,7 @@ import {
 import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
+import DeviceAutomationsCard, { type DeviceAutomationRow } from "@/components/dashboard/DeviceAutomationsCard";
 import TelemetryFreshnessBadge from "@/components/dashboard/TelemetryFreshnessBadge";
 import CircularGauge from "@/components/dashboard/CircularGauge";
 import RestorePowerButton from "@/components/ui/RestorePowerButton";
@@ -170,7 +171,7 @@ export default async function DeviceDetailPage(props: {
 
   const billingCycle = getCurrentBillingCycle(billingCycleStartDay, now);
 
-  const [rateRows, usageByDeviceDayRes, usagePeriodsRes, monthUsageRes, latestTelemetryResult] = await Promise.all([
+  const [rateRows, usageByDeviceDayRes, usagePeriodsRes, monthUsageRes, latestTelemetryResult, automationsRes] = await Promise.all([
     getMeralcoRatesForRange(supabase, billingCycle.startDate, now),
     forwardedCycleUsagePromise &&
     forwardedCycle?.startDate.getTime() === billingCycle.startDate.getTime()
@@ -198,6 +199,17 @@ export default async function DeviceDetailPage(props: {
       .order("recorded_at", { ascending: false })
       .limit(1)
       .maybeSingle<EnergyLogRow>(),
+    // Scheduled turn-offs: active ones plus those that ended in the last day.
+    isTenant
+      ? Promise.resolve({ data: [] as DeviceAutomationRow[] })
+      : supabase
+          .from("device_automations")
+          .select("id,trigger_type,run_at,threshold,ends_at,status,consumed_kwh,consumed_php,executed_at,ended_at")
+          .eq("device_id", deviceData.id)
+          .or(`status.eq.active,ended_at.gte.${new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()}`)
+          .order("created_at", { ascending: false })
+          .limit(6)
+          .returns<DeviceAutomationRow[]>(),
   ]);
 
   let latestLog: EnergyLogRow | null = null;
@@ -398,6 +410,7 @@ export default async function DeviceDetailPage(props: {
               initialRelayState={deviceData.relay_state !== false}
               variant="full"
             />
+            <DeviceAutomationsCard deviceId={device.id} rows={automationsRes.data ?? []} />
           </div>
         )}
 

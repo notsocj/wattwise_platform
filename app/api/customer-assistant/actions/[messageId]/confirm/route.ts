@@ -25,6 +25,7 @@ function resultMessage(proposal: CustomerAssistantProposal): string {
     case "update_device_limit": return `${proposal.subject} limit updated to ${proposal.proposed_value}.`;
     case "set_auto_cutoff": return `Automatic cutoff for ${proposal.subject} is now ${proposal.action.enabled ? "enabled" : "disabled"}.`;
     case "set_notification_preference": return `${proposal.subject} is now ${proposal.action.enabled ? "enabled" : "disabled"}.`;
+    case "schedule_turn_off": return `Scheduled for ${proposal.subject}: ${proposal.proposed_value}.`;
   }
 }
 
@@ -81,6 +82,23 @@ export async function POST(
       const column = action.channel === "push" ? "budget_push_enabled" : "budget_email_enabled";
       const { error } = await supabase.from("notification_preferences").update({ [column]: action.enabled }).eq("user_id", user.id);
       if (error) throw new Error("The notification preference could not be updated.");
+    } else if (action.type === "schedule_turn_off") {
+      // create_device_automation re-checks ownership, role, and timing (a time
+      // that passed while the card sat unconfirmed is rejected).
+      const { error } = await supabase.rpc("create_device_automation", {
+        p_device_id: action.device_id,
+        p_trigger: action.trigger,
+        p_run_at: action.run_at,
+        p_threshold: action.threshold,
+        p_ends_at: action.ends_at,
+      });
+      if (error) {
+        throw new Error(
+          error.code === "22023" || error.code === "P0001" || error.code === "42501"
+            ? error.message
+            : "The turn-off could not be scheduled."
+        );
+      }
     } else {
       const { data: device } = await supabase
         .from("devices")

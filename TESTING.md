@@ -101,6 +101,12 @@ Safe load only.
 
 - [ ] Ask about your bill or a device. ✅ The answer uses your real numbers.
 - [ ] Ask it to change a device limit, then confirm. ✅ The dashboard reflects the change.
+- [ ] Ask "Turn off the aircon at 1 AM". ✅ A "Schedule a turn-off" card shows the exact time ("1:00 AM, Sun, Nov 8"); nothing changes until you confirm. After confirming, the device page's **Scheduled turn-offs** card lists it, and at that time the relay goes off within about 20 seconds.
+- [ ] Ask "Turn it off after ₱5 more tonight" on a running demo unit (or a lamp). ✅ After confirming, the card shows progress ("₱1.20 of ₱5.00 since it was scheduled"), and the relay turns off within about 20 seconds of reaching ₱5.
+- [ ] Ask "Turn off the aircon after 0.2 kWh". ✅ Same as above, counted in kWh.
+- [ ] Cancel a scheduled turn-off from the device page. ✅ It asks first, then shows "Cancelled"; the device keeps running.
+- [ ] Ask it to turn a device **on** at a time, or to turn it off right now. ✅ It declines; scheduled rules only turn devices off.
+- [ ] As a tenant, ask to schedule a turn-off. ✅ It explains only the owner can.
 - [ ] Turn on airplane mode and send a message. ✅ Your text stays in the box and a friendly error appears.
 
 ## 11. Manager and tenant

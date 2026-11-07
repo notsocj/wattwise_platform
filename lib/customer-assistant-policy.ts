@@ -3,6 +3,9 @@ import type {
   CustomerAssistantProposal,
   CustomerRole,
 } from "@/lib/customer-assistant-types";
+import { isAutomationRule } from "./device-automations.ts";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const CUSTOMER_ASSISTANT_MESSAGE_LIMIT = 1000;
 export const CUSTOMER_ASSISTANT_HISTORY_LIMIT = 10;
@@ -49,7 +52,11 @@ export function isCustomerAssistantProposal(value: unknown): value is CustomerAs
       typeof action.enabled === "boolean") ||
     (action.type === "set_notification_preference" &&
       (action.channel === "push" || action.channel === "email") &&
-      typeof action.enabled === "boolean");
+      typeof action.enabled === "boolean") ||
+    (action.type === "schedule_turn_off" &&
+      typeof action.device_id === "string" &&
+      UUID_PATTERN.test(action.device_id) &&
+      isAutomationRule(action));
   return (
     validAction &&
     typeof proposal.title === "string" &&
