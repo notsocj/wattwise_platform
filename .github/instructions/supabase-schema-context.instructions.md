@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `039`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
+This file reflects the current database shape defined by `supabase/migrations/001` through `042`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
 
 ## Current Schema Summary
 
@@ -597,7 +597,7 @@ All are `LANGUAGE sql STABLE` and SECURITY INVOKER, so `devices`/`energy_logs` R
 | Function | Notes |
 | --- | --- |
 | `current_profile_role()` | SECURITY DEFINER, `row_security = off`; returns the caller's `profiles.role`, NULL when `auth.uid()` is NULL (`016`–`018`). Call as `(SELECT current_profile_role())` in policies |
-| `can_access_device(target_device devices)` | SECURITY DEFINER; true for super admin, owner, `user_id`, or tenant, and true when `auth.uid()` IS NULL (`018`) |
+| `can_access_device(target_device devices)` | SECURITY DEFINER; true for super admin, owner, `user_id`, or tenant; false when `auth.uid()` IS NULL (`040`; it returned true from `018` until then) |
 | `is_registered_device_mac(candidate_mac text)` | SECURITY DEFINER, `row_security = off`; `upper(mac_address) = upper(trim(candidate_mac))`; EXECUTE for anon, authenticated (`022`) |
 | `accessible_energy_log_device_keys()` | SECURITY DEFINER, `row_security = off`; SETOF text of UUID and MAC keys of devices the caller owns, uses, or rents; EXECUTE for anon (returns nothing) and authenticated (`033`) |
 
@@ -655,11 +655,13 @@ RLS is enabled on every table above: `profiles`, `meralco_rates`, `devices`, `en
 The `anon` role is intentionally allowed to support ESP32 hardware:
 
 - `INSERT` into `energy_logs` when `is_registered_device_mac(device_id)` is true (case-insensitive, trimmed)
-- `SELECT` from `devices` so hardware can poll `relay_state` by MAC (`hardware_anon_select_devices`, `USING (true)`)
+- `SELECT` from `devices` so hardware can poll `relay_state` by MAC (`hardware_anon_select_devices`, `USING (true)`), limited to the `mac_address` and `relay_state` columns since `040` (`REVOKE ALL ON devices FROM anon`, then a column `GRANT SELECT`); anon has no other privilege on `devices`
 
 Cautions:
 
-- the anon device policy (and `can_access_device()` returning true for a NULL `auth.uid()`) lets anyone with the public anon key read every `devices` row and column; the hardware's `select=relay_state&mac_address=eq.<MAC>` filter is a client choice, not a restriction
+- the firmware's `GET /rest/v1/devices?select=relay_state&mac_address=eq.<MAC>` keeps working; anon `select=*`, any other column, and writes fail with `42501`. Any new anon read must name only those two columns, and a column added to `devices` is hidden from anon unless granted
+- anon can still list every `mac_address` with its `relay_state`, and a registered MAC is all an anon telemetry insert needs. MACs are not secret (an ESP32 broadcasts its own over Wi-Fi), so preventing spoofed readings needs a per-device secret and a firmware update
+- before `040`, both this policy and `can_access_device()` (true for a NULL `auth.uid()`, through the all-roles `users_select_accessible_devices`) let the public anon key read every `devices` row and column
 - the insert check ignores case and whitespace, but the triggers and RPCs match `device_id` exactly; hardware must post the MAC exactly as stored (uppercase with colons) or the reading is stored but skipped by last-seen, budget, and usage logic
 
 ## Query and Implementation Rules
