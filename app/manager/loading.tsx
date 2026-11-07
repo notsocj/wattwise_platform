@@ -5,7 +5,7 @@ import LoadingIndicator, {
 
 function MetricSkeleton() {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-surface p-4">
+    <div className="rounded-2xl border border-fg/[0.06] bg-surface p-4">
       <LoadingSkeleton className="h-7 w-16 rounded-md" />
       <LoadingSkeleton className="mt-2 h-3 w-24 rounded" />
     </div>
@@ -14,7 +14,7 @@ function MetricSkeleton() {
 
 function RoomSkeleton() {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <LoadingSkeleton className="h-4 w-32 rounded" />
@@ -38,13 +38,13 @@ function RoomSkeleton() {
 
 export default function ManagerLoading() {
   return (
-    <div className="min-h-screen bg-canvas pb-28 text-white">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-canvas/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-canvas pb-28 text-fg lg:min-h-0 lg:pb-0">
+      <header className="sticky top-0 z-40 border-b border-fg/5 bg-canvas/95 backdrop-blur-sm lg:hidden">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 pb-4 pt-5">
           <div className="min-w-0">
             <LoadingSkeleton className="h-3 w-28 rounded" />
             <div className="mt-2 flex items-center gap-2">
-              <Building2 className="h-5 w-5 shrink-0 text-mint" />
+              <Building2 className="h-5 w-5 shrink-0 text-accent" />
               <LoadingSkeleton className="h-6 w-40 rounded-md" />
             </div>
           </div>
@@ -52,9 +52,9 @@ export default function ManagerLoading() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-5 pt-4">
+      <main className="mx-auto w-full max-w-5xl px-5 pt-4 lg:px-0 lg:pt-0">
         <div className="space-y-4">
-          <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+          <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <LoadingSkeleton className="h-3 w-28 rounded" />
@@ -72,7 +72,7 @@ export default function ManagerLoading() {
             <MetricSkeleton />
           </section>
 
-          <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+          <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <LoadingSkeleton className="h-4 w-28 rounded" />
               <LoadingSkeleton className="h-8 w-24 rounded-full" />
@@ -87,7 +87,7 @@ export default function ManagerLoading() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-white/5 bg-canvas/95 backdrop-blur-sm">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 border-t border-fg/5 bg-canvas/95 backdrop-blur-sm">
         <div className="grid grid-cols-6 px-2 py-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div

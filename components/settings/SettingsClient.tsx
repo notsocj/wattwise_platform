@@ -62,7 +62,7 @@ export default function SettingsClient({
 
       {toast ? (
         <div
-          className={`fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border px-4 py-3 backdrop-blur-sm ${
+          className={`fixed bottom-24 left-1/2 z-50 w-[calc(100%-2rem)] max-w-97.5 -translate-x-1/2 rounded-xl border px-4 py-3 backdrop-blur-sm transition-[translate,scale,opacity] duration-200 ease-out starting:translate-y-2 starting:opacity-0 lg:bottom-8 lg:left-[calc(50%+var(--app-sidebar,0px)/2)] ${
             toast.type === "success"
               ? "border-mint/35 bg-mint/10"
               : "border-danger/35 bg-danger/10"
@@ -70,13 +70,13 @@ export default function SettingsClient({
         >
           <div className="flex items-center gap-2.5">
             {toast.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-mint" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" />
             ) : (
               <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
             )}
             <p
               className={`text-sm font-semibold ${
-                toast.type === "success" ? "text-mint" : "text-danger"
+                toast.type === "success" ? "text-accent" : "text-danger"
               }`}
             >
               {toast.message}

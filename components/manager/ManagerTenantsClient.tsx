@@ -150,18 +150,18 @@ export default function ManagerTenantsClient({
         <div className="rounded-xl border border-mint/35 bg-mint/10 p-4 text-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-bold text-mint">Tenant credentials generated</p>
-              <p className="mt-1 break-all text-white/70">
+              <p className="font-bold text-accent">Tenant credentials generated</p>
+              <p className="mt-1 break-all text-fg/70">
                 Email: {credential.email}
               </p>
-              <p className="break-all text-white/70">
+              <p className="break-all text-fg/70">
                 Temporary password: {credential.password}
               </p>
             </div>
             <button
               type="button"
               onClick={() => void copyCredential()}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-mint transition-colors hover:bg-mint/15"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
             >
               {copiedCredential ? (
                 <Check className="h-4 w-4" />
@@ -174,10 +174,10 @@ export default function ManagerTenantsClient({
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-mint" />
-          <h2 className="text-sm font-bold uppercase tracking-wider">
+          <UserPlus className="h-4 w-4 text-accent" />
+          <h2 className="text-base font-semibold tracking-tight">
             Create Tenant
           </h2>
         </div>
@@ -186,13 +186,13 @@ export default function ManagerTenantsClient({
             value={tenantEmail}
             onChange={(event) => setTenantEmail(event.target.value)}
             placeholder="room3@wattwise.local"
-            className="rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <input
             value={tenantName}
             onChange={(event) => setTenantName(event.target.value)}
             placeholder="Tenant name or room label"
-            className="rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="button"
@@ -214,18 +214,18 @@ export default function ManagerTenantsClient({
         </div>
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+        <h2 className="text-base font-semibold tracking-tight">
           Tenant Assignments
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">
+        <p className="mt-1 text-xs leading-relaxed text-fg/45">
           Move tenants between rooms without giving them edit access to limits or
           relay controls.
         </p>
 
         <div className="mt-4 space-y-3">
           {tenants.length === 0 ? (
-            <p className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm text-white/50">
+            <p className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
               Create a tenant account to start assigning renters to room meters.
             </p>
           ) : (
@@ -238,14 +238,14 @@ export default function ManagerTenantsClient({
               return (
                 <div
                   key={tenant.id}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
+                  className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-bold">
                         {tenant.full_name || tenant.email}
                       </p>
-                      <p className="mt-1 truncate text-xs text-white/45">
+                      <p className="mt-1 truncate text-xs text-fg/45">
                         {tenant.email}
                       </p>
                       {tenant.must_update_password ? (
@@ -254,7 +254,7 @@ export default function ManagerTenantsClient({
                         </p>
                       ) : null}
                     </div>
-                    <span className="rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/55">
+                    <span className="rounded-full bg-fg/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-fg/55">
                       {assignedDevice ? "Assigned" : "Vacant"}
                     </span>
                   </div>
@@ -269,7 +269,7 @@ export default function ManagerTenantsClient({
                         void assignTenant(tenant.id, nextDeviceId)
                       }
                     />
-                    <div className="rounded-xl border border-white/[0.06] bg-black/10 px-3 py-2 text-xs text-white/50">
+                    <div className="rounded-xl border border-fg/[0.06] bg-shade/10 px-3 py-2 text-xs text-fg/50">
                       {assignedDevice
                         ? `${formatPeso(assignedDevice.spend_php)} / ${formatPeso(
                             assignedDevice.user_approved_limit_php

@@ -160,18 +160,18 @@ export default function AutoShutoffSection({
 
   return (
     <>
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+        <h2 className="text-base font-semibold tracking-tight">
           Automatic Shutoff at 100%
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">
+        <p className="mt-1 text-xs leading-relaxed text-fg/45">
           Choose which appliances WattWise may turn off after their approved
           billing-cycle variable-spend limit is reached.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
           {localDevices.length === 0 ? (
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm text-white/50">
+            <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
               Add an appliance first to configure safety overrides.
             </div>
           ) : (
@@ -182,12 +182,12 @@ export default function AutoShutoffSection({
               return (
                 <div
                   key={device.id}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
+                  className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold">{device.device_name}</p>
-                      <p className="mt-1 text-[11px] text-white/45">
+                      <p className="mt-1 text-[11px] text-fg/45">
                         Limit: {formatLimit(device.user_approved_limit_php)}
                       </p>
                       {device.budget_status === "approval_required" ? (
@@ -210,7 +210,7 @@ export default function AutoShutoffSection({
                       role="switch"
                       aria-checked={autoCutoffEnabled}
                       className={`relative h-7 w-14 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                        autoCutoffEnabled ? "bg-naku" : "bg-white/15"
+                        autoCutoffEnabled ? "bg-naku" : "bg-fg/15"
                       }`}
                       aria-label={`Automatic shutoff for ${device.device_name}`}
                     >
@@ -232,7 +232,7 @@ export default function AutoShutoffSection({
                       )}
                     </button>
                   </div>
-                  <p className="mt-3 text-[11px] text-white/40">
+                  <p className="mt-3 text-[11px] text-fg/40">
                     {autoCutoffEnabled
                       ? "Enabled: WattWise turns the relay off at 100%."
                       : "Disabled: WattWise alerts you at 100% and leaves power on."}

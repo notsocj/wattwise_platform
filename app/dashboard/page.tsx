@@ -2,8 +2,10 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
+  PhilippinePeso,
   Wallet,
 } from "lucide-react";
+import { CARD, CardHeader, CardPill } from "@/components/ui/Card";
 import BottomNav from "@/components/ui/BottomNav";
 import { Suspense } from "react";
 import { startQuery } from "@/lib/start-query";
@@ -53,6 +55,7 @@ type UsageByDeviceRow = {
   usage_kwh: number | string;
 };
 type ProfileRow = {
+  full_name: string | null;
   monthly_budget_php: number | string | null;
   billing_cycle_start_day: number | null;
   role: string | null;
@@ -146,7 +149,7 @@ export default async function DashboardPage() {
   const [profileResult, activeRates, devicesRows] = await Promise.all([
     supabase
       .from("profiles")
-      .select("monthly_budget_php, billing_cycle_start_day, role")
+      .select("full_name, monthly_budget_php, billing_cycle_start_day, role")
       .eq("id", user.id)
       .maybeSingle<ProfileRow>(),
     getActiveMeralcoRates(supabase),
@@ -311,7 +314,7 @@ export default async function DashboardPage() {
   const showDailyTrend = !hasNoDailyCostYet;
 
   let TrendIcon = Minus;
-  let trendClassName = "text-white/50";
+  let trendClassName = "text-fg/50";
   let trendCopy = "No change from yesterday";
 
   if (!hasNoDailyCostYet && !hasSameSpend && totalYesterdayCostPhp > 0) {
@@ -369,61 +372,50 @@ export default async function DashboardPage() {
     computeFixedChargesWithVat(activeRates.fixedMonthlyChargesPhp, activeRates.vatRate);
 
   return (
-    <div className="min-h-screen bg-canvas text-white pb-24">
+    <div className="min-h-screen bg-canvas lg:min-h-0 text-fg pb-24 lg:pb-12">
 
       {/* ===== Header ===== */}
-      <PageHeader title={<>Watt<span className="text-mint">Wise</span></>} />
+      <PageHeader
+        title={<>Watt<span className="text-accent">Wise</span></>}
+        desktopTitle={getGreeting(now, profileData?.full_name)}
+        description={new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", weekday: "long", month: "long", day: "numeric" }).format(now)}
+      />
 
-      <div className="px-5 pt-[84px] flex flex-col gap-4">
+      <div className="ww-stagger px-5 pt-[84px] flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:pt-0">
         <DashboardLiveTelemetry initialDevices={devices} canManageDevices={!isTenant}>
 
         {/* ===== Total Daily Cost Card ===== */}
-        <div className="relative rounded-xl bg-surface border border-white/5 p-5 overflow-hidden">
-          {/* Mint left accent */}
-          <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
-          <p className="text-[11px] font-semibold tracking-widest text-white/50 uppercase mb-1">
-            Total Daily Cost
-          </p>
-          <p className="text-5xl font-bold tracking-tight text-white">
-            <span className="text-3xl font-semibold text-white/50 mr-0.5">
-              ₱
-            </span>
+        <div className={`${CARD} p-5 lg:col-span-6 lg:self-stretch lg:p-6`}>
+          <CardHeader
+            icon={PhilippinePeso}
+            title="Today's cost"
+            aside={<CardPill>incl. {(activeRates.vatRate * 100).toFixed(0)}% VAT</CardPill>}
+          />
+          <p className="mt-4 text-5xl font-bold tracking-tight text-fg">
+            <span className="mr-0.5 text-3xl font-semibold text-fg/50">₱</span>
             {totalDailyCostPhp.toLocaleString("en-PH", {
               minimumFractionDigits: 2,
             })}
           </p>
           {showDailyTrend ? (
-            <div className={`flex items-center gap-1.5 mt-2 text-sm ${trendClassName}`}>
-              <TrendIcon className="w-3.5 h-3.5" />
+            <div className={`mt-2 flex items-center gap-1.5 text-sm ${trendClassName}`}>
+              <TrendIcon className="h-3.5 w-3.5" />
               <span className="font-medium">{trendCopy}</span>
             </div>
           ) : null}
-          <p className="text-[10px] text-white/40 mt-2">
-            VAT: {(activeRates.vatRate * 100).toFixed(2)}%
-          </p>
         </div>
 
         {/* ===== Home Wallet Card ===== */}
-        <div className="relative rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5 overflow-hidden">
-          <div className="absolute left-0 inset-y-0 w-1 bg-mint/60 rounded-r-full" />
-
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-mint" />
-              <h2 className="text-[13px] font-bold uppercase tracking-wider">
-                Home Wallet
-              </h2>
-            </div>
-            <span className="text-[10px] text-white/40 font-medium">
-              Billing Cycle
-            </span>
+        <div className={`${CARD} p-5 lg:col-span-7 lg:self-stretch lg:p-6`}>
+          <div className="mb-4">
+            <CardHeader icon={Wallet} title={isTenant ? "Room wallet" : "Home wallet"} aside={<CardPill>Billing cycle</CardPill>} />
           </div>
 
           {isTenant ? (
             <div className="mb-4">
-              <span className="text-sm text-white/70">Landlord Hard Limit</span>
+              <span className="text-sm text-fg/70">Landlord Hard Limit</span>
               <p className="mt-1 text-3xl font-bold tracking-tight">
-                <span className="mr-0.5 text-xl text-white/50">₱</span>
+                <span className="mr-0.5 text-xl text-fg/50">₱</span>
                 {monthlyBudget.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -436,38 +428,46 @@ export default async function DashboardPage() {
 
           <div className="mb-1.5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/40">Home Burn Rate</span>
-              <span className="text-xs text-white/50">
+              <span className="text-xs font-medium text-fg/50">Spent this cycle</span>
+              <span className="text-xs text-fg/50">
                 ₱ {homeCycleEstimatedBillPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so far this billing cycle
               </span>
             </div>
-            <div className="w-full h-2.5 rounded-full bg-white/[0.06]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-fg/[0.06]">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${homeBurnTone.bar}`}
+                className={`h-full origin-left rounded-full transition-[width,scale] duration-700 ease-out starting:scale-x-0 ${homeBurnTone.bar}`}
                 style={{ width: `${homeBurnPercent}%` }}
               />
             </div>
-            <p className="text-[10px] text-white/40 mt-1.5">
+            <p className="mt-3 text-xs leading-relaxed text-fg/40">
               {isTenant ? "Room variable energy spend" : "Variable energy spend"}: ₱ {homeCycleVariableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (excludes fixed bill fees)
             </p>
-            <p className="text-[10px] text-white/40 mt-1.5">
+            <p className="mt-1 text-xs leading-relaxed text-fg/40">
               Projected bill: ₱ {projectedCycleBill.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Based on the last {forecastLookbackDays} day{forecastLookbackDays === 1 ? "" : "s"}, with {billingCycle.remainingDays} day(s) left in your billing cycle.
             </p>
-            <p
-              className={`text-[10px] font-semibold tracking-wider mt-1.5 text-right uppercase ${homeBurnTone.text}`}
-            >
-              {homeBurnPercent.toFixed(1)}% of home budget consumed
+            <p className={`mt-2 text-right text-xs font-semibold ${homeBurnTone.text}`}>
+              {homeBurnPercent.toFixed(1)}% of {isTenant ? "room" : "home"} budget used
             </p>
           </div>
         </div>
 
-        <WeekSummaryWidget days={weekSummaries} />
-        <BudgetAlertCard />
-        <Suspense fallback={null}>
-          <BudgetWarningFeed />
-        </Suspense>
+        <div className="lg:col-span-5 lg:self-stretch lg:[&>*]:h-full">
+          <WeekSummaryWidget days={weekSummaries} />
+        </div>
+        {/* Alerts render nothing when there is nothing to say; empty wrappers collapse. */}
+        <div className="empty:hidden lg:col-span-12">
+          <BudgetAlertCard />
+        </div>
+        <div className="empty:hidden lg:col-span-12">
+          <Suspense fallback={null}>
+            <BudgetWarningFeed />
+          </Suspense>
+        </div>
 
+        {/* Desktop shows connected units first; this detail card moves below them. */}
+        <div className="lg:order-last lg:col-span-12">
         <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={homeCycleUsageKwh} settingsHref={isTenant ? undefined : "/settings"} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
+        </div>
         </DashboardLiveTelemetry>
 
       </div>
@@ -476,4 +476,12 @@ export default async function DashboardPage() {
       <BottomNav />
     </div>
   );
+}
+
+/** Desktop dashboard title, in Manila time: "Good evening, Caleb". */
+function getGreeting(now: Date, fullName: string | null | undefined) {
+  const hour = Number(new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", hour: "numeric", hourCycle: "h23" }).format(now));
+  const partOfDay = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const firstName = fullName?.trim().split(/\s+/)[0];
+  return firstName ? `${partOfDay}, ${firstName}` : partOfDay;
 }

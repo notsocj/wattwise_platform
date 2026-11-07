@@ -16,16 +16,16 @@ export default async function AdminRatesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <DollarSign className="h-6 w-6 text-mint" />
+        <DollarSign className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Meralco Rates</h1>
       </div>
-      <p className="mb-6 text-white/50">
+      <p className="mb-6 text-fg/50">
         Rate history is sourced from the synchronized Meralco table. Creation and edits are audited
         through the admin API.
       </p>
-      <div className="overflow-x-auto rounded-lg border border-white/10 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-fg/10 bg-surface">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 text-white/50">
+          <thead className="border-b border-fg/10 text-fg/50">
             <tr>
               {[
                 "Effective month",
@@ -59,7 +59,7 @@ export default async function AdminRatesPage() {
                 components.geaAll +
                 components.lifelineSubsidy;
               return (
-                <tr key={r.effective_month} className="border-b border-white/5">
+                <tr key={r.effective_month} className="border-b border-fg/5">
                   <td className="p-4">{r.effective_month}</td>
                   <td className="p-4">₱{Number(r.generation).toFixed(4)}</td>
                   <td className="p-4">₱{Number(r.transmission).toFixed(4)}</td>
@@ -72,7 +72,7 @@ export default async function AdminRatesPage() {
                   <td className="p-4">
                     {(Number(r.vat_rate) * 100).toFixed(2)}%
                     {components.vatGeneration !== null ? (
-                      <span className="block text-xs text-white/50">
+                      <span className="block text-xs text-fg/50">
                         Gen {(components.vatGeneration * 100).toFixed(2)}%
                       </span>
                     ) : null}

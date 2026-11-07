@@ -18,7 +18,7 @@ export default function ProfilingStep({
             Device Registered
           </span>
         </div>
-        <p className="text-sm leading-relaxed text-white/80">
+        <p className="text-sm leading-relaxed text-fg/80">
           Registration is saved so the hardware can upload securely. Keep the
           WattWise unit and appliance powered on while we wait for its live reading.
         </p>
@@ -26,10 +26,10 @@ export default function ProfilingStep({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-fg/60">
             Estimated Daily Hours
           </span>
-          <span className="text-lg font-bold text-white">{dailyHours}h</span>
+          <span className="text-lg font-bold text-fg">{dailyHours}h</span>
         </div>
         <input
           type="range"
@@ -41,12 +41,12 @@ export default function ProfilingStep({
           onChange={(event) => onDailyHoursChange(Number(event.target.value))}
           className="w-full accent-mint disabled:opacity-50"
         />
-        <div className="flex justify-between text-[10px] text-white/50">
+        <div className="flex justify-between text-[10px] text-fg/50">
           <span>1h</span>
           <span>12h</span>
           <span>24h</span>
         </div>
-        <p className="text-[11px] leading-snug text-white/50">
+        <p className="text-[11px] leading-snug text-fg/50">
           Use the normal daily runtime for this appliance so the AI estimate feels realistic.
         </p>
       </div>

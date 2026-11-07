@@ -12,10 +12,10 @@ export default async function AdminUsersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <Users className="h-6 w-6 text-mint" />
+        <Users className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Users</h1>
       </div>
-      <p className="mb-6 text-white/50">
+      <p className="mb-6 text-fg/50">
         Configure roles, manager relationships, password requirements, and account access. Every
         change is audited.
       </p>

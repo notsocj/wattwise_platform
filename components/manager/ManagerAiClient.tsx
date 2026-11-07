@@ -2,7 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import useSWR from "swr";
-import { AlertTriangle, Bot, Send, Sparkles } from "lucide-react";
+import { AlertTriangle, Send, Sparkles } from "lucide-react";
+import BrandMark from "@/components/ui/BrandMark";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { ManagerFleetSnapshot } from "@/lib/manager-data";
@@ -37,21 +38,21 @@ function getCardClasses(severity: InsightCard["severity"]): string {
       return "border-danger/30 bg-danger/10";
     case "info":
     default:
-      return "border-white/[0.06] bg-white/[0.03]";
+      return "border-fg/[0.06] bg-fg/[0.03]";
   }
 }
 
 function getAccentClasses(severity: InsightCard["severity"]): string {
   switch (severity) {
     case "success":
-      return "text-mint";
+      return "text-accent";
     case "warning":
       return "text-naku";
     case "danger":
       return "text-danger";
     case "info":
     default:
-      return "text-white/55";
+      return "text-fg/55";
   }
 }
 
@@ -143,21 +144,21 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-mint/70">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/70">
               Fleet Brain
             </p>
             <h2 className="mt-1 text-2xl font-bold tracking-tight">
               WattWise Manager Assistant
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/55">
+            <p className="mt-2 text-sm leading-relaxed text-fg/55">
               Advisory-only AI for tenant rooms, hard limits, cutoff risk, and
               stale telemetry.
             </p>
           </div>
-          <Bot className="h-6 w-6 shrink-0 text-mint" />
+          <BrandMark className="h-8 w-8 text-accent" />
         </div>
       </section>
 
@@ -170,20 +171,20 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-xl border border-white/[0.06] bg-surface p-4"
+            className="rounded-2xl border border-fg/[0.06] bg-surface p-4"
           >
             <p className="text-2xl font-bold tracking-tight">{value}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
               {label}
             </p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-mint" />
-          <h2 className="text-sm font-bold uppercase tracking-wider">
+          <Sparkles className="h-4 w-4 text-accent" />
+          <h2 className="text-base font-semibold tracking-tight">
             AI Priority Cards
           </h2>
         </div>
@@ -193,7 +194,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
             <LoadingIndicator
               size="md"
               label="Reading manager fleet"
-              spinnerClassName="border-white/20 border-t-mint"
+              spinnerClassName="border-fg/20 border-t-mint"
             />
           </div>
         ) : cardsErrorMessage ? (
@@ -220,7 +221,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
                 <h3 className="mt-2 text-base font-bold tracking-tight">
                   {card.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">
+                <p className="mt-2 text-sm leading-relaxed text-fg/70">
                   {card.message}
                 </p>
               </article>
@@ -229,11 +230,11 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
         )}
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+        <h2 className="text-base font-semibold tracking-tight">
           Manager Chatbot
         </h2>
-        <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/10 p-3">
+        <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto rounded-xl border border-fg/[0.06] bg-shade/10 p-3">
           {messages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}
@@ -243,7 +244,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
                 className={`max-w-[88%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
                   message.role === "user"
                     ? "bg-mint text-black"
-                    : "bg-white/[0.05] text-white/75"
+                    : "bg-fg/[0.05] text-fg/75"
                 }`}
               >
                 {message.content}
@@ -252,7 +253,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
           ))}
           {chatLoading ? (
             <div className="flex justify-start">
-              <div className="rounded-xl bg-white/[0.05] px-3 py-2">
+              <div className="rounded-xl bg-fg/[0.05] px-3 py-2">
                 <LoadingIndicator size="sm" label="Thinking" />
               </div>
             </div>
@@ -264,7 +265,7 @@ export default function ManagerAiClient({ snapshot }: ManagerAiClientProps) {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Ask about Room 3 cutoff risk..."
-            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+            className="min-w-0 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="submit"

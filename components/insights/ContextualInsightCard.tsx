@@ -27,7 +27,7 @@ export default function ContextualInsightCard({
   icon: Icon,
   accentClassName,
   surfaceClassName,
-  titleClassName = "text-white",
+  titleClassName = "text-fg",
 }: ContextualInsightCardProps) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -124,14 +124,14 @@ export default function ContextualInsightCard({
             }
             setDismissed(true);
           }}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/5 hover:text-white/70"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-fg/50 transition-colors hover:bg-fg/5 hover:text-fg/70"
           aria-label={`Dismiss ${title}`}
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-white/70">{message}</p>
+      <p className="mt-3 text-sm leading-relaxed text-fg/70">{message}</p>
     </section>
   );
 }

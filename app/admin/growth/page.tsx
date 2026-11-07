@@ -24,7 +24,7 @@ export default async function AdminGrowthPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <TrendingUp className="h-6 w-6 text-mint" />
+        <TrendingUp className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Growth</h1>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -34,8 +34,8 @@ export default async function AdminGrowthPage() {
           ["Devices · 30d", d30.count],
           ["Devices · 90d", d90.count],
         ].map(([l, v]) => (
-          <div key={l} className="rounded-lg border border-white/10 bg-surface p-5">
-            <p className="text-sm text-white/50">{l}</p>
+          <div key={l} className="rounded-lg border border-fg/10 bg-surface p-5">
+            <p className="text-sm text-fg/50">{l}</p>
             <p className="mt-2 text-3xl font-semibold">{v ?? 0}</p>
           </div>
         ))}

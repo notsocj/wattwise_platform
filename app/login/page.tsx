@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import FormAlert from "@/components/ui/FormAlert";
+import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { getHomePathForRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -20,7 +21,7 @@ type LoginFieldErrors = Partial<{
 }>;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  "w-full bg-transparent rounded-xl px-4 py-4 text-fg placeholder-fg/30 text-base focus:outline-none transition-colors";
 
 function getInputClass(hasError: boolean, extraClass = ""): string {
   const stateClass = hasError
@@ -42,7 +43,7 @@ function LoginForm() {
       : null
   );
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SubmitStatus>("idle");
 
   function validatePassword(value = password): string | null {
     return value ? null : "Enter your password.";
@@ -82,7 +83,7 @@ function LoginForm() {
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
     const supabase = createClient();
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: normalizeEmail(email),
@@ -91,10 +92,12 @@ function LoginForm() {
 
     if (signInError) {
       setSubmitError(getFriendlyAuthError(signInError.message, "login"));
-      setLoading(false);
+      setStatus("idle");
       return;
     }
 
+    // Signed in: say so while the profile read and next page load.
+    setStatus("success");
     const { data: profile } = await supabase
       .from("profiles")
       .select("role, must_update_password")
@@ -105,15 +108,16 @@ function LoginForm() {
       profile?.role === "tenant" && profile.must_update_password === true
         ? "/update-password"
         : getHomePathForRole(profile?.role);
-    // Keep the button in its loading state until the next page replaces this
-    // one, so a second tap can't submit again mid-navigation.
+    // The button stays in its success state (disabled) until the next page
+    // replaces this one, so a second tap can't submit again mid-navigation.
     router.push(destination);
     router.refresh();
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
-      <div className="flex flex-col items-center px-6 pb-6 pt-16">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight lg:min-h-0">
+      {/* Desktop shows the brand panel beside the form instead. */}
+      <div className="flex flex-col items-center px-6 pb-6 pt-16 lg:hidden">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image
             src="/wattwise_mascot.png"
@@ -124,30 +128,28 @@ function LoginForm() {
           />
         </div>
 
-        <h1 className="text-3xl font-bold text-white">
-          Watt<span className="text-mint">Wise</span>
+        <h1 className="text-3xl font-bold text-fg">
+          Watt<span className="text-accent">Wise</span>
         </h1>
 
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
           INTELLIGENT ENERGY
         </p>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pt-6">
-        {submitError && (
-          <div
-            role="alert"
-            className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
-          >
-            {submitError}
-          </div>
-        )}
+        <div className="mb-8 hidden lg:block">
+          <h1 className="text-3xl font-bold tracking-tight text-fg">Welcome back</h1>
+          <p className="mt-2 text-sm text-fg/50">Log in to see your home&apos;s live usage.</p>
+        </div>
+
+        <FormAlert message={submitError} />
 
         <form onSubmit={handleLogin} noValidate>
           <div className="mb-5">
             <label
               htmlFor="login-email"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               Email
             </label>
@@ -179,7 +181,7 @@ function LoginForm() {
             <p
               id="login-email-message"
               className={`mt-2 text-xs ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? "text-danger" : "text-fg/40"
               }`}
             >
               {fieldErrors.email ?? "Use the email you registered with WattWise."}
@@ -189,7 +191,7 @@ function LoginForm() {
           <div className="mb-3">
             <label
               htmlFor="login-password"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               Password
             </label>
@@ -218,7 +220,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-accent/60 transition-colors hover:text-accent"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -242,39 +244,26 @@ function LoginForm() {
           <div className="mb-8 flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+              className="text-sm font-semibold text-accent transition-colors hover:text-accent/80"
             >
               Forgot Password?
             </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <LoadingIndicator
-                  size="sm"
-                  label="Logging in"
-                  showLabel={false}
-                  spinnerClassName="border-black/30 border-t-black"
-                />
-                Logging in...
-              </span>
-            ) : (
-              "Login"
-            )}
-          </button>
+          <SubmitButton
+            status={status}
+            idleLabel="Login"
+            loadingLabel="Logging in..."
+            successLabel="Logged in! Opening WattWise..."
+          />
         </form>
 
         <div className="mt-6 flex justify-center">
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-fg/50">
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="font-bold text-mint transition-colors hover:text-mint/80"
+              className="font-bold text-accent transition-colors hover:text-accent/80"
             >
               Register
             </Link>

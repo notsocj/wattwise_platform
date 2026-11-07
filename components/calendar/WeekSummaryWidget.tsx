@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
+import { CARD, CardHeader } from "@/components/ui/Card";
 import type { CalendarDailySummary } from "@/lib/calendar-analytics";
 
 type WeekSummaryWidgetProps = {
@@ -13,10 +14,10 @@ function getIntensityClasses(intensity: CalendarDailySummary["intensity"]): stri
     case "medium":
       return "border-naku/25 bg-naku/10 text-naku";
     case "low":
-      return "border-mint/25 bg-mint/10 text-mint";
+      return "border-mint/25 bg-mint/10 text-accent";
     case "none":
     default:
-      return "border-white/[0.06] bg-white/[0.03] text-white/50";
+      return "border-fg/[0.06] bg-fg/[0.03] text-fg/50";
   }
 }
 
@@ -31,23 +32,21 @@ export default function WeekSummaryWidget({ days }: WeekSummaryWidgetProps) {
   const maxKwh = Math.max(0, ...days.map((day) => day.kwh));
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-surface p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
-            Calendar Pulse
-          </p>
-          <h2 className="mt-1 text-sm font-bold tracking-tight">
-            This Week At A Glance
-          </h2>
-        </div>
-        <Link
-          href="/dashboard/calendar"
-          className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold text-white/70 transition-colors hover:border-mint/20 hover:bg-mint/10 hover:text-mint"
-        >
-          Expand View
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
+    <section className={`${CARD} p-4 lg:p-6`}>
+      <div className="mb-4">
+        <CardHeader
+          icon={CalendarDays}
+          title="This week"
+          aside={
+            <Link
+              href="/dashboard/calendar"
+              className="inline-flex items-center gap-1 rounded-full border border-fg/[0.08] px-2.5 py-1 text-[11px] font-medium text-fg/60 transition-colors duration-150 ease-out hover:border-mint/30 hover:text-accent"
+            >
+              Open calendar
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-7 gap-1">
@@ -64,10 +63,10 @@ export default function WeekSummaryWidget({ days }: WeekSummaryWidgetProps) {
             >
               <p className="text-[10px] font-semibold uppercase tracking-wide">{day.weekdayShort}</p>
               <p className="mt-1 text-base font-bold tabular-nums">{day.dayNumber}</p>
-              <div className="mx-1.5 mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="mx-1.5 mt-2 h-1.5 overflow-hidden rounded-full bg-fg/10">
                 <div className="h-full rounded-full bg-current" style={{ width: `${fillPercent}%` }} />
               </div>
-              <p className="mt-2 truncate text-[10px] font-medium tracking-tight tabular-nums text-white/65">
+              <p className="mt-2 truncate text-[10px] font-medium tracking-tight tabular-nums text-fg/65">
                 {formatDayCost(day.costPhp)}
               </p>
             </div>
@@ -75,7 +74,7 @@ export default function WeekSummaryWidget({ days }: WeekSummaryWidgetProps) {
         })}
       </div>
       {maxKwh <= 0 ? (
-        <p className="mt-3 text-xs leading-relaxed text-white/50">
+        <p className="mt-3 text-xs leading-relaxed text-fg/50">
           No readings in the last 7 days. Check that your WattWise units are plugged in and online.
         </p>
       ) : null}

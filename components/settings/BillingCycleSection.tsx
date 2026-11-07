@@ -125,19 +125,19 @@ export default function BillingCycleSection({
   }
 
   return (
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+        <h2 className="text-base font-semibold tracking-tight">
           Billing Cycle
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">
+        <p className="mt-1 text-xs leading-relaxed text-fg/45">
           Set the Meralco reading date that starts your bill cycle. WattWise will
           use this for wallet totals, analytics forecasts, and Smart Control cutoffs.
         </p>
 
-        <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
           <label
             htmlFor="billing-cycle-start-day"
-            className="text-[11px] font-semibold uppercase tracking-wider text-white/50"
+            className="text-[11px] font-semibold uppercase tracking-wider text-fg/50"
           >
             Meralco Billing Start Date
           </label>
@@ -152,10 +152,10 @@ export default function BillingCycleSection({
                   setBillingCycleError(null);
                 }
               }}
-              className="h-11 flex-1 rounded-xl border border-white/10 bg-black/10 px-3 text-sm font-semibold text-white outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 text-sm font-semibold text-fg outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {Array.from({ length: 28 }, (_, index) => index + 1).map((day) => (
-                <option key={day} value={String(day)} className="bg-surface text-white">
+                <option key={day} value={String(day)} className="bg-surface text-fg">
                   {day}
                 </option>
               ))}
@@ -165,7 +165,7 @@ export default function BillingCycleSection({
               type="button"
               onClick={() => void saveBillingCycle()}
               disabled={isSavingBillingCycle}
-              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingBillingCycle ? (
                 <>
@@ -178,17 +178,17 @@ export default function BillingCycleSection({
             </button>
           </div>
 
-          <p className={`mt-3 text-xs ${billingCycleError ? "text-danger" : "text-white/45"}`}>
+          <p className={`mt-3 text-xs ${billingCycleError ? "text-danger" : "text-fg/45"}`}>
             {billingCycleError
               ? billingCycleError
               : "Allowed values are 1 through 28 to match real Meralco reading windows safely."}
           </p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
           <label
             htmlFor="meralco-monthly-kwh"
-            className="text-[11px] font-semibold uppercase tracking-wider text-white/50"
+            className="text-[11px] font-semibold uppercase tracking-wider text-fg/50"
           >
             Monthly kWh on your Meralco bill (optional)
           </label>
@@ -205,18 +205,18 @@ export default function BillingCycleSection({
                 setKwhDraft(event.target.value);
                 if (kwhError) setKwhError(null);
               }}
-              className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/10 px-3 text-base font-semibold text-white outline-none transition-colors placeholder:text-white/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-fg/10 bg-shade/10 px-3 text-base font-semibold text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="button"
               onClick={() => void saveMonthlyKwh(false)}
               disabled={isSavingKwh}
-              className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 min-w-[88px] items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingKwh ? <LoadingIndicator size="sm" label="Saving" showLabel={false} /> : "Save"}
             </button>
           </div>
-          <p className={`mt-3 text-xs leading-relaxed ${kwhError ? "text-danger" : "text-white/50"}`}>
+          <p className={`mt-3 text-xs leading-relaxed ${kwhError ? "text-danger" : "text-fg/50"}`}>
             {kwhError
               ? kwhError
               : draftKwh !== null
@@ -228,7 +228,7 @@ export default function BillingCycleSection({
               type="button"
               onClick={() => void saveMonthlyKwh(true)}
               disabled={isSavingKwh}
-              className="mt-2 min-h-10 text-xs font-semibold text-white/60 underline hover:text-white disabled:opacity-60"
+              className="mt-2 min-h-10 text-xs font-semibold text-fg/60 underline hover:text-fg disabled:opacity-60"
             >
               Clear and use monitored usage
             </button>

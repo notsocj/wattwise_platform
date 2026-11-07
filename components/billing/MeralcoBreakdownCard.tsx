@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink, ReceiptText } from "lucide-react";
+import { CARD, CardHeader } from "@/components/ui/Card";
 import RateComponentList from "@/components/billing/RateComponentList";
 import { computeVariableRatePerKwh, type MeralcoRateComponents } from "@/lib/meralco-bill";
 
@@ -50,15 +51,14 @@ export default function MeralcoBreakdownCard({
   const sourceUrl = provenance?.sourcePdfUrl ?? provenance?.sourceUrl;
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider">Meralco rate breakdown</h2>
-          <p className="mt-1 text-xs text-white/45">
-            PHP per kWh, with VAT applied per component as Meralco bills it
-          </p>
-        </div>
-        <span className="text-xs font-semibold text-mint">₱{variableWithVat.toFixed(4)}/kWh</span>
+    <section className={`${CARD} p-5 lg:p-6`}>
+      <div className="mb-4">
+        <CardHeader
+          icon={ReceiptText}
+          title="Meralco rate breakdown"
+          aside={<span className="text-sm font-semibold text-accent">₱{variableWithVat.toFixed(4)}/kWh</span>}
+        />
+        <p className="mt-2 text-xs text-fg/45">PHP per kWh, with VAT applied per component as Meralco bills it.</p>
       </div>
       <RateComponentList
         rates={rates}
@@ -69,10 +69,10 @@ export default function MeralcoBreakdownCard({
         settingsHref={settingsHref}
       />
       {effectiveMonth && provenance && (
-        <div className="mt-4 border-t border-white/[0.08] pt-3 text-[11px] leading-relaxed text-white/45">
+        <div className="mt-4 border-t border-fg/[0.08] pt-3 text-[11px] leading-relaxed text-fg/45">
           <p>
             Effective from{" "}
-            <span className="font-medium text-white/70">{formatMonth(effectiveMonth)}</span>
+            <span className="font-medium text-fg/70">{formatMonth(effectiveMonth)}</span>
           </p>
           <p className="mt-1">
             {provenance.autoUpdated && provenance.fetchedAt
@@ -84,7 +84,7 @@ export default function MeralcoBreakdownCard({
               href={sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-1 inline-flex items-center gap-1 font-medium text-mint hover:text-mint/80"
+              className="mt-1 inline-flex items-center gap-1 font-medium text-accent hover:text-accent/80"
             >
               Source: Meralco {provenance.sourcePdfUrl ? "monthly bill summary" : "rate archives"}
               <ExternalLink className="h-3 w-3" />
@@ -96,7 +96,7 @@ export default function MeralcoBreakdownCard({
       )}
       <Link
         href="/rates"
-        className="mt-4 flex items-center justify-between rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2.5 text-xs font-semibold text-white/75 transition-colors hover:border-mint/35 hover:text-mint"
+        className="mt-4 flex items-center justify-between rounded-lg border border-fg/[0.08] bg-fg/[0.02] px-3 py-2.5 text-xs font-semibold text-fg/75 transition-colors hover:border-mint/35 hover:text-accent"
       >
         <span>View rate details &amp; history</span>
         <ChevronRight className="h-4 w-4" />

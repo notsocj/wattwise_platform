@@ -66,9 +66,9 @@ export default function AdminDevicesTable({
   }
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border border-white/10 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-fg/10 bg-surface">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 text-white/50">
+          <thead className="border-b border-fg/10 text-fg/50">
             <tr>
               {[
                 "Device",
@@ -89,7 +89,7 @@ export default function AdminDevicesTable({
           </thead>
           <tbody>
             {rows.map((d) => (
-              <tr key={d.id} className="border-b border-white/5">
+              <tr key={d.id} className="border-b border-fg/5">
                 <td className="p-4">{d.device_name}</td>
                 <td className="p-4 font-mono text-xs">{d.mac_address}</td>
                 <td className="p-4">{d.appliance_type || "—"}</td>
@@ -107,7 +107,7 @@ export default function AdminDevicesTable({
                   ) : (
                     <span title={d.last_seen_at ?? undefined}>
                       Offline
-                      <span className="block text-xs text-white/50">
+                      <span className="block text-xs text-fg/50">
                         {d.last_seen_at ? `last seen ${formatReadingAge(d.last_seen_at)}` : "never seen"}
                       </span>
                     </span>
@@ -121,7 +121,7 @@ export default function AdminDevicesTable({
                       setSaveError(null);
                       setEditing({ ...d, owner_id: d.owner_id || d.user_id });
                     }}
-                    className="rounded-md border border-mint/30 px-3 py-1.5 text-xs font-semibold text-mint hover:bg-mint/10"
+                    className="rounded-md border border-mint/30 px-3 py-1.5 text-xs font-semibold text-accent hover:bg-mint/10"
                   >
                     Configure
                   </button>
@@ -133,13 +133,13 @@ export default function AdminDevicesTable({
       </div>
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-white/10 bg-surface p-6">
+          <div className="w-full max-w-lg rounded-xl border border-fg/10 bg-surface p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Configure device</h2>
-                <p className="text-sm text-white/50">{editing.mac_address}</p>
+                <p className="text-sm text-fg/50">{editing.mac_address}</p>
               </div>
-              <button onClick={() => setEditing(null)} className="text-white/50">
+              <button onClick={() => setEditing(null)} className="text-fg/50">
                 ✕
               </button>
             </div>
@@ -149,7 +149,7 @@ export default function AdminDevicesTable({
                 <input
                   value={editing.device_name}
                   onChange={(e) => setEditing({ ...editing, device_name: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 />
               </label>
               <label className="block text-sm">
@@ -157,7 +157,7 @@ export default function AdminDevicesTable({
                 <input
                   value={editing.appliance_type || ""}
                   onChange={(e) => setEditing({ ...editing, appliance_type: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 />
               </label>
               <label className="block text-sm">
@@ -165,7 +165,7 @@ export default function AdminDevicesTable({
                 <select
                   value={editing.owner_id || ""}
                   onChange={(e) => setEditing({ ...editing, owner_id: e.target.value || null })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 >
                   <option value="">Unassigned</option>
                   {people
@@ -182,7 +182,7 @@ export default function AdminDevicesTable({
                 <select
                   value={editing.tenant_id || ""}
                   onChange={(e) => setEditing({ ...editing, tenant_id: e.target.value || null })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 >
                   <option value="">No tenant</option>
                   {people
@@ -205,7 +205,7 @@ export default function AdminDevicesTable({
                       user_approved_limit_php: Number(e.target.value) || null,
                     })
                   }
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 />
               </label>
               <label className="block text-sm">
@@ -214,7 +214,7 @@ export default function AdminDevicesTable({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Why is this assignment changing?"
-                  className="mt-1 min-h-20 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2"
+                  className="mt-1 min-h-20 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2"
                 />
               </label>
             </div>
@@ -229,7 +229,7 @@ export default function AdminDevicesTable({
                   setEditing(null);
                   setSaveError(null);
                 }}
-                className="rounded-lg border border-white/10 px-4 py-2 text-sm"
+                className="rounded-lg border border-fg/10 px-4 py-2 text-sm"
               >
                 Cancel
               </button>

@@ -6,90 +6,54 @@ import Image from "next/image";
 import { useSupabase } from "@/components/providers/SupabaseProvider";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 
+// The intro plays as CSS keyframes (ww-splash-* in globals.css), so it stays smooth while the app hydrates.
+const FADE_OUT_AT = 2900;
+const LEAVE_AT = 3200;
+
 export default function SplashScreen() {
   const router = useRouter();
   const { session } = useSupabase();
-  const [animationStep, setAnimationStep] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const destination = session ? "/dashboard" : "/onboarding";
 
   useEffect(() => {
-    document.documentElement.dataset.theme = "dark";
-  }, []);
-
-  useEffect(() => {
-    const showMascotTimer = setTimeout(() => {
-      setAnimationStep(1);
-    }, 120);
-
-    const moveMascotTimer = setTimeout(() => {
-      setAnimationStep(2);
-    }, 1000);
-
-    const showSubtitleTimer = setTimeout(() => {
-      setAnimationStep(3);
-    }, 1550);
-
+    router.prefetch(destination);
+    const fadeTimer = setTimeout(() => setLeaving(true), FADE_OUT_AT);
+    const leaveTimer = setTimeout(() => router.replace(destination), LEAVE_AT);
     return () => {
-      clearTimeout(showMascotTimer);
-      clearTimeout(moveMascotTimer);
-      clearTimeout(showSubtitleTimer);
+      clearTimeout(fadeTimer);
+      clearTimeout(leaveTimer);
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace(session ? "/dashboard" : "/onboarding");
-    }, 3300);
-    return () => clearTimeout(timer);
-  }, [router, session]);
+  }, [router, destination]);
 
   return (
     <div
-      data-theme="dark"
-      className="relative min-h-screen overflow-hidden bg-canvas tracking-tight transition-opacity duration-500"
+      className={`flex min-h-dvh flex-col items-center justify-center bg-canvas px-6 tracking-tight transition-[opacity,scale] duration-300 ease-out ${
+        leaving ? "scale-[0.98] opacity-0" : ""
+      }`}
     >
-      {/* Mascot */}
-      <div
-        className={`absolute left-1/2 transition-all duration-700 ease-out ${
-          animationStep === 0
-            ? "top-1/2 -translate-x-1/2 -translate-y-1/2 scale-95 opacity-0"
-            : animationStep === 1
-              ? "top-1/2 -translate-x-1/2 -translate-y-1/2 scale-100 opacity-100"
-              : "top-[42%] -translate-x-1/2 -translate-y-1/2 scale-100 opacity-100"
-        }`}
-      >
+      {/* Starts centred on its own, then lifts to make room for the wordmark. */}
+      <div className="ww-splash-lift">
         <Image
           src="/wattwise_mascot.png"
           alt="WattWise mascot"
           width={180}
           height={180}
           priority
-          className="h-36 w-36 object-contain"
+          className="ww-splash-pop h-36 w-36 object-contain"
         />
       </div>
 
-      {/* Brand Name + Subtitle */}
-      <div className="absolute inset-x-0 top-[60%] flex -translate-y-1/2 flex-col items-center px-6">
-        <h1
-          className={`mb-1.5 flex items-center text-5xl font-bold text-white transition-all duration-500 ${
-            animationStep >= 2
-              ? "translate-y-0 opacity-100"
-              : "translate-y-4 opacity-0"
-          }`}
-        >
-          Watt<span className="text-mint">Wise</span>
-        </h1>
+      <h1 className="ww-splash-rise mt-6 text-5xl font-bold text-fg">
+        Watt<span className="text-accent">Wise</span>
+      </h1>
 
-        <p
-          className={`text-[10px] font-semibold tracking-[0.4em] text-mint/70 transition-opacity duration-700 sm:text-xs ${
-            animationStep >= 3 ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          INTELLIGENT ENERGY
-        </p>
+      <p className="ww-splash-fade mt-1.5 text-[10px] font-semibold tracking-[0.4em] text-accent/70 sm:text-xs" style={{ animationDelay: "1350ms" }}>
+        INTELLIGENT ENERGY
+      </p>
 
-        <div className="mt-5">
-          <LoadingIndicator size="sm" label="Preparing your energy hub" />
-        </div>
+      <div className="ww-splash-fade mt-5" style={{ animationDelay: "1650ms" }}>
+        <LoadingIndicator size="sm" label="Preparing your energy hub" />
       </div>
     </div>
   );

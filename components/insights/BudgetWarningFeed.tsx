@@ -35,13 +35,13 @@ export default async function BudgetWarningFeed() {
   const events = (data ?? []) as BudgetEvent[];
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+    <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
       <div className="mb-3 flex items-center gap-2">
-        <BellRing className="h-4 w-4 text-mint" />
-        <h2 className="text-sm font-bold uppercase tracking-wider">Budget alerts</h2>
+        <BellRing className="h-4 w-4 text-accent" />
+        <h2 className="text-base font-semibold tracking-tight">Budget alerts</h2>
       </div>
       {events.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-canvas/30 p-3 text-sm text-white/50">
+        <div className="flex items-center gap-2 rounded-lg border border-fg/[0.08] bg-canvas/30 p-3 text-sm text-fg/50">
           <CheckCircle2 className="h-4 w-4 text-bida" />
           No budget alerts yet.
         </div>
@@ -67,8 +67,8 @@ export default async function BudgetWarningFeed() {
                   <p className={`text-xs font-bold uppercase tracking-wide ${tone.text}`}>
                     {relation?.device_name ?? "WattWise device"} · {percent}%
                   </p>
-                  <p className="mt-1 text-sm text-white/80">{event.message}</p>
-                  <p className="mt-1 text-[11px] text-white/45">
+                  <p className="mt-1 text-sm text-fg/80">{event.message}</p>
+                  <p className="mt-1 text-[11px] text-fg/45">
                     ₱{Number(event.spend_php).toFixed(2)} spent
                     {limit > 0 ? ` of ₱${limit.toFixed(2)}` : ""} ·{" "}
                     {new Date(event.created_at).toLocaleString("en-PH")}

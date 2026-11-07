@@ -98,10 +98,10 @@ export default function ManagerRoomsClient({
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
-          <PlugZap className="h-4 w-4 text-mint" />
-          <h2 className="text-sm font-bold uppercase tracking-wider">
+          <PlugZap className="h-4 w-4 text-accent" />
+          <h2 className="text-base font-semibold tracking-tight">
             Pair Hardware
           </h2>
         </div>
@@ -110,19 +110,19 @@ export default function ManagerRoomsClient({
             value={deviceName}
             onChange={(event) => setDeviceName(event.target.value)}
             placeholder="Room 3 Sub-meter"
-            className="rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <input
             value={macAddress}
             onChange={(event) => setMacAddress(event.target.value)}
             placeholder="AA:BB:CC:DD:EE:FF"
-            className="rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+            className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-3 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
           />
           <button
             type="button"
             onClick={() => setShowScanner(true)}
             disabled={pending !== null}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-bold text-white/75 transition-colors hover:border-mint/30 hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/75 transition-colors hover:border-mint/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             <QrCode className="h-4 w-4" />
             Scan QR
@@ -131,7 +131,7 @@ export default function ManagerRoomsClient({
             type="button"
             onClick={() => void pairDevice()}
             disabled={pending !== null || !deviceName || !macAddress}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-mint disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending === "new-device" ? (
               <LoadingIndicator size="sm" showLabel={false} />
@@ -143,18 +143,18 @@ export default function ManagerRoomsClient({
         </div>
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+        <h2 className="text-base font-semibold tracking-tight">
           Room Control
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">
+        <p className="mt-1 text-xs leading-relaxed text-fg/45">
           Assign tenants, set hard limits, and override relays for manager-owned
           sub-meters.
         </p>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {devices.length === 0 ? (
-            <p className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm text-white/50 lg:col-span-2">
+            <p className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50 lg:col-span-2">
               Pair a WattWise unit to start managing tenant sub-meters.
             </p>
           ) : (
@@ -165,15 +165,15 @@ export default function ManagerRoomsClient({
               return (
                 <div
                   key={device.id}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
+                  className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-bold">{device.device_name}</p>
-                      <p className="mt-1 truncate text-[11px] text-white/45">
+                      <p className="mt-1 truncate text-[11px] text-fg/45">
                         {device.mac_address}
                       </p>
-                      <p className="mt-2 text-xs text-white/60">
+                      <p className="mt-2 text-xs text-fg/60">
                         {device.tenant_label}
                       </p>
                     </div>
@@ -197,8 +197,8 @@ export default function ManagerRoomsClient({
                       disabled={isPending}
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
                         device.relay_state
-                          ? "bg-mint/10 text-mint"
-                          : "bg-white/[0.06] text-white/60"
+                          ? "bg-mint/10 text-accent"
+                          : "bg-fg/[0.06] text-fg/60"
                       } disabled:opacity-60`}
                     >
                       <Power className="h-3 w-3" />
@@ -206,7 +206,7 @@ export default function ManagerRoomsClient({
                     </button>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-white/60">
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-fg/60">
                     <span>{Math.round(device.watts)}W</span>
                     <span>{Math.round(device.volts)}V</span>
                     <span>{device.amps.toFixed(1)}A</span>
@@ -241,16 +241,16 @@ export default function ManagerRoomsClient({
                         }
                       }}
                       disabled={isPending}
-                      className="rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-mint/40"
+                      className="rounded-xl border border-fg/10 bg-shade/10 px-3 py-2 text-sm text-fg placeholder:text-fg/30 outline-none focus:border-mint/40"
                     />
                   </div>
 
                   <div className="mt-4">
-                    <div className="mb-1.5 flex justify-between text-[11px] text-white/45">
+                    <div className="mb-1.5 flex justify-between text-[11px] text-fg/45">
                       <span>{formatPeso(device.spend_php)} used</span>
                       <span>{limit > 0 ? formatPeso(limit) : "No hard limit"}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/[0.06]">
+                    <div className="h-2 rounded-full bg-fg/[0.06]">
                       <div
                         className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
                         style={{ width: `${Math.min(device.progress_percent, 100)}%` }}
@@ -281,7 +281,7 @@ export default function ManagerRoomsClient({
             }
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-fg/10 bg-surface shadow-2xl">
             <MacQrScanner
               onScan={(mac) => {
                 setMacAddress(mac);

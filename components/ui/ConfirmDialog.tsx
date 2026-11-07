@@ -78,13 +78,13 @@ function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby={description ? "confirm-dialog-description" : undefined}
-        className="w-full max-w-[398px] rounded-2xl border border-white/10 bg-surface p-5 shadow-2xl"
+        className="w-full max-w-[398px] rounded-2xl border border-fg/10 bg-surface p-5 shadow-2xl"
       >
-        <h2 id="confirm-dialog-title" className="text-base font-bold text-white">
+        <h2 id="confirm-dialog-title" className="text-base font-bold text-fg">
           {title}
         </h2>
         {description ? (
-          <div id="confirm-dialog-description" className="mt-2 text-sm leading-relaxed text-white/60">
+          <div id="confirm-dialog-description" className="mt-2 text-sm leading-relaxed text-fg/60">
             {description}
           </div>
         ) : null}
@@ -93,7 +93,7 @@ function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={() => onSettle(false)}
-            className="h-11 flex-1 rounded-xl border border-white/10 text-sm font-semibold text-white/80 transition-colors hover:bg-white/5"
+            className="h-11 flex-1 rounded-xl border border-fg/10 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5"
           >
             {cancelLabel}
           </button>

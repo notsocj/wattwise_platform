@@ -1,8 +1,8 @@
 import Link from "next/link";
+import BrandMark from "@/components/ui/BrandMark";
 import { formatPeso } from "@/lib/format";
 import {
   AlertTriangle,
-  Bot,
   Gauge,
   PlugZap,
   Power,
@@ -42,31 +42,31 @@ export default function ManagerFleetDashboard({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg/45">
               Current Cycle
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight">
               {formatPeso(snapshot.totals.spend_php)}
             </h2>
-            <p className="mt-1 text-xs text-white/45">
+            <p className="mt-1 text-xs text-fg/45">
               Across {snapshot.devices.length} paired room
               {snapshot.devices.length === 1 ? "" : "s"}
             </p>
           </div>
           <Link
             href="/manager/ai"
-            className="inline-flex items-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-mint transition-colors hover:bg-mint/15"
+            className="inline-flex items-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-mint/15"
           >
-            <Bot className="h-4 w-4" />
+            <BrandMark className="h-4 w-4" />
             Ask AI
           </Link>
         </div>
 
         <div className="mt-5">
-          <div className="mb-1.5 flex justify-between text-[11px] text-white/45">
+          <div className="mb-1.5 flex justify-between text-[11px] text-fg/45">
             <span>Fleet hard-limit usage</span>
             <span>
               {snapshot.totals.limit_php > 0
@@ -74,7 +74,7 @@ export default function ManagerFleetDashboard({
                 : "No limits yet"}
             </span>
           </div>
-          <div className="h-2 rounded-full bg-white/[0.06]">
+          <div className="h-2 rounded-full bg-fg/[0.06]">
             <div
               className={`h-full rounded-full ${totalTone.bar}`}
               style={{ width: `${totalProgress}%` }}
@@ -89,7 +89,7 @@ export default function ManagerFleetDashboard({
             label: "Assigned",
             value: snapshot.totals.assigned_rooms,
             icon: Users,
-            tone: "text-mint",
+            tone: "text-accent",
           },
           {
             label: "Relays On",
@@ -107,35 +107,35 @@ export default function ManagerFleetDashboard({
             label: "Stale",
             value: snapshot.totals.offline_rooms,
             icon: RadioTower,
-            tone: "text-white/55",
+            tone: "text-fg/55",
           },
         ].map(({ label, value, icon: Icon, tone }) => (
           <div
             key={label}
-            className="rounded-xl border border-white/[0.06] bg-surface p-4"
+            className="rounded-2xl border border-fg/[0.06] bg-surface p-4"
           >
             <Icon className={`h-4 w-4 ${tone}`} />
             <p className="mt-3 text-2xl font-bold tracking-tight">{value}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
               {label}
             </p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider">
+            <h2 className="text-base font-semibold tracking-tight">
               Priority Rooms
             </h2>
-            <p className="mt-1 text-xs text-white/45">
+            <p className="mt-1 text-xs text-fg/45">
               Highest hard-limit progress this billing cycle.
             </p>
           </div>
           <Link
             href="/manager/rooms"
-            className="text-xs font-bold text-mint transition-colors hover:text-mint/80"
+            className="text-xs font-bold text-accent transition-colors hover:text-accent/80"
           >
             Manage
           </Link>
@@ -143,34 +143,34 @@ export default function ManagerFleetDashboard({
 
         <div className="mt-4 space-y-3">
           {topRooms.length === 0 ? (
-            <p className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm text-white/50">
+            <p className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4 text-sm text-fg/50">
               Pair a WattWise room unit to start seeing fleet analytics.
             </p>
           ) : (
             topRooms.map((device) => (
               <div
                 key={device.id}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
+                className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-bold">{device.device_name}</p>
-                    <p className="mt-1 truncate text-xs text-white/45">
+                    <p className="mt-1 truncate text-xs text-fg/45">
                       {device.tenant_label}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
                       device.relay_state
-                        ? "bg-mint/10 text-mint"
-                        : "bg-white/[0.06] text-white/60"
+                        ? "bg-mint/10 text-accent"
+                        : "bg-fg/[0.06] text-fg/60"
                     }`}
                   >
                     {device.relay_state ? "ON" : "OFF"}
                   </span>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-white/60">
+                <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-fg/60">
                   <span className="inline-flex items-center gap-1">
                     <PlugZap className="h-3 w-3" />
                     {Math.round(device.watts)}W
@@ -182,7 +182,7 @@ export default function ManagerFleetDashboard({
                   <span>{statusLabel(device.budget_status)}</span>
                 </div>
 
-                <div className="mt-3 h-2 rounded-full bg-white/[0.06]">
+                <div className="mt-3 h-2 rounded-full bg-fg/[0.06]">
                   <div
                     className={`h-full rounded-full ${getBudgetToneClasses(device.progress_percent).bar}`}
                     style={{ width: `${Math.min(device.progress_percent, 100)}%` }}

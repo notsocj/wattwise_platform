@@ -7,9 +7,11 @@ type ThemeMode = "dark" | "light";
 
 type ThemeToggleProps = {
   className?: string;
+  /** Show "Light mode" / "Dark mode" beside the icon (sidebar rows). */
+  showLabel?: boolean;
 };
 
-export default function ThemeToggle({ className }: ThemeToggleProps) {
+export default function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
   const nextTheme: ThemeMode = theme === "dark" ? "light" : "dark";
 
@@ -21,14 +23,15 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
       title={`Switch to ${nextTheme} mode`}
       className={
         className ??
-        "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70 transition-colors hover:border-white/20 hover:text-white"
+        "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-fg/10 bg-fg/[0.03] text-fg/70 transition-colors hover:border-fg/20 hover:text-fg"
       }
     >
       {theme === "dark" ? (
-        <Sun className="h-4 w-4" aria-hidden="true" />
+        <Sun className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : (
-        <Moon className="h-4 w-4" aria-hidden="true" />
+        <Moon className="h-4 w-4 shrink-0" aria-hidden="true" />
       )}
+      {showLabel ? <span>{nextTheme === "light" ? "Light mode" : "Dark mode"}</span> : null}
     </button>
   );
 }

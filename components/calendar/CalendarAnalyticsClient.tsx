@@ -29,9 +29,9 @@ function getDayCircleClasses(intensity: CalendarDailySummary["intensity"]): stri
     case "medium":
       return "bg-naku/20 font-bold text-naku";
     case "low":
-      return "bg-mint/15 font-bold text-mint";
+      return "bg-mint/15 font-bold text-accent";
     default:
-      return "bg-transparent text-white";
+      return "bg-transparent text-fg";
   }
 }
 
@@ -45,7 +45,7 @@ function getIndicatorClasses(intensity: CalendarDailySummary["intensity"]): stri
       return "bg-mint";
     case "none":
     default:
-      return "bg-white/10";
+      return "bg-fg/10";
   }
 }
 
@@ -65,10 +65,10 @@ function getModalBadgeClasses(intensity: CalendarDailySummary["intensity"]): str
     case "medium":
       return "bg-naku/18 text-naku";
     case "low":
-      return "bg-mint/15 text-mint";
+      return "bg-mint/15 text-accent";
     case "none":
     default:
-      return "bg-white/[0.05] text-white/50";
+      return "bg-fg/[0.05] text-fg/50";
   }
 }
 
@@ -134,11 +134,11 @@ export default function CalendarAnalyticsClient({
 
   return (
     <>
-      <div className="flex flex-col gap-5 pb-28">
-        <section className="rounded-2xl border border-white/[0.06] bg-surface p-5">
+      <div className="flex flex-col gap-5 pb-28 lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:items-start lg:pb-0">
+        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5 lg:col-span-4 lg:col-start-1 lg:row-start-1">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg/45">
                 Energy Calendar
               </p>
               <h2 className="mt-1 text-[28px] font-bold tracking-tight">{monthLabel}</h2>
@@ -146,14 +146,14 @@ export default function CalendarAnalyticsClient({
             <div className="flex items-center gap-2">
               <Link
                 href={safePreviousMonthHref}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.04] text-fg/65 transition-colors hover:bg-fg/[0.07] hover:text-fg"
                 aria-label="Previous month"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
               <Link
                 href={safeNextMonthHref}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.04] text-fg/65 transition-colors hover:bg-fg/[0.07] hover:text-fg"
                 aria-label="Next month"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -162,14 +162,14 @@ export default function CalendarAnalyticsClient({
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-white/[0.03] p-3.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+            <div className="rounded-2xl bg-fg/[0.03] p-3.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
                 Month kWh
               </p>
               <p className="mt-2 text-2xl font-bold tracking-tight">{monthTotalKwh.toFixed(2)}</p>
             </div>
-            <div className="rounded-2xl bg-white/[0.03] p-3.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+            <div className="rounded-2xl bg-fg/[0.03] p-3.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
                 Variable Spend
               </p>
               <p className="mt-2 text-2xl font-bold tracking-tight">
@@ -182,8 +182,8 @@ export default function CalendarAnalyticsClient({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/[0.06] bg-surface p-4">
-          <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
+        <section className="rounded-2xl border border-fg/[0.06] bg-surface p-4 lg:col-span-8 lg:col-start-5 lg:row-span-2 lg:row-start-1 lg:p-6">
+          <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-fg/45">
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((label) => (
               <span key={label}>{label}</span>
             ))}
@@ -207,8 +207,8 @@ export default function CalendarAnalyticsClient({
                           day.kwh > 0
                             ? getDayCircleClasses(day.intensity)
                             : day.isCurrentMonth
-                              ? "text-white"
-                              : "text-white/55"
+                              ? "text-fg"
+                              : "text-fg/55"
                         } ${day.isToday ? "ring-2 ring-mint/70 ring-offset-2 ring-offset-surface" : ""}`}
                       >
                         {day.dayNumber}
@@ -234,7 +234,7 @@ export default function CalendarAnalyticsClient({
           </div>
         </section>
 
-        <div className="sticky bottom-24 z-10 pt-1">
+        <div className="sticky bottom-24 z-10 pt-1 lg:static lg:col-span-4 lg:col-start-1 lg:row-start-2 lg:self-start lg:pt-0">
           <button
             type="button"
             onClick={() => void handleConsultAi()}
@@ -247,7 +247,7 @@ export default function CalendarAnalyticsClient({
       </div>
 
       {isPanelOpen ? (
-        <div className="fixed inset-x-0 top-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-x-0 top-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ease-out starting:opacity-0 lg:bottom-0 lg:z-50">
           <button
             type="button"
             aria-label="Close analytics panel"
@@ -258,10 +258,10 @@ export default function CalendarAnalyticsClient({
               }
             }}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[min(78vh,100%)] overflow-y-auto rounded-t-[28px] bg-surface px-5 pb-6 pt-5 shadow-2xl">
+          <div className="absolute inset-x-0 bottom-0 max-h-[min(78vh,100%)] overflow-y-auto rounded-t-[28px] bg-surface px-5 pb-6 pt-5 shadow-2xl transition-[translate] duration-[400ms] ease-drawer starting:translate-y-full lg:inset-y-0 lg:left-auto lg:right-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:rounded-l-[28px] lg:px-7 lg:pt-7 lg:starting:translate-x-full lg:starting:translate-y-0">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-mint/70">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/70">
                   AI Calendar Read
                 </p>
                 <h3 className="mt-1 text-xl font-bold tracking-tight">
@@ -272,7 +272,7 @@ export default function CalendarAnalyticsClient({
                 type="button"
                 onClick={() => setIsPanelOpen(false)}
                 disabled={isLoading}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-40"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.04] text-fg/60 transition-colors hover:bg-fg/[0.07] hover:text-fg disabled:opacity-40"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -284,7 +284,7 @@ export default function CalendarAnalyticsClient({
                 <LoadingIndicator
                   size="md"
                   label="Consulting your calendar habits"
-                  spinnerClassName="border-white/20 border-t-mint"
+                  spinnerClassName="border-fg/20 border-t-mint"
                 />
               </div>
             ) : error ? (
@@ -293,8 +293,8 @@ export default function CalendarAnalyticsClient({
               </div>
             ) : analysis ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-white/[0.03] p-4">
-                  <p className="text-sm leading-relaxed text-white/75">
+                <div className="rounded-2xl bg-fg/[0.03] p-4">
+                  <p className="text-sm leading-relaxed text-fg/75">
                     {analysis.summary}
                   </p>
                 </div>
@@ -306,7 +306,7 @@ export default function CalendarAnalyticsClient({
                         key={highlight}
                         className="rounded-2xl bg-mint/10 p-3"
                       >
-                        <p className="text-sm leading-relaxed text-white/80">
+                        <p className="text-sm leading-relaxed text-fg/80">
                           {highlight}
                         </p>
                       </div>
@@ -320,17 +320,17 @@ export default function CalendarAnalyticsClient({
       ) : null}
 
       {selectedDay ? (
-        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md">
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md transition-opacity duration-200 ease-out starting:opacity-0">
           <button
             type="button"
             aria-label="Close day details"
             className="absolute inset-0"
             onClick={() => setSelectedDay(null)}
           />
-          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl bg-surface p-5 shadow-2xl">
+          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl bg-surface p-5 shadow-2xl transition-[scale,opacity] duration-200 ease-out starting:scale-[0.96] starting:opacity-0 lg:inset-x-auto lg:left-1/2 lg:w-[440px] lg:-translate-x-1/2">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg/45">
                   Day Details
                 </p>
                 <h3 className="mt-1 text-xl font-bold tracking-tight">
@@ -340,7 +340,7 @@ export default function CalendarAnalyticsClient({
               <button
                 type="button"
                 onClick={() => setSelectedDay(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-fg/[0.04] text-fg/60 transition-colors hover:bg-fg/[0.07] hover:text-fg"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -348,29 +348,29 @@ export default function CalendarAnalyticsClient({
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-white/[0.03] p-3.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+              <div className="rounded-2xl bg-fg/[0.03] p-3.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
                   Usage
                 </p>
                 <p className="mt-2 text-2xl font-bold tracking-tight">
                   {selectedDay.kwh.toFixed(2)}
                 </p>
-                <p className="mt-1 text-[11px] text-white/55">kWh for the day</p>
+                <p className="mt-1 text-[11px] text-fg/55">kWh for the day</p>
               </div>
-              <div className="rounded-2xl bg-white/[0.03] p-3.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+              <div className="rounded-2xl bg-fg/[0.03] p-3.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
                   Variable Spend
                 </p>
                 <p className="mt-2 text-2xl font-bold tracking-tight">
                   ₱{selectedDay.costPhp.toFixed(2)}
                 </p>
-                <p className="mt-1 text-[11px] text-white/55">Estimated by active Meralco rate</p>
+                <p className="mt-1 text-[11px] text-fg/55">Estimated by active Meralco rate</p>
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+            <div className="mt-4 flex items-center justify-between rounded-2xl bg-fg/[0.03] px-4 py-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">
                   Usage Level
                 </p>
                 <div className="mt-2 flex items-center gap-2">
@@ -386,7 +386,7 @@ export default function CalendarAnalyticsClient({
                   </span>
                 </div>
               </div>
-              <p className="max-w-36 text-right text-[11px] leading-relaxed text-white/60">
+              <p className="max-w-36 text-right text-[11px] leading-relaxed text-fg/60">
                 {selectedDay.kwh > 0
                   ? "Tap other days to compare your burn pattern."
                   : "No meaningful usage logged for this day."}

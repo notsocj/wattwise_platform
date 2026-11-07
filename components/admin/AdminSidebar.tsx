@@ -52,25 +52,25 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
   }
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-surface border-r border-white/10 flex flex-col">
+    <aside className="fixed top-0 left-0 h-screen w-64 bg-surface border-r border-fg/10 flex flex-col">
       {/* Brand Header */}
-      <div className="px-5 py-6 border-b border-white/10">
+      <div className="px-5 py-6 border-b border-fg/10">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-bold text-white">
-            Watt<span className="text-mint">Wise</span>
+          <span className="text-lg font-bold text-fg">
+            Watt<span className="text-accent">Wise</span>
           </span>
         </div>
-        <p className="text-xs font-semibold tracking-widest text-mint/60 uppercase">
+        <p className="text-xs font-semibold tracking-widest text-accent/60 uppercase">
           Mission Control
         </p>
       </div>
 
       {/* Admin Profile */}
-      <div className="px-5 py-4 border-b border-white/10">
-        <p className="text-sm font-semibold text-white truncate">
+      <div className="px-5 py-4 border-b border-fg/10">
+        <p className="text-sm font-semibold text-fg truncate">
           {adminName || "Super Admin"}
         </p>
-        <p className="text-xs text-white/40 truncate">{adminEmail}</p>
+        <p className="text-xs text-fg/40 truncate">{adminEmail}</p>
       </div>
 
       {/* Navigation */}
@@ -83,8 +83,8 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
               href={path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-mint/10 text-mint"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
+                  ? "bg-mint/10 text-accent"
+                  : "text-fg/60 hover:text-fg hover:bg-fg/5"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -95,10 +95,10 @@ export default function AdminSidebar({ adminName, adminEmail }: AdminSidebarProp
       </nav>
 
       {/* Sign Out */}
-      <div className="px-3 py-4 border-t border-white/10">
+      <div className="px-3 py-4 border-t border-fg/10">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-fg/60 hover:text-fg hover:bg-fg/5 transition-colors w-full"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign Out

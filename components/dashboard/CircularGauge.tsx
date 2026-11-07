@@ -20,7 +20,7 @@ export default function CircularGauge({
 
   return (
     <div className="flex flex-col items-center px-1">
-      <div className="relative aspect-square w-full max-w-[108px]">
+      <div className="relative aspect-square w-full max-w-[108px] lg:max-w-[168px]">
         <svg
           viewBox="0 0 100 100"
           className="h-full w-full -rotate-90"
@@ -50,13 +50,13 @@ export default function CircularGauge({
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold leading-none">{value}</span>
-          <span className="mt-1 text-[11px] font-medium text-mint/70">
+          <span className="text-2xl font-bold leading-none lg:text-4xl">{value}</span>
+          <span className="mt-1 text-[11px] font-medium text-accent/70 lg:text-xs">
             {unit}
           </span>
         </div>
       </div>
-      <span className="mt-2.5 text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+      <span className="mt-2.5 text-[11px] font-semibold tracking-wider text-fg/40 uppercase">
         {label}
       </span>
     </div>

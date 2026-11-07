@@ -49,32 +49,32 @@ export default function RateComponentList({
 
   return (
     <div className={`space-y-4 ${textSize}`}>
-      <dl className="divide-y divide-white/[0.06]">
+      <dl className="divide-y divide-fg/[0.06]">
         {lines.map((line) => {
           const value = rates[line.key];
           const isCredit = value < 0;
           return (
             <div
               key={line.key}
-              className={`flex items-baseline justify-between gap-4 ${rowPadding} text-white/60`}
+              className={`flex items-baseline justify-between gap-4 ${rowPadding} text-fg/60`}
             >
               <dt className="min-w-0">
                 {line.label}
                 {line.key === "distribution" ? (
-                  <span className="ml-1.5 text-[11px] text-white/50">
+                  <span className="ml-1.5 text-[11px] text-fg/50">
                     {distributionTierLabel(household?.monthlyKwh ?? null)} tier
                   </span>
                 ) : null}
                 {line.vat === "none" ? (
-                  <span className="ml-1.5 text-[11px] text-white/50">no VAT</span>
+                  <span className="ml-1.5 text-[11px] text-fg/50">no VAT</span>
                 ) : null}
               </dt>
               <dd className="shrink-0 text-right tabular-nums">
-                <span className={`font-semibold ${isCredit ? "text-bida" : "text-white"}`}>
+                <span className={`font-semibold ${isCredit ? "text-bida" : "text-fg"}`}>
                   {isCredit ? "−" : ""}₱{Math.abs(value).toFixed(4)}
                 </span>
                 {usageKwh > 0 ? (
-                  <span className="ml-1.5 text-[11px] text-white/50">
+                  <span className="ml-1.5 text-[11px] text-fg/50">
                     ({isCredit ? "−" : ""}₱
                     {Math.abs(value * usageKwh * vatMultiplierFor(line.vat, rates, vatRate)).toFixed(2)})
                   </span>
@@ -85,7 +85,7 @@ export default function RateComponentList({
         })}
       </dl>
 
-      <p className="text-[11px] leading-relaxed text-white/50">
+      <p className="text-[11px] leading-relaxed text-fg/50">
         {household
           ? `Meralco picks the distribution rate and energy tax from your whole home's monthly use: ${household.monthlyKwh.toLocaleString("en-PH", { maximumFractionDigits: 0 })} kWh, ${
               household.source === "bill"
@@ -96,7 +96,7 @@ export default function RateComponentList({
         {settingsHref && household?.source !== "bill" ? (
           <>
             {" "}
-            <Link href={settingsHref} className="font-semibold text-mint underline">
+            <Link href={settingsHref} className="font-semibold text-accent underline">
               Add your bill kWh
             </Link>{" "}
             for an exact tier.
@@ -104,26 +104,26 @@ export default function RateComponentList({
         ) : null}
       </p>
 
-      <div className="space-y-1.5 border-t border-white/[0.08] pt-3 text-white/60">
+      <div className="space-y-1.5 border-t border-fg/[0.08] pt-3 text-fg/60">
         <div className="flex items-baseline justify-between gap-4">
           <span className="min-w-0">Metering + supply fixed charges</span>
-          <span className="shrink-0 font-semibold tabular-nums text-white">
+          <span className="shrink-0 font-semibold tabular-nums text-fg">
             ₱{fixedChargesPhp.toFixed(2)}
           </span>
         </div>
       </div>
 
-      <div className="space-y-1.5 border-t border-white/[0.08] pt-3 text-white/60">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">VAT</p>
+      <div className="space-y-1.5 border-t border-fg/[0.08] pt-3 text-fg/60">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-fg/50">VAT</p>
         {vatLines.map((line) => (
           <div key={line.label} className="flex items-baseline justify-between gap-4">
             <span className="min-w-0">{line.label}</span>
-            <span className="shrink-0 font-semibold tabular-nums text-white">
+            <span className="shrink-0 font-semibold tabular-nums text-fg">
               {formatPercent(line.value)}
             </span>
           </div>
         ))}
-        <p className="text-[11px] leading-relaxed text-white/50">
+        <p className="text-[11px] leading-relaxed text-fg/50">
           System loss, Universal Charge, FIT-All, GEA-All, real property tax, and the lifeline
           subsidy are not subject to VAT.
         </p>

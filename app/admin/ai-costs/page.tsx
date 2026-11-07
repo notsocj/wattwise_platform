@@ -13,20 +13,20 @@ export default async function AdminAiCostsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <Brain className="h-6 w-6 text-mint" />
+        <Brain className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">AI Costs</h1>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-white/10 bg-surface p-5">
-          <p className="text-sm text-white/50">Insights</p>
+        <div className="rounded-lg border border-fg/10 bg-surface p-5">
+          <p className="text-sm text-fg/50">Insights</p>
           <p className="mt-2 text-3xl font-semibold">{rows.length}</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-surface p-5">
-          <p className="text-sm text-white/50">Tokens</p>
+        <div className="rounded-lg border border-fg/10 bg-surface p-5">
+          <p className="text-sm text-fg/50">Tokens</p>
           <p className="mt-2 text-3xl font-semibold">{tokens.toLocaleString()}</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-surface p-5">
-          <p className="text-sm text-white/50">Insight types</p>
+        <div className="rounded-lg border border-fg/10 bg-surface p-5">
+          <p className="text-sm text-fg/50">Insight types</p>
           <p className="mt-2 text-3xl font-semibold">
             {new Set(rows.map((r) => r.insight_type)).size}
           </p>

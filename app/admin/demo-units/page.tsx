@@ -20,8 +20,8 @@ export default async function DemoUnitsPage() {
   }));
 
   return <div>
-    <div className="mb-2 flex items-center gap-3"><FlaskConical className="h-6 w-6 text-mint" /><h1 className="text-2xl font-bold">Demo Units</h1></div>
-    <p className="mb-6 max-w-3xl text-white/55">Create a controllable simulated meter for a user or tenant. Its readings enter the same dashboard, reports, costs, and budget workflow as a physical WattWise unit.</p>
+    <div className="mb-2 flex items-center gap-3"><FlaskConical className="h-6 w-6 text-accent" /><h1 className="text-2xl font-bold">Demo Units</h1></div>
+    <p className="mb-6 max-w-3xl text-fg/55">Create a controllable simulated meter for a user or tenant. Its readings enter the same dashboard, reports, costs, and budget workflow as a physical WattWise unit.</p>
     <DemoUnitsClient units={normalizedUnits} people={people ?? []} />
   </div>;
 }

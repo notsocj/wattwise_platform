@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { startQuery } from "@/lib/start-query";
 import { getSessionUser } from "@/lib/auth-context";
 import PageHeader from "@/components/ui/PageHeader";
+import { CARD, CardHeader } from "@/components/ui/Card";
 import {
   AlertTriangle,
   CalendarClock,
+  Gauge,
   LineChart,
   PlugZap,
   TrendingUp,
@@ -63,16 +65,16 @@ function TenantBurnNotice({
   description: string;
 }) {
   return (
-    <div className="min-h-screen bg-canvas pb-24 text-white">
-      <PageHeader icon={LineChart} title="Burn Analytics" />
+    <div className="min-h-screen bg-canvas lg:min-h-0 pb-24 text-fg lg:pb-12">
+      <PageHeader icon={LineChart} title="Burn Analytics" description="How fast you're spending this billing cycle, and where it's heading." />
 
-      <main className="flex min-h-screen items-center px-5 pt-[84px]">
-        <section className="w-full rounded-xl border border-white/[0.06] bg-surface p-6 text-center">
+      <main className="flex min-h-screen items-center px-5 lg:min-h-[60vh] pt-[84px] lg:pt-0">
+        <section className="w-full rounded-2xl border border-fg/[0.06] bg-surface p-6 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/10">
-            <PlugZap className="h-7 w-7 text-mint" />
+            <PlugZap className="h-7 w-7 text-accent" />
           </div>
           <h2 className="mt-5 text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="mt-3 text-sm leading-relaxed text-white/55">
+          <p className="mt-3 text-sm leading-relaxed text-fg/55">
             {description}
           </p>
         </section>
@@ -266,95 +268,80 @@ export default async function AnalyticsPage() {
   const remainingDays = billingCycle.remainingDays;
 
   return (
-    <div className="min-h-screen bg-canvas pb-24 text-white">
-      <PageHeader icon={LineChart} title="Burn Analytics" />
+    <div className="min-h-screen bg-canvas lg:min-h-0 pb-24 text-fg lg:pb-12">
+      <PageHeader icon={LineChart} title="Burn Analytics" description="How fast you're spending this billing cycle, and where it's heading." />
 
-      <main className="flex flex-col gap-4 px-5 pt-[84px]">
-        <section className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-surface p-5">
-          <div className="absolute inset-y-0 left-0 w-1 rounded-r-full bg-mint/60" />
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-white/50">
-            Projected Billing Cycle Bill
-          </p>
+      <main className="ww-stagger flex flex-col gap-4 px-5 pt-[84px] lg:grid lg:grid-cols-12 lg:items-start lg:gap-5 lg:pt-0">
+        <section className={`${CARD} p-5 lg:order-1 lg:col-span-8 lg:self-stretch lg:p-6`}>
+          <div className="mb-4">
+            <CardHeader icon={Gauge} title="Projected bill this cycle" />
+          </div>
           <p className="text-5xl font-bold tracking-tight">
-            <span className="mr-0.5 text-3xl font-semibold text-white/50">₱</span>
+            <span className="mr-0.5 text-3xl font-semibold text-fg/50">₱</span>
             {projectedCycleBill.toLocaleString("en-PH", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
-          <p className="mt-2 text-sm text-white/55">
+          <p className="mt-2 text-sm text-fg/55">
             Based on the last {forecastLookbackDays} day{forecastLookbackDays === 1 ? "" : "s"}, with {remainingDays} day(s) left in your billing cycle.
           </p>
         </section>
 
-        <AnomalyAlertCard />
+        <div className="empty:hidden lg:col-span-12">
+          <AnomalyAlertCard />
+        </div>
 
+        <div className="lg:order-5 lg:col-span-12">
         <MeralcoBreakdownCard rates={activeRates.rates} vatRate={activeRates.vatRate} fixedCharges={activeRates.fixedCharges} usageKwh={cycleUsageKwh} settingsHref={isTenant ? undefined : "/settings"} effectiveMonth={activeRates.effectiveMonth} provenance={activeRates.provenance} />
+        </div>
 
-        <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider">
-                7-Day Financial Velocity
-              </h2>
-              <p className="mt-1 text-xs text-white/45">
-                Uses bounded RPC aggregates, not raw unbounded telemetry scans.
-              </p>
-            </div>
-            <TrendingUp className="h-5 w-5 text-mint" />
+        <section className={`${CARD} p-5 lg:order-3 lg:col-span-8 lg:p-6`}>
+          <div className="mb-4">
+            <CardHeader icon={TrendingUp} title="Daily spend, last 7 days" />
           </div>
           <BurnRateChart data={chartData} />
         </section>
 
-        <section className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-white/[0.06] bg-surface p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/45">
-              Billing Cycle To Date
-            </p>
+        <section className="grid grid-cols-2 gap-3 lg:order-4 lg:col-span-4 lg:grid-cols-1 lg:gap-5">
+          <div className={`${CARD} p-4 lg:p-6`}>
+            <p className="text-sm font-medium text-fg/60">Cycle to date</p>
             <p className="mt-2 text-2xl font-bold">
               ₱{cycleEstimatedBill.toLocaleString("en-PH", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </p>
-            <p className="mt-1 text-[11px] text-white/40">
+            <p className="mt-1 text-[11px] text-fg/40">
               Variable: ₱{actualCycleVariableSpend.toFixed(2)}
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/[0.06] bg-surface p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/45">
-              Burn Rate
-            </p>
+          <div className={`${CARD} p-4 lg:p-6`}>
+            <p className="text-sm font-medium text-fg/60">Budget used</p>
             <p className="mt-2 text-2xl font-bold">{burnPercent.toFixed(1)}%</p>
-            <p className="mt-1 text-[11px] text-white/40">
+            <p className="mt-1 text-[11px] text-fg/40">
               Of ₱{monthlyBudget.toLocaleString("en-PH")} home budget
             </p>
           </div>
         </section>
 
         <section
-          className={`rounded-xl border p-5 ${
+          className={`rounded-2xl border p-5 lg:order-2 lg:col-span-4 lg:self-stretch lg:p-6 ${
             projectedHitDay
-              ? "border-naku/25 bg-naku/10"
-              : "border-mint/25 bg-mint/10"
+              ? "border-naku/20 bg-naku/[0.07]"
+              : "border-mint/20 bg-mint/[0.06]"
           }`}
         >
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
             {projectedHitDay ? (
               <AlertTriangle className="h-4 w-4 text-naku" />
             ) : (
-              <CalendarClock className="h-4 w-4 text-mint" />
+              <CalendarClock className="h-4 w-4 text-accent" />
             )}
-            <h2
-              className={`text-sm font-bold uppercase tracking-wider ${
-                projectedHitDay ? "text-naku" : "text-mint"
-              }`}
-            >
-              Forecast
-            </h2>
+            <h2 className={`text-sm font-semibold ${projectedHitDay ? "text-naku" : "text-accent"}`}>Forecast</h2>
           </div>
-          <p className="text-sm leading-relaxed text-white/70">
+          <p className="text-sm leading-relaxed text-fg/70">
             {projectedHitDay
               ? `Trending to hit your ₱${monthlyBudget.toLocaleString("en-PH")} budget around day ${projectedHitDay} of this billing cycle. Naku, ease up on high-watt appliances before then.`
               : `Bida, current trend stays within your ₱${monthlyBudget.toLocaleString("en-PH")} budget for this billing cycle.`}

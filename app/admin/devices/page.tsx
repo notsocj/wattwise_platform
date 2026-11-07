@@ -16,10 +16,10 @@ export default async function AdminDevicesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <Cpu className="h-6 w-6 text-mint" />
+        <Cpu className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Devices</h1>
       </div>
-      <p className="mb-6 text-white/50">
+      <p className="mb-6 text-fg/50">
         Configure device metadata, assign owners and tenants, and update approved budget limits.
         Names are shown instead of account IDs.
       </p>

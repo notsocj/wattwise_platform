@@ -9,16 +9,41 @@
   --color-canvas: #121212;
   --color-ink: #121212;
   --color-surface: #1E1E1E;
+  /* Desktop sidebar rail; the content panel sits on it as bg-canvas. */
+  --color-sidebar: #0B0B0B;
   --color-mint: #00E66F;
+  /*
+   * Theme tokens. `fg` is the foreground: classes use it with opacity
+   * (text-fg/60, border-fg/[0.06], bg-fg/[0.04]) instead of hard-coded white.
+   * `accent` is mint for text and icons; light mode darkens it for contrast,
+   * while mint fills (bg-mint) keep the bright brand colour in both themes.
+   */
+  --color-fg: #FFFFFF;
+  --color-accent: #00E66F;
+  /* Inset wells (inputs, nested panels): darkens in dark mode, a soft tint in light. */
+  --color-shade: #000000;
   --color-bida: #10B981;
   --color-naku: #F59E0B;
   --color-danger: #EF4444;
+
+  /* Motion: strong curves; the built-in ones are too weak to read as intentional. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 :root,
 [data-theme="dark"] {
   --color-canvas: #121212;
   --color-surface: #1E1E1E;
+  --color-sidebar: #0B0B0B;
+  --color-fg: #ffffff;
+  --color-accent: #00E66F;
+  --color-shade: #000000;
+  --color-bida: #10B981;
+  --color-naku: #F59E0B;
+  --color-danger: #EF4444;
   --color-text: #ffffff;
   --chart-axis: rgba(255, 255, 255, 0.4);
   --chart-muted-bar: rgba(255, 255, 255, 0.12);
@@ -29,6 +54,15 @@
 [data-theme="light"] {
   --color-canvas: #f5f6f8;
   --color-surface: #ffffff;
+  --color-sidebar: #e9ebef;
+  --color-fg: #0f1115;
+  /* Translucent, so bg-shade/10 lands near 4% ink instead of a muddy 10% grey. */
+  --color-shade: rgb(15 17 21 / 0.4);
+  /* Darker shades so text and icons pass WCAG AA on white and on the canvas. */
+  --color-accent: #007e3c;
+  --color-bida: #047857;
+  --color-naku: #b45309;
+  --color-danger: #b91c1c;
   --color-text: #0f1115;
   --chart-axis: rgba(15, 17, 21, 0.45);
   --chart-muted-bar: #393939;
@@ -42,21 +76,142 @@ body {
   font-family: var(--font-sans);
 }
 
-html[data-theme],
-html[data-theme] * {
-  transition:
-    background-color 200ms ease,
-    color 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    fill 200ms ease,
-    stroke 200ms ease;
+/*
+ * Theme-switch color fade for every element. It sits in the base layer so a
+ * `transition-*` utility on an element replaces it; unlayered, it silently
+ * overrode them all (press feedback, toggles, ...).
+ */
+@layer base {
+  html[data-theme],
+  html[data-theme] * {
+    transition:
+      background-color 200ms ease,
+      color 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease,
+      fill 200ms ease,
+      stroke 200ms ease;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-theme],
   html[data-theme] * {
     transition: none !important;
+  }
+}
+
+/* One-time entrance for decorative brand content (sign-in panel). */
+@keyframes ww-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes ww-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.ww-rise {
+  animation: ww-rise 520ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ww-rise {
+    animation-name: ww-fade;
+  }
+}
+
+/*
+ * Page content entrance: each direct child rises 8px and fades in, 40ms apart.
+ * Seen on every navigation, so it stays short and small. `backwards` (not
+ * `both`) leaves no transform behind once done, so fixed modals inside cards
+ * keep positioning against the viewport.
+ */
+@keyframes ww-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@utility ww-enter {
+  animation: ww-enter 320ms var(--ease-out) backwards;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-name: ww-fade;
+  }
+}
+
+.ww-stagger > * {
+  animation: ww-enter 320ms var(--ease-out) backwards;
+}
+
+.ww-stagger > :nth-child(2) { animation-delay: 40ms; }
+.ww-stagger > :nth-child(3) { animation-delay: 80ms; }
+.ww-stagger > :nth-child(4) { animation-delay: 120ms; }
+.ww-stagger > :nth-child(5) { animation-delay: 160ms; }
+.ww-stagger > :nth-child(6) { animation-delay: 200ms; }
+.ww-stagger > :nth-child(n + 7) { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ww-stagger > * {
+    animation-name: ww-fade;
+  }
+}
+
+/*
+ * Splash intro (app/page.tsx). Mascot pops in at the centre of the screen, lifts
+ * to make room, then the wordmark rises and the subtitle and loader fade in.
+ * The 68px offset is half the height of the text below (measured), so the mascot starts dead centre.
+ */
+@keyframes ww-splash-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes ww-splash-lift {
+  from {
+    transform: translateY(68px);
+  }
+}
+
+@keyframes ww-splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.ww-splash-pop {
+  animation: ww-splash-pop 700ms var(--ease-out) 100ms both;
+}
+
+.ww-splash-lift {
+  animation: ww-splash-lift 800ms var(--ease-in-out) 850ms both;
+}
+
+.ww-splash-rise {
+  animation: ww-splash-rise 600ms var(--ease-out) 1100ms both;
+}
+
+.ww-splash-fade {
+  animation: ww-fade 500ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ww-splash-pop,
+  .ww-splash-rise {
+    animation-name: ww-fade;
+  }
+
+  .ww-splash-lift {
+    animation: none;
   }
 }
 
@@ -68,237 +223,4 @@ html[data-theme] * {
 .text-mint-glow {
   /* glow removed globally */
   text-shadow: none !important;
-}
-
-[data-theme="light"] .text-white {
-  color: var(--color-text);
-}
-
-[data-theme="light"] .text-white\/20 {
-  color: rgba(15, 17, 21, 0.2);
-}
-
-[data-theme="light"] .text-white\/30 {
-  color: rgba(15, 17, 21, 0.3);
-}
-
-[data-theme="light"] .text-white\/35 {
-  color: rgba(15, 17, 21, 0.35);
-}
-
-[data-theme="light"] .text-white\/40 {
-  color: rgba(15, 17, 21, 0.4);
-}
-
-[data-theme="light"] .text-white\/45 {
-  color: rgba(15, 17, 21, 0.45);
-}
-
-[data-theme="light"] .text-white\/50 {
-  color: rgba(15, 17, 21, 0.5);
-}
-
-[data-theme="light"] .text-white\/55 {
-  color: rgba(15, 17, 21, 0.55);
-}
-
-[data-theme="light"] .text-white\/60 {
-  color: rgba(15, 17, 21, 0.6);
-}
-
-[data-theme="light"] .text-white\/65 {
-  color: rgba(15, 17, 21, 0.65);
-}
-
-[data-theme="light"] .text-white\/70 {
-  color: rgba(15, 17, 21, 0.7);
-}
-
-[data-theme="light"] .text-white\/75 {
-  color: rgba(15, 17, 21, 0.75);
-}
-
-[data-theme="light"] .text-white\/80 {
-  color: rgba(15, 17, 21, 0.8);
-}
-
-[data-theme="light"] .hover\:text-white:hover {
-  color: var(--color-text);
-}
-
-[data-theme="light"] .hover\:text-white\/50:hover {
-  color: rgba(15, 17, 21, 0.5);
-}
-
-[data-theme="light"] .hover\:text-white\/60:hover {
-  color: rgba(15, 17, 21, 0.6);
-}
-
-[data-theme="light"] .hover\:text-white\/70:hover {
-  color: rgba(15, 17, 21, 0.7);
-}
-
-[data-theme="light"] .placeholder-white\/30::placeholder {
-  color: rgba(15, 17, 21, 0.45);
-}
-
-[data-theme="light"] .placeholder\:text-white\/30::placeholder {
-  color: rgba(15, 17, 21, 0.45);
-}
-
-[data-theme="dark"] .text-white {
-  color: #ffffff;
-}
-
-[data-theme="dark"] .text-white\/20 {
-  color: rgba(255, 255, 255, 0.2);
-}
-
-[data-theme="dark"] .text-white\/30 {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-[data-theme="dark"] .text-white\/35 {
-  color: rgba(255, 255, 255, 0.35);
-}
-
-[data-theme="dark"] .text-white\/40 {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-[data-theme="dark"] .text-white\/45 {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-[data-theme="dark"] .text-white\/50 {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-[data-theme="dark"] .text-white\/55 {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-[data-theme="dark"] .text-white\/60 {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-[data-theme="dark"] .text-white\/65 {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-[data-theme="dark"] .text-white\/70 {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-[data-theme="dark"] .text-white\/75 {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-[data-theme="dark"] .text-white\/80 {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-[data-theme="dark"] .hover\:text-white:hover {
-  color: #ffffff;
-}
-
-[data-theme="dark"] .hover\:text-white\/50:hover {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-[data-theme="dark"] .hover\:text-white\/60:hover {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-[data-theme="dark"] .hover\:text-white\/70:hover {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-[data-theme="dark"] .placeholder-white\/30::placeholder {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-[data-theme="dark"] .placeholder\:text-white\/30::placeholder {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-/* Light theme: white-alpha fills and borders become ink-alpha (generated from
-   the classes used in app/ and components/; regenerate when adding new steps). */
-[data-theme="light"] .bg-white\/10 {
-  background-color: rgba(15, 17, 21, 0.125);
-}
-[data-theme="light"] .bg-white\/15 {
-  background-color: rgba(15, 17, 21, 0.188);
-}
-[data-theme="light"] .bg-white\/20 {
-  background-color: rgba(15, 17, 21, 0.25);
-}
-[data-theme="light"] .bg-white\/5 {
-  background-color: rgba(15, 17, 21, 0.062);
-}
-[data-theme="light"] .bg-white\/\[0\.02\] {
-  background-color: rgba(15, 17, 21, 0.025);
-}
-[data-theme="light"] .bg-white\/\[0\.03\] {
-  background-color: rgba(15, 17, 21, 0.037);
-}
-[data-theme="light"] .bg-white\/\[0\.04\] {
-  background-color: rgba(15, 17, 21, 0.05);
-}
-[data-theme="light"] .bg-white\/\[0\.05\] {
-  background-color: rgba(15, 17, 21, 0.062);
-}
-[data-theme="light"] .bg-white\/\[0\.06\] {
-  background-color: rgba(15, 17, 21, 0.075);
-}
-[data-theme="light"] .bg-white\/\[0\.07\] {
-  background-color: rgba(15, 17, 21, 0.088);
-}
-[data-theme="light"] .bg-white\/\[0\.08\] {
-  background-color: rgba(15, 17, 21, 0.1);
-}
-[data-theme="light"] .bg-white\/\[0\.10\] {
-  background-color: rgba(15, 17, 21, 0.125);
-}
-[data-theme="light"] .border-white\/10 {
-  border-color: rgba(15, 17, 21, 0.125);
-}
-[data-theme="light"] .border-white\/15 {
-  border-color: rgba(15, 17, 21, 0.188);
-}
-[data-theme="light"] .border-white\/20 {
-  border-color: rgba(15, 17, 21, 0.25);
-}
-[data-theme="light"] .border-white\/35 {
-  border-color: rgba(15, 17, 21, 0.438);
-}
-[data-theme="light"] .border-white\/5 {
-  border-color: rgba(15, 17, 21, 0.062);
-}
-[data-theme="light"] .border-white\/\[0\.06\] {
-  border-color: rgba(15, 17, 21, 0.075);
-}
-[data-theme="light"] .border-white\/\[0\.07\] {
-  border-color: rgba(15, 17, 21, 0.088);
-}
-[data-theme="light"] .border-white\/\[0\.08\] {
-  border-color: rgba(15, 17, 21, 0.1);
-}
-[data-theme="light"] .hover\:bg-white\/10:hover {
-  background-color: rgba(15, 17, 21, 0.125);
-}
-[data-theme="light"] .hover\:bg-white\/5:hover {
-  background-color: rgba(15, 17, 21, 0.062);
-}
-[data-theme="light"] .hover\:bg-white\/\[0\.06\]:hover {
-  background-color: rgba(15, 17, 21, 0.075);
-}
-[data-theme="light"] .hover\:bg-white\/\[0\.07\]:hover {
-  background-color: rgba(15, 17, 21, 0.088);
-}
-[data-theme="light"] .hover\:border-white\/20:hover {
-  border-color: rgba(15, 17, 21, 0.25);
-}
-[data-theme="light"] .divide-white\/\[0\.06\] > :not(:last-child) {
-  border-color: rgba(15, 17, 21, 0.075);
 }

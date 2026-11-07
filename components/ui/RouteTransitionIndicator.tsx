@@ -2,15 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
-
 const MIN_VISIBLE_MS = 220;
 const MAX_VISIBLE_MS = 5000;
+/** Time for the bar to fill the last stretch and fade before it unmounts. */
+const FINISH_MS = 420;
 
+type Phase = "idle" | "loading" | "finishing";
+
+/**
+ * Thin progress bar along the top edge while a client navigation loads.
+ * It shoots forward, slows as it waits (one long ease-out transition, so it
+ * never looks stuck), then fills and fades once the new route renders.
+ */
 export default function RouteTransitionIndicator() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  // Bumped per navigation so a new one restarts the bar from zero.
+  const [run, setRun] = useState(0);
+  const isNavigating = phase === "loading";
 
   const startAtRef = useRef<number | null>(null);
   const destinationRef = useRef<string | null>(null);
@@ -33,25 +43,27 @@ export default function RouteTransitionIndicator() {
     clearTimers();
     startAtRef.current = Date.now();
     destinationRef.current = destination;
-    setIsNavigating(true);
+    setRun((value) => value + 1);
+    setPhase("loading");
 
     safetyTimerRef.current = setTimeout(() => {
-      setIsNavigating(false);
+      setPhase("idle");
       startAtRef.current = null;
       destinationRef.current = null;
     }, MAX_VISIBLE_MS);
   }, [clearTimers]);
 
   const completeTransition = useCallback(() => {
+    clearTimers(); // drops the safety timeout; the finish timers below take over
     const startedAt = startAtRef.current;
     const elapsed = startedAt ? Date.now() - startedAt : MIN_VISIBLE_MS;
     const delay = Math.max(0, MIN_VISIBLE_MS - elapsed);
 
     hideTimerRef.current = setTimeout(() => {
-      setIsNavigating(false);
+      setPhase("finishing");
       startAtRef.current = null;
       destinationRef.current = null;
-      clearTimers();
+      hideTimerRef.current = setTimeout(() => setPhase("idle"), FINISH_MS);
     }, delay);
   }, [clearTimers]);
 
@@ -126,15 +138,25 @@ export default function RouteTransitionIndicator() {
     // query string changes should also end the indicator
   }, [completeTransition, pathname, searchParams, isNavigating]);
 
-  if (!isNavigating) {
+  if (phase === "idle") {
     return null;
   }
 
+  const finishing = phase === "finishing";
+
   return (
-    <div className="pointer-events-none fixed left-1/2 top-3 z-[70] -translate-x-1/2">
-      <div className="rounded-full border border-white/10 bg-canvas/90 px-3 py-1.5 shadow-lg backdrop-blur-sm">
-        <LoadingIndicator size="sm" label="Loading page" />
-      </div>
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-0.5">
+      <div
+        key={run}
+        className={`h-full origin-left bg-mint shadow-[0_0_10px_rgb(0_230_111/0.6)] starting:scale-x-0 ${
+          finishing
+            ? "scale-x-100 opacity-0 transition-[scale,opacity] duration-200 ease-out [transition-delay:0ms,180ms]"
+            : "scale-x-[86%] transition-[scale] duration-[8000ms] ease-[cubic-bezier(0.05,0.7,0.1,1)]"
+        }`}
+      />
+      <span role="status" className="sr-only">
+        {finishing ? "" : "Loading page"}
+      </span>
     </div>
   );
 }

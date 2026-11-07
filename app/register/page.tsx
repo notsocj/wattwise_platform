@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import Link from "next/link";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import FormAlert from "@/components/ui/FormAlert";
+import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { getHomePathForRole, type UserRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -24,7 +25,7 @@ type RegisterFieldErrors = Partial<{
 type RegisterRole = Extract<UserRole, "user" | "manager">;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  "w-full bg-transparent rounded-xl px-4 py-4 text-fg placeholder-fg/30 text-base focus:outline-none transition-colors";
 
 function getInputClass(hasError: boolean, extraClass = ""): string {
   const stateClass = hasError
@@ -43,7 +44,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SubmitStatus>("idle");
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
 
   function validateFullName(value = fullName): string | null {
@@ -102,7 +103,7 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
     const supabase = createClient();
     const normalizedEmail = normalizeEmail(email);
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -115,10 +116,9 @@ export default function RegisterPage() {
         },
       },
     });
-    setLoading(false);
-
     if (signUpError) {
       setSubmitError(getFriendlyAuthError(signUpError.message, "register"));
+      setStatus("idle");
       return;
     }
 
@@ -129,28 +129,31 @@ export default function RegisterPage() {
       return;
     }
 
+    // Signed in straight away: confirm it while the app loads. The button
+    // stays disabled until the next page replaces this one.
+    setStatus("success");
     router.push(getHomePathForRole(accountType));
     router.refresh();
   }
 
   if (confirmationEmail) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-fg">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <MailCheck className="h-8 w-8 text-bida" />
         </div>
         <h1 className="mb-2 text-2xl font-bold">Confirm Your Email</h1>
-        <p className="mb-8 max-w-sm text-center text-white/50">
+        <p className="mb-8 max-w-sm text-center text-fg/50">
           We sent a confirmation link to{" "}
-          <span className="font-semibold text-mint">{confirmationEmail}</span>. Open it
+          <span className="font-semibold text-accent">{confirmationEmail}</span>. Open it
           to activate your account, then log in.
         </p>
-        <p className="mb-8 max-w-sm text-center text-sm text-white/50">
+        <p className="mb-8 max-w-sm text-center text-sm text-fg/50">
           If it doesn&apos;t arrive in a few minutes, check your spam folder.
         </p>
         <Link
           href="/login"
-          className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+          className="flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent/80"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Login
@@ -160,8 +163,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
-      <div className="flex flex-col items-center px-6 pb-6 pt-16">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight lg:min-h-0">
+      {/* Desktop shows the brand panel beside the form instead. */}
+      <div className="flex flex-col items-center px-6 pb-6 pt-16 lg:hidden">
         <div className="flex h-24 w-24 items-center justify-center">
           <Image
             src="/wattwise_mascot.png"
@@ -172,31 +176,24 @@ export default function RegisterPage() {
           />
         </div>
 
-        <h1 className="text-3xl font-bold text-white">
-          Watt<span className="text-mint">Wise</span>
+        <h1 className="text-3xl font-bold text-fg">
+          Watt<span className="text-accent">Wise</span>
         </h1>
 
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
           INTELLIGENT ENERGY
         </p>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pt-2">
-        <h2 className="mb-6 text-xl font-bold text-white">Create Account</h2>
+        <h2 className="mb-6 text-xl font-bold text-fg">Create Account</h2>
 
-        {submitError && (
-          <div
-            role="alert"
-            className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
-          >
-            {submitError}
-          </div>
-        )}
+        <FormAlert message={submitError} />
 
         <form onSubmit={handleRegister} noValidate>
           <div className="mb-5">
             <fieldset>
-              <legend className="mb-2 block text-base font-semibold text-white">
+              <legend className="mb-2 block text-base font-semibold text-fg">
                 Account Type
               </legend>
               <div className="grid grid-cols-2 gap-3">
@@ -224,13 +221,13 @@ export default function RegisterPage() {
                       }}
                       className={`rounded-xl border px-3 py-3 text-left transition-colors ${
                         selected
-                          ? "border-mint bg-mint/10 text-white"
-                          : "border-white/10 bg-white/[0.03] text-white/60"
+                          ? "border-mint bg-mint/10 text-fg"
+                          : "border-fg/10 bg-fg/[0.03] text-fg/60"
                       }`}
                       aria-pressed={selected}
                     >
                       <span className="block text-sm font-bold">{option.title}</span>
-                      <span className="mt-1 block text-[11px] leading-snug text-white/45">
+                      <span className="mt-1 block text-[11px] leading-snug text-fg/45">
                         {option.description}
                       </span>
                     </button>
@@ -243,7 +240,7 @@ export default function RegisterPage() {
           <div className="mb-5">
             <label
               htmlFor="register-full-name"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               {accountType === "manager" ? "Property Name" : "Home Name"}
             </label>
@@ -274,7 +271,7 @@ export default function RegisterPage() {
             <p
               id="register-full-name-message"
               className={`mt-2 text-xs ${
-                fieldErrors.fullName ? "text-danger" : "text-white/40"
+                fieldErrors.fullName ? "text-danger" : "text-fg/40"
               }`}
             >
               {fieldErrors.fullName ??
@@ -287,7 +284,7 @@ export default function RegisterPage() {
           <div className="mb-5">
             <label
               htmlFor="register-email"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               Email Address
             </label>
@@ -319,7 +316,7 @@ export default function RegisterPage() {
             <p
               id="register-email-message"
               className={`mt-2 text-xs ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? "text-danger" : "text-fg/40"
               }`}
             >
               {fieldErrors.email ??
@@ -330,7 +327,7 @@ export default function RegisterPage() {
           <div className="mb-2">
             <label
               htmlFor="register-password"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               Password
             </label>
@@ -359,7 +356,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-accent/60 transition-colors hover:text-accent"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -374,39 +371,26 @@ export default function RegisterPage() {
           <p
             id="register-password-message"
             className={`mb-8 text-xs ${
-              fieldErrors.password ? "text-danger" : "text-white/40"
+              fieldErrors.password ? "text-danger" : "text-fg/40"
             }`}
           >
             {fieldErrors.password ?? "Must be at least 8 characters long."}
           </p>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <LoadingIndicator
-                  size="sm"
-                  label="Creating account"
-                  showLabel={false}
-                  spinnerClassName="border-black/30 border-t-black"
-                />
-                Creating account...
-              </span>
-            ) : (
-              "Sign Up"
-            )}
-          </button>
+          <SubmitButton
+            status={status}
+            idleLabel="Sign Up"
+            loadingLabel="Creating account..."
+            successLabel="Account created! Setting things up..."
+          />
         </form>
 
         <div className="mt-6 flex justify-center">
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-fg/50">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-bold text-mint transition-colors hover:text-mint/80"
+              className="font-bold text-accent transition-colors hover:text-accent/80"
             >
               Log In
             </Link>

@@ -106,8 +106,8 @@ export default async function ManagerCalendarPage(props: {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-white/[0.06] bg-surface p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
+      <section className="rounded-2xl border border-fg/[0.06] bg-surface p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg/45">
           Room Filter
         </p>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -116,7 +116,7 @@ export default async function ManagerCalendarPage(props: {
             className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors ${
               !selectedDeviceId
                 ? "bg-mint text-black"
-                : "bg-white/[0.04] text-white/60 hover:text-white"
+                : "bg-fg/[0.04] text-fg/60 hover:text-fg"
             }`}
           >
             All Rooms
@@ -128,7 +128,7 @@ export default async function ManagerCalendarPage(props: {
               className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors ${
                 selectedDeviceId === device.id
                   ? "bg-mint text-black"
-                  : "bg-white/[0.04] text-white/60 hover:text-white"
+                  : "bg-fg/[0.04] text-fg/60 hover:text-fg"
               }`}
             >
               {device.device_name}

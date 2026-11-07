@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { KeyRound, ArrowLeft } from "lucide-react";
-import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import FormAlert from "@/components/ui/FormAlert";
+import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -17,7 +18,7 @@ type ResetFieldErrors = Partial<{
 }>;
 
 const inputBaseClass =
-  "w-full bg-transparent rounded-xl px-4 py-4 text-white placeholder-white/30 text-base focus:outline-none transition-colors";
+  "w-full bg-transparent rounded-xl px-4 py-4 text-fg placeholder-fg/30 text-base focus:outline-none transition-colors";
 
 function getInputClass(hasError: boolean): string {
   const stateClass = hasError
@@ -29,7 +30,7 @@ function getInputClass(hasError: boolean): string {
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SubmitStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ResetFieldErrors>({});
   const [success, setSuccess] = useState(false);
@@ -60,7 +61,7 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
 
     try {
       const normalizedEmail = normalizeEmail(email);
@@ -76,36 +77,39 @@ export default function ForgotPasswordPage() {
         setSubmitError(getFriendlyAuthError(resetError.message, "reset"));
       } else {
         setEmail(normalizedEmail);
+        // Let the button confirm the send before the "check your email" screen replaces the form.
+        setStatus("success");
+        await new Promise((resolve) => setTimeout(resolve, 700));
         setSuccess(true);
+        return;
       }
     } catch (err) {
       setSubmitError(
         getFriendlyAuthError(err instanceof Error ? err.message : undefined, "reset")
       );
-    } finally {
-      setLoading(false);
     }
+    setStatus("idle");
   }
 
   if (success) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-fg">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <KeyRound className="h-8 w-8 text-bida" />
         </div>
         <h1 className="mb-2 text-2xl font-bold">Check Your Email</h1>
-        <p className="mb-8 max-w-sm text-center text-white/50">
+        <p className="mb-8 max-w-sm text-center text-fg/50">
           We&apos;ve sent a password reset link to{" "}
-          <span className="font-semibold text-mint">{email}</span>. Click the
+          <span className="font-semibold text-accent">{email}</span>. Click the
           link to set a new password.
         </p>
-        <p className="mb-8 max-w-sm text-center text-sm text-white/40">
+        <p className="mb-8 max-w-sm text-center text-sm text-fg/40">
           The link only works for a limited time. If you don&apos;t receive it,
           check your spam folder.
         </p>
         <Link
           href="/login"
-          className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+          className="flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent/80"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Login
@@ -115,8 +119,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight">
-      <div className="flex flex-col items-center px-6 pb-6 pt-16">
+    <div className="relative flex min-h-screen flex-col bg-canvas tracking-tight lg:min-h-0">
+      {/* Desktop shows the brand panel beside the form instead. */}
+      <div className="flex flex-col items-center px-6 pb-6 pt-16 lg:hidden">
         <div className="mb-3 flex h-24 w-24 items-center justify-center">
           <Image
             src="/wattwise_mascot.png"
@@ -127,30 +132,28 @@ export default function ForgotPasswordPage() {
           />
         </div>
 
-        <h1 className="mb-0 text-3xl font-bold text-white">
-          Watt<span className="text-mint">Wise</span>
+        <h1 className="mb-0 text-3xl font-bold text-fg">
+          Watt<span className="text-accent">Wise</span>
         </h1>
 
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
           RESET YOUR PASSWORD
         </p>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pt-6">
-        {submitError && (
-          <div
-            role="alert"
-            className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
-          >
-            {submitError}
-          </div>
-        )}
+        <div className="mb-8 hidden lg:block">
+          <h1 className="text-3xl font-bold tracking-tight text-fg">Reset your password</h1>
+          <p className="mt-2 text-sm text-fg/50">We&apos;ll email you a link to set a new one.</p>
+        </div>
+
+        <FormAlert message={submitError} />
 
         <form onSubmit={handleResetRequest} noValidate>
           <div className="mb-6">
             <label
               htmlFor="reset-email"
-              className="mb-2 block text-base font-semibold text-white"
+              className="mb-2 block text-base font-semibold text-fg"
             >
               Email Address
             </label>
@@ -181,7 +184,7 @@ export default function ForgotPasswordPage() {
             <p
               id="reset-email-message"
               className={`mt-2 text-sm ${
-                fieldErrors.email ? "text-danger" : "text-white/40"
+                fieldErrors.email ? "text-danger" : "text-fg/40"
               }`}
             >
               {fieldErrors.email ??
@@ -189,31 +192,19 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mb-4 inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <LoadingIndicator
-                  size="sm"
-                  label="Sending reset link"
-                  showLabel={false}
-                  spinnerClassName="border-black/30 border-t-black"
-                />
-                Sending...
-              </span>
-            ) : (
-              "Send Reset Link"
-            )}
-          </button>
+          <SubmitButton
+            status={status}
+            idleLabel="Send Reset Link"
+            loadingLabel="Sending..."
+            successLabel="Link sent!"
+            className="mb-4"
+          />
         </form>
 
         <div className="flex justify-center">
           <Link
             href="/login"
-            className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+            className="flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent/80"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Login

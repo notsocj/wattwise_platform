@@ -9,12 +9,12 @@ export default async function AdminAuditPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <ScrollText className="h-6 w-6 text-mint" />
+        <ScrollText className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Audit Log</h1>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-white/10 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-fg/10 bg-surface">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 text-white/50">
+          <thead className="border-b border-fg/10 text-fg/50">
             <tr>
               {["Time", "Action", "Target", "Reason", "Actor"].map((h) => (
                 <th key={h} className="p-4">
@@ -25,8 +25,8 @@ export default async function AdminAuditPage() {
           </thead>
           <tbody>
             {(data ?? []).map((a) => (
-              <tr key={a.id} className="border-b border-white/5">
-                <td className="p-4 text-white/50">{new Date(a.created_at).toLocaleString()}</td>
+              <tr key={a.id} className="border-b border-fg/5">
+                <td className="p-4 text-fg/50">{new Date(a.created_at).toLocaleString()}</td>
                 <td className="p-4">{a.action}</td>
                 <td className="p-4">
                   {a.target_type} {a.target_id || ""}

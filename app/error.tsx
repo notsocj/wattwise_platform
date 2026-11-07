@@ -15,19 +15,19 @@ export default function RouteError({
   }, [error]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-canvas px-6 py-12 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-canvas px-6 py-12 text-fg">
       <section className="relative mx-auto flex min-h-[75vh] w-full max-w-md items-center justify-center">
         <div
           role="alert"
-          className="w-full rounded-xl border border-white/10 bg-surface/95 p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+          className="w-full rounded-xl border border-fg/10 bg-surface/95 p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-sm"
         >
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-naku">
             Something went wrong
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-fg">
             We couldn&apos;t load this page
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/70">
+          <p className="mt-3 text-sm leading-relaxed text-fg/70">
             Your data is safe. This is usually a brief connection problem. Try again, or head
             back to the app.
           </p>
@@ -41,13 +41,13 @@ export default function RouteError({
             </button>
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 px-5 text-sm font-semibold text-white/80 transition hover:bg-white/5"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-fg/10 px-5 text-sm font-semibold text-fg/80 transition hover:bg-fg/5"
             >
               Return to App
             </Link>
           </div>
           {error.digest ? (
-            <p className="mt-5 text-[11px] text-white/50">Reference: {error.digest}</p>
+            <p className="mt-5 text-[11px] text-fg/50">Reference: {error.digest}</p>
           ) : null}
         </div>
       </section>

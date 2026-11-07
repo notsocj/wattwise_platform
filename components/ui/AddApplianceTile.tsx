@@ -27,7 +27,7 @@ export default function AddApplianceTile() {
       {/* Dashed "Add Appliance" tile */}
       <button
         onClick={() => setIsOpen(true)}
-        className="rounded-xl border border-dashed border-white/10 p-4 flex flex-col items-center justify-center min-h-32.5 text-white/50 hover:text-white/50 hover:border-white/20 transition-colors"
+        className="rounded-2xl border border-dashed border-fg/10 p-4 flex flex-col items-center justify-center min-h-32.5 text-fg/50 hover:text-fg/50 hover:border-fg/20 transition-colors"
       >
         <div className="w-10 h-10 rounded-xl border border-dashed border-current flex items-center justify-center mb-2">
           <Plus className="w-5 h-5" />

@@ -44,11 +44,11 @@ export default function ManagerSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((current) => !current)}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-black/10 px-3 py-2 text-left text-sm text-black outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-white"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-shade/10 px-3 py-2 text-left text-sm text-black outline-none transition-colors focus:border-mint/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-fg/10 dark:text-fg"
       >
         <span className="min-w-0 truncate">{selected?.label ?? "Select"}</span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-black/70 transition-transform dark:text-white/70 ${
+          className={`h-4 w-4 shrink-0 text-black/70 transition-transform dark:text-fg/70 ${
             open ? "rotate-180" : ""
           }`}
         />
@@ -58,7 +58,7 @@ export default function ManagerSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-56 overflow-y-auto rounded-xl border border-black/10 bg-white p-1 shadow-2xl dark:border-white/10 dark:bg-surface"
+          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-56 overflow-y-auto rounded-xl border border-black/10 bg-white p-1 shadow-2xl dark:border-fg/10 dark:bg-surface"
         >
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -76,13 +76,13 @@ export default function ManagerSelect({
                 }}
                 className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                   isSelected
-                    ? "bg-mint/10 text-black dark:text-white"
-                    : "text-black/65 hover:bg-black/[0.04] hover:text-black dark:text-white/70 dark:hover:bg-white/[0.06] dark:hover:text-white"
+                    ? "bg-mint/10 text-black dark:text-fg"
+                    : "text-black/65 hover:bg-black/[0.04] hover:text-black dark:text-fg/70 dark:hover:bg-fg/[0.06] dark:hover:text-fg"
                 }`}
               >
                 <Check
                   className={`h-4 w-4 shrink-0 ${
-                    isSelected ? "text-mint" : "text-transparent"
+                    isSelected ? "text-accent" : "text-transparent"
                   }`}
                 />
                 <span className="min-w-0 truncate">{option.label}</span>

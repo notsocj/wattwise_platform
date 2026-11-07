@@ -85,13 +85,16 @@ Default local URL is `http://localhost:3000`. If you need to avoid a port confli
 ### UI and design system
 
 - Use the existing Space Grotesk typography, loaded with `next/font/google` in `app/layout.tsx` (self-hosted woff2, exposed as `--font-sans`).
-- Use Tailwind utility classes and shared theme tokens such as `bg-canvas`, `bg-surface`, `text-mint`, `text-bida`, `text-naku`, and `text-danger`.
+- Use Tailwind utility classes and shared theme tokens such as `bg-canvas`, `bg-surface`, `text-fg`, `text-accent`, `bg-mint`, `text-bida`, `text-naku`, and `text-danger`. The WattWise owl is `components/ui/BrandMark.tsx` (it takes the text colour); use it for the assistant and brand spots instead of a generic robot icon.
 - Use `text-ink` for dark text on mint/bright fills (it stays dark in both themes). Never name a color token after a Tailwind size keyword (`base`, `sm`, `lg`, ...): `--color-base` once turned every `text-base` into a color instead of 16px.
 - Avoid hardcoding new hex colors in JSX when a theme token should be used instead.
 - Reserve danger red for destructive or safety-critical states only.
 - Reuse shared feedback primitives like `components/ui/LoadingIndicator.tsx` for pending states.
 - Use `components/ui/PageHeader.tsx` (with `pt-[84px]` on the body) for mobile page headers, `useConfirmDialog` from `components/ui/ConfirmDialog.tsx` instead of `window.confirm`/`alert`, and `app/error.tsx` as the route error boundary.
-- Light theme works by overriding `text-white/*`, `bg-white/*`, and `border-white/*` classes in `app/globals.css`. When you introduce a new opacity step, add its light override (the bg/border block is generated from usage). Keep tap targets at least 40px (`h-10 w-10`) and readable copy at `text-white/50` or stronger.
+- Desktop (Tailwind `lg`, 1024px+) is laid out by `components/ui/AppFrame.tsx` in the root layout: app routes (`APP_SHELL_PREFIXES` in `components/ui/app-nav.ts`) get `AppSidebar` (groups from `APP_DESKTOP_SECTIONS`) and pages sit on the rounded `DESKTOP_PANEL`; sign-in pages get `AuthBrandPanel` beside the form. Below `lg`, everything stays in the 430px phone column with the bottom bar. On desktop `PageHeader` is an in-page title block (pass `description`; no back button), so page bodies use `pt-[84px] lg:pt-0` and loading screens start with `PageTitleSkeleton`. Cards use `CARD` / `CardHeader` from `components/ui/Card.tsx`. Pages use `lg:grid lg:grid-cols-12` with `lg:col-span-*`, and `lg:order-*` only to move secondary cards down.
+- Colors are theme tokens (`app/globals.css`), never hard-coded white: `text-fg/60`, `border-fg/[0.06]`, `bg-fg/[0.04]` for foreground, `text-accent` for mint text and icons (darker in light mode for contrast), `bg-mint`/`border-mint` for fills, `bg-shade/10` for inset wells. Literal `text-white`/`bg-white` only on surfaces that stay coloured in both themes (red buttons, toggle knobs, print). The saved theme is applied before paint by the script in `app/layout.tsx`.
+- Motion: use the `ease-out`, `ease-in-out`, and `ease-drawer` tokens from `app/globals.css`. Name transitioned properties as `translate`/`scale`/`opacity` (Tailwind 4 sets those properties, not `transform`). Use `starting:` for mount entrances; page bodies use `ww-stagger` and title blocks `lg:ww-enter` (both `backwards`-filled so no transform lingers to trap fixed children). The theme color fade is in `@layer base` so `transition-*` utilities win; keep it there.
+- Light theme comes from the tokens above switching values under `[data-theme="light"]`; there are no per-class overrides, so any opacity step works. Keep tap targets at least 40px (`h-10 w-10`) and readable copy at `text-fg/50` or stronger.
 
 ### React and TypeScript
 

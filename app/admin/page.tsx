@@ -17,13 +17,13 @@ export default async function AdminPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
-        <Shield className="h-6 w-6 text-mint" />
+        <Shield className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">Overview</h1>
       </div>
-      <p className="text-white/50 mb-8">
+      <p className="text-fg/50 mb-8">
         Platform summary, key metrics, and quick actions.
       </p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{cards.map(([label, value]) => <div key={label} className="rounded-lg border border-white/10 bg-surface p-5"><p className="text-sm text-white/50">{label}</p><p className="mt-2 text-3xl font-semibold text-white">{value ?? 0}</p></div>)}</div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{cards.map(([label, value]) => <div key={label} className="rounded-lg border border-fg/10 bg-surface p-5"><p className="text-sm text-fg/50">{label}</p><p className="mt-2 text-3xl font-semibold text-fg">{value ?? 0}</p></div>)}</div>
     </div>
   );
 }

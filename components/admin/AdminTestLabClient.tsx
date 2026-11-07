@@ -191,17 +191,17 @@ export default function AdminTestLabClient() {
   }
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-white/10 bg-surface p-5">
+      <section className="rounded-xl border border-fg/10 bg-surface p-5">
         <div className="relative max-w-xl">
           <p className="mb-2 text-sm font-medium">Selected account</p>
           <button
             type="button"
             disabled={loading}
             onClick={() => setAccountPickerOpen((open) => !open)}
-            className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-left text-white transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-lg border border-fg/10 bg-shade/20 px-3 py-2.5 text-left text-fg transition-colors hover:border-mint/35 disabled:cursor-wait disabled:opacity-60"
           >
             <span className="flex min-w-0 items-center gap-3">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-mint/10 text-mint">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-mint/10 text-accent">
                 <UserRound className="h-4 w-4" />
               </span>
               <span className="min-w-0">
@@ -211,27 +211,27 @@ export default function AdminTestLabClient() {
                     (loading && !data ? "Loading WattWise accounts…" : "Choose a WattWise user")}
                 </span>
                 {selectedPerson && (
-                  <span className="block truncate text-xs text-white/45">
+                  <span className="block truncate text-xs text-fg/45">
                     {selectedPerson.email} · {selectedPerson.role}
                   </span>
                 )}
               </span>
             </span>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-white/45 transition-transform ${accountPickerOpen ? "rotate-180" : ""}`}
+              className={`h-4 w-4 shrink-0 text-fg/45 transition-transform ${accountPickerOpen ? "rotate-180" : ""}`}
             />
           </button>
           {accountPickerOpen && (
-            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-surface shadow-2xl shadow-black/50">
-              <div className="border-b border-white/10 p-3">
-                <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-                  <Search className="h-4 w-4 text-white/40" />
+            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-fg/10 bg-surface shadow-2xl shadow-black/50">
+              <div className="border-b border-fg/10 p-3">
+                <label className="flex items-center gap-2 rounded-lg border border-fg/10 bg-shade/20 px-3 py-2">
+                  <Search className="h-4 w-4 text-fg/40" />
                   <input
                     autoFocus
                     value={accountQuery}
                     onChange={(event) => setAccountQuery(event.target.value)}
                     placeholder="Search name, email, or role…"
-                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
+                    className="w-full bg-transparent text-sm text-fg outline-none placeholder:text-fg/40"
                   />
                 </label>
               </div>
@@ -242,24 +242,24 @@ export default function AdminTestLabClient() {
                       type="button"
                       key={person.id}
                       onClick={() => chooseAccount(person.id)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${person.id === userId ? "bg-mint/10" : "hover:bg-white/5"}`}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${person.id === userId ? "bg-mint/10" : "hover:bg-fg/5"}`}
                     >
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-white/5 text-xs font-semibold text-white/70">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-fg/5 text-xs font-semibold text-fg/70">
                         {(person.full_name || person.email).slice(0, 1).toUpperCase()}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-white">
+                        <span className="block truncate text-sm font-medium text-fg">
                           {person.full_name || person.email}
                         </span>
-                        <span className="block truncate text-xs text-white/45">{person.email}</span>
+                        <span className="block truncate text-xs text-fg/45">{person.email}</span>
                       </span>
-                      <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] capitalize text-white/55">
+                      <span className="rounded-full bg-fg/5 px-2 py-1 text-[11px] capitalize text-fg/55">
                         {person.role}
                       </span>
                     </button>
                   ))
                 ) : (
-                  <p className="px-3 py-5 text-center text-sm text-white/45">
+                  <p className="px-3 py-5 text-center text-sm text-fg/45">
                     No accounts match that search.
                   </p>
                 )}
@@ -301,16 +301,16 @@ export default function AdminTestLabClient() {
                 <AlertTriangle className="h-5 w-5 shrink-0" />
                 Readiness warnings
               </div>
-              <ul className="mt-2 list-disc space-y-1 pl-7 text-white/70">
+              <ul className="mt-2 list-disc space-y-1 pl-7 text-fg/70">
                 {readiness.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
               </ul>
             </section>
           )}
-          <section className="rounded-xl border border-white/10 bg-surface p-5">
+          <section className="rounded-xl border border-fg/10 bg-surface p-5">
             <div className="mb-4 flex items-center gap-2">
-              <Plus className="h-5 w-5 text-mint" />
+              <Plus className="h-5 w-5 text-accent" />
               <h2 className="font-semibold">Create virtual demo unit</h2>
             </div>
             <div className="grid gap-3 md:grid-cols-4">
@@ -338,7 +338,7 @@ export default function AdminTestLabClient() {
                 onChange={(value) => setForm({ ...form, limit_php: value })}
               />
             </div>
-            <label className="mt-3 flex items-center gap-2 text-sm text-white/70">
+            <label className="mt-3 flex items-center gap-2 text-sm text-fg/70">
               <input
                 type="checkbox"
                 checked={form.approval_required}
@@ -354,11 +354,11 @@ export default function AdminTestLabClient() {
               Create demo unit
             </button>
           </section>
-          <section className="rounded-xl border border-white/10 bg-surface p-5">
+          <section className="rounded-xl border border-fg/10 bg-surface p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="font-semibold">Run a real test</h2>
-                <p className="mt-1 text-sm text-white/50">
+                <p className="mt-1 text-sm text-fg/50">
                   A threshold inserts telemetry once; repeated thresholds are blocked per billing
                   cycle.
                 </p>
@@ -366,7 +366,7 @@ export default function AdminTestLabClient() {
               <button
                 disabled={loading}
                 onClick={() => void load(userId)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-fg/10 px-3 py-2 text-sm disabled:opacity-50"
               >
                 <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />{" "}
                 {loading ? "Loading…" : "Refresh evidence"}
@@ -390,7 +390,7 @@ export default function AdminTestLabClient() {
                       approval_required: next.require_approval_on_expiry === true,
                     });
                 }}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-white"
+                className="mt-2 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2.5 text-fg"
               >
                 <option value="">Choose a device…</option>
                 {selected.devices.map((item) => (
@@ -402,7 +402,7 @@ export default function AdminTestLabClient() {
               </select>
             </label>
             {device && (
-              <div className="mt-4 rounded-lg border border-white/10 bg-black/15 p-4">
+              <div className="mt-4 rounded-lg border border-fg/10 bg-shade/15 p-4">
                 <div className="grid gap-3 sm:grid-cols-4">
                   <Info label="Device" value={device.device_name} />
                   <Info
@@ -416,7 +416,7 @@ export default function AdminTestLabClient() {
                   />
                 </div>
                 {physical && (
-                  <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-white/80">
+                  <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-fg/80">
                     <div className="flex gap-2 font-semibold text-danger">
                       <AlertTriangle className="h-5 w-5" /> Physical-device safeguards
                     </div>
@@ -428,7 +428,7 @@ export default function AdminTestLabClient() {
                       value={confirmation}
                       onChange={(event) => setConfirmation(event.target.value)}
                       placeholder={`Type “${device.device_name}” to confirm`}
-                      className="mt-3 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+                      className="mt-3 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
                     />
                   </div>
                 )}
@@ -437,7 +437,7 @@ export default function AdminTestLabClient() {
                   <input
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+                    className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
                   />
                 </label>
                 <div className="mt-3 grid gap-3 md:grid-cols-4">
@@ -463,7 +463,7 @@ export default function AdminTestLabClient() {
                       />
                     </>
                   )}
-                  <label className="flex items-end gap-2 pb-2 text-sm text-white/70">
+                  <label className="flex items-end gap-2 pb-2 text-sm text-fg/70">
                     <input
                       type="checkbox"
                       checked={form.approval_required}
@@ -489,7 +489,7 @@ export default function AdminTestLabClient() {
                         : {}),
                     })
                   }
-                  className="mt-3 rounded-lg border border-white/10 px-3 py-2 text-sm"
+                  className="mt-3 rounded-lg border border-fg/10 px-3 py-2 text-sm"
                 >
                   Save configuration
                 </button>
@@ -515,7 +515,7 @@ export default function AdminTestLabClient() {
                       value={customSpend}
                       onChange={(event) => setCustomSpend(event.target.value)}
                       placeholder="Target PHP"
-                      className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm"
+                      className="w-28 rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm"
                     />
                     <RunButton
                       disabled={busy || !customSpend}
@@ -531,7 +531,7 @@ export default function AdminTestLabClient() {
                       value={customUsage}
                       onChange={(event) => setCustomUsage(event.target.value)}
                       placeholder="Target kWh"
-                      className="w-28 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm"
+                      className="w-28 rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm"
                     />
                     <RunButton
                       disabled={busy || !customUsage}
@@ -545,7 +545,7 @@ export default function AdminTestLabClient() {
                     <button
                       disabled={busy}
                       onClick={() => submit({ action: "restore_power" })}
-                      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint"
+                      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-accent"
                     >
                       <Power className="h-4 w-4" /> Manual restore
                     </button>
@@ -558,7 +558,7 @@ export default function AdminTestLabClient() {
         </>
       )}
       {message && (
-        <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-white/80">
+        <div className="rounded-lg border border-mint/25 bg-mint/10 p-3 text-sm text-fg/80">
           {message}
         </div>
       )}
@@ -577,13 +577,13 @@ function Field({
   type?: string;
 }) {
   return (
-    <label className="text-sm text-white/70">
+    <label className="text-sm text-fg/70">
       {label}
       <input
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white"
+        className="mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-fg"
       />
     </label>
   );
@@ -591,8 +591,8 @@ function Field({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wider text-white/40">{label}</p>
-      <p className="mt-1 text-sm text-white/80">{value}</p>
+      <p className="text-xs uppercase tracking-wider text-fg/40">{label}</p>
+      <p className="mt-1 text-sm text-fg/80">{value}</p>
     </div>
   );
 }
@@ -609,7 +609,7 @@ function RunButton({
     <button
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-mint disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg border border-mint/30 px-3 py-2 text-sm font-semibold text-accent disabled:opacity-50"
     >
       <Send className="h-4 w-4" />
       {label}
@@ -618,27 +618,27 @@ function RunButton({
 }
 function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: Delivery[] }) {
   return (
-    <section className="rounded-xl border border-white/10 bg-surface p-5">
+    <section className="rounded-xl border border-fg/10 bg-surface p-5">
       <div className="mb-4 flex items-center gap-2">
-        <TestTube2 className="h-5 w-5 text-mint" />
+        <TestTube2 className="h-5 w-5 text-accent" />
         <h2 className="font-semibold">Result timeline</h2>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-sm font-medium text-white/65">Budget events</h3>
+          <h3 className="mb-2 text-sm font-medium text-fg/65">Budget events</h3>
           {events.length ? (
             <div className="space-y-2">
               {events.map((event) => (
-                <div key={event.id} className="rounded-lg border border-white/10 p-3 text-sm">
+                <div key={event.id} className="rounded-lg border border-fg/10 p-3 text-sm">
                   <div className="flex justify-between">
                     <span className="font-semibold">
                       {event.threshold_percent ?? 100}% · {event.event_type.replace("_", " ")}
                     </span>
-                    <span className="text-white/45">
+                    <span className="text-fg/45">
                       {new Date(event.created_at).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="mt-1 text-white/60">{event.message}</p>
+                  <p className="mt-1 text-fg/60">{event.message}</p>
                 </div>
               ))}
             </div>
@@ -647,11 +647,11 @@ function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: D
           )}
         </div>
         <div>
-          <h3 className="mb-2 text-sm font-medium text-white/65">Notification deliveries</h3>
+          <h3 className="mb-2 text-sm font-medium text-fg/65">Notification deliveries</h3>
           {deliveries.length ? (
             <div className="space-y-2">
               {deliveries.map((delivery) => (
-                <div key={delivery.id} className="rounded-lg border border-white/10 p-3 text-sm">
+                <div key={delivery.id} className="rounded-lg border border-fg/10 p-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-2 font-semibold">
                       {delivery.channel === "push" ? (
@@ -664,7 +664,7 @@ function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: D
                     <span
                       className={
                         delivery.status === "sent"
-                          ? "text-mint"
+                          ? "text-accent"
                           : delivery.status === "failed"
                             ? "text-danger"
                             : "text-naku"
@@ -677,7 +677,7 @@ function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: D
                     <p className="mt-1 text-xs text-danger">{delivery.error_message}</p>
                   )}
                   {delivery.error_code && (
-                    <p className="mt-1 text-[11px] uppercase tracking-wide text-white/40">
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-fg/40">
                       {delivery.error_code}
                     </p>
                   )}
@@ -694,7 +694,7 @@ function Timeline({ events, deliveries }: { events: BudgetEvent[]; deliveries: D
 }
 function Empty({ text }: { text: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-white/45">
+    <div className="rounded-lg border border-dashed border-fg/10 p-4 text-sm text-fg/45">
       <CheckCircle2 className="mb-2 h-4 w-4" />
       {text}
     </div>

@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -30,11 +29,17 @@ function getStoredTheme(): ThemeMode {
 }
 
 function subscribeToThemeChanges(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
+  // Another tab changed the theme: apply it here too.
+  function onStorage(event: StorageEvent) {
+    if (event.key !== STORAGE_KEY) return;
+    document.documentElement.dataset.theme = getStoredTheme();
+    onStoreChange();
+  }
+  window.addEventListener("storage", onStorage);
   window.addEventListener("wattwise-theme-change", onStoreChange);
 
   return () => {
-    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("storage", onStorage);
     window.removeEventListener("wattwise-theme-change", onStoreChange);
   };
 }
@@ -52,9 +57,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     (): ThemeMode => "dark"
   );
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+  // No effect writes data-theme on mount: the boot script in app/layout.tsx
+  // already set it, and hydration briefly renders the server's "dark", which
+  // would flash dark for light-mode users. Changes go through writeTheme.
 
   const value: ThemeContextValue = {
     theme,

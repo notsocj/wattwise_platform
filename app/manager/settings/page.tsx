@@ -23,15 +23,15 @@ export default async function ManagerSettingsPage() {
       >
         <div className="flex items-start gap-3">
           {adminConfigured ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-mint" />
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
           ) : (
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-naku" />
           )}
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider">
+            <h2 className="text-base font-semibold tracking-tight">
               Tenant Creation Config
             </h2>
-            <p className="mt-1 text-xs leading-relaxed text-white/60">
+            <p className="mt-1 text-xs leading-relaxed text-fg/60">
               {adminConfigured
                 ? "You can create tenant accounts from the Tenants tab."
                 : "Tenant account creation isn't available yet. Contact WattWise support to enable it."}

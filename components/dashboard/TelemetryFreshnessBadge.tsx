@@ -23,7 +23,7 @@ export default function TelemetryFreshnessBadge({ recordedAt }: TelemetryFreshne
 
   const age = formatReadingAge(recordedAt, now);
   return (
-    <span className="text-white/60">
+    <span className="text-fg/60">
       OFFLINE{age ? ` · last reading ${age}` : " · no readings yet"}
     </span>
   );

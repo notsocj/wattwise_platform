@@ -66,7 +66,7 @@ export default function AddApplianceModal({
         aria-modal="true"
         aria-labelledby={showScanner ? undefined : "add-appliance-modal-title"}
         aria-label={showScanner ? "Scan device QR code" : undefined}
-        className="max-h-[85vh] w-full max-w-107.5 overflow-hidden overflow-y-auto rounded-2xl border border-white/10 bg-surface shadow-2xl"
+        className="max-h-[85vh] w-full max-w-107.5 overflow-hidden overflow-y-auto rounded-2xl border border-fg/10 bg-surface shadow-2xl"
       >
         {showScanner ? (
           <MacQrScanner
@@ -75,18 +75,18 @@ export default function AddApplianceModal({
           />
         ) : (
           <>
-            <div className="flex items-center justify-between border-b border-white/10 px-5 pb-3 pt-5">
+            <div className="flex items-center justify-between border-b border-fg/10 px-5 pb-3 pt-5">
               <div>
                 <h2
                   id="add-appliance-modal-title"
-                  className="text-sm font-bold tracking-tight text-white"
+                  className="text-sm font-bold tracking-tight text-fg"
                 >
                   {step === 1 && "Add New Appliance"}
                   {step === 2 && "Choose Appliance Type"}
                   {step === 3 && "Live AI Profiling"}
                   {step === 4 && "Approve Budget Limit"}
                 </h2>
-                <p className="mt-0.5 text-[11px] text-white/50">
+                <p className="mt-0.5 text-[11px] text-fg/50">
                   Step {step} of 4
                 </p>
               </div>
@@ -94,7 +94,7 @@ export default function AddApplianceModal({
                 type="button"
                 onClick={handleCloseModal}
                 disabled={isSavingDevice || isSavingProfile}
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10 hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -106,12 +106,12 @@ export default function AddApplianceModal({
                 <div key={label} className="flex-1">
                   <div
                     className={`h-1 rounded-full transition-colors ${
-                      index + 1 <= step ? "bg-mint" : "bg-white/10"
+                      index + 1 <= step ? "bg-mint" : "bg-fg/10"
                     }`}
                   />
                   <p
                     className={`mt-1 text-center text-[10px] font-medium ${
-                      index + 1 <= step ? "text-white/80" : "text-white/50"
+                      index + 1 <= step ? "text-fg/80" : "text-fg/50"
                     }`}
                   >
                     {label}
@@ -177,7 +177,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={goBack}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1 rounded-xl border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Back
                   </button>
@@ -186,7 +186,7 @@ export default function AddApplianceModal({
                     type="button"
                     onClick={handleCloseModal}
                     disabled={isBusy}
-                    className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex-1 rounded-xl border border-fg/10 px-4 py-3 text-sm font-semibold text-fg/80 transition-colors hover:bg-fg/5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Cancel
                   </button>

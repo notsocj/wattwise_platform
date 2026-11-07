@@ -80,15 +80,15 @@ export default function AccountSection({
   }
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
-      <h2 className="text-sm font-bold uppercase tracking-wider">
+    <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
+      <h2 className="text-base font-semibold tracking-tight">
         Account
       </h2>
-      <p className="mt-1 text-xs text-white/45">{email}</p>
+      <p className="mt-1 text-xs text-fg/45">{email}</p>
 
       <Link
         href="/update-password"
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-bold text-white/70 transition-colors hover:border-mint/30 hover:bg-mint/10 hover:text-mint"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-fg/10 bg-fg/[0.03] px-4 py-3 text-sm font-bold text-fg/70 transition-colors hover:border-mint/30 hover:bg-mint/10 hover:text-accent"
       >
         <KeyRound className="h-4 w-4" aria-hidden="true" />
         Update Password
@@ -98,7 +98,7 @@ export default function AccountSection({
         type="button"
         onClick={() => void sendPasswordReset()}
         disabled={isSendingReset || isDeleting}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-mint transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm font-bold text-accent transition-colors hover:bg-mint/15 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSendingReset ? (
           <>
@@ -116,7 +116,7 @@ export default function AccountSection({
             <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
             <div>
               <p className="text-sm font-bold text-danger">Delete Account</p>
-              <p className="mt-1 text-xs leading-relaxed text-white/55">
+              <p className="mt-1 text-xs leading-relaxed text-fg/55">
                 This removes your login, profile, devices, telemetry ownership,
                 and cached insights through cascading database deletes.
               </p>
@@ -135,7 +135,7 @@ export default function AccountSection({
             disabled={isDeleting}
             autoComplete="off"
             placeholder="Type DELETE to confirm"
-            className="mt-3 w-full rounded-lg border border-danger/30 bg-black/10 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-danger"
+            className="mt-3 w-full rounded-lg border border-danger/30 bg-shade/10 px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg/30 focus:border-danger"
           />
           <button
             type="button"

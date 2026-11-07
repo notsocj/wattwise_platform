@@ -89,10 +89,10 @@ export default async function DashboardCalendarPage(props: {
   }));
 
   return (
-    <div className="min-h-screen bg-canvas pb-24 text-white">
-      <PageHeader backHref="/dashboard" eyebrow="Expand View" title="Calendar Analytics" />
+    <div className="min-h-screen bg-canvas lg:min-h-0 pb-24 text-fg lg:pb-12">
+      <PageHeader backHref="/dashboard" eyebrow="Expand View" title="Calendar Analytics" description="Daily usage and cost across the month. Pick a day for details." />
 
-      <main className="px-5 pt-[84px]">
+      <main className="ww-stagger px-5 pt-[84px] lg:pt-0">
         <CalendarAnalyticsClient
           monthLabel={formatMonthLabel(monthDate)}
           monthTotalCostPhp={monthTotalCostPhp}

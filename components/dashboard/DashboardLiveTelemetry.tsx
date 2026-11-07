@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { HelpCircle, Power, Refrigerator, Tv, Wind } from "lucide-react";
+import { HelpCircle, Power, Refrigerator, Tv, Wind, Zap } from "lucide-react";
+import { CARD, CardHeader } from "@/components/ui/Card";
 import { isFreshReading } from "@/lib/device-telemetry";
 import AddApplianceTile from "@/components/ui/AddApplianceTile";
 import RelayToggle from "@/components/ui/RelayToggle";
@@ -216,29 +217,34 @@ export default function DashboardLiveTelemetry({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-xl border border-white/5 bg-surface p-5">
-        <div className="absolute inset-y-0 left-0 w-1 rounded-r-full bg-mint/60" />
-        <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-white/50">
-            Total Live Wattage
-          </p>
-          <p className="text-5xl font-bold tracking-tight text-white">
-            {totalWatts.toLocaleString()}
-            <span className="ml-1 text-lg font-medium text-white/50">W</span>
-          </p>
-          <div className="mt-2 text-sm text-bida">
-            <span className="font-medium">{onlineDeviceCount} device(s) online live</span>
-          </div>
-        </div>
+      <div className={`${CARD} p-5 lg:col-span-6 lg:self-stretch lg:p-6`}>
+        <CardHeader
+          icon={Zap}
+          title="Live wattage"
+          aside={
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${onlineDeviceCount > 0 ? "text-bida" : "text-fg/45"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${onlineDeviceCount > 0 ? "animate-pulse bg-bida" : "bg-fg/30"}`} />
+              {onlineDeviceCount > 0 ? "Live" : "Idle"}
+            </span>
+          }
+        />
+        <p className="mt-4 text-5xl font-bold tracking-tight text-fg">
+          {totalWatts.toLocaleString()}
+          <span className="ml-1 text-lg font-medium text-fg/50">W</span>
+        </p>
+        <p className="mt-2 text-sm text-fg/50">
+          {onlineDeviceCount} of {devices.length} {devices.length === 1 ? "unit" : "units"} online
+        </p>
       </div>
 
       {children}
 
-      <section className="mt-2">
-        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-white/50">
-          Connected Units
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
+      <section className="mt-2 lg:col-span-12 lg:mt-3">
+        <div className="mb-3 flex items-baseline gap-2">
+          <h2 className="text-base font-semibold text-fg">Connected units</h2>
+          <span className="text-sm text-fg/40">{devices.length}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {devices.map((device) => {
             const Icon = getDeviceIcon(device.applianceType, device.name);
 
@@ -247,17 +253,16 @@ export default function DashboardLiveTelemetry({
               // two controls are siblings instead of a button nested in a link.
               <div
                 key={device.id}
-                className="relative flex min-h-[150px] flex-col justify-between overflow-hidden rounded-xl border border-white/5 bg-surface p-4 transition-colors focus-within:border-mint/30 hover:border-mint/20"
+                className={`${CARD} relative flex min-h-[150px] flex-col justify-between overflow-hidden p-4 transition-[border-color,background-color] duration-150 ease-out focus-within:border-mint/30 hover:border-fg/15`}
               >
                 <Link
                   href={`/dashboard/${device.id}`}
                   aria-label={`Open ${device.name}`}
-                  className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
+                  className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
                 />
-                <div className="absolute inset-y-0 left-0 w-1 rounded-r-full bg-mint/50" />
                 <div className="flex items-start justify-between">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint/10">
-                    <Icon className="h-4 w-4 text-mint" />
+                    <Icon className="h-4 w-4 text-accent" />
                   </div>
                   {canManageDevices ? (
                     <div className="relative z-10 -mr-1 -mt-1">
@@ -282,12 +287,12 @@ export default function DashboardLiveTelemetry({
                   </p>
                   <div className="space-y-1 text-[11px]">
                     <div className="flex items-center gap-1">
-                      <Power className={`h-3 w-3 ${device.relayState ? "text-mint" : "text-white/50"}`} />
-                      <span className={device.relayState ? "font-semibold text-mint" : "text-white/50"}>
+                      <Power className={`h-3 w-3 ${device.relayState ? "text-accent" : "text-fg/50"}`} />
+                      <span className={device.relayState ? "font-semibold text-accent" : "text-fg/50"}>
                         {device.relayState ? "ON" : "OFF"}
                       </span>
-                      <span className="text-white/30" aria-hidden="true">•</span>
-                      <span className={device.isOnline ? "text-bida" : "text-white/50"}>
+                      <span className="text-fg/30" aria-hidden="true">•</span>
+                      <span className={device.isOnline ? "text-bida" : "text-fg/50"}>
                         {device.isOnline ? "LIVE" : "IDLE"}
                       </span>
                     </div>
@@ -300,7 +305,7 @@ export default function DashboardLiveTelemetry({
                         Auto cutoff active
                       </p>
                     ) : null}
-                    <div className="grid grid-cols-3 gap-1 text-white/55">
+                    <div className="grid grid-cols-3 gap-1 text-fg/55">
                       <span>{device.watts}W</span>
                       <span>{device.volts}V</span>
                       <span>{device.amps.toFixed(1)}A</span>

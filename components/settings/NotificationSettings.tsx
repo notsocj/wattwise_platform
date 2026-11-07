@@ -48,7 +48,7 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-7 w-14 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-mint" : "bg-white/15"
+        checked ? "bg-mint" : "bg-fg/15"
       }`}
     >
       <span
@@ -291,30 +291,30 @@ export default function NotificationSettings({ appId }: { appId: string | null }
   }
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-surface p-5">
+    <section className="rounded-2xl border border-fg/[0.06] bg-surface p-5">
       <div className="flex items-start gap-3">
-        <Bell className="mt-0.5 h-5 w-5 shrink-0 text-mint" />
+        <Bell className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider">Budget Notifications</h2>
-          <p className="mt-1 text-xs leading-relaxed text-white/45">
+          <h2 className="text-base font-semibold tracking-tight">Budget Notifications</h2>
+          <p className="mt-1 text-xs leading-relaxed text-fg/45">
             50% stays in-app. At 80% WattWise can send a push; critical 100% events can also send email.
           </p>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="mt-4 rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
           <LoadingIndicator size="sm" label="Loading notification settings" />
         </div>
       ) : preferences ? (
         <div className="mt-4 flex flex-col gap-3">
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+          <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-mint" />
+                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                 <div>
                   <p className="text-sm font-bold">Push alerts at 80% and 100%</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-white/45">
+                  <p className="mt-1 text-[11px] leading-relaxed text-fg/45">
                     Permission is requested only when you turn this on.
                   </p>
                 </div>
@@ -352,7 +352,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
                 !pushAvailable
               }
               onClick={() => void sendTest("push")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-mint disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending === "test-push" ? (
                 <LoadingIndicator size="sm" label="Sending" showLabel={false} />
@@ -363,13 +363,13 @@ export default function NotificationSettings({ appId }: { appId: string | null }
             </button>
           </div>
 
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+          <div className="rounded-xl border border-fg/[0.06] bg-fg/[0.03] p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-mint" />
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                 <div>
                   <p className="text-sm font-bold">Critical email at 100%</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-white/45">
+                  <p className="mt-1 text-[11px] leading-relaxed text-fg/45">
                     Enabled by default for approval-required and automatic-cutoff events.
                   </p>
                 </div>
@@ -386,7 +386,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
               type="button"
               disabled={pending !== null || !preferences.budget_email_enabled}
               onClick={() => void sendTest("email")}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-mint disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-mint/25 bg-mint/10 px-3 py-2 text-xs font-bold text-accent disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending === "test-email" ? (
                 <LoadingIndicator size="sm" label="Sending" showLabel={false} />
@@ -404,7 +404,7 @@ export default function NotificationSettings({ appId }: { appId: string | null }
           role={feedback.type === "error" ? "alert" : "status"}
           className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${
             feedback.type === "success"
-              ? "border-mint/25 bg-mint/10 text-mint"
+              ? "border-mint/25 bg-mint/10 text-accent"
               : feedback.type === "error"
                 ? "border-danger/25 bg-danger/10 text-danger"
                 : "border-naku/25 bg-naku/10 text-naku"

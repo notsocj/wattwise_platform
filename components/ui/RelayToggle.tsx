@@ -132,8 +132,8 @@ export default function RelayToggle({
           aria-label={relayState ? "Power is on. Turn appliance off" : "Power is off. Turn appliance on"}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
             relayState
-              ? "bg-mint/15 text-mint hover:bg-mint/25"
-              : "bg-white/[0.06] text-white/60 hover:bg-white/10"
+              ? "bg-mint/15 text-accent hover:bg-mint/25"
+              : "bg-fg/[0.06] text-fg/60 hover:bg-fg/10"
           } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           {isPending ? (
@@ -144,7 +144,7 @@ export default function RelayToggle({
               spinnerClassName={
                 relayState
                   ? "border-mint/35 border-t-mint"
-                  : "border-white/35 border-t-white"
+                  : "border-fg/35 border-t-fg"
               }
             />
           ) : (
@@ -160,30 +160,30 @@ export default function RelayToggle({
 
   return (
     <>
-      <div className="rounded-xl bg-white/[0.03] backdrop-blur border border-white/[0.06] p-5">
+      <div className="rounded-xl bg-fg/[0.03] backdrop-blur border border-fg/[0.06] p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                relayState ? "bg-mint/15" : "bg-white/[0.06]"
+                relayState ? "bg-mint/15" : "bg-fg/[0.06]"
               }`}
             >
               <Power
-                className={`w-5 h-5 ${relayState ? "text-mint" : "text-white/50"}`}
+                className={`w-5 h-5 ${relayState ? "text-accent" : "text-fg/50"}`}
               />
             </div>
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider">
+              <h3 className="text-base font-semibold tracking-tight">
                 Power Control
               </h3>
-              <p className="mt-0.5 text-[11px] text-white/40">
+              <p className="mt-0.5 text-[11px] text-fg/40">
                 {isPending ? (
-                  <span className="inline-flex items-center gap-1.5 text-white/70">
+                  <span className="inline-flex items-center gap-1.5 text-fg/70">
                     <LoadingIndicator
                       size="sm"
                       label="Updating relay"
                       showLabel={false}
-                      spinnerClassName="border-white/35 border-t-white"
+                      spinnerClassName="border-fg/35 border-t-fg"
                     />
                     Updating relay...
                   </span>
@@ -203,7 +203,7 @@ export default function RelayToggle({
             role="switch"
             aria-checked={relayState}
             className={`relative w-14 h-7 rounded-full transition-colors ${
-              relayState ? "bg-mint" : "bg-white/10"
+              relayState ? "bg-mint" : "bg-fg/10"
             } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
             aria-label="Appliance power"
           >
@@ -215,7 +215,7 @@ export default function RelayToggle({
           </button>
         </div>
 
-        <p className="text-[11px] text-white/50 mt-3">
+        <p className="text-[11px] text-fg/50 mt-3">
           Pag naka-off, titigil ang data collection at power sa appliance.
         </p>
       </div>

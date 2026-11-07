@@ -133,20 +133,20 @@ export default function MacQrScanner({
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 pb-4 pt-5">
+      <div className="flex items-center gap-3 border-b border-fg/10 px-5 pb-4 pt-5">
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] text-white/70 transition-colors hover:bg-white/10"
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-fg/[0.06] text-fg/70 transition-colors hover:bg-fg/10"
           aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-sm font-bold tracking-tight text-white">
+          <h2 className="text-sm font-bold tracking-tight text-fg">
             Scan QR Code
           </h2>
-          <p className="mt-0.5 text-[11px] text-white/50">
+          <p className="mt-0.5 text-[11px] text-fg/50">
             Point camera at the device QR label
           </p>
         </div>
@@ -156,11 +156,11 @@ export default function MacQrScanner({
         {cameraError ? (
           <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-naku/30 bg-naku/10 p-6 text-center">
             <Camera className="h-8 w-8 text-naku" />
-            <p className="text-sm font-medium text-white/80">{cameraError}</p>
+            <p className="text-sm font-medium text-fg/80">{cameraError}</p>
             <button
               type="button"
               onClick={onCancel}
-              className="min-h-10 text-sm font-semibold text-mint underline"
+              className="min-h-10 text-sm font-semibold text-accent underline"
             >
               Enter MAC manually instead
             </button>
@@ -180,7 +180,7 @@ export default function MacQrScanner({
             ) : null}
           </div>
         )}
-        <p aria-live="polite" className={`mt-3 text-center text-[11px] ${sawUnrecognizedCode ? "text-naku" : "text-white/50"}`}>
+        <p aria-live="polite" className={`mt-3 text-center text-[11px] ${sawUnrecognizedCode ? "text-naku" : "text-fg/50"}`}>
           {sawUnrecognizedCode
             ? "That QR code isn't a WattWise label. Scan the label on the device itself."
             : "MAC address will be filled in automatically when detected."}

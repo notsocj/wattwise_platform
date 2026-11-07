@@ -41,11 +41,11 @@ export default function ApplianceTypeStep({
                   ? "border-mint bg-mint/5"
                   : errorMessage
                     ? "border-danger/40 bg-danger/10 hover:border-danger/60"
-                    : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                    : "border-fg/10 bg-fg/[0.03] hover:border-fg/20"
               }`}
             >
-              <Icon className={`h-8 w-8 ${isSelected ? "text-mint" : "text-white/50"}`} />
-              <span className={`text-sm font-semibold ${isSelected ? "text-white" : "text-white/60"}`}>
+              <Icon className={`h-8 w-8 ${isSelected ? "text-accent" : "text-fg/50"}`} />
+              <span className={`text-sm font-semibold ${isSelected ? "text-fg" : "text-fg/60"}`}>
                 {option.label}
               </span>
             </button>
@@ -55,7 +55,7 @@ export default function ApplianceTypeStep({
       <p
         id="appliance-type-message"
         className={`text-[11px] leading-snug ${
-          errorMessage ? "text-danger" : "text-white/50"
+          errorMessage ? "text-danger" : "text-fg/50"
         }`}
       >
         {errorMessage ??

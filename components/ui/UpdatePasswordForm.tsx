@@ -14,7 +14,9 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { getFriendlyAuthError } from "@/lib/user-form-messages";
 import { logoutOneSignal } from "@/lib/onesignal";
+import FormAlert from "@/components/ui/FormAlert";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
+import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 
 type UpdatePasswordFormProps = {
   mode?: "update" | "reset";
@@ -33,7 +35,7 @@ export default function UpdatePasswordForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SubmitStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -94,7 +96,7 @@ export default function UpdatePasswordForm({
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
 
     try {
       const supabase = createClient();
@@ -126,6 +128,9 @@ export default function UpdatePasswordForm({
         }
       }
 
+      // Let the button confirm the change before the success screen replaces the form.
+      setStatus("success");
+      await new Promise((resolve) => setTimeout(resolve, 700));
       setPassword("");
       setConfirmPassword("");
       setSuccess(true);
@@ -143,14 +148,14 @@ export default function UpdatePasswordForm({
     } catch (err) {
       setError(getFriendlyAuthError(err instanceof Error ? err.message : undefined, "update"));
     } finally {
-      setLoading(false);
+      setStatus("idle");
     }
   }
 
   if (sessionState === "checking") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas px-6 text-white">
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4">
+      <div className="flex min-h-screen items-center justify-center bg-canvas px-6 text-fg">
+        <div className="rounded-xl border border-fg/10 bg-fg/[0.03] px-5 py-4">
           <LoadingIndicator size="md" label="Preparing secure session" />
         </div>
       </div>
@@ -159,12 +164,12 @@ export default function UpdatePasswordForm({
 
   if (success) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-fg">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-bida/10">
           <CheckCircle2 className="h-8 w-8 text-bida" />
         </div>
         <h1 className="mb-2 text-2xl font-bold">Password Updated</h1>
-        <p className="mb-8 max-w-sm text-center text-sm leading-6 text-white/50">
+        <p className="mb-8 max-w-sm text-center text-sm leading-6 text-fg/50">
           {mode === "reset"
             ? "Your password has been updated successfully. Redirecting to login..."
             : "Your WattWise account password has been changed successfully."}
@@ -185,12 +190,12 @@ export default function UpdatePasswordForm({
 
   if (sessionState === "missing") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-fg">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10">
           <KeyRound className="h-8 w-8 text-danger" />
         </div>
         <h1 className="mb-2 text-2xl font-bold">Reset Link Required</h1>
-        <p className="mb-8 max-w-sm text-center text-sm leading-6 text-white/50">
+        <p className="mb-8 max-w-sm text-center text-sm leading-6 text-fg/50">
           Open this page from your password reset email, or sign in first to update
           your password from your account.
         </p>
@@ -203,7 +208,7 @@ export default function UpdatePasswordForm({
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-4 text-sm font-semibold text-mint transition-colors hover:border-mint/40"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-fg/10 px-4 py-4 text-sm font-semibold text-accent transition-colors hover:border-mint/40"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Login
@@ -214,7 +219,7 @@ export default function UpdatePasswordForm({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas tracking-tight text-white">
+    <div className="flex min-h-screen flex-col bg-canvas tracking-tight text-fg">
       <div className="flex flex-col items-center px-6 pb-6 pt-14">
         <div className="mb-3 flex h-20 w-20 items-center justify-center">
           <Image
@@ -226,23 +231,19 @@ export default function UpdatePasswordForm({
           />
         </div>
         <h1 className="text-3xl font-bold">
-          Watt<span className="text-mint">Wise</span>
+          Watt<span className="text-accent">Wise</span>
         </h1>
-        <p className="text-[10px] font-semibold tracking-[0.4em] text-mint/70">
+        <p className="text-[10px] font-semibold tracking-[0.4em] text-accent/70">
           {mode === "reset" ? "RESET PASSWORD" : "UPDATE PASSWORD"}
         </p>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pt-4">
-        {error && (
-          <div className="mb-5 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {error}
-          </div>
-        )}
+        <FormAlert message={error} />
 
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
-            <label className="mb-2 block text-base font-semibold text-white">
+            <label className="mb-2 block text-base font-semibold text-fg">
               New Password
             </label>
             <div className="relative">
@@ -251,13 +252,13 @@ export default function UpdatePasswordForm({
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-white placeholder-white/30 transition-colors focus:border-mint focus:outline-none"
+                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-accent/60 transition-colors hover:text-accent"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -266,13 +267,13 @@ export default function UpdatePasswordForm({
                 )}
               </button>
             </div>
-            <p className="mt-2 text-sm text-white/40">
+            <p className="mt-2 text-sm text-fg/40">
               Use at least 8 characters.
             </p>
           </div>
 
           <div className="mb-8">
-            <label className="mb-2 block text-base font-semibold text-white">
+            <label className="mb-2 block text-base font-semibold text-fg">
               Confirm Password
             </label>
             <div className="relative">
@@ -281,7 +282,7 @@ export default function UpdatePasswordForm({
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-white placeholder-white/30 transition-colors focus:border-mint focus:outline-none"
+                className="w-full rounded-xl border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
               />
               <button
                 type="button"
@@ -289,7 +290,7 @@ export default function UpdatePasswordForm({
                 aria-label={
                   showConfirmPassword ? "Hide confirmation" : "Show confirmation"
                 }
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-mint/60 transition-colors hover:text-mint"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-accent/60 transition-colors hover:text-accent"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -300,25 +301,13 @@ export default function UpdatePasswordForm({
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading || !password || !confirmPassword}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-mint py-4 text-[17px] font-bold text-black transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <LoadingIndicator
-                  size="sm"
-                  label="Updating password"
-                  showLabel={false}
-                  spinnerClassName="border-black/30 border-t-black"
-                />
-                Updating...
-              </span>
-            ) : (
-              "Update Password"
-            )}
-          </button>
+          <SubmitButton
+            status={status}
+            disabled={!password || !confirmPassword}
+            idleLabel="Update Password"
+            loadingLabel="Updating..."
+            successLabel="Password updated!"
+          />
         </form>
 
         <div className="mt-6 flex justify-center">
@@ -331,7 +320,7 @@ export default function UpdatePasswordForm({
                 await createClient().auth.signOut();
                 router.replace("/login");
               }}
-              className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+              className="flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent/80"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Login
@@ -339,7 +328,7 @@ export default function UpdatePasswordForm({
           ) : (
             <Link
               href={backHref}
-              className="flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint/80"
+              className="flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent/80"
             >
               <ArrowLeft className="h-4 w-4" />
               Back

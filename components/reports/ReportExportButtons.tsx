@@ -44,19 +44,19 @@ export default function ReportExportButtons({ period }: { period: string }) {
 
   const buttons: Array<{ format: ExportFormat; label: string; className: string }> = [
     { format: "pdf", label: "Download PDF", className: "bg-mint text-ink hover:bg-mint/90" },
-    { format: "csv", label: "Download CSV", className: "border border-white/10 text-white hover:bg-white/5" },
+    { format: "csv", label: "Download CSV", className: "border border-fg/10 text-fg hover:bg-fg/5" },
   ];
 
   return (
     <div className="mb-6 print:hidden">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:inline-grid lg:w-auto lg:grid-cols-[repeat(2,minmax(11rem,auto))]">
         {buttons.map(({ format, label, className }) => (
           <button
             key={format}
             type="button"
             onClick={() => void download(format)}
             disabled={pendingFormat !== null}
-            className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
           >
             {pendingFormat === format ? (
               <LoadingIndicator size="sm" label={`Preparing ${format.toUpperCase()}`} showLabel={false} />

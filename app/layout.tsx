@@ -4,7 +4,7 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import MobileViewport from "@/components/ui/MobileViewport";
+import AppFrame from "@/components/ui/AppFrame";
 import RouteTransitionIndicator from "@/components/ui/RouteTransitionIndicator";
 import OneSignalIdentityBridge from "@/components/providers/OneSignalIdentityBridge";
 
@@ -34,6 +34,9 @@ export const metadata: Metadata = {
   },
 };
 
+const THEME_BOOT_SCRIPT =
+  "try{var t=localStorage.getItem('wattwise-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}";
+
 // No cookies are read here, so pages that don't read them (login, register,
 // onboarding, ...) can be served statically. The session is read in the
 // browser by SupabaseProvider.
@@ -43,8 +46,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" className={spaceGrotesk.variable}>
-      <body suppressHydrationWarning className="antialiased bg-canvas text-white">
+    // The inline script applies the saved theme before first paint (no dark
+    // flash for light-mode users); it may change data-theme before hydration.
+    <html lang="en" data-theme="dark" className={spaceGrotesk.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body suppressHydrationWarning className="antialiased bg-canvas text-fg">
         <SupabaseProvider>
           <OneSignalIdentityBridge
             appId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID ?? null}
@@ -54,7 +62,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <RouteTransitionIndicator />
             </Suspense>
-            <MobileViewport>{children}</MobileViewport>
+            <AppFrame>{children}</AppFrame>
           </ThemeProvider>
         </SupabaseProvider>
       </body>

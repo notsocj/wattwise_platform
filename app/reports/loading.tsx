@@ -1,3 +1,4 @@
+import { PageTitleSkeleton } from "@/components/ui/PageHeader";
 import {
   LoadingSkeleton,
   LoadingSkeletonText,
@@ -5,7 +6,8 @@ import {
 
 export default function ReportsLoading() {
   return (
-    <div className="min-h-screen bg-canvas px-5 pt-[84px] text-white">
+    <div className="min-h-screen bg-canvas lg:min-h-0 px-5 pt-[84px] lg:pt-0 text-fg">
+      <PageTitleSkeleton />
       <div>
         <div className="flex gap-2">
           <LoadingSkeleton className="h-9 w-20 rounded-lg" />

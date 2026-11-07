@@ -22,8 +22,8 @@ type ReportTableProps = {
 // Rendered on the server with the report already built (see app/reports/page.tsx).
 export default function ReportTable({ period, rows, error = null }: ReportTableProps) {
   return (
-    <section className="overflow-x-auto rounded-xl border border-white/[0.08] bg-surface p-5 print:border-black/10 print:bg-white">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-widest">
+    <section className="overflow-x-auto rounded-2xl border border-fg/[0.06] bg-surface p-5 lg:p-6 print:border-black/10 print:bg-white">
+      <h2 className="mb-4 text-base font-semibold tracking-tight first-letter:uppercase">
         {period} appliance comparison
       </h2>
       {error ? (
@@ -31,13 +31,13 @@ export default function ReportTable({ period, rows, error = null }: ReportTableP
       ) : rows === null ? (
         <LoadingIndicator label="Loading report" />
       ) : rows.length === 0 ? (
-        <p className="text-sm text-white/50 print:text-black/60">
+        <p className="text-sm text-fg/50 print:text-black/60">
           No registered appliances or telemetry for this period.
         </p>
       ) : (
         <table className="w-full min-w-[680px] text-left text-xs">
           <thead>
-            <tr className="border-b border-white/10 text-white/45 print:border-black/10 print:text-black/50">
+            <tr className="border-b border-fg/10 text-fg/45 print:border-black/10 print:text-black/50">
               <th className="py-2">Appliance</th>
               <th>Actual kWh</th>
               <th>Estimated kWh</th>
@@ -51,11 +51,11 @@ export default function ReportTable({ period, rows, error = null }: ReportTableP
             {rows.map((row) => (
               <tr
                 key={`${row.device_name}-${row.appliance_type}`}
-                className="border-b border-white/[0.06] print:border-black/10"
+                className="border-b border-fg/[0.06] print:border-black/10"
               >
                 <td className="py-3 font-semibold">
                   {row.device_name}
-                  <span className="ml-2 text-white/40 print:text-black/40">
+                  <span className="ml-2 text-fg/40 print:text-black/40">
                     {row.appliance_type}
                   </span>
                 </td>

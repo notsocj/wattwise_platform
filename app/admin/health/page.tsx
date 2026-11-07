@@ -21,7 +21,7 @@ export default async function AdminHealthPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <HeartPulse className="h-6 w-6 text-mint" />
+        <HeartPulse className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold">System Health</h1>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -31,8 +31,8 @@ export default async function AdminHealthPage() {
           ["Telemetry (24h)", logs.count],
           ["Latest rate sync", sync.data?.[0]?.status || "No runs"],
         ].map(([l, v]) => (
-          <div key={l} className="rounded-lg border border-white/10 bg-surface p-5">
-            <p className="text-sm text-white/50">{l}</p>
+          <div key={l} className="rounded-lg border border-fg/10 bg-surface p-5">
+            <p className="text-sm text-fg/50">{l}</p>
             <p className="mt-2 text-2xl font-semibold">{v ?? 0}</p>
           </div>
         ))}

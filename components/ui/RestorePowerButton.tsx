@@ -49,7 +49,7 @@ export default function RestorePowerButton({ deviceId }: { deviceId: string }) {
   return (
     <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
       <p className="text-sm font-bold text-danger">Automatic cutoff active</p>
-      <p className="mt-1 text-xs text-white/60">
+      <p className="mt-1 text-xs text-fg/60">
         WattWise will not restore this appliance automatically. Raise its limit or
         disable automatic shutoff first if the limit is still reached.
       </p>

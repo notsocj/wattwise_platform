@@ -25,7 +25,7 @@ type Unit = {
   } | null;
 };
 
-const fieldClass = "mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white";
+const fieldClass = "mt-1 w-full rounded-lg border border-fg/10 bg-shade/20 px-3 py-2 text-sm text-fg";
 const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 function displayPerson(person: Person | undefined) {
@@ -115,15 +115,15 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
     <div className="space-y-8">
       <section className="rounded-xl border border-mint/20 bg-mint/5 p-5">
         <div className="flex gap-3">
-          <Zap className="mt-0.5 h-5 w-5 shrink-0 text-mint" />
+          <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
           <div>
             <h2 className="font-semibold">Virtual WattWise unit</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/60">Demo units let you present and test WattWise without physical hardware. Each start begins a new four-hour run, with a reading every 10 seconds. New units build history from their first reading. Restarting an existing unit fills gaps of up to 14 days using its profiled daily hours.</p>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-fg/60">Demo units let you present and test WattWise without physical hardware. Each start begins a new four-hour run, with a reading every 10 seconds. New units build history from their first reading. Restarting an existing unit fills gaps of up to 14 days using its profiled daily hours.</p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border border-white/10 bg-surface p-5">
+      <section className="rounded-xl border border-fg/10 bg-surface p-5">
         <h2 className="text-lg font-semibold">Create and assign a demo unit</h2>
         <form onSubmit={createUnit} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label className="text-sm">Device name<input required name="device_name" placeholder="Panel demo aircon" className={fieldClass} /></label>
@@ -136,25 +136,25 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
         </form>
       </section>
 
-      {message && <p className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">{message}</p>}
+      {message && <p className="rounded-lg border border-fg/10 bg-fg/5 px-4 py-3 text-sm text-fg/80">{message}</p>}
 
-      <section className="overflow-x-auto rounded-xl border border-white/10 bg-surface">
+      <section className="overflow-x-auto rounded-xl border border-fg/10 bg-surface">
         <table className="w-full min-w-[900px] text-left text-sm">
-          <thead className="border-b border-white/10 text-white/50"><tr>{["Device", "Assigned owner", "Tenant", "Watts", "Generated kWh", "State", "Last reading", "Actions"].map((heading) => <th key={heading} className="p-4 font-medium">{heading}</th>)}</tr></thead>
+          <thead className="border-b border-fg/10 text-fg/50"><tr>{["Device", "Assigned owner", "Tenant", "Watts", "Generated kWh", "State", "Last reading", "Actions"].map((heading) => <th key={heading} className="p-4 font-medium">{heading}</th>)}</tr></thead>
           <tbody>
             {units.map((unit) => {
               const device = unit.devices;
               const busy = runningId === unit.device_id;
-              return <tr key={unit.device_id} className="border-b border-white/5 last:border-0">
-                <td className="p-4"><p className="font-medium">{device?.device_name ?? "Missing device"}</p><p className="mt-1 font-mono text-xs text-white/40">{device?.mac_address}</p></td>
+              return <tr key={unit.device_id} className="border-b border-fg/5 last:border-0">
+                <td className="p-4"><p className="font-medium">{device?.device_name ?? "Missing device"}</p><p className="mt-1 font-mono text-xs text-fg/40">{device?.mac_address}</p></td>
                 <td className="p-4">{displayPerson(people.find((person) => person.id === (device?.owner_id ?? device?.user_id)))}</td>
                 <td className="p-4">{displayPerson(people.find((person) => person.id === device?.tenant_id))}</td>
                 <td className="p-4">{Number(unit.simulated_watts).toFixed(0)} W</td>
                 <td className="p-4">{Number(unit.energy_kwh).toFixed(4)} kWh</td>
-                <td className="p-4"><span className={unit.is_active ? "text-mint" : "text-white/45"}>{unit.is_active ? "Running" : "Paused"}</span></td>
-                <td className="p-4 text-white/60">{unit.last_generated_at ? new Date(unit.last_generated_at).toLocaleString() : "No reading yet"}</td>
+                <td className="p-4"><span className={unit.is_active ? "text-accent" : "text-fg/45"}>{unit.is_active ? "Running" : "Paused"}</span></td>
+                <td className="p-4 text-fg/60">{unit.last_generated_at ? new Date(unit.last_generated_at).toLocaleString() : "No reading yet"}</td>
                 <td className="p-4"><div className="flex flex-wrap gap-2">
-                  <button disabled={busy} onClick={() => updateUnit(unit.device_id, { is_active: !unit.is_active, reason: unit.is_active ? "Paused demo unit" : "Started demo unit" })} className={`${buttonClass} border border-white/15 hover:bg-white/5`}>{unit.is_active ? <><Square className="h-3.5 w-3.5" />Pause</> : <><Play className="h-3.5 w-3.5" />Start</>}</button>
+                  <button disabled={busy} onClick={() => updateUnit(unit.device_id, { is_active: !unit.is_active, reason: unit.is_active ? "Paused demo unit" : "Started demo unit" })} className={`${buttonClass} border border-fg/15 hover:bg-fg/5`}>{unit.is_active ? <><Square className="h-3.5 w-3.5" />Pause</> : <><Play className="h-3.5 w-3.5" />Start</>}</button>
                   <button disabled={busy} onClick={async () => {
                     const confirmed = await confirm({
                       title: "Reset this simulated meter to 0 kWh?",
@@ -162,12 +162,12 @@ export default function DemoUnitsClient({ units, people }: { units: Unit[]; peop
                       confirmLabel: "Reset meter",
                     });
                     if (confirmed) void updateUnit(unit.device_id, { reset_energy: true, reason: "Reset simulated meter baseline" });
-                  }} className={`${buttonClass} border border-white/15 text-white/70 hover:bg-white/5`}><RotateCcw className="h-3.5 w-3.5" />Reset</button>
+                  }} className={`${buttonClass} border border-fg/15 text-fg/70 hover:bg-fg/5`}><RotateCcw className="h-3.5 w-3.5" />Reset</button>
                   <button disabled={busy} onClick={() => void deleteUnit(unit)} className={`${buttonClass} border border-danger/35 text-danger hover:bg-danger/10`}><Trash2 className="h-3.5 w-3.5" />Delete</button>
                 </div></td>
               </tr>;
             })}
-            {!units.length && <tr><td colSpan={8} className="p-8 text-center text-white/50">No demo units yet. Create one above to begin.</td></tr>}
+            {!units.length && <tr><td colSpan={8} className="p-8 text-center text-fg/50">No demo units yet. Create one above to begin.</td></tr>}
           </tbody>
         </table>
       </section>

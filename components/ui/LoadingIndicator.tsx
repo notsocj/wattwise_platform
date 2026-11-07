@@ -49,7 +49,7 @@ export default function LoadingIndicator({
           spinnerClassName
         )}
       />
-      {showLabel ? <span className="text-xs font-medium text-white/75">{label}</span> : null}
+      {showLabel ? <span className="text-xs font-medium text-fg/75">{label}</span> : null}
     </span>
   );
 }
@@ -58,7 +58,7 @@ export function LoadingSkeleton({ className }: LoadingSkeletonProps) {
   return (
     <div
       aria-hidden="true"
-      className={cn("animate-pulse rounded-lg bg-white/[0.08]", className)}
+      className={cn("animate-pulse rounded-lg bg-fg/[0.08]", className)}
     />
   );
 }
@@ -78,7 +78,7 @@ export function LoadingSkeletonText({
         return (
           <div
             key={`skeleton-line-${index}`}
-            className={cn("h-3 animate-pulse rounded bg-white/[0.08]", widthClass)}
+            className={cn("h-3 animate-pulse rounded bg-fg/[0.08]", widthClass)}
           />
         );
       })}
