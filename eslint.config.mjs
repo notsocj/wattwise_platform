@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "wattwise-survey-video/**", // separate Remotion project with its own config
+    "wattwise-showcase-video/**", // separate Remotion project (defense showcase)
     "output/**",
     "tmp/**",
     "next-env.d.ts",

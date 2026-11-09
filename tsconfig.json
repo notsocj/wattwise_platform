@@ -31,5 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "supabase/functions", "wattwise-survey-video", ".open-next", "output", "tmp"]
+  "exclude": ["node_modules", "supabase/functions", "wattwise-survey-video", "wattwise-showcase-video", ".open-next", "output", "tmp"]
 }
