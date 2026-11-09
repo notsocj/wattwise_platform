@@ -42,10 +42,38 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session — do not add logic between createServerClient and getUser
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refresh session — do not add logic between createServerClient and getClaims.
+  // getClaims verifies the ES256 access token locally against Supabase's cached
+  // signing keys (refreshing an expired token first), so the request no longer
+  // waits on an Auth server round trip the way getUser did.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  let user: { id: string; email: string | null } | null =
+    typeof claims?.sub === "string"
+      ? { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null }
+      : null;
+
+  // One round trip (migration 045) returns the profile fields every role check
+  // below needs, forwarded to the page so it skips its own auth round trip, and
+  // whether this session still exists. A signed-out session ("log out of all
+  // devices") or a disabled account is treated as signed out immediately, even
+  // though its token has not expired yet.
+  type MiddlewareProfile = {
+    role: string | null;
+    must_update_password: boolean | null;
+    billing_cycle_start_day: number | null;
+    disabled_at: string | null;
+    session_active: boolean;
+  };
+  let profile: MiddlewareProfile | null = null;
+  if (user) {
+    const { data, error } = await supabase.rpc("middleware_session_profile").maybeSingle<MiddlewareProfile>();
+    profile = error ? null : data;
+    if (!error && data && (!data.session_active || data.disabled_at)) {
+      user = null;
+      profile = null;
+    }
+  }
 
   // Protected routes — redirect unauthenticated users to login
   const protectedRoutes = [
@@ -64,23 +92,6 @@ export async function updateSession(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
-  }
-
-  // One profile read per request serves every role check below and is
-  // forwarded to the page, which then skips its own auth round trip.
-  type MiddlewareProfile = {
-    role: string | null;
-    must_update_password: boolean | null;
-    billing_cycle_start_day: number | null;
-  };
-  let profile: MiddlewareProfile | null = null;
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("role, must_update_password, billing_cycle_start_day")
-      .eq("id", user.id)
-      .maybeSingle<MiddlewareProfile>();
-    profile = data;
   }
 
   // Admin routes — require super_admin role

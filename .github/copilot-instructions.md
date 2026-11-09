@@ -165,7 +165,7 @@ Short versions of the rules in `AGENTS.md`; read it before changing billing, tel
 - No hardcoded fallback rates. Never round money per reading; round only for display.
 
 ### Auth and data access
-- Pages and route handlers get the user from `getSessionUser()` (`lib/auth-context.ts`). The middleware verifies the session once and forwards identity in `x-wattwise-*` headers. Do not call `supabase.auth.getUser()` in pages or handlers, and never set or read those headers elsewhere.
+- Pages and route handlers get the user from `getSessionUser()` (`lib/auth-context.ts`). The middleware verifies the token locally with `getClaims()` and makes one database call (`middleware_session_profile()`, migration `045`, which also rejects signed-out sessions and disabled accounts), then forwards identity in `x-wattwise-*` headers. Keep it to that one round trip: on Vercel it runs near the visitor (Singapore), not next to the database (Seoul). Do not call `supabase.auth.getUser()` in pages or handlers, and never set or read those headers elsewhere.
 - Roles (`lib/roles.ts`): `user`, `tenant`, `manager`, `super_admin`. In the middleware, non-admins on `/admin` go to `/login?error=unauthorized` and non-managers on `/manager` go to their role's home (`getHomePathForRole`); `app/admin/layout.tsx` checks the role again.
 - The root layout must not read cookies or headers (that would make every public page dynamic). `SupabaseProvider` reads the session in the browser.
 - Never query `energy_logs` without a limit or bounded time range (about 17,000 rows per unit per day). Use the RPCs `get_latest_device_readings`, `get_usage_kwh_by_device[_day]`, `get_average_watts_by_device`.

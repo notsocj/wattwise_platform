@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `044`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
+This file reflects the current database shape defined by `supabase/migrations/001` through `045`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
 
 ## Current Schema Summary
 
@@ -17,7 +17,7 @@ All objects live in `public` unless noted. Extensions: `uuid-ossp` (`001`), `pg_
 - Admin / automation tables: `meralco_rate_sync_runs`, `admin_audit_logs`, `demo_device_simulations`
 - Telemetry RPCs: `get_latest_device_readings`, `get_usage_kwh_by_device`, `get_usage_kwh_by_device_day`, `get_average_watts_by_device`, `get_device_usage_periods`, `get_hourly_averages`
 - Billing / Smart Control functions: `meralco_variable_rate_per_kwh`, `household_monthly_kwh_for`, `my_household_usage`, `apply_device_budget_settings`, `restore_device_power`, `create_device_automation`, `cancel_device_automation`, `run_device_automations` (`041`)
-- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`, `take_public_chat_slot` (`042`), `admin_platform_daily_kwh`, `admin_storage_stats` (`043`)
+- Other functions: `reserve_notification_test_delivery`, `simulate_demo_units`, `take_public_chat_slot` (`042`), `admin_platform_daily_kwh`, `admin_storage_stats` (`043`), `middleware_session_profile` (`045`)
 - RLS helpers: `current_profile_role`, `can_access_device`, `is_registered_device_mac`, `accessible_energy_log_device_keys`
 - Trigger functions: `handle_new_user`, `guard_profile_privileged_columns`, `create_notification_preferences_for_profile`, `sync_device_owner_columns`, `update_device_last_seen`, `handle_energy_log_smart_budget`, `record_device_budget_warnings`, `touch_notification_preferences_updated_at`, `touch_notification_delivery_updated_at`
 - pg_cron jobs: `simulate-demo-units`, `purge-cron-run-details`, `run-device-automations` (`041`)
@@ -454,6 +454,10 @@ CREATE INDEX idx_meralco_sync_runs_ran_at
 
 - a failed extraction is recorded with `status = 'failed'`; `meralco_rates` is untouched until all parsed components pass required-field, range, and anomaly validation
 - written with the service role; only `super_admin` can read
+
+### `middleware_session_profile()` (`045`)
+
+`SECURITY DEFINER`, `STABLE`, `search_path = ''`; `EXECUTE` for `authenticated` only (revoked from `PUBLIC` and `anon`). Returns one row for the caller (`auth.uid()`): `role`, `must_update_password`, `billing_cycle_start_day`, `disabled_at`, and `session_active` (the JWT's `session_id` still exists in `auth.sessions` for that user and is not past `not_after`). No row when the caller has no profile. The middleware verifies tokens locally with `getClaims()`, so this is what makes "log out of all devices" and account disabling take effect before the token expires; treat `session_active = false` or a non-null `disabled_at` as signed out.
 
 ### Admin console functions (`043`)
 

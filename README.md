@@ -113,7 +113,7 @@ The full conventions are in [AGENTS.md](AGENTS.md).
 Most of the latency came from round trips between the app server and the database, so the design keeps them few and short:
 
 - **Same region.** Vercel functions run in Seoul (`vercel.json`), next to Supabase.
-- **One auth check per request.** The middleware (`lib/supabase/middleware.ts`) verifies the session and reads the profile once, then forwards the user's id, email, role, and billing day as request headers (client-supplied copies are stripped). Pages and route handlers read them with `getSessionUser()` instead of calling Supabase Auth again.
+- **One auth check per request.** The middleware (`lib/supabase/middleware.ts`) verifies the token locally (`getClaims()`, no Auth server call) and makes a single database call that returns the profile and confirms the session is still active, then forwards the user's id, email, role, and billing day as request headers (client-supplied copies are stripped). Pages and route handlers read them with `getSessionUser()` instead of calling Supabase Auth again.
 - **Static public pages.** The root layout reads no cookies, so `/`, login, register, onboarding, password reset, and the pitch deck are prerendered and served from the edge.
 - **Parallel queries.** Pages start independent queries together (`lib/start-query.ts`) and stream secondary cards with `Suspense`.
 - **Cached rates.** Meralco rates are cached across requests for an hour (`lib/meralco-rates-server.ts`).
