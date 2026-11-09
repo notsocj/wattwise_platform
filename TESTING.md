@@ -115,6 +115,7 @@ Safe load only.
 - [ ] Ask "Turn it off after ₱5 more tonight" on a running demo unit (or a lamp). ✅ After confirming, the card shows progress ("₱1.20 of ₱5.00 since it was scheduled"), and the relay turns off within about 20 seconds of reaching ₱5.
 - [ ] Ask "Turn off the aircon after 0.2 kWh". ✅ Same as above, counted in kWh.
 - [ ] Cancel a scheduled turn-off from the device page. ✅ It asks first, then shows "Cancelled"; the device keeps running.
+- [ ] Ask "paki turn off yung electric fan" for a unit whose Other description is Electric fan, confirm, then ask "paki on ulit". ✅ Both cards name that unit, and the line above each card matches it (no "Sorry, hindi ko…").
 - [ ] Ask "Turn on my unit named test" (or "Patayin mo na ang aircon"). ✅ A "Turn on now" / "Turn off now" card appears; nothing changes until you confirm, then the relay follows within about 5 seconds. Asking to turn on a unit that is already on says so instead.
 - [ ] Ask it to turn on a unit that was automatically cut off. ✅ It declines and points you to Restore Power.
 - [ ] Ask it to turn a device **on** at a time. ✅ It declines; scheduled rules only turn devices off.

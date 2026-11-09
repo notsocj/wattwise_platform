@@ -17,7 +17,7 @@ import {
   resolveModelProposal,
 } from "@/lib/customer-assistant-server";
 import { buildGroundedCustomerResponse } from "@/lib/customer-assistant-grounding";
-import { detectPowerCommand } from "@/lib/customer-assistant-power";
+import { detectPowerCommand, replyForProposal } from "@/lib/customer-assistant-power";
 import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
 
 type Profile = {
@@ -106,14 +106,18 @@ export async function POST(request: NextRequest) {
 
   const { data: recent } = await admin
     .from("customer_ai_messages")
-    .select("role,content")
+    .select("role,content,proposal")
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false })
     .limit(6);
-  const history = (recent ?? []).reverse().filter(
-    (row): row is { role: "user" | "assistant"; content: string } =>
-      (row.role === "user" || row.role === "assistant") && typeof row.content === "string"
-  );
+  // The device the latest card was about, so "paki on ulit" knows what "ulit" means.
+  const lastDeviceId = (recent ?? [])
+    .map((row) => (row.proposal as { action?: { device_id?: unknown } } | null)?.action?.device_id)
+    .find((id): id is string => typeof id === "string");
+  const history = (recent ?? [])
+    .reverse()
+    .filter((row) => (row.role === "user" || row.role === "assistant") && typeof row.content === "string")
+    .map((row) => ({ role: row.role as "user" | "assistant", content: row.content as string }));
   const { error: userInsertError } = await admin.from("customer_ai_messages").insert({
     user_id: session.user.id,
     role: "user",
@@ -126,7 +130,8 @@ export async function POST(request: NextRequest) {
   const offTopic = offTopicReply(message);
   const context = offTopic ? null : await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
   // "Turn the aircon on/off" is resolved in code: the card still needs the user's confirmation.
-  const power = context ? detectPowerCommand(message, context.devices) : null;
+  const lastDeviceRef = context?.devices.find((device) => device.id === lastDeviceId)?.ref ?? null;
+  const power = context ? detectPowerCommand(message, context.devices, lastDeviceRef) : null;
   const powerDevice = power ? context?.devices.find((device) => device.ref === power.device_ref) : null;
   const grounded = context && !power ? buildGroundedCustomerResponse(message, context) : null;
   const generated = offTopic
@@ -144,7 +149,7 @@ export async function POST(request: NextRequest) {
   const resolved: ReturnType<typeof resolveModelProposal> = context
     ? resolveModelProposal(generated.rawAction, context)
     : { proposal: null };
-  const content = resolved.refusal ?? generated.reply;
+  const content = resolved.refusal ?? (resolved.proposal ? replyForProposal(resolved.proposal, generated.reply) : generated.reply);
   const displayData = grounded?.display ?? (context ? resolveModelDisplay(generated.rawDisplay, context) : null);
   const { data: assistant, error } = await admin
     .from("customer_ai_messages")
