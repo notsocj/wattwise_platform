@@ -20,13 +20,43 @@ class CanvasBoundary extends Component<{ onError: () => void; children: ReactNod
   }
 }
 
+// Software-only WebGL (no GPU acceleration: SwiftShader, llvmpipe, Microsoft
+// Basic Render) draws every 3D frame on the CPU and blocks the page for seconds,
+// so those machines keep the SVG poster and never download three.js.
+// failIfMajorPerformanceCaveat refuses some of them; the renderer name catches the rest.
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software|basic render/i;
+
 function supportsWebGL() {
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+    const options: WebGLContextAttributes = { failIfMajorPerformanceCaveat: true };
+    const gl = canvas.getContext("webgl2", options) ?? canvas.getContext("webgl", options);
+    if (!gl) return false;
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "";
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return !SOFTWARE_RENDERER.test(renderer);
   } catch {
     return false;
   }
+}
+
+/** Calls `run` once the page has loaded and the browser is idle (2 s at the latest). */
+function whenIdleAfterLoad(run: () => void) {
+  let idleId: number | undefined;
+  let timeoutId: number | undefined;
+  const schedule = () => {
+    // Safari has no requestIdleCallback.
+    if (typeof window.requestIdleCallback === "function") idleId = window.requestIdleCallback(run, { timeout: 2000 });
+    else timeoutId = setTimeout(run, 600) as unknown as number;
+  };
+  if (document.readyState === "complete") schedule();
+  else window.addEventListener("load", schedule, { once: true });
+  return () => {
+    window.removeEventListener("load", schedule);
+    if (idleId !== undefined) window.cancelIdleCallback(idleId);
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  };
 }
 
 let webglSupport: boolean | undefined;
@@ -61,8 +91,13 @@ export default function WattWiseStage({ poster }: { poster: ReactNode }) {
   const [failed, setFailed] = useState(false);
   const [visible, setVisible] = useState(true);
   const [ready, setReady] = useState(false);
+  // three.js is fetched and started only after the page is interactive, so it
+  // never competes with first paint and hydration; the poster shows until then.
+  const [idle, setIdle] = useState(false);
   const reduced = useSyncExternalStore(subscribeReduced, readReduced, () => false);
   const webgl = useSyncExternalStore(noSubscribe, readWebGL, () => false) && !failed;
+
+  useEffect(() => whenIdleAfterLoad(() => setIdle(true)), []);
 
   const isOpen = hovered || pinned;
 
@@ -103,7 +138,7 @@ export default function WattWiseStage({ poster }: { poster: ReactNode }) {
         >
           {poster}
         </div>
-        {webgl ? (
+        {webgl && idle ? (
           <>
             <div className={`absolute inset-0 transition-opacity duration-700 ease-out ${ready ? "opacity-100" : "opacity-0"}`}>
               <CanvasBoundary onError={handleFailure}>
@@ -133,7 +168,7 @@ export default function WattWiseStage({ poster }: { poster: ReactNode }) {
           </>
         ) : null}
       </div>
-      {webgl ? (
+      {webgl && idle ? (
         <figcaption
           aria-hidden="true"
           className={`-mt-2 text-xs font-medium uppercase tracking-[0.24em] text-fg/40 transition-opacity duration-200 ease-out ${

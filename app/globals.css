@@ -115,6 +115,22 @@ body {
   }
 }
 
+/*
+ * Rise without the fade, for a page's largest text (the landing headline).
+ * Browsers skip elements first painted at opacity 0 when timing the largest
+ * paint, so a faded-in headline left the "largest paint" to whatever small
+ * element appeared last (seconds later). Reduced motion: no animation.
+ */
+@keyframes ww-lift {
+  from {
+    transform: translateY(10px);
+  }
+}
+
+.ww-lift {
+  animation: ww-lift 520ms var(--ease-out) both;
+}
+
 .ww-rise {
   animation: ww-rise 520ms var(--ease-out) both;
 }
@@ -122,6 +138,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ww-rise {
     animation-name: ww-fade;
+  }
+
+  .ww-lift {
+    animation: none;
   }
 }
 

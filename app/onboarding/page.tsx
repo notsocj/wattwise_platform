@@ -65,8 +65,7 @@ export default function LandingPage() {
             </span>
           </p>
           <h1
-            className="ww-rise mt-6 text-5xl font-bold leading-[0.98] tracking-tighter text-fg sm:text-6xl xl:text-7xl"
-            style={{ animationDelay: "80ms" }}
+            className="ww-lift mt-6 text-5xl font-bold leading-[0.98] tracking-tighter text-fg sm:text-6xl xl:text-7xl"
           >
             Smart Energy.
             <br />

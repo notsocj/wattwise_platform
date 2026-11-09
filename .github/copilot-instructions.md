@@ -151,7 +151,7 @@ Page building blocks:
 - Client navigations show a thin mint progress bar at the top (`components/ui/RouteTransitionIndicator.tsx`, in the root layout under `<Suspense>`).
 
 ### Landing page
-`app/onboarding/page.tsx` is full width. The 3D unit lives in `components/landing/device/`: `WattWiseStage` loads `WattWiseCanvas` (three.js + React Three Fiber) client-side only and falls back to the SVG `DevicePoster` when WebGL, JavaScript, or motion is unavailable. `components/landing/Reveal.tsx` reveals sections on scroll; `components/landing/SmoothScroll.tsx` enables Lenis wheel smoothing on this page only (skipped for reduced motion). Keep three.js and Lenis out of app routes.
+`app/onboarding/page.tsx` is full width. The 3D unit lives in `components/landing/device/`: `WattWiseStage` loads `WattWiseCanvas` (three.js + React Three Fiber) client-side only, after load and browser idle, and falls back to the SVG `DevicePoster` when WebGL, JavaScript, or motion is unavailable, or when WebGL is software-only (no GPU; detected by renderer name). Keep the headline's entrance transform-only (`ww-lift`) so it counts as the largest paint. `components/landing/Reveal.tsx` reveals sections on scroll; `components/landing/SmoothScroll.tsx` enables Lenis wheel smoothing on this page only (skipped for reduced motion). Keep three.js and Lenis out of app routes.
 
 ---
 
