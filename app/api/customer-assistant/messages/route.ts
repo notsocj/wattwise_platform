@@ -17,7 +17,7 @@ import {
   resolveModelProposal,
 } from "@/lib/customer-assistant-server";
 import { buildGroundedCustomerResponse } from "@/lib/customer-assistant-grounding";
-import { detectPowerCommand, replyForProposal } from "@/lib/customer-assistant-power";
+import { detectPowerCommand, detectScheduleCommand, isRefusal, replyForProposal } from "@/lib/customer-assistant-power";
 import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
 
 type Profile = {
@@ -117,6 +117,8 @@ export async function POST(request: NextRequest) {
   const history = (recent ?? [])
     .reverse()
     .filter((row) => (row.role === "user" || row.role === "assistant") && typeof row.content === "string")
+    // Past refusals teach the model to refuse again, so it never sees them.
+    .filter((row) => row.role === "user" || !isRefusal(row.content as string))
     .map((row) => ({ role: row.role as "user" | "assistant", content: row.content as string }));
   const { error: userInsertError } = await admin.from("customer_ai_messages").insert({
     user_id: session.user.id,
@@ -129,27 +131,30 @@ export async function POST(request: NextRequest) {
   // loading account data or calling OpenAI.
   const offTopic = offTopicReply(message);
   const context = offTopic ? null : await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
-  // "Turn the aircon on/off" is resolved in code: the card still needs the user's confirmation.
+  // Device commands ("turn the aircon off", "turn it off at 5:32 pm") are
+  // resolved in code; the card still needs the user's confirmation.
   const lastDeviceRef = context?.devices.find((device) => device.id === lastDeviceId)?.ref ?? null;
   const power = context ? detectPowerCommand(message, context.devices, lastDeviceRef) : null;
-  const powerDevice = power ? context?.devices.find((device) => device.ref === power.device_ref) : null;
-  const grounded = context && !power ? buildGroundedCustomerResponse(message, context) : null;
+  const command = power
+    ? { type: "set_power" as const, ...power }
+    : context
+      ? detectScheduleCommand(message, context.devices, lastDeviceRef)
+      : null;
+  const grounded = context && !command ? buildGroundedCustomerResponse(message, context) : null;
   const generated = offTopic
     ? { reply: offTopic, rawAction: null, rawDisplay: null, fallback: false }
-    : power && powerDevice
-      ? {
-          reply: `Sige, ${power.on ? "i-o-on" : "i-o-off"} natin ang ${powerDevice.name}. I-confirm mo lang sa card para ma-send ang command.`,
-          rawAction: { type: "set_power", device_ref: power.device_ref, on: power.on },
-          rawDisplay: null,
-          fallback: false,
-        }
+    : command
+      ? { reply: "", rawAction: command, rawDisplay: null, fallback: false }
       : grounded
       ? { reply: grounded.reply, rawAction: null, rawDisplay: null, fallback: false }
       : await generateCustomerAssistantReply(message, history, context!);
   const resolved: ReturnType<typeof resolveModelProposal> = context
     ? resolveModelProposal(generated.rawAction, context)
     : { proposal: null };
-  const content = resolved.refusal ?? (resolved.proposal ? replyForProposal(resolved.proposal, generated.reply) : generated.reply);
+  const content =
+    (resolved.refusal ??
+      (resolved.proposal ? replyForProposal(resolved.proposal, generated.reply) : generated.reply)) ||
+    'Hindi ko maihanda iyan. Sabihin ang device at kung kailan, e.g. "Turn off the aircon at 1 AM".';
   const displayData = grounded?.display ?? (context ? resolveModelDisplay(generated.rawDisplay, context) : null);
   const { data: assistant, error } = await admin
     .from("customer_ai_messages")

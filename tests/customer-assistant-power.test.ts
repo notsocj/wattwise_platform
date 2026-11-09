@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectPowerCommand, replyForProposal } from "../lib/customer-assistant-power.ts";
+import { detectPowerCommand, detectScheduleCommand, isRefusal, parseClockTime, replyForProposal } from "../lib/customer-assistant-power.ts";
 import type { CustomerAssistantProposal } from "../lib/customer-assistant-types.ts";
 
 const devices = [
@@ -59,4 +59,43 @@ test("the text above a card never contradicts it", () => {
   const budget = { ...card({ type: "update_home_budget", value: 2500 }), title: "Update home budget", subject: "Monthly home budget" };
   assert.equal(replyForProposal(budget, "Sige, gawin nating ₱2,500 ang budget."), "Sige, gawin nating ₱2,500 ang budget.");
   assert.match(replyForProposal(budget, "Sorry, I can't do that."), /Update home budget/);
+});
+
+test("reads clock times the way people type them", () => {
+  assert.equal(parseClockTime("later 5 32 pm"), "17:32");
+  assert.equal(parseClockTime("at 5:32pm"), "17:32");
+  assert.equal(parseClockTime("ng 11:30 p.m."), "23:30");
+  assert.equal(parseClockTime("12 am"), "00:00");
+  assert.equal(parseClockTime("12:15 pm"), "12:15");
+  assert.equal(parseClockTime("at 17:30"), "17:30");
+  assert.equal(parseClockTime("13 pm"), null);
+  assert.equal(parseClockTime("after 50 pesos"), null);
+});
+
+test("schedules turn-offs by time, spend, or usage", () => {
+  assert.deepEqual(detectScheduleCommand("can you schedule it to turn of later 5 32 pm?", devices, "device_4"), {
+    type: "schedule_turn_off", device_ref: "device_4", trigger: "time", time: "17:32",
+  });
+  assert.deepEqual(detectScheduleCommand("patayin mo ang aircon ng 11:30 pm", devices), {
+    type: "schedule_turn_off", device_ref: "device_1", trigger: "time", time: "23:30",
+  });
+  assert.deepEqual(detectScheduleCommand("turn off the aircon after it spends ₱50 more tonight", devices), {
+    type: "schedule_turn_off", device_ref: "device_1", trigger: "spend", php: 50, until: "06:00",
+  });
+  assert.deepEqual(detectScheduleCommand("turn off the tv after 2 kWh", devices), {
+    type: "schedule_turn_off", device_ref: "device_2", trigger: "usage", kwh: 2, until: null,
+  });
+});
+
+test("leaves turn-on schedules, missing devices, and plain questions to the model", () => {
+  assert.equal(detectScheduleCommand("turn on the aircon at 6 pm", devices), null);
+  assert.equal(detectScheduleCommand("turn it off at 5 pm", devices), null, "no earlier card and several devices");
+  assert.equal(detectScheduleCommand("how much will the aircon cost by 5 pm?", devices), null);
+  assert.equal(detectScheduleCommand("turn off the aircon", devices), null, "no time or amount: that's set_power");
+});
+
+test("only declining replies count as refusals", () => {
+  assert.equal(isRefusal("Hindi ko ma-schedule na mag-off ang Efan Home"), true);
+  assert.equal(isRefusal("Sorry, I can't do that."), true);
+  assert.equal(isRefusal("Ang aircon ang pinakamalaki ang gastos ngayong cycle."), false);
 });
