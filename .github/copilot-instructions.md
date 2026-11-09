@@ -24,16 +24,17 @@ Deployment: pushing to `main` deploys production on Vercel (functions pinned to 
 - **Landing `/onboarding`**: a full-width marketing page with a 3D WattWise unit, scroll reveals, and smooth scrolling (see "Landing page" below).
 - **Sign-in pages**: `/login`, `/register`, `/forgot-password`, `/reset-password` (email reset link), `/update-password` (tenants who must change their first password are forced here by the middleware).
 - **Home `/dashboard`**: household budget wallet (`HomeBudgetEditor`, the only place `profiles.monthly_budget_php` is edited), device cards with live W/V/A over Supabase Realtime, Taglish insight and budget alert cards, and Add Appliance (QR scan of the unit's MAC with `html5-qrcode`, then AI appliance profiling).
-- **Device detail `/dashboard/[deviceId]`**: gauges, per-device budget limit, relay on/off, restore power.
+- **Device detail `/dashboard/[deviceId]`**: gauges, per-device budget limit, relay on/off, restore power, scheduled turn-offs, and Unit settings (rename, change type, remove the unit and its readings through `/api/devices/[deviceId]`).
+- **Add Appliance "Other"**: picking Other asks what the appliance is; it is saved in `devices.appliance_detail` (migration `044`) and used in reports and AI profiling.
 - **Burn `/analytics`**: how fast the billing cycle budget is being spent and the projection.
 - **Reports `/reports`**: usage and cost by period, downloadable as PDF (`pdf-lib`) or CSV through `/api/reports`.
 - **Calendar `/dashboard/calendar`**: day-by-day usage and cost with AI notes.
 - **Meralco Rates `/rates`**: the current rate schedule and rate history.
 - **Settings `/settings`**: grouped rows for billing cycle (in-app day picker) and household Meralco kWh, appearance (light/dark), notifications, safety (auto-shutoff), and account (change password, reset email, log out, log out of all devices, delete account).
-- **Assistant**: a floating WattWise assistant (`components/customer-assistant/CustomerAssistantFab.tsx`) that answers questions and proposes actions the user must confirm.
+- **Assistant**: a floating WattWise assistant (`components/customer-assistant/CustomerAssistantFab.tsx`) that answers questions and proposes actions the user must confirm, including turning a unit on or off now (`set_power`) and scheduled turn-offs.
 
 ### Manager portal `/manager` (role `manager`, e.g. landlords)
-Fleet (with AI priority cards), Rooms, Tenants (creates tenant logins, reissues temporary passwords), Calendar, Settings; the manager assistant is a floating owl button (`ManagerAssistantFab`) on every page. Layout is `components/manager/ManagerShell.tsx`.
+Fleet (with AI priority cards), Rooms (pair, rename, remove units), Tenants (creates tenant logins, reissues temporary passwords), Calendar, Settings; the manager assistant is a floating owl button (`ManagerAssistantFab`) on every page. Layout is `components/manager/ManagerShell.tsx`.
 
 ### Super admin console `/admin` (role `super_admin`)
 Overview, Users, Devices, Demo Units, Meralco Rates (read-only history; rates come from the sync job), Growth, AI Costs (token usage from `ai_insights`), System Health, Global Analytics, Audit Log, Test Lab. It has its own layout and `components/admin/AdminSidebar.tsx`.

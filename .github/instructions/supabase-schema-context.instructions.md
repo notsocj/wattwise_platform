@@ -5,7 +5,7 @@ applyTo: "**"
 
 # Wattwise Platform — Supabase Schema Context
 
-This file reflects the current database shape defined by `supabase/migrations/001` through `043`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
+This file reflects the current database shape defined by `supabase/migrations/001` through `044`. Treat the migration files as the source of truth; this document is the working reference for application and API development. Migration files do not establish which versions are applied in a deployed environment (check `supabase migration list --linked`; deploys do not apply migrations).
 
 ## Current Schema Summary
 
@@ -137,6 +137,7 @@ CREATE TABLE devices (
   last_seen_at TIMESTAMP WITH TIME ZONE,
   relay_state BOOLEAN DEFAULT false,         -- 010
   appliance_type TEXT,                       -- 010
+  appliance_detail TEXT,                     -- 044: what an "Other" appliance is
   daily_usage_hours NUMERIC(4, 1),           -- 010
   suggested_monthly_limit_php NUMERIC(10, 2),           -- 012
   user_approved_limit_php NUMERIC(10, 2),
@@ -160,6 +161,7 @@ Constraints:
 | Constraint | Rule |
 | --- | --- |
 | `devices_appliance_type_check` | `appliance_type IS NULL OR IN ('refrigerator', 'aircon', 'tv', 'other')` (matches `ApplianceType` in `lib/constants.ts`) |
+| `devices_appliance_detail_check` | `appliance_detail IS NULL OR char_length(btrim(appliance_detail)) BETWEEN 1 AND 40` (`044`). The app fills it only for `other` and clears it otherwise; anon cannot read it (`040` column grants) |
 | `devices_budget_status_check` | `budget_status IN ('ok', 'approval_required', 'auto_cutoff')` |
 | `devices_user_approved_limit_positive_check` | `user_approved_limit_php IS NULL OR > 0` |
 | `devices_suggested_limit_positive_check` | `suggested_monthly_limit_php IS NULL OR > 0` |
@@ -197,7 +199,7 @@ CREATE INDEX idx_energy_logs_device_time
 Notes:
 
 - `device_id` is intentionally `TEXT` with no foreign key: it holds either `devices.id::text` or `devices.mac_address` (hardware and the demo simulator write the MAC). All lookups must support both formats
-- deleting a device or profile does not delete its `energy_logs`; delete by both UUID text and MAC explicitly (as `DELETE /api/admin/demo-units/[deviceId]` does)
+- deleting a device or profile does not delete its `energy_logs`; delete by both UUID text and MAC explicitly (as `DELETE /api/admin/demo-units/[deviceId]` and the owner's `DELETE /api/devices/[deviceId]` do). Account deletion does not do this yet
 - `energy_kwh` is a cumulative meter reading; usage is always computed from positive deltas
 - AFTER INSERT triggers fire in name order: `energy_logs_update_device_last_seen` → `on_energy_log_smart_budget` → `zz_energy_log_budget_warning`
 - never query this table unbounded; always use a hard limit or bounded time range

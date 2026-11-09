@@ -7,6 +7,7 @@ import {
   computeVariableRatePerKwh,
 } from "@/lib/meralco-rates";
 import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
+import { applianceLabel } from "@/lib/device-edit";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -25,6 +26,7 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   appliance_type: string | null;
+  appliance_detail: string | null;
   daily_usage_hours: number | string | null;
   profiled_baseline_watts: number | string | null;
   user_approved_limit_php: number | string | null;
@@ -108,7 +110,7 @@ export async function buildEnergyReport(
   const deviceQuery = supabase
     .from("devices")
     .select(
-      "id, device_name, mac_address, appliance_type, daily_usage_hours, profiled_baseline_watts, user_approved_limit_php"
+      "id, device_name, mac_address, appliance_type, appliance_detail, daily_usage_hours, profiled_baseline_watts, user_approved_limit_php"
     )
     .order("created_at", { ascending: true });
 
@@ -157,7 +159,7 @@ export async function buildEnergyReport(
 
     return {
       device_name: device.device_name,
-      appliance_type: device.appliance_type ?? "other",
+      appliance_type: applianceLabel(device.appliance_type, device.appliance_detail),
       measured_kwh: Number(usageKwh.toFixed(4)),
       estimated_kwh: estimatedKwh === null ? null : Number(estimatedKwh.toFixed(4)),
       difference_kwh: estimatedKwh === null ? null : Number((usageKwh - estimatedKwh).toFixed(4)),

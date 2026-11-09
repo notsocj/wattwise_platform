@@ -1,7 +1,8 @@
 import { HelpCircle, Refrigerator, Tv, Wind } from "@/components/ui/icons";
 import { ApplianceType } from "@/lib/constants";
+import { APPLIANCE_DETAIL_MAX_LENGTH } from "@/lib/device-edit";
 
-const APPLIANCE_OPTIONS: {
+export const APPLIANCE_OPTIONS: {
   type: ApplianceType;
   label: string;
   icon: typeof Refrigerator;
@@ -17,11 +18,17 @@ export default function ApplianceTypeStep({
   errorMessage,
   disabled,
   onSelect,
+  detail,
+  detailError,
+  onDetailChange,
 }: {
   selectedType: ApplianceType | null;
   errorMessage: string | undefined;
   disabled: boolean;
   onSelect: (type: ApplianceType) => void;
+  detail: string;
+  detailError: string | undefined;
+  onDetailChange: (value: string) => void;
 }) {
   return (
     <>
@@ -52,6 +59,9 @@ export default function ApplianceTypeStep({
           );
         })}
       </div>
+      {selectedType === ApplianceType.Other ? (
+        <ApplianceDetailField value={detail} error={detailError} disabled={disabled} onChange={onDetailChange} />
+      ) : null}
       <p
         id="appliance-type-message"
         className={`text-[11px] leading-snug ${
@@ -62,5 +72,47 @@ export default function ApplianceTypeStep({
           "WattWise will register this MAC first, then use live telemetry for profiling."}
       </p>
     </>
+  );
+}
+
+/** Free-text "what is it?" field shown when Other is picked; shared with the Device page settings. */
+export function ApplianceDetailField({
+  value,
+  error,
+  disabled,
+  onChange,
+  id = "appliance-detail",
+}: {
+  value: string;
+  error: string | undefined;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  id?: string;
+}) {
+  return (
+    <div className="transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-fg/60">
+        What appliance is it?
+      </label>
+      <input
+        id={id}
+        value={value}
+        maxLength={APPLIANCE_DETAIL_MAX_LENGTH}
+        disabled={disabled}
+        autoComplete="off"
+        placeholder="e.g. Electric fan, Rice cooker, Water heater"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        onChange={(event) => onChange(event.target.value)}
+        className={`h-12 w-full rounded-full border bg-shade/10 px-4 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors duration-150 ease-out focus:border-mint/40 disabled:opacity-60 ${
+          error ? "border-danger/50" : "border-fg/10"
+        }`}
+      />
+      {error ? (
+        <p id={`${id}-error`} className="mt-1.5 text-[11px] text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }

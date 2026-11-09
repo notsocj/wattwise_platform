@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ApplianceType } from "@/lib/constants";
 import { pollForDeviceProfile } from "@/lib/device-profile-polling";
 import { MAC_REGEX, normalizeMac } from "@/lib/mac-address";
+import { parseApplianceDetail } from "@/lib/device-edit";
 
 export type AiProfile = {
   estimated_monthly_kwh: number;
@@ -21,6 +22,7 @@ export type FieldErrors = Partial<{
   macAddress: string;
   deviceName: string;
   applianceType: string;
+  applianceDetail: string;
   dailyHours: string;
   approvedLimit: string;
 }>;
@@ -62,6 +64,7 @@ export function useApplianceOnboarding({
   const [macAddress, setMacAddress] = useState("");
   const [deviceName, setDeviceName] = useState("");
   const [applianceType, setApplianceType] = useState<ApplianceType | null>(null);
+  const [applianceDetail, setApplianceDetail] = useState("");
   const [dailyHours, setDailyHours] = useState(4);
   const [approvedLimit, setApprovedLimit] = useState("");
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -148,6 +151,11 @@ export function useApplianceOnboarding({
       nextErrors.applianceType =
         "Choose the appliance type that best matches this device.";
     }
+    const detailResult = parseApplianceDetail(applianceType ?? "", applianceDetail);
+    if ("error" in detailResult) {
+      nextErrors.applianceDetail = detailResult.error;
+    }
+    const detail = "detail" in detailResult ? detailResult.detail : null;
 
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || !applianceType) {
@@ -169,6 +177,7 @@ export function useApplianceOnboarding({
           mac_address: normalizeMac(macAddress),
           device_name: deviceName.trim(),
           appliance_type: applianceType,
+          appliance_detail: detail,
         })
         .eq("id", deviceId);
 
@@ -210,6 +219,7 @@ export function useApplianceOnboarding({
         mac_address: normalizedMac,
         device_name: trimmedName,
         appliance_type: applianceType,
+        appliance_detail: detail,
         relay_state: true,
         require_approval_on_expiry: true,
       })
@@ -231,6 +241,7 @@ export function useApplianceOnboarding({
             .update({
               device_name: trimmedName,
               appliance_type: applianceType,
+              appliance_detail: detail,
               relay_state: true,
             })
             .eq("id", existingDevice.id)
@@ -439,6 +450,12 @@ export function useApplianceOnboarding({
   function selectApplianceType(type: ApplianceType) {
     setApplianceType(type);
     clearFieldError("applianceType");
+    clearFieldError("applianceDetail");
+  }
+
+  function updateApplianceDetail(value: string) {
+    setApplianceDetail(value);
+    clearFieldError("applianceDetail");
   }
 
   function updateDailyHours(hours: number) {
@@ -460,6 +477,7 @@ export function useApplianceOnboarding({
     macAddress,
     deviceName,
     applianceType,
+    applianceDetail,
     dailyHours,
     approvedLimit,
     profile,
@@ -476,6 +494,7 @@ export function useApplianceOnboarding({
     revalidateStep1Field,
     applyScannedMac,
     selectApplianceType,
+    updateApplianceDetail,
     updateDailyHours,
     updateApprovedLimit,
     goBack,

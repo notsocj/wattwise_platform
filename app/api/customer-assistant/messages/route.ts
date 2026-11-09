@@ -17,6 +17,7 @@ import {
   resolveModelProposal,
 } from "@/lib/customer-assistant-server";
 import { buildGroundedCustomerResponse } from "@/lib/customer-assistant-grounding";
+import { detectPowerCommand } from "@/lib/customer-assistant-power";
 import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
 
 type Profile = {
@@ -124,10 +125,20 @@ export async function POST(request: NextRequest) {
   // loading account data or calling OpenAI.
   const offTopic = offTopicReply(message);
   const context = offTopic ? null : await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
-  const grounded = context ? buildGroundedCustomerResponse(message, context) : null;
+  // "Turn the aircon on/off" is resolved in code: the card still needs the user's confirmation.
+  const power = context ? detectPowerCommand(message, context.devices) : null;
+  const powerDevice = power ? context?.devices.find((device) => device.ref === power.device_ref) : null;
+  const grounded = context && !power ? buildGroundedCustomerResponse(message, context) : null;
   const generated = offTopic
     ? { reply: offTopic, rawAction: null, rawDisplay: null, fallback: false }
-    : grounded
+    : power && powerDevice
+      ? {
+          reply: `Sige, ${power.on ? "i-o-on" : "i-o-off"} natin ang ${powerDevice.name}. I-confirm mo lang sa card para ma-send ang command.`,
+          rawAction: { type: "set_power", device_ref: power.device_ref, on: power.on },
+          rawDisplay: null,
+          fallback: false,
+        }
+      : grounded
       ? { reply: grounded.reply, rawAction: null, rawDisplay: null, fallback: false }
       : await generateCustomerAssistantReply(message, history, context!);
   const resolved: ReturnType<typeof resolveModelProposal> = context

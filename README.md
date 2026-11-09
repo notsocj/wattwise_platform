@@ -12,6 +12,7 @@ Production: [wattwise-app.site](https://www.wattwise-app.site)
 - **Dark and light themes**, chosen in the sidebar or Settings and applied before the first paint
 - **Live dashboard** with per-device watts, voltage, and current pushed through Supabase Realtime (no page reloads), plus freshness-aware LIVE/idle/offline states
 - **Meralco billing** that matches the Summary Schedule of Rates: every per-kWh component and adjustment (including AWAT refunds), the distribution tier and energy tax for the home's monthly usage, fixed customer charges, and per-component VAT, synced automatically each month and shown in full on the `/rates` page for signed-in users
+- **Unit management**: rename a unit, change its appliance type ("Other" asks what it is), or remove it with all of its readings, from the Device page or the manager's Rooms page
 - **Smart Control**: per-device monthly budget limits that cut the relay when spend is exceeded, with optional approval-on-expiry
 - **Budget alerts** at 50% (in-app), 80% (push), and 100% (push + email) via OneSignal and Resend
 - **Analytics, calendar, and reports**: reports are built on the server from the same usage data as the dashboard, price each day at that day's Meralco rate, and export to CSV and PDF

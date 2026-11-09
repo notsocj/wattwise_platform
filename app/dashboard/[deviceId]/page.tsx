@@ -21,6 +21,7 @@ import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-ra
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
 import DeviceAutomationsCard, { type DeviceAutomationRow } from "@/components/dashboard/DeviceAutomationsCard";
+import DeviceSettingsCard from "@/components/dashboard/DeviceSettingsCard";
 import TelemetryFreshnessBadge from "@/components/dashboard/TelemetryFreshnessBadge";
 import CircularGauge from "@/components/dashboard/CircularGauge";
 import RestorePowerButton from "@/components/ui/RestorePowerButton";
@@ -411,6 +412,13 @@ export default async function DeviceDetailPage(props: {
               variant="full"
             />
             <DeviceAutomationsCard deviceId={device.id} rows={automationsRes.data ?? []} />
+            <DeviceSettingsCard
+              deviceId={device.id}
+              name={deviceData.device_name}
+              applianceType={deviceData.appliance_type}
+              applianceDetail={deviceData.appliance_detail}
+              macAddress={deviceData.mac_address}
+            />
           </div>
         )}
 

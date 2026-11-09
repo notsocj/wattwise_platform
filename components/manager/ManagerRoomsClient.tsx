@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { formatPeso } from "@/lib/format";
 import { useRouter } from "next/navigation";
-import { PlugZap, Power, QrCode, ShieldAlert } from "@/components/ui/icons";
+import { PencilLine, PlugZap, Power, QrCode, ShieldAlert, Trash2 } from "@/components/ui/icons";
+import { DEVICE_NAME_MAX_LENGTH } from "@/lib/device-edit";
 import ManagerSelect from "@/components/manager/ManagerSelect";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -27,6 +28,7 @@ export default function ManagerRoomsClient({
   const [showScanner, setShowScanner] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const tenantOptions = [
     { value: "", label: "Vacant" },
     ...tenants.map((tenant) => ({
@@ -88,6 +90,54 @@ export default function ManagerRoomsClient({
     } finally {
       setPending(null);
     }
+  }
+
+  // Rename and remove use the shared owner route, same as the homeowner Device page.
+  async function sendDeviceRequest(deviceId: string, method: "PATCH" | "DELETE", body: object, fallback: string) {
+    setPending(deviceId);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/devices/${deviceId}`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage(typeof payload.error === "string" ? payload.error : fallback);
+        return false;
+      }
+      router.refresh();
+      return true;
+    } catch {
+      setMessage("Network error. Check your connection and try again.");
+      return false;
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function saveRename() {
+    if (!renaming) return;
+    const name = renaming.name.trim();
+    if (!name) {
+      setMessage("Give this unit a name.");
+      return;
+    }
+    if (await sendDeviceRequest(renaming.id, "PATCH", { device_name: name }, "Failed to rename unit.")) {
+      setRenaming(null);
+    }
+  }
+
+  async function removeDevice(device: ManagerDevice) {
+    const confirmed = await confirm({
+      title: `Remove ${device.device_name}?`,
+      description:
+        "This deletes the unit, its readings, and its budget history, and unassigns its tenant. It can't be undone. You can pair the hardware again later.",
+      confirmLabel: "Remove unit",
+      tone: "danger",
+    });
+    if (confirmed) await sendDeviceRequest(device.id, "DELETE", { confirmed: true }, "Failed to remove unit.");
   }
 
   return (
@@ -168,8 +218,46 @@ export default function ManagerRoomsClient({
                   className="rounded-2xl border border-fg/[0.06] bg-fg/[0.03] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-bold">{device.device_name}</p>
+                    <div className="min-w-0 flex-1">
+                      {renaming?.id === device.id ? (
+                        <form
+                          className="flex items-center gap-2"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void saveRename();
+                          }}
+                        >
+                          <label className="sr-only" htmlFor={`rename-${device.id}`}>New name for {device.device_name}</label>
+                          <input
+                            id={`rename-${device.id}`}
+                            autoFocus
+                            value={renaming.name}
+                            maxLength={DEVICE_NAME_MAX_LENGTH}
+                            disabled={isPending}
+                            onChange={(event) => setRenaming({ id: device.id, name: event.target.value })}
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") setRenaming(null);
+                            }}
+                            className="h-10 min-w-0 flex-1 rounded-full border border-fg/10 bg-shade/10 px-4 text-sm text-fg outline-none transition-colors duration-150 ease-out focus:border-mint/40"
+                          />
+                          <button
+                            type="submit"
+                            disabled={isPending || !renaming.name.trim()}
+                            className="h-10 shrink-0 rounded-full bg-mint px-4 text-xs font-bold text-ink transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.97] disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRenaming(null)}
+                            className="h-10 shrink-0 rounded-full px-3 text-xs font-semibold text-fg/60 transition-colors duration-150 ease-out hover:text-fg"
+                          >
+                            Cancel
+                          </button>
+                        </form>
+                      ) : (
+                        <p className="truncate font-bold">{device.device_name}</p>
+                      )}
                       <p className="mt-1 truncate text-[11px] text-fg/45">
                         {device.mac_address}
                       </p>
@@ -248,6 +336,27 @@ export default function ManagerRoomsClient({
                       className="h-12 w-full rounded-full border border-fg/10 bg-shade/10 pl-9 pr-4 text-sm text-fg placeholder:text-fg/30 outline-none transition-colors duration-150 ease-out focus:border-mint/40"
                     />
                     </label>
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRenaming({ id: device.id, name: device.device_name })}
+                      disabled={isPending || renaming?.id === device.id}
+                      className="inline-flex h-10 items-center gap-1.5 rounded-full border border-fg/10 px-4 text-xs font-semibold text-fg/70 transition-[border-color,color,scale] duration-150 ease-out hover:border-mint/30 hover:text-accent enabled:active:scale-[0.97] disabled:opacity-50"
+                    >
+                      <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void removeDevice(device)}
+                      disabled={isPending}
+                      className="inline-flex h-10 items-center gap-1.5 rounded-full border border-danger/25 px-4 text-xs font-semibold text-danger transition-[background-color,scale] duration-150 ease-out hover:bg-danger/10 enabled:active:scale-[0.97] disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      Remove
+                    </button>
                   </div>
 
                   <div className="mt-4">

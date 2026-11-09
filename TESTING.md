@@ -2,7 +2,7 @@
 
 A manual and automated checklist for the web app (`wattwise_platform`) and the ESP32-S3 units (`wattwise_hardware`). Tick items with `[x]` as you go. Each item says what to do and, after ✅, what should happen.
 
-Last updated: November 7, 2026.
+Last updated: November 9, 2026.
 
 ## Before you start
 
@@ -75,6 +75,11 @@ Safe load only.
 - [ ] Scan any other QR code. ✅ "That QR code isn't a WattWise label."
 - [ ] Deny camera access. ✅ A friendly message with the option to enter the MAC manually.
 - [ ] Enter a MAC that belongs to another account. ✅ "This device is already linked to another WattWise account."
+- [ ] Pick **Other** as the type. ✅ A "What appliance is it?" field appears; Register Device is blocked until you fill it in (for example "Electric fan"). Reports show "Electric fan" instead of "other".
+- [ ] On the Device page, open **Unit settings**: rename the unit and change its type, then Save. ✅ The new name shows in the title and on Home. Switching away from Other clears its description.
+- [ ] **Throwaway unit only:** Unit settings → **Remove unit**. ✅ It asks first; after confirming you land on Home and the unit is gone. Adding the same MAC again starts with no old readings.
+- [ ] As a manager, on Rooms use **Rename** and **Remove** on a unit. ✅ Same behaviour; Escape or Cancel leaves the name unchanged.
+- [ ] As a tenant, the Device page has no Unit settings card.
 
 ## 7. Dashboard, analytics, calendar, and rates
 
@@ -110,7 +115,9 @@ Safe load only.
 - [ ] Ask "Turn it off after ₱5 more tonight" on a running demo unit (or a lamp). ✅ After confirming, the card shows progress ("₱1.20 of ₱5.00 since it was scheduled"), and the relay turns off within about 20 seconds of reaching ₱5.
 - [ ] Ask "Turn off the aircon after 0.2 kWh". ✅ Same as above, counted in kWh.
 - [ ] Cancel a scheduled turn-off from the device page. ✅ It asks first, then shows "Cancelled"; the device keeps running.
-- [ ] Ask it to turn a device **on** at a time, or to turn it off right now. ✅ It declines; scheduled rules only turn devices off.
+- [ ] Ask "Turn on my unit named test" (or "Patayin mo na ang aircon"). ✅ A "Turn on now" / "Turn off now" card appears; nothing changes until you confirm, then the relay follows within about 5 seconds. Asking to turn on a unit that is already on says so instead.
+- [ ] Ask it to turn on a unit that was automatically cut off. ✅ It declines and points you to Restore Power.
+- [ ] Ask it to turn a device **on** at a time. ✅ It declines; scheduled rules only turn devices off.
 - [ ] As a tenant, ask to schedule a turn-off. ✅ It explains only the owner can.
 - [ ] Open the assistant with an existing conversation. ✅ It opens already at the newest message (no scrolling from the top); a first open shows placeholder bubbles while history loads.
 - [ ] Send a message. ✅ An owl with bouncing dots appears, with a status line ("Reading your devices...", "Checking Meralco rates...", "Writing a reply..."), and the reply eases in.

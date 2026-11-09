@@ -22,6 +22,8 @@ export type OwnedDeviceRow = {
   id: string;
   device_name: string;
   mac_address: string;
+  appliance_type: string | null;
+  appliance_detail: string | null;
   relay_state: boolean | null;
   owner_id: string | null;
   tenant_id: string | null;
@@ -77,7 +79,7 @@ export async function fetchOwnedDeviceById(
       : `owner_id.eq.${userId},user_id.eq.${userId}`;
   const withRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, relay_state, owner_id, tenant_id, user_approved_limit_php, budget_status")
+    .select("id, device_name, mac_address, appliance_type, appliance_detail, relay_state, owner_id, tenant_id, user_approved_limit_php, budget_status")
     .eq("id", deviceId)
     .or(accessFilter)
     .maybeSingle<OwnedDeviceRow>();
@@ -92,7 +94,7 @@ export async function fetchOwnedDeviceById(
 
   const withoutRelayState = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, owner_id, tenant_id, user_approved_limit_php, budget_status")
+    .select("id, device_name, mac_address, appliance_type, appliance_detail, owner_id, tenant_id, user_approved_limit_php, budget_status")
     .eq("id", deviceId)
     .or(accessFilter)
     .maybeSingle<Omit<OwnedDeviceRow, "relay_state">>();

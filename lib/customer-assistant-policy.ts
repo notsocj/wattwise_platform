@@ -53,6 +53,10 @@ export function isCustomerAssistantProposal(value: unknown): value is CustomerAs
     (action.type === "set_notification_preference" &&
       (action.channel === "push" || action.channel === "email") &&
       typeof action.enabled === "boolean") ||
+    (action.type === "set_power" &&
+      typeof action.device_id === "string" &&
+      UUID_PATTERN.test(action.device_id) &&
+      typeof action.on === "boolean") ||
     (action.type === "schedule_turn_off" &&
       typeof action.device_id === "string" &&
       UUID_PATTERN.test(action.device_id) &&

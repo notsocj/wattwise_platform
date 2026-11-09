@@ -25,6 +25,7 @@ export default function AddApplianceModal({
     macAddress,
     deviceName,
     applianceType,
+    applianceDetail,
     dailyHours,
     approvedLimit,
     profile,
@@ -41,6 +42,7 @@ export default function AddApplianceModal({
     revalidateStep1Field,
     applyScannedMac,
     selectApplianceType,
+    updateApplianceDetail,
     updateDailyHours,
     updateApprovedLimit,
     goBack,
@@ -140,6 +142,9 @@ export default function AddApplianceModal({
                   errorMessage={fieldErrors.applianceType}
                   disabled={isBusy}
                   onSelect={selectApplianceType}
+                  detail={applianceDetail}
+                  detailError={fieldErrors.applianceDetail}
+                  onDetailChange={updateApplianceDetail}
                 />
               ) : null}
 

@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill } from "@/lib/meralco-rates";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
+import { applianceLabel } from "@/lib/device-edit";
 
 const FALLBACK_PROMPT_RATE_PHP_PER_KWH = 12;
 const AI_SAFETY_FACTOR_PHP_PER_KWH = 12;
@@ -19,6 +20,7 @@ type DeviceRow = {
   device_name: string;
   mac_address: string;
   appliance_type: string | null;
+  appliance_detail: string | null;
   relay_state?: boolean | null;
   budget_status?: string | null;
 };
@@ -136,7 +138,7 @@ export async function POST(
 
   const { data: device, error: deviceError } = await supabase
     .from("devices")
-    .select("id, device_name, mac_address, appliance_type, relay_state, budget_status")
+    .select("id, device_name, mac_address, appliance_type, appliance_detail, relay_state, budget_status")
     .eq("id", deviceId)
     .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
     .maybeSingle<DeviceRow>();
@@ -278,7 +280,7 @@ export async function POST(
           role: "user",
           content: JSON.stringify({
             appliance_name: device.device_name,
-            appliance_type: device.appliance_type ?? "other",
+            appliance_type: applianceLabel(device.appliance_type, device.appliance_detail),
             baseline_watts: fallback.baseline_watts,
             voltage_v: fallback.voltage_v,
             current_a: fallback.current_a,
