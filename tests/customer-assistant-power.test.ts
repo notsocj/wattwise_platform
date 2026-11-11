@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectPowerCommand, detectScheduleCommand, isRefusal, parseClockTime, replyForProposal } from "../lib/customer-assistant-power.ts";
+import { detectLimitCommand, detectPowerCommand, detectScheduleCommand, isRefusal, parseClockTime, replyForProposal } from "../lib/customer-assistant-power.ts";
 import type { CustomerAssistantProposal } from "../lib/customer-assistant-types.ts";
 
 const devices = [
@@ -133,4 +133,22 @@ test("only declining replies count as refusals", () => {
   assert.equal(isRefusal("Hindi ko ma-schedule na mag-off ang Efan Home"), true);
   assert.equal(isRefusal("Sorry, I can't do that."), true);
   assert.equal(isRefusal("Ang aircon ang pinakamalaki ang gastos ngayong cycle."), false);
+});
+
+test("device limit changes are read in code", () => {
+  const units = [
+    { ref: "u1", name: "Wattwise Unit 1" },
+    { ref: "u2", name: "Wattwise Unit 2" },
+    { ref: "ac", name: "Aircon", appliance_type: "aircon" },
+  ];
+  const limit = (message: string, last: string[] = []) => detectLimitCommand(message, units, last);
+  assert.deepEqual(limit("Set the Wattwise Unit 1 limit back to ₱35.06"), { type: "update_device_limit", device_ref: "u1", value: 35.06 });
+  assert.deepEqual(limit("raise the aircon limit to 1,500 pesos"), { type: "update_device_limit", device_ref: "ac", value: 1500 });
+  assert.deepEqual(limit("itaas ang limit ng wattwise 2 sa 500"), { type: "update_device_limit", device_ref: "u2", value: 500 });
+  assert.deepEqual(limit("lower the limit to ₱100", ["u2"]), { type: "update_device_limit", device_ref: "u2", value: 100 });
+  // Questions, missing amounts, several units, and no unit stay with the model.
+  assert.equal(limit("is ₱500 a good limit for the aircon?"), null);
+  assert.equal(limit("set the aircon limit"), null);
+  assert.equal(limit("set the limit of wattwise unit 1 and 2 to ₱50"), null);
+  assert.equal(limit("set my limit to ₱50"), null);
 });

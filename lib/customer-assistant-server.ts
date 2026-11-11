@@ -382,6 +382,7 @@ export function resolveModelProposal(
     if (action.type === "update_device_limit") {
       const value = validatePesoValue(action.value);
       if (value === null) return { proposal: null };
+      if (value === device.limit_php) return { proposal: null, refusal: `${peso(value)} na ang limit ng ${device.name}.` };
       return {
         proposal: {
           action: { type: action.type, device_id: device.id, value },

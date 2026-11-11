@@ -134,7 +134,7 @@ export function isRefusal(text: string): boolean {
 // "5:32 pm", "5 32 pm", "5.32pm", "11 pm", or 24-hour "17:30".
 const CLOCK_12 = /\b(\d{1,2})(?:[:. ](\d{2}))?\s*([ap])\.?\s?m\b\.?/i;
 const CLOCK_24 = /\b([01]?\d|2[0-3]):([0-5]\d)\b/;
-const PESOS = /(?:₱|\bphp\s?)(\d+(?:\.\d+)?)|\b(\d+(?:\.\d+)?)\s*(?:pesos?|php)\b/i;
+const PESOS = /(?:₱|\bphp\s?)(\d[\d,]*(?:\.\d+)?)|\b(\d[\d,]*(?:\.\d+)?)\s*(?:pesos?|php)\b/i;
 const KWH = /\b(\d+(?:\.\d+)?)\s*kwh\b/i;
 const TONIGHT = /\b(?:tonight|ngayong gabi|mamayang gabi)\b/i;
 
@@ -180,10 +180,37 @@ export function detectScheduleCommand(
   if (peso || kwh) {
     const until = time ?? (TONIGHT.test(text) ? "06:00" : null);
     return peso
-      ? { type: "schedule_turn_off", device_ref, trigger: "spend", php: Number(peso[1] ?? peso[2]), until }
+      ? { type: "schedule_turn_off", device_ref, trigger: "spend", php: Number((peso[1] ?? peso[2]).replace(/,/g, "")), until }
       : { type: "schedule_turn_off", device_ref, trigger: "usage", kwh: Number(kwh![1]), until };
   }
   return { type: "schedule_turn_off", device_ref, trigger: "time", time: time! };
+}
+
+// A change verb and the word "limit": "set/raise/lower the aircon limit to ₱500",
+// "gawin mong ₱300 ang limit ng TV", "itaas ang limit ng unit 1 sa 500".
+const LIMIT_WORD = /\blimit\b/i;
+const CHANGE_VERB = /\b(?:set|change|raise|lower|increase|decrease|reduce|make|update|put|adjust|gawin|gawing|ilagay|lagay|itaas|taasan|ibaba|babaan|palitan|i-?set)\b/i;
+const AMOUNT_AFTER_TO = /\b(?:to|sa|into|na)\s+(\d[\d,]*(?:\.\d+)?)\b/i;
+
+/**
+ * "Set the Wattwise Unit 1 limit back to ₱35.06" as a device-limit change for
+ * exactly one unit, resolved in code (the model once refused this). The amount
+ * is the peso figure, or the number after "to"/"sa". Questions without a
+ * change verb ("is ₱500 a good limit?") stay with the model.
+ */
+export function detectLimitCommand(
+  message: string,
+  devices: ReadonlyArray<PowerDevice>,
+  lastDeviceRefs: readonly string[] = []
+): { type: "update_device_limit"; device_ref: string; value: number } | null {
+  const text = normalize(message);
+  if (!LIMIT_WORD.test(text) || !CHANGE_VERB.test(text)) return null;
+  const peso = PESOS.exec(text);
+  const raw = peso ? (peso[1] ?? peso[2]) : AMOUNT_AFTER_TO.exec(text)?.[1];
+  const value = raw ? Number(raw.replace(/,/g, "")) : NaN;
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const device_ref = resolveDevice(text, devices, lastDeviceRefs);
+  return device_ref ? { type: "update_device_limit", device_ref, value } : null;
 }
 
 /**
@@ -194,6 +221,9 @@ export function detectScheduleCommand(
 export function replyForProposal(proposal: CustomerAssistantProposal, modelReply: string): string {
   if (proposal.action.type === "set_power") {
     return `Sige, ${proposal.action.on ? "i-o-on" : "i-o-off"} natin ang ${proposal.subject}. I-confirm mo lang sa card para ma-send ang command.`;
+  }
+  if (proposal.action.type === "update_device_limit" && !modelReply.trim()) {
+    return `Sige, gagawin nating ${proposal.proposed_value} ang limit ng ${proposal.subject}. I-confirm mo lang sa card.`;
   }
   if (proposal.action.type === "schedule_turn_off") {
     return `Sige, ise-schedule natin ang ${proposal.subject}: ${proposal.proposed_value}. I-confirm mo lang sa card.`;

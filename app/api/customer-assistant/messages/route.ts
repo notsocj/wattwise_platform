@@ -17,7 +17,7 @@ import {
   resolveModelProposal,
 } from "@/lib/customer-assistant-server";
 import { buildGroundedCustomerResponse } from "@/lib/customer-assistant-grounding";
-import { detectPowerCommand, detectScheduleCommand, isRefusal, replyForProposal } from "@/lib/customer-assistant-power";
+import { detectLimitCommand, detectPowerCommand, detectScheduleCommand, isRefusal, replyForProposal } from "@/lib/customer-assistant-power";
 import type { CustomerAssistantMessage } from "@/lib/customer-assistant-types";
 
 type Profile = {
@@ -146,7 +146,8 @@ export async function POST(request: NextRequest) {
   const command = power
     ? { type: "set_power" as const, ...power }
     : context
-      ? detectScheduleCommand(message, context.devices, lastDeviceRefs)
+      ? (detectScheduleCommand(message, context.devices, lastDeviceRefs) ??
+        detectLimitCommand(message, context.devices, lastDeviceRefs))
       : null;
   const grounded = context && !command ? buildGroundedCustomerResponse(message, context) : null;
   const generated = offTopic
