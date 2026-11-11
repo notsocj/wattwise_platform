@@ -113,10 +113,15 @@ export async function POST(request: NextRequest) {
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false })
     .limit(6);
-  // The device the latest card was about, so "paki on ulit" knows what "ulit" means.
-  const lastDeviceId = (recent ?? [])
-    .map((row) => (row.proposal as { action?: { device_id?: unknown } } | null)?.action?.device_id)
-    .find((id): id is string => typeof id === "string");
+  // The devices the latest card was about, so "paki on ulit" knows what "ulit" means.
+  const lastDeviceIds =
+    (recent ?? [])
+      .map((row) => {
+        const action = (row.proposal as { action?: { device_id?: unknown; device_ids?: unknown } } | null)?.action;
+        const ids = Array.isArray(action?.device_ids) ? action.device_ids : [action?.device_id];
+        return ids.filter((id): id is string => typeof id === "string");
+      })
+      .find((ids) => ids.length) ?? [];
   const history = (recent ?? [])
     .reverse()
     .filter((row) => (row.role === "user" || row.role === "assistant") && typeof row.content === "string")
@@ -136,12 +141,12 @@ export async function POST(request: NextRequest) {
   const context = offTopic ? null : await buildCustomerAssistantContext(session.supabase, session.user.id, session.profile);
   // Device commands ("turn the aircon off", "turn it off at 5:32 pm") are
   // resolved in code; the card still needs the user's confirmation.
-  const lastDeviceRef = context?.devices.find((device) => device.id === lastDeviceId)?.ref ?? null;
-  const power = context ? detectPowerCommand(message, context.devices, lastDeviceRef) : null;
+  const lastDeviceRefs = (context?.devices ?? []).filter((device) => lastDeviceIds.includes(device.id)).map((device) => device.ref);
+  const power = context ? detectPowerCommand(message, context.devices, lastDeviceRefs) : null;
   const command = power
     ? { type: "set_power" as const, ...power }
     : context
-      ? detectScheduleCommand(message, context.devices, lastDeviceRef)
+      ? detectScheduleCommand(message, context.devices, lastDeviceRefs)
       : null;
   const grounded = context && !command ? buildGroundedCustomerResponse(message, context) : null;
   const generated = offTopic

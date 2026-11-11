@@ -13,6 +13,8 @@ export const CUSTOMER_ASSISTANT_RATE_LIMIT = 20;
 export const CUSTOMER_ASSISTANT_RATE_WINDOW_MS = 5 * 60 * 1000;
 export const CUSTOMER_ASSISTANT_PROPOSAL_TTL_MS = 15 * 60 * 1000;
 export const MAX_PESO_VALUE = 9_999_999.99;
+/** Units one on/off card may switch at once. */
+export const MAX_POWER_DEVICES = 8;
 
 export function isCustomerRole(role: string | null | undefined): role is CustomerRole {
   return role === "user" || role === "tenant";
@@ -54,8 +56,10 @@ export function isCustomerAssistantProposal(value: unknown): value is CustomerAs
       (action.channel === "push" || action.channel === "email") &&
       typeof action.enabled === "boolean") ||
     (action.type === "set_power" &&
-      typeof action.device_id === "string" &&
-      UUID_PATTERN.test(action.device_id) &&
+      Array.isArray(action.device_ids) &&
+      action.device_ids.length >= 1 &&
+      action.device_ids.length <= MAX_POWER_DEVICES &&
+      action.device_ids.every((id) => typeof id === "string" && UUID_PATTERN.test(id)) &&
       typeof action.on === "boolean") ||
     (action.type === "schedule_turn_off" &&
       typeof action.device_id === "string" &&

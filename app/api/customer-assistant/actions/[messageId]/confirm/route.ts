@@ -26,7 +26,7 @@ function resultMessage(proposal: CustomerAssistantProposal): string {
     case "set_auto_cutoff": return `Automatic cutoff for ${proposal.subject} is now ${proposal.action.enabled ? "enabled" : "disabled"}.`;
     case "set_notification_preference": return `${proposal.subject} is now ${proposal.action.enabled ? "enabled" : "disabled"}.`;
     case "schedule_turn_off": return `Scheduled for ${proposal.subject}: ${proposal.proposed_value}.`;
-    case "set_power": return `Turn-${proposal.action.on ? "on" : "off"} command sent to ${proposal.subject}. The unit applies it within about 5 seconds.`;
+    case "set_power": return `Turn-${proposal.action.on ? "on" : "off"} command sent to ${proposal.subject}. ${proposal.action.device_ids.length > 1 ? "Each unit applies" : "The unit applies"} it within about 5 seconds.`;
   }
 }
 
@@ -103,17 +103,19 @@ export async function POST(
     } else if (action.type === "set_power") {
       // Same rules as PATCH /api/devices/[deviceId]/relay: owner only, and a unit
       // under automatic cutoff comes back only through Restore Power.
-      const { data: device } = await supabase
+      const { data: devices } = await supabase
         .from("devices")
         .select("id,budget_status")
-        .eq("id", action.device_id)
+        .in("id", action.device_ids)
         .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
-        .maybeSingle<{ id: string; budget_status: string | null }>();
-      if (!device) throw new Error("The device is no longer manageable by this account.");
-      if (action.on && device.budget_status === "auto_cutoff") {
-        throw new Error("This device was automatically cut off. Use Restore Power after raising its limit or disabling automatic shutoff.");
+        .returns<{ id: string; budget_status: string | null }[]>();
+      if (!devices || devices.length !== new Set(action.device_ids).size) {
+        throw new Error("A device on this card is no longer manageable by this account.");
       }
-      const { error } = await supabase.from("devices").update({ relay_state: action.on }).eq("id", device.id);
+      if (action.on && devices.some((device) => device.budget_status === "auto_cutoff")) {
+        throw new Error("A device on this card was automatically cut off. Use Restore Power after raising its limit or disabling automatic shutoff.");
+      }
+      const { error } = await supabase.from("devices").update({ relay_state: action.on }).in("id", action.device_ids);
       if (error) throw new Error("The power command could not be sent.");
     } else {
       const { data: device } = await supabase

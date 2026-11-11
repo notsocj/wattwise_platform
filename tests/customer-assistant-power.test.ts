@@ -11,23 +11,38 @@ const devices = [
 ];
 
 test("turns a named device on or off now", () => {
-  assert.deepEqual(detectPowerCommand("can you turn on my wattwise unit named test", devices), { device_ref: "device_2", on: true });
-  assert.deepEqual(detectPowerCommand("Patayin mo na ang aircon", devices), { device_ref: "device_1", on: false });
-  assert.deepEqual(detectPowerCommand("switch the aircon off please", devices), { device_ref: "device_1", on: false });
-  assert.deepEqual(detectPowerCommand("buksan ang Test Fan", devices), { device_ref: "device_3", on: true });
+  assert.deepEqual(detectPowerCommand("can you turn on my wattwise unit named test", devices), { device_refs: ["device_2"], on: true });
+  assert.deepEqual(detectPowerCommand("Patayin mo na ang aircon", devices), { device_refs: ["device_1"], on: false });
+  assert.deepEqual(detectPowerCommand("switch the aircon off please", devices), { device_refs: ["device_1"], on: false });
+  assert.deepEqual(detectPowerCommand("buksan ang Test Fan", devices), { device_refs: ["device_3"], on: true });
   assert.equal(detectPowerCommand("turn on the latest one", devices), null, "test is not matched inside latest");
 });
 
 test("finds a device by what it is when the name isn't used", () => {
-  assert.deepEqual(detectPowerCommand("paki turn off yung electric fan ko sa bahay", devices), { device_ref: "device_4", on: false });
-  assert.deepEqual(detectPowerCommand("paki-off yung tv", devices), { device_ref: "device_2", on: false });
+  assert.deepEqual(detectPowerCommand("paki turn off yung electric fan ko sa bahay", devices), { device_refs: ["device_4"], on: false });
+  assert.deepEqual(detectPowerCommand("paki-off yung tv", devices), { device_refs: ["device_2"], on: false });
+});
+
+test("several units, or all of them, in one command", () => {
+  const units = [
+    { ref: "device_1", name: "Wattwise Unit 1" },
+    { ref: "device_2", name: "Wattwise Unit 2" },
+    { ref: "device_3", name: "Aircon", appliance_type: "aircon" },
+  ];
+  assert.deepEqual(detectPowerCommand("turn off wattwise unit 1 and wattwise unit 2", units), { device_refs: ["device_1", "device_2"], on: false });
+  assert.deepEqual(detectPowerCommand("patayin lahat", units), { device_refs: ["device_1", "device_2", "device_3"], on: false });
+  assert.deepEqual(detectPowerCommand("paki on ulit", units, ["device_1", "device_2"]), { device_refs: ["device_1", "device_2"], on: true });
+  // A shorter name inside a longer one isn't counted twice.
+  assert.deepEqual(detectPowerCommand("buksan ang Test Fan", devices), { device_refs: ["device_3"], on: true });
+  // Schedules stay one device at a time.
+  assert.equal(detectScheduleCommand("turn off wattwise unit 1 and wattwise unit 2 at 5 pm", units), null);
 });
 
 test("follow-ups reuse the device from the last card", () => {
-  assert.deepEqual(detectPowerCommand("paki on ulit mainit e", devices, "device_4"), { device_ref: "device_4", on: true });
-  assert.deepEqual(detectPowerCommand("turn it on", devices, "device_1"), { device_ref: "device_1", on: true });
+  assert.deepEqual(detectPowerCommand("paki on ulit mainit e", devices, ["device_4"]), { device_refs: ["device_4"], on: true });
+  assert.deepEqual(detectPowerCommand("turn it on", devices, ["device_1"]), { device_refs: ["device_1"], on: true });
   assert.equal(detectPowerCommand("turn it on", devices), null, "no earlier card and several devices");
-  assert.deepEqual(detectPowerCommand("i-off mo", [devices[0]]), { device_ref: "device_1", on: false });
+  assert.deepEqual(detectPowerCommand("i-off mo", [devices[0]]), { device_refs: ["device_1"], on: false });
 });
 
 test("leaves scheduled, ambiguous, and state questions to the model", () => {
@@ -51,7 +66,7 @@ const card = (action: CustomerAssistantProposal["action"]): CustomerAssistantPro
 });
 
 test("the text above a card never contradicts it", () => {
-  const power = card({ type: "set_power", device_id: "x", on: true });
+  const power = card({ type: "set_power", device_ids: ["x"], on: true });
   assert.equal(
     replyForProposal(power, "Sorry, pero hindi ko ma-turn on ang Efan Home mo dahil naka-off ito."),
     "Sige, i-o-on natin ang Efan Home. I-confirm mo lang sa card para ma-send ang command."
@@ -73,7 +88,7 @@ test("reads clock times the way people type them", () => {
 });
 
 test("schedules turn-offs by time, spend, or usage", () => {
-  assert.deepEqual(detectScheduleCommand("can you schedule it to turn of later 5 32 pm?", devices, "device_4"), {
+  assert.deepEqual(detectScheduleCommand("can you schedule it to turn of later 5 32 pm?", devices, ["device_4"]), {
     type: "schedule_turn_off", device_ref: "device_4", trigger: "time", time: "17:32",
   });
   assert.deepEqual(detectScheduleCommand("patayin mo ang aircon ng 11:30 pm", devices), {

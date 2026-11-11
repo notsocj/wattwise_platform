@@ -7,7 +7,7 @@ export type CustomerAssistantAction =
   | { type: "update_home_budget"; value: number }
   | { type: "update_device_limit"; device_id: string; value: number }
   | { type: "set_auto_cutoff"; device_id: string; enabled: boolean }
-  | { type: "set_power"; device_id: string; on: boolean }
+  | { type: "set_power"; device_ids: string[]; on: boolean }
   | {
       type: "set_notification_preference";
       channel: "push" | "email";

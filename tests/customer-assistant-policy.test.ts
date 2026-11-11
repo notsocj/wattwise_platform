@@ -32,9 +32,11 @@ test("rejects malformed or unsupported stored proposals", () => {
   assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "update_home_budget", value: 200 } }), true);
   assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "control_relay", enabled: false } }), false);
   const deviceId = "3f2b8c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f";
-  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_id: deviceId, on: true } }), true);
-  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_id: deviceId, on: "yes" } }), false);
-  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_id: "not-a-uuid", on: false } }), false);
+  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_ids: [deviceId], on: true } }), true);
+  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_ids: [deviceId, deviceId.replace("3f", "4f")], on: false } }), true);
+  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_ids: [deviceId], on: "yes" } }), false);
+  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_ids: ["not-a-uuid"], on: false } }), false);
+  assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "set_power", device_ids: [], on: false } }), false);
   assert.equal(isCustomerAssistantProposal({ ...base, action: { type: "update_device_limit", device_id: "not-a-uuid", value: 200 } }), false);
 });
 

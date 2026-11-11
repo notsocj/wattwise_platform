@@ -34,36 +34,62 @@ function mentions(text: string, phrase: string): boolean {
   return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, "u").test(text);
 }
 
+// "Patayin lahat", "turn off all my units".
+const ALL_DEVICES = /\b(?:all|lahat)\b/i;
+
 /**
- * Which device the message means: its name (longest match wins), else a unique
- * match on what it is ("electric fan", "aircon"), else the device the last
- * proposal was about ("paki on ulit"), else the only device.
+ * Every device named in the message. Longer names are matched first and cut
+ * out, so "Test fan" doesn't also count as "test", while "Wattwise Unit 1 and
+ * Wattwise Unit 2" finds both.
  */
-function resolveDevice(text: string, devices: ReadonlyArray<PowerDevice>, lastDeviceRef: string | null): string | null {
-  const named = devices.filter((device) => mentions(text, device.name)).sort((a, b) => b.name.length - a.name.length);
-  if (named.length) return named[0].ref;
+function namedDevices(text: string, devices: ReadonlyArray<PowerDevice>): string[] {
+  let rest = text;
+  const refs: string[] = [];
+  for (const device of [...devices].sort((a, b) => b.name.length - a.name.length)) {
+    if (!mentions(rest, device.name)) continue;
+    refs.push(device.ref);
+    rest = rest.split(normalize(device.name)).join(" ");
+  }
+  return refs;
+}
+
+/**
+ * Which devices the message means: "all", else every named device, else a
+ * unique match on what it is ("electric fan", "aircon"), else the devices the
+ * last card was about ("paki on ulit"), else the only device. Empty when unclear.
+ */
+function resolveDevices(text: string, devices: ReadonlyArray<PowerDevice>, lastDeviceRefs: readonly string[]): string[] {
+  if (ALL_DEVICES.test(text) && devices.length) return devices.map((device) => device.ref);
+  const named = namedDevices(text, devices);
+  if (named.length) return named;
 
   const byKind = devices.filter((device) =>
     [device.appliance_detail ?? "", ...(TYPE_WORDS[device.appliance_type ?? ""] ?? [])].some((word) => mentions(text, word))
   );
-  if (byKind.length === 1) return byKind[0].ref;
-  if (byKind.length > 1) return null;
+  if (byKind.length) return byKind.length === 1 ? [byKind[0].ref] : [];
 
-  if (lastDeviceRef && devices.some((device) => device.ref === lastDeviceRef)) return lastDeviceRef;
-  return devices.length === 1 ? devices[0].ref : null;
+  const last = lastDeviceRefs.filter((ref) => devices.some((device) => device.ref === ref));
+  if (last.length) return last;
+  return devices.length === 1 ? [devices[0].ref] : [];
+}
+
+/** One device for a schedule; several or none leaves it to the model. */
+function resolveDevice(text: string, devices: ReadonlyArray<PowerDevice>, lastDeviceRefs: readonly string[]): string | null {
+  const refs = resolveDevices(text, devices, lastDeviceRefs);
+  return refs.length === 1 ? refs[0] : null;
 }
 
 export function detectPowerCommand(
   message: string,
   devices: ReadonlyArray<PowerDevice>,
-  lastDeviceRef: string | null = null
-): { device_ref: string; on: boolean } | null {
+  lastDeviceRefs: readonly string[] = []
+): { device_refs: string[]; on: boolean } | null {
   const text = normalize(message);
   const on = ON.test(text);
   const off = OFF.test(text);
   if (on === off || SCHEDULE.test(text) || STATE_QUESTION.test(text)) return null;
-  const device_ref = resolveDevice(text, devices, lastDeviceRef);
-  return device_ref ? { device_ref, on } : null;
+  const device_refs = resolveDevices(text, devices, lastDeviceRefs);
+  return device_refs.length ? { device_refs, on } : null;
 }
 
 const REFUSAL = /\b(?:sorry|hindi ko|di ko|can't|cannot|can not|unable|not able)\b/i;
@@ -107,7 +133,7 @@ export type ScheduleCommand =
 export function detectScheduleCommand(
   message: string,
   devices: ReadonlyArray<PowerDevice>,
-  lastDeviceRef: string | null = null
+  lastDeviceRefs: readonly string[] = []
 ): ScheduleCommand | null {
   const text = normalize(message);
   if (!OFF.test(text) || ON.test(text)) return null;
@@ -116,7 +142,7 @@ export function detectScheduleCommand(
   const kwh = KWH.exec(text);
   if (peso && kwh) return null;
   if (!time && !peso && !kwh) return null;
-  const device_ref = resolveDevice(text, devices, lastDeviceRef);
+  const device_ref = resolveDevice(text, devices, lastDeviceRefs);
   if (!device_ref) return null;
 
   if (peso || kwh) {
