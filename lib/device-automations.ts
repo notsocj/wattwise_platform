@@ -107,3 +107,52 @@ export function isAutomationRule(value: unknown): value is AutomationRule {
   if (rule.trigger === "usage") return rule.run_at === null && positive(rule.threshold, MAX_AUTOMATION_KWH) !== null;
   return false;
 }
+
+/** A device_automations row as the calendar reads it (device name joined in). */
+export type AutomationCalendarRow = {
+  id: string;
+  trigger_type: AutomationTrigger;
+  run_at: string | null;
+  threshold: number | string | null;
+  ends_at: string;
+  status: string;
+  executed_at: string | null;
+  created_at: string;
+  device_name: string;
+};
+
+export type CalendarAutomation = {
+  id: string;
+  /** Manila day, YYYY-MM-DD. */
+  dayKey: string;
+  deviceName: string;
+  /** "Turn off at 1:00 PM, Thu, Nov 12" or "Turn off after ₱50.00 more (...)". */
+  label: string;
+  /** Set once the rule turned the device off. */
+  doneAt: string | null;
+};
+
+/**
+ * Places active and finished rules on the Manila day they ran, or will run
+ * (time rules), or were made (spend/usage rules), keeping only `monthPrefix`
+ * ("2026-11"). Cancelled and expired rules are left off the calendar.
+ */
+export function toCalendarAutomations(rows: AutomationCalendarRow[], monthPrefix: string): CalendarAutomation[] {
+  const at = (row: AutomationCalendarRow) => row.executed_at ?? row.run_at ?? row.created_at;
+  return rows
+    .filter((row) => row.status === "active" || row.status === "done")
+    .sort((a, b) => new Date(at(a)).getTime() - new Date(at(b)).getTime())
+    .map((row) => ({
+      id: row.id,
+      dayKey: new Date(new Date(at(row)).getTime() + MANILA_OFFSET_MS).toISOString().slice(0, 10),
+      deviceName: row.device_name,
+      label: describeAutomation({
+        trigger: row.trigger_type,
+        run_at: row.run_at,
+        threshold: row.threshold == null ? null : Number(row.threshold),
+        ends_at: row.ends_at,
+      }),
+      doneAt: row.status === "done" ? row.executed_at : null,
+    }))
+    .filter((item) => item.dayKey.startsWith(`${monthPrefix}-`));
+}

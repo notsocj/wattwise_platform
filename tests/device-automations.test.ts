@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  toCalendarAutomations,
   describeAutomation,
   isAutomationRule,
   nextManilaTime,
@@ -68,4 +69,26 @@ test("stored rules are validated before a proposal can be confirmed", () => {
   // Only owners confirm scheduled turn-offs; tenants cannot.
   assert.equal(canRoleConfirmAction("user", action), true);
   assert.equal(canRoleConfirmAction("tenant", action), false);
+});
+
+test("calendar places rules on the Manila day they ran or will run", () => {
+  const base = { threshold: null, ends_at: "2026-11-12T06:00:00.000Z", device_name: "Efan Home" };
+  const items = toCalendarAutomations(
+    [
+      // Done: executed 6:17 PM Manila on Nov 11.
+      { ...base, id: "a", trigger_type: "time", run_at: "2026-11-11T10:17:00.000Z", status: "done", executed_at: "2026-11-11T10:17:05.000Z", created_at: "2026-11-11T09:00:00.000Z" },
+      // Active time rule: 1:00 PM Manila on Nov 12.
+      { ...base, id: "b", trigger_type: "time", run_at: "2026-11-12T05:00:00.000Z", status: "active", executed_at: null, created_at: "2026-11-11T12:00:00.000Z" },
+      // Spend rule made at 1:00 AM Manila on Dec 1: not in November.
+      { ...base, id: "c", trigger_type: "spend", run_at: null, threshold: "50", status: "active", executed_at: null, created_at: "2026-11-30T17:00:00.000Z" },
+      // Cancelled rules stay off the calendar.
+      { ...base, id: "d", trigger_type: "time", run_at: "2026-11-13T05:00:00.000Z", status: "cancelled", executed_at: null, created_at: "2026-11-11T12:00:00.000Z" },
+    ],
+    "2026-11"
+  );
+  assert.deepEqual(items.map((item) => [item.id, item.dayKey, item.doneAt !== null]), [
+    ["a", "2026-11-11", true],
+    ["b", "2026-11-12", false],
+  ]);
+  assert.match(items[1].label, /^Turn off at 1:00 PM/);
 });

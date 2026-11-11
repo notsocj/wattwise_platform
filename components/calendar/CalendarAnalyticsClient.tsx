@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles, X } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, Sparkles, Timer, X } from "@/components/ui/icons";
+import type { CalendarAutomation } from "@/lib/device-automations";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import type { CalendarDailySummary } from "@/lib/calendar-analytics";
 import type {
@@ -20,7 +21,32 @@ type CalendarAnalyticsClientProps = {
   previousMonthHref?: string;
   nextMonthHref?: string;
   weeks: CalendarDailySummary[][];
+  /** Scheduled turn-offs this month; omitted where there are none (manager calendar). */
+  automations?: CalendarAutomation[];
 };
+
+/** "Turn off at 1:00 PM, Thu, Nov 12" or its "Turned off at …" result, with the device. */
+function AutomationItem({ item, showDay }: { item: CalendarAutomation; showDay?: boolean }) {
+  return (
+    <li className="flex items-start gap-3 rounded-2xl bg-fg/[0.03] px-3.5 py-3">
+      <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${item.doneAt ? "bg-fg/[0.06] text-fg/50" : "bg-mint/10 text-accent"}`}>
+        <Timer className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{item.deviceName}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-fg/60">{item.label}</p>
+        <p className={`mt-1 text-[11px] font-semibold ${item.doneAt ? "text-fg/50" : "text-accent"}`}>
+          {item.doneAt ? "Done: turned off" : "Scheduled"}
+          {showDay ? ` · ${formatShortDay(item.dayKey)}` : ""}
+        </p>
+      </div>
+    </li>
+  );
+}
+
+function formatShortDay(dayKey: string): string {
+  return new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "short", day: "numeric" }).format(new Date(`${dayKey}T00:00:00`));
+}
 
 function getDayCircleClasses(intensity: CalendarDailySummary["intensity"]): string {
   switch (intensity) {
@@ -81,7 +107,11 @@ export default function CalendarAnalyticsClient({
   previousMonthHref,
   nextMonthHref,
   weeks,
+  automations = [],
 }: CalendarAnalyticsClientProps) {
+  const automationsByDay = new Map<string, CalendarAutomation[]>();
+  for (const item of automations) automationsByDay.set(item.dayKey, [...(automationsByDay.get(item.dayKey) ?? []), item]);
+  const upcoming = automations.filter((item) => !item.doneAt);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,6 +210,17 @@ export default function CalendarAnalyticsClient({
               </p>
             </div>
           </div>
+
+          {upcoming.length ? (
+            <div className="mt-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">Scheduled turn-offs</p>
+              <ul className="mt-2 space-y-2">
+                {upcoming.slice(0, 4).map((item) => (
+                  <AutomationItem key={item.id} item={item} showDay />
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-2xl border border-fg/[0.06] bg-surface p-4 lg:col-span-12 lg:row-start-2 lg:p-6 xl:col-span-8 xl:col-start-5 xl:row-span-2 xl:row-start-1">
@@ -192,11 +233,14 @@ export default function CalendarAnalyticsClient({
           <div className="grid gap-2">
             {weeks.map((week, weekIndex) => (
               <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-2">
-                {week.map((day) => (
+                {week.map((day) => {
+                  const dayAutomations = automationsByDay.get(day.dayKey) ?? [];
+                  return (
                   <button
                     type="button"
                     key={day.dayKey}
                     onClick={() => setSelectedDay(day)}
+                    aria-label={dayAutomations.length ? `${day.dayNumber}, ${dayAutomations.length} scheduled turn-off${dayAutomations.length === 1 ? "" : "s"}` : undefined}
                     className={`flex min-h-[76px] items-start justify-center rounded-2xl p-1.5 text-center transition-transform hover:scale-[1.01] ${
                       day.isCurrentMonth ? "" : "opacity-40"
                     }`}
@@ -217,18 +261,21 @@ export default function CalendarAnalyticsClient({
                         ) : null}
                       </div>
 
-                      {day.kwh > 0 ? (
+                      <span className="mt-2 flex h-3 items-center gap-1">
                         <span
-                          className={`mt-2 h-1.5 w-1.5 rounded-full ${getIndicatorClasses(
-                            day.intensity
-                          )}`}
+                          className={`h-1.5 w-1.5 rounded-full ${day.kwh > 0 ? getIndicatorClasses(day.intensity) : "bg-transparent"}`}
                         />
-                      ) : (
-                        <span className="mt-2 h-1.5 w-1.5 rounded-full bg-transparent" />
-                      )}
+                        {dayAutomations.length ? (
+                          <Timer
+                            className={`h-3 w-3 ${dayAutomations.some((item) => !item.doneAt) ? "text-accent" : "text-fg/45"}`}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                      </span>
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -392,6 +439,17 @@ export default function CalendarAnalyticsClient({
                   : "No meaningful usage logged for this day."}
               </p>
             </div>
+
+            {automationsByDay.get(selectedDay.dayKey)?.length ? (
+              <div className="mt-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/45">Scheduled turn-offs</p>
+                <ul className="mt-2 space-y-2">
+                  {automationsByDay.get(selectedDay.dayKey)!.map((item) => (
+                    <AutomationItem key={item.id} item={item} />
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -2,7 +2,7 @@
 
 A manual and automated checklist for the web app (`wattwise_platform`) and the ESP32-S3 units (`wattwise_hardware`). Tick items with `[x]` as you go. Each item says what to do and, after ✅, what should happen.
 
-Last updated: November 9, 2026.
+Last updated: November 11, 2026.
 
 ## Before you start
 
@@ -114,6 +114,7 @@ Safe load only.
 - [ ] Ask "Turn off the aircon at 1 AM". ✅ A "Schedule a turn-off" card shows the exact time ("1:00 AM, Sun, Nov 8"); nothing changes until you confirm. After confirming, the device page's **Scheduled turn-offs** card lists it, and at that time the relay goes off within about 20 seconds.
 - [ ] Ask "Turn it off after ₱5 more tonight" on a running demo unit (or a lamp). ✅ After confirming, the card shows progress ("₱1.20 of ₱5.00 since it was scheduled"), and the relay turns off within about 20 seconds of reaching ₱5.
 - [ ] Ask "Turn off the aircon after 0.2 kWh". ✅ Same as above, counted in kWh.
+- [ ] After scheduling a turn-off, open the device page and the Calendar. ✅ The device page shows "Scheduled: Turn off at …" under its title; the Calendar marks that day with a mint timer (grey once it has run), lists it under "Scheduled turn-offs", and shows it in that day's details.
 - [ ] Cancel a scheduled turn-off from the device page. ✅ It asks first, then shows "Cancelled"; the device keeps running.
 - [ ] Ask "paki turn off yung electric fan" for a unit whose Other description is Electric fan, confirm, then ask "paki on ulit". ✅ Both cards name that unit, and the line above each card matches it (no "Sorry, hindi ko…").
 - [ ] Right after a card for a unit, ask "can you schedule it to turn off later 5 32 pm?". ✅ A "Schedule a turn-off" card for that unit at 5:32 PM (tomorrow if the time has passed), and the line above it agrees.

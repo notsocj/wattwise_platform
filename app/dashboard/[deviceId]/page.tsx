@@ -7,6 +7,7 @@ import {
   Activity,
   ArrowLeft,
   ChevronRight,
+  Timer,
   Wallet,
   Power,
 } from "@/components/ui/icons";
@@ -28,6 +29,7 @@ import RestorePowerButton from "@/components/ui/RestorePowerButton";
 import TipidTipCard from "@/components/insights/TipidTipCard";
 import { getCurrentBillingCycle, getManilaDayKey } from "@/lib/date-utils";
 import { getBudgetProgressPercent, getBudgetToneClasses } from "@/lib/budget-policy";
+import { describeAutomation } from "@/lib/device-automations";
 
 type ProfileRow = {
   monthly_budget_php: number | string | null;
@@ -325,6 +327,18 @@ export default async function DeviceDetailPage(props: {
   );
   const burnTone = getBudgetToneClasses(burnPercent);
 
+  // Header notice for what is scheduled next on this unit.
+  const activeAutomations = (automationsRes.data ?? []).filter((row) => row.status === "active");
+  const nextAutomation = activeAutomations[0];
+  const automationNotice = nextAutomation
+    ? describeAutomation({
+        trigger: nextAutomation.trigger_type,
+        run_at: nextAutomation.run_at,
+        threshold: nextAutomation.threshold == null ? null : Number(nextAutomation.threshold),
+        ends_at: nextAutomation.ends_at,
+      })
+    : null;
+
   return (
     <div className="min-h-screen bg-canvas lg:min-h-0 text-fg pb-8">
       <RealtimeRefreshBridge deviceKeys={[deviceData.id, deviceData.mac_address]} />
@@ -356,53 +370,106 @@ export default async function DeviceDetailPage(props: {
             </span>{" "}
             • <TelemetryFreshnessBadge recordedAt={latestLog?.recorded_at ?? null} />
           </p>
+          {automationNotice ? (
+            <p className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-mint/10 px-3 py-1.5 text-xs font-medium text-accent lg:mt-3 lg:text-sm">
+              <Timer className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                Scheduled: {automationNotice}
+                {activeAutomations.length > 1 ? ` · +${activeAutomations.length - 1} more` : ""}
+              </span>
+            </p>
+          ) : null}
         </div>
         </div>
       </header>
 
-      <div className="ww-stagger px-5 pb-8 flex min-h-[calc(100vh-88px)] flex-col gap-5 lg:grid lg:min-h-0 lg:grid-cols-12 lg:items-start">
+      {/* Phones: one column (gauges, usage, controls, billing). Desktop: readings
+          on the left at their natural height, controls on the right. */}
+      <div className="ww-stagger flex flex-col gap-5 px-5 pb-8 lg:grid lg:grid-cols-12 lg:items-start">
         <div className="empty:hidden lg:col-span-12">
           <TipidTipCard />
         </div>
 
-        {/* ===== Metrology Gauges ===== */}
-        <section className="grid flex-1 grid-cols-3 items-center rounded-2xl border border-fg/[0.06] bg-surface px-2 py-8 lg:col-span-12 xl:col-span-7 xl:row-span-2 lg:self-stretch lg:px-6">
-          <CircularGauge
-            value={device.watts}
-            max={device.maxWatts}
-            label="Power"
-            unit="WATTS"
-          />
-          <CircularGauge
-            value={device.volts}
-            max={device.maxVolts}
-            label="Voltage"
-            unit="VOLTS"
-          />
-          <CircularGauge
-            value={device.amps}
-            max={device.maxAmps}
-            label="Current"
-            unit="AMPS"
-          />
-        </section>
+        <div className={`flex flex-col gap-5 max-lg:contents ${isTenant ? "lg:col-span-12" : "lg:col-span-7"}`}>
+          {/* ===== Metrology Gauges ===== */}
+          <section className="grid grid-cols-3 items-center rounded-2xl border border-fg/[0.06] bg-surface px-2 py-6 max-lg:order-1 lg:px-6 lg:py-8">
+            <CircularGauge
+              value={device.watts}
+              max={device.maxWatts}
+              label="Power"
+              unit="WATTS"
+            />
+            <CircularGauge
+              value={device.volts}
+              max={device.maxVolts}
+              label="Voltage"
+              unit="VOLTS"
+            />
+            <CircularGauge
+              value={device.amps}
+              max={device.maxAmps}
+              label="Current"
+              unit="AMPS"
+            />
+          </section>
 
-        <section className={`${CARD} p-5 lg:order-last lg:col-span-12 lg:p-6`}>
-          <CardHeader icon={Activity} title="Actual kWh usage" aside={<CardPill>Metered</CardPill>} />
-          <p className="mb-4 mt-2 text-xs text-fg/45">Derived from positive changes in this appliance&apos;s cumulative PZEM meter reading.</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {usageSummary.map((period) => (
-              <div key={period.label} className="rounded-xl border border-fg/[0.05] bg-fg/[0.02] px-3 py-3">
-                <p className="text-xs font-medium text-fg/45">{period.label}</p>
-                <p className="mt-1 text-lg font-bold text-fg">{period.value.toFixed(3)} <span className="text-xs font-medium text-accent/75">kWh</span></p>
+          <section className={`${CARD} p-5 max-lg:order-2 lg:p-6`}>
+            <CardHeader icon={Activity} title="Actual kWh usage" aside={<CardPill>Metered</CardPill>} />
+            <p className="mb-4 mt-2 text-xs text-fg/45">Derived from positive changes in this appliance&apos;s cumulative PZEM meter reading.</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {usageSummary.map((period) => (
+                <div key={period.label} className="rounded-xl border border-fg/[0.05] bg-fg/[0.02] px-3 py-3">
+                  <p className="text-xs font-medium text-fg/45">{period.label}</p>
+                  <p className="mt-1 whitespace-nowrap text-lg font-bold text-fg lg:text-base 2xl:text-lg">{period.value.toFixed(3)} <span className="text-xs font-medium text-accent/75">kWh</span></p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ===== Appliance Burn Rate ===== */}
+          <section className={`${CARD} p-5 max-lg:order-4 lg:p-6`}>
+            <div className="mb-4">
+              <CardHeader icon={Wallet} title="Billing cycle" aside={<CardPill>Device limit</CardPill>} />
+            </div>
+
+            {/* Budget row */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-fg/70">Smart Control Limit</span>
+              <span className="text-lg font-bold">
+                <span className="text-fg/50 text-sm mr-0.5">₱</span>
+                {device.monthlyBudget.toLocaleString()}
+              </span>
+            </div>
+
+            {/* Burn rate */}
+            <div className="mb-1.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-fg/40">
+                  Smart Control variable spend
+                </span>
+                <span className="text-xs text-fg/50">
+                  ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} this billing cycle
+                </span>
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-fg/[0.06]">
+                <div
+                  className={`h-full origin-left rounded-full transition-[width,scale] duration-700 ease-out starting:scale-x-0 ${burnTone.bar}`}
+                  style={{ width: `${Math.min(burnPercent, 100)}%` }}
+                />
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-fg/40">
+                Variable spend: ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className={`mt-2 text-right text-xs font-semibold ${burnTone.text}`}>
+                {burnPercent.toFixed(1)}% of budget used
+              </p>
+            </div>
+          </section>
+        </div>
 
         {/* ===== Power Control (Relay) ===== */}
         {isTenant ? null : (
-          <div className="flex flex-col gap-5 lg:col-span-6 xl:col-span-5">
+          <div className="flex flex-col gap-5 max-lg:order-3 lg:col-span-5">
             {deviceData.budget_status === "auto_cutoff" ? (
               <RestorePowerButton deviceId={device.id} />
             ) : null}
@@ -421,47 +488,6 @@ export default async function DeviceDetailPage(props: {
             />
           </div>
         )}
-
-        {/* ===== Appliance Burn Rate ===== */}
-        <section className={`${CARD} p-5 lg:col-span-6 lg:p-6 xl:col-span-5`}>
-          <div className="mb-4">
-            <CardHeader icon={Wallet} title="Billing cycle" aside={<CardPill>Device limit</CardPill>} />
-          </div>
-
-          {/* Budget row */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-fg/70">Smart Control Limit</span>
-            <span className="text-lg font-bold">
-              <span className="text-fg/50 text-sm mr-0.5">₱</span>
-              {device.monthlyBudget.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Burn rate */}
-          <div className="mb-1.5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-fg/40">
-                Smart Control variable spend
-              </span>
-              <span className="text-xs text-fg/50">
-                ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} this billing cycle
-              </span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-fg/[0.06]">
-              <div
-                className={`h-full origin-left rounded-full transition-[width,scale] duration-700 ease-out starting:scale-x-0 ${burnTone.bar}`}
-                style={{ width: `${Math.min(burnPercent, 100)}%` }}
-              />
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-fg/40">
-              Variable spend: ₱ {device.variableSpendPhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Fixed-fee share: ₱ {device.fixedFeeSharePhp.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            <p className={`mt-2 text-right text-xs font-semibold ${burnTone.text}`}>
-              {burnPercent.toFixed(1)}% of budget used
-            </p>
-          </div>
-        </section>
-
       </div>
     </div>
   );

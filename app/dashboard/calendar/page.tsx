@@ -12,6 +12,7 @@ import {
   type UsageByDeviceDayRow,
 } from "@/lib/calendar-analytics";
 import type { CalendarAnalyticsDayPayload } from "@/lib/calendar-ai";
+import { toCalendarAutomations, type AutomationCalendarRow } from "@/lib/device-automations";
 
 function formatMonthLabel(date: Date): string {
   return new Intl.DateTimeFormat("en-PH", {
@@ -61,14 +62,30 @@ export default async function DashboardCalendarPage(props: {
   const prevMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
   const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
 
-  const [activeRates, usageByDayRes] = await Promise.all([
+  const [activeRates, usageByDayRes, automationsRes] = await Promise.all([
     getActiveMeralcoRates(supabase),
     supabase.rpc("get_usage_kwh_by_device_day", {
       p_user_id: user.id,
       p_start: startOfMonth.toISOString(),
       p_end: endOfMonth.toISOString(),
     }),
+    // Scheduled turn-offs that overlap this month. RLS returns only rules on
+    // devices the caller owns, so tenants get none.
+    supabase
+      .from("device_automations")
+      .select("id,trigger_type,run_at,threshold,ends_at,status,executed_at,created_at,devices(device_name)")
+      .in("status", ["active", "done"])
+      .gte("ends_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
+      .limit(200),
   ]);
+  const automations = toCalendarAutomations(
+    (automationsRes.data ?? []).map((row) => {
+      const device = Array.isArray(row.devices) ? row.devices[0] : row.devices;
+      return { ...row, device_name: (device as { device_name?: string } | null)?.device_name ?? "Unit" } as AutomationCalendarRow;
+    }),
+    toMonthParam(monthDate)
+  );
 
   const usageByDayRows = (usageByDayRes.data ?? []) as UsageByDeviceDayRow[];
   const dailyUsageMap = aggregateUsageByDay(usageByDayRows);
@@ -101,6 +118,7 @@ export default async function DashboardCalendarPage(props: {
           previousMonthHref={`/dashboard/calendar?month=${toMonthParam(prevMonth)}`}
           nextMonthHref={`/dashboard/calendar?month=${toMonthParam(nextMonth)}`}
           weeks={weeks}
+          automations={automations}
         />
       </main>
 
