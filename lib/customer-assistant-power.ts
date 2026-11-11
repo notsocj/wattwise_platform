@@ -10,7 +10,8 @@ import type { CustomerAssistantProposal } from "./customer-assistant-types.ts";
 
 const ON = /\b(?:turn|switch|power)\s+on\b|\b(?:turn|switch)\s+[\p{L}\p{N}\s'-]{1,40}?\s+on\b|\b(?:buksan|buhayin|paandarin|i-?on|paki-?\s?on|pa-?on|on\s+(?:mo|ulit|uli))\b/iu;
 const OFF = /\b(?:turn|switch|power)\s+of{1,2}\b|\b(?:turn|switch)\s+[\p{L}\p{N}\s'-]{1,40}?\s+off\b|\b(?:patayin|isara|i-?off|paki-?\s?off|pa-?off|off\s+(?:mo|ulit|uli))\b/iu;
-const SCHEDULE = /\b(?:at|ng|by|after|pag|kapag|when|until|hanggang|tonight|mamaya|tomorrow|bukas|later)\b|\d\s*(?:am|pm)\b|\d{1,2}:\d{2}|₱|\bphp\b|\bpesos?\b|\bkwh\b/i;
+// No bare "at"/"ng": in Taglish they also mean "and"/"of"; clock times are caught below.
+const SCHEDULE = /\b(?:by|after|pag|kapag|when|until|hanggang|tonight|mamaya|tomorrow|bukas|later)\b|\d\s*(?:am|pm)\b|\d{1,2}:\d{2}|₱|\bphp\b|\bpesos?\b|\bkwh\b/i;
 // "Naka-on ba?" asks about the state; it is not a command.
 const STATE_QUESTION = /\bnaka-?\s?(?:on|off)\b/i;
 
@@ -37,12 +38,32 @@ function mentions(text: string, phrase: string): boolean {
 // "Patayin lahat", "turn off all my units".
 const ALL_DEVICES = /\b(?:all|lahat)\b/i;
 
+// "1 and 2", "1, 2 at 3", "1 & 2", "1/2", "1 saka 2".
+const LIST_JOINER = String.raw`\s*(?:,|&|\/|\band\b|\bat\b|\bsaka\b|\btsaka\b)\s*`;
+const NUMBER_LIST = new RegExp(String.raw`([\p{L}][\p{L}'-]*(?:\s+[\p{L}][\p{L}'-]*)*)\s+(\d+)((?:${LIST_JOINER}\d+)+)`, "gu");
+
+/**
+ * Spells out number lists so each unit's full name appears: "wattwise unit 1
+ * and 2" -> "wattwise unit 1, wattwise unit 2". A plural ("units 1 and 2") is
+ * also written singular.
+ */
+function expandNumberLists(text: string): string {
+  return text.replace(NUMBER_LIST, (_match, prefix: string, first: string, rest: string) => {
+    const singular = prefix.endsWith("s") ? prefix.slice(0, -1) : null;
+    return [first, ...(rest.match(/\d+/g) ?? [])]
+      .map((n) => (singular ? `${prefix} ${n}, ${singular} ${n}` : `${prefix} ${n}`))
+      .join(", ");
+  });
+}
+
 /**
  * Every device named in the message. Longer names are matched first and cut
  * out, so "Test fan" doesn't also count as "test", while "Wattwise Unit 1 and
- * Wattwise Unit 2" finds both.
+ * 2" finds both. Then short forms of numbered names: "wattwise 2" or "unit 2"
+ * for "Wattwise Unit 2", only when exactly one unit fits that number.
  */
-function namedDevices(text: string, devices: ReadonlyArray<PowerDevice>): string[] {
+function namedDevices(message: string, devices: ReadonlyArray<PowerDevice>): string[] {
+  const text = expandNumberLists(message);
   let rest = text;
   const refs: string[] = [];
   for (const device of [...devices].sort((a, b) => b.name.length - a.name.length)) {
@@ -50,6 +71,17 @@ function namedDevices(text: string, devices: ReadonlyArray<PowerDevice>): string
     refs.push(device.ref);
     rest = rest.split(normalize(device.name)).join(" ");
   }
+
+  const byNumber = new Map<string, string[]>();
+  for (const device of devices) {
+    if (refs.includes(device.ref)) continue;
+    const numbered = /^(.*\D)\s*(\d+)$/.exec(normalize(device.name));
+    if (!numbered) continue;
+    const [, prefix, n] = numbered;
+    const words = prefix.split(/[^\p{L}\p{N}]+/u).filter((word) => word.length >= 3);
+    if (words.some((word) => mentions(rest, `${word} ${n}`))) byNumber.set(n, [...(byNumber.get(n) ?? []), device.ref]);
+  }
+  for (const candidates of byNumber.values()) if (candidates.length === 1) refs.push(candidates[0]);
   return refs;
 }
 

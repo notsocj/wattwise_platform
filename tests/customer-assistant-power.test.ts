@@ -38,6 +38,26 @@ test("several units, or all of them, in one command", () => {
   assert.equal(detectScheduleCommand("turn off wattwise unit 1 and wattwise unit 2 at 5 pm", units), null);
 });
 
+test("numbered units written as a list or a short name", () => {
+  const units = [
+    { ref: "u1", name: "Wattwise Unit 1" },
+    { ref: "u2", name: "Wattwise Unit 2" },
+    { ref: "u3", name: "Wattwise Unit 3" },
+    { ref: "k1", name: "Kitchen Unit 1" },
+  ];
+  const off = (message: string) => detectPowerCommand(message, units)?.device_refs;
+  assert.deepEqual(off("turn off wattwise unit 1 and 2"), ["u1", "u2"]);
+  assert.deepEqual(off("turn off wattwise unit 1 and 2\\"), ["u1", "u2"]);
+  assert.deepEqual(off("patayin ang wattwise unit 1, 2 at 3"), ["u1", "u2", "u3"]);
+  assert.deepEqual(off("turn off wattwise units 2 & 3"), ["u2", "u3"]);
+  assert.deepEqual(off("turn off wattwise 1 and 2"), ["u1", "u2"]);
+  assert.deepEqual(off("i-off ang wattwise 3"), ["u3"]);
+  // "unit 1" fits two units: ambiguous, so not guessed.
+  assert.equal(off("turn off unit 1"), undefined);
+  // A number that isn't a unit ("for 2 hours") doesn't pick one.
+  assert.deepEqual(off("turn off kitchen unit 1 for 2 hours"), ["k1"]);
+});
+
 test("follow-ups reuse the device from the last card", () => {
   assert.deepEqual(detectPowerCommand("paki on ulit mainit e", devices, ["device_4"]), { device_refs: ["device_4"], on: true });
   assert.deepEqual(detectPowerCommand("turn it on", devices, ["device_1"]), { device_refs: ["device_1"], on: true });
