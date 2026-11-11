@@ -43,11 +43,14 @@ async function trimHistory(userId: string) {
   const admin = createAdminClient();
   const { data: stale } = await admin
     .from("customer_ai_messages")
-    .select("id")
+    .select("id,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .range(CUSTOMER_ASSISTANT_HISTORY_LIMIT, CUSTOMER_ASSISTANT_HISTORY_LIMIT + 100);
-  const ids = (stale ?? []).map((row) => row.id);
+  // Keep rows inside the rate-limit window: the limit counts them, and trimming
+  // to 10 rows would otherwise cap the count at 5 user messages.
+  const windowStart = Date.now() - CUSTOMER_ASSISTANT_RATE_WINDOW_MS;
+  const ids = (stale ?? []).filter((row) => new Date(row.created_at).getTime() < windowStart).map((row) => row.id);
   if (ids.length) await admin.from("customer_ai_messages").delete().in("id", ids);
 }
 

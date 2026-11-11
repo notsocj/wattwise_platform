@@ -410,7 +410,7 @@ CREATE INDEX idx_customer_ai_messages_user_created
 ```
 
 - authenticated users have SELECT-only access to their own rows; inserts and proposal transitions are service-role-only after an API route authenticates the session
-- server routes keep the latest 10 rows per user and enforce a rolling message limit (`lib/customer-assistant-policy.ts`)
+- server routes keep the latest 10 rows per user, plus any from the last 5 minutes, and enforce a rolling limit of 20 user messages per 5 minutes (`lib/customer-assistant-policy.ts`); trimming must keep rows inside that window or the count can never pass 5
 - the `pending` → `processing` conditional update prevents double confirmation
 - `customer_ai_display_data_check`: `display_data` is NULL or a `device_list` object with 1–8 `devices`; no arbitrary HTML is stored
 
