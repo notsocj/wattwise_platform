@@ -4,7 +4,6 @@ import { getSessionUser } from "@/lib/auth-context";
 import { CARD, CardHeader, CardPill } from "@/components/ui/Card";
 import { redirect } from "next/navigation";
 import {
-  Activity,
   ArrowLeft,
   ChevronRight,
   Timer,
@@ -17,7 +16,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   computeHistoricalVariableSpendByDeviceFromDayRows,
   computeFixedChargesWithVat,
+  computeVariableRatePerKwh,
 } from "@/lib/meralco-rates";
+import DeviceUsageCard, { type UsageDay } from "@/components/dashboard/DeviceUsageCard";
 import { getActiveMeralcoRates, getMeralcoRatesForRange } from "@/lib/meralco-rates-server";
 import RealtimeRefreshBridge from "@/components/realtime/RealtimeRefreshBridge";
 import RelayToggle from "@/components/ui/RelayToggle";
@@ -273,13 +274,6 @@ export default async function DeviceDetailPage(props: {
   for (const row of (usagePeriodsRes.data ?? []) as UsagePeriodRow[]) {
     periodUsage.set(row.period_key, Math.max(0, toNumber(row.usage_kwh)));
   }
-  const usageSummary = [
-    { label: "This hour", value: periodUsage.get("hour") ?? 0 },
-    { label: "Today", value: periodUsage.get("day") ?? 0 },
-    { label: "This week", value: periodUsage.get("week") ?? 0 },
-    { label: "This month", value: periodUsage.get("month") ?? 0 },
-    { label: "Billing cycle", value: billingCycleKWh },
-  ];
 
   const totalBillingCycleKWhAcrossHome = Array.from(cycleKWhByDevice.values()).reduce(
     (sum, usageKwh) => sum + Math.max(0, usageKwh),
@@ -297,6 +291,33 @@ export default async function DeviceDetailPage(props: {
   const variableSpendPhp = monthUsageRes.data
     ? Math.max(0, toNumber(monthUsageRes.data.variable_spend_php))
     : variableSpendByDevice.get(deviceData.id) ?? 0;
+
+  // Energy use card: priced at this cycle's actual peso-per-kWh (so days add up
+  // to the Billing cycle spend), or today's Meralco rate before any usage.
+  const ratePerKwh = billingCycleKWh > 0
+    ? variableSpendPhp / billingCycleKWh
+    : computeVariableRatePerKwh(activeRates.rates, activeRates.vatRate);
+  const usagePeriods = [
+    { label: "This hour", hint: "since the hour began", kwh: periodUsage.get("hour") ?? 0 },
+    { label: "Today", hint: "since midnight", kwh: periodUsage.get("day") ?? 0 },
+    { label: "This week", hint: "since Monday", kwh: periodUsage.get("week") ?? 0 },
+    { label: "This month", hint: "since the 1st", kwh: periodUsage.get("month") ?? 0 },
+  ].map((period) => ({ ...period, php: period.kwh * ratePerKwh }));
+  const deviceDayKwh = new Map<string, number>();
+  for (const row of usageByDeviceRows) {
+    if (row.device_id !== deviceData.id) continue;
+    deviceDayKwh.set(row.day_key, (deviceDayKwh.get(row.day_key) ?? 0) + Math.max(0, toNumber(row.usage_kwh)));
+  }
+  const todayKey = getManilaDayKey(now);
+  const dayLabel = (key: string) =>
+    new Date(`${key}T12:00:00+08:00`).toLocaleDateString("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" });
+  const usageDays: UsageDay[] = [];
+  for (let t = billingCycle.startDate.getTime(); ; t += 24 * 60 * 60 * 1000) {
+    const key = getManilaDayKey(new Date(t));
+    if (key > todayKey) break;
+    const kwh = deviceDayKwh.get(key) ?? 0;
+    usageDays.push({ key, label: dayLabel(key), kwh, php: kwh * ratePerKwh, isToday: key === todayKey });
+  }
 
   const estimatedBillPhp =
     variableSpendPhp + computeFixedChargesWithVat(fixedFeeSharePhp, activeRates.vatRate);
@@ -413,18 +434,14 @@ export default async function DeviceDetailPage(props: {
             />
           </section>
 
-          <section className={`${CARD} p-5 max-lg:order-2 lg:p-6`}>
-            <CardHeader icon={Activity} title="Actual kWh usage" aside={<CardPill>Metered</CardPill>} />
-            <p className="mb-4 mt-2 text-xs text-fg/45">Derived from positive changes in this appliance&apos;s cumulative PZEM meter reading.</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {usageSummary.map((period) => (
-                <div key={period.label} className="rounded-xl border border-fg/[0.05] bg-fg/[0.02] px-3 py-3">
-                  <p className="text-xs font-medium text-fg/45">{period.label}</p>
-                  <p className="mt-1 whitespace-nowrap text-lg font-bold text-fg lg:text-base 2xl:text-lg">{period.value.toFixed(3)} <span className="text-xs font-medium text-accent/75">kWh</span></p>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div className="max-lg:order-2">
+            <DeviceUsageCard
+              cycle={{ kwh: billingCycleKWh, php: variableSpendPhp }}
+              cycleStartLabel={dayLabel(getManilaDayKey(billingCycle.startDate))}
+              periods={usagePeriods}
+              days={usageDays}
+            />
+          </div>
 
           {/* ===== Appliance Burn Rate ===== */}
           <section className={`${CARD} p-5 max-lg:order-4 lg:p-6`}>
