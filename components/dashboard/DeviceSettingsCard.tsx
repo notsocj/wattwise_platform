@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Trash2 } from "@/components/ui/icons";
+import { RefreshCw, Settings, Trash2 } from "@/components/ui/icons";
 import { CARD, CardHeader } from "@/components/ui/Card";
 import FormAlert from "@/components/ui/FormAlert";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
@@ -11,7 +11,7 @@ import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { APPLIANCE_OPTIONS, ApplianceDetailField } from "@/components/ui/add-appliance/ApplianceTypeStep";
 import { DEVICE_NAME_MAX_LENGTH } from "@/lib/device-edit";
 
-/** Owner-only card on the Device page: rename, change type, or remove the unit. */
+/** Owner-only card on the Device page: rename, change type, reset Wi-Fi, or remove the unit. */
 export default function DeviceSettingsCard({
   deviceId,
   name,
@@ -32,6 +32,7 @@ export default function DeviceSettingsCard({
   const [draftDetail, setDraftDetail] = useState(applianceDetail ?? "");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [removing, setRemoving] = useState(false);
+  const [wifiReset, setWifiReset] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
 
   const trimmed = draftName.trim();
@@ -78,6 +79,33 @@ export default function DeviceSettingsCard({
     }
   }
 
+  async function resetWifi() {
+    const confirmed = await confirm({
+      title: `Reset ${name}'s Wi-Fi?`,
+      description:
+        "The unit forgets its Wi-Fi within a few seconds and goes offline. To reconnect it, be near the unit, join the WattWise-Setup network on your phone, and pick a Wi-Fi. Readings and power control pause until then. Your readings and settings are kept.",
+      confirmLabel: "Reset Wi-Fi",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    setWifiReset("sending");
+    setError(null);
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/wifi-reset`, { method: "POST" });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof payload.error === "string" ? payload.error : "We couldn't send the reset. Try again.");
+        setWifiReset("idle");
+        return;
+      }
+      setWifiReset("sent");
+    } catch {
+      setError("Network error. Check your connection and try again.");
+      setWifiReset("idle");
+    }
+  }
+
   async function remove() {
     const confirmed = await confirm({
       title: `Remove ${name}?`,
@@ -110,7 +138,7 @@ export default function DeviceSettingsCard({
     }
   }
 
-  const busy = status !== "idle" || removing;
+  const busy = status !== "idle" || removing || wifiReset === "sending";
 
   return (
     <section className={`${CARD} p-5 lg:p-6`}>
@@ -190,7 +218,27 @@ export default function DeviceSettingsCard({
         />
       </form>
 
-      <div className="mt-5 border-t border-fg/[0.06] pt-4">
+      <div className="mt-5 space-y-1 border-t border-fg/[0.06] pt-4">
+        <button
+          type="button"
+          onClick={() => void resetWifi()}
+          disabled={busy || wifiReset === "sent"}
+          className="flex w-full items-center gap-3 rounded-2xl px-1 py-2 text-left transition-[opacity,scale] duration-150 ease-out enabled:active:scale-[0.99] disabled:opacity-60"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fg/[0.06] text-fg/70">
+            {wifiReset === "sending" ? <LoadingIndicator size="sm" showLabel={false} /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-fg">
+              {wifiReset === "sending" ? "Sending…" : wifiReset === "sent" ? "Wi-Fi reset sent" : "Reset Wi-Fi"}
+            </span>
+            <span className="mt-0.5 block text-xs text-fg/50" aria-live="polite">
+              {wifiReset === "sent"
+                ? "Join WattWise-Setup near the unit to pick a new network. Expires in 10 minutes if the unit is offline."
+                : "Forget the saved network so you can connect the unit to a new one"}
+            </span>
+          </span>
+        </button>
         <button
           type="button"
           onClick={() => void remove()}
