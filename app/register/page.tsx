@@ -9,6 +9,8 @@ import FormAlert from "@/components/ui/FormAlert";
 import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
 import { getHomePathForRole, type UserRole } from "@/lib/roles";
 import { LEGAL_VERSION } from "@/lib/legal";
+import { validateNewPassword } from "@/lib/password-policy";
+import PasswordChecklist from "@/components/ui/PasswordChecklist";
 import { createClient } from "@/lib/supabase/client";
 import {
   getFriendlyAuthError,
@@ -59,15 +61,7 @@ export default function RegisterPage() {
   }
 
   function validatePassword(value = password): string | null {
-    if (!value) {
-      return "Create a password with at least 8 characters.";
-    }
-
-    if (value.length < 8) {
-      return "Password must be at least 8 characters long.";
-    }
-
-    return null;
+    return validateNewPassword(value);
   }
 
   function validateForm(): RegisterFieldErrors {
@@ -359,7 +353,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 aria-invalid={Boolean(fieldErrors.password)}
-                aria-describedby="register-password-message"
+                aria-describedby="register-password-message register-password-rules"
                 className={getInputClass(Boolean(fieldErrors.password), "pr-12")}
               />
               <button
@@ -377,14 +371,14 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <p
-            id="register-password-message"
-            className={`mb-6 text-xs ${
-              fieldErrors.password ? "text-danger" : "text-fg/40"
-            }`}
-          >
-            {fieldErrors.password ?? "Must be at least 8 characters long."}
-          </p>
+          <div className="mb-6 space-y-2">
+            {fieldErrors.password ? (
+              <p id="register-password-message" className="text-xs text-danger">
+                {fieldErrors.password}
+              </p>
+            ) : null}
+            <PasswordChecklist id="register-password-rules" password={password} />
+          </div>
 
           <div className="mb-8">
             <label htmlFor="register-terms" className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-fg/70">

@@ -48,6 +48,15 @@ export function getFriendlyAuthError(
     return "An account already uses this email. Log in instead, or reset your password.";
   }
 
+  if (normalizedMessage.includes("should be different")) {
+    return "Choose a new password that is different from your current one.";
+  }
+
+  // Supabase Auth's password rule (see lib/password-policy.ts).
+  if (normalizedMessage.includes("password should") || normalizedMessage.includes("weak password")) {
+    return "Your password needs at least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.";
+  }
+
   if (
     normalizedMessage.includes("rate limit") ||
     normalizedMessage.includes("too many") ||
@@ -79,7 +88,7 @@ export function getFriendlyAuthError(
       return "This reset link has expired or was already used. Request a new one from the login page.";
     }
     if (normalizedMessage.includes("password")) {
-      return "Use a stronger password with at least 8 characters.";
+      return "Your password needs at least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.";
     }
     return "We could not update your password. Try again in a moment.";
   }

@@ -17,6 +17,8 @@ import { logoutOneSignal } from "@/lib/onesignal";
 import FormAlert from "@/components/ui/FormAlert";
 import LoadingIndicator from "@/components/ui/LoadingIndicator";
 import SubmitButton, { type SubmitStatus } from "@/components/ui/SubmitButton";
+import PasswordChecklist from "@/components/ui/PasswordChecklist";
+import { validateNewPassword } from "@/lib/password-policy";
 
 type UpdatePasswordFormProps = {
   mode?: "update" | "reset";
@@ -86,8 +88,9 @@ export default function UpdatePasswordForm({
     e.preventDefault();
     setError(null);
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+    const passwordError = validateNewPassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -250,6 +253,9 @@ export default function UpdatePasswordForm({
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter new password"
+                aria-label="New password"
+                aria-describedby="update-password-rules"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-full border border-mint/40 bg-transparent px-4 py-4 pr-12 text-base text-fg placeholder-fg/30 transition-colors focus:border-mint focus:outline-none"
@@ -267,9 +273,9 @@ export default function UpdatePasswordForm({
                 )}
               </button>
             </div>
-            <p className="mt-2 text-sm text-fg/40">
-              Use at least 8 characters.
-            </p>
+            <div className="mt-3">
+              <PasswordChecklist password={password} id="update-password-rules" />
+            </div>
           </div>
 
           <div className="mb-8">
