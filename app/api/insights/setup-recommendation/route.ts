@@ -8,6 +8,7 @@ import {
 } from "@/lib/meralco-rates";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import { ApplianceType } from "@/lib/constants";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 const TYPICAL_WATTS: Record<ApplianceType, number> = {
   [ApplianceType.Refrigerator]: 150,
@@ -88,6 +89,9 @@ export async function POST(request: NextRequest) {
         : appliance_type === ApplianceType.Tv
           ? "TV"
           : "Appliance";
+
+  const limited = await takeAiRequestSlot(user.id);
+  if (limited) return limited;
 
   const openai = new OpenAI({ apiKey });
 

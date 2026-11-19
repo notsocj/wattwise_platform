@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+import { adminError, requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
 
 function demoMac() {
   const hex = crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -24,7 +24,7 @@ export async function GET() {
   ]);
 
   if (simulationError || peopleError) {
-    return NextResponse.json({ error: simulationError?.message ?? peopleError?.message }, { status: 500 });
+    return adminError(simulationError?.message ?? peopleError?.message, "Something went wrong. Try again.", 500);
   }
 
   return NextResponse.json({ data: simulations ?? [], people: people ?? [] });
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     .select("*")
     .single();
 
-  if (deviceError || !device) return NextResponse.json({ error: deviceError?.message ?? "Unable to create demo device." }, { status: 400 });
+  if (deviceError || !device) return adminError(deviceError?.message, "Unable to create demo device.", 400);
 
   const { data: simulation, error: simulationError } = await auth.admin
     .from("demo_device_simulations")
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
   if (simulationError) {
     await auth.admin.from("devices").delete().eq("id", device.id);
-    return NextResponse.json({ error: simulationError.message }, { status: 400 });
+    return adminError(simulationError.message, "That change couldn't be saved. Check the values and try again.", 400);
   }
 
   await writeAdminAudit(auth.admin, {

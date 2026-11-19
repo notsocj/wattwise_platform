@@ -29,6 +29,15 @@ export async function requireAdminApi() {
   }
 }
 
+/**
+ * A failed admin database call: the detail goes to the server log, the browser
+ * gets a plain message (OWASP A10, no internal error text in responses).
+ */
+export function adminError(detail: string | undefined, message: string, status: number) {
+  console.error("admin route error:", detail ?? "unknown");
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function writeAdminAudit(
   admin: ReturnType<typeof createAdminClient>,
   input: {

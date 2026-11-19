@@ -30,6 +30,7 @@ import {
   getManilaDayKey,
   getStartOfManilaDay,
 } from "@/lib/date-utils";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 const VALID_INSIGHT_TYPES = Object.values(InsightType);
 
@@ -322,6 +323,9 @@ export async function POST(request: NextRequest) {
       deviceCount: devices.length,
     });
 
+    const limited = await takeAiRequestSlot(user.id);
+    if (limited) return limited;
+
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
       model: OPENAI_CHAT_MODEL,
@@ -388,8 +392,8 @@ export async function POST(request: NextRequest) {
     console.error("Insights API error:", err);
     return NextResponse.json(
       {
-        error:
-          err instanceof Error ? err.message : "Failed to generate insight",
+        // The detail is logged above; never send provider or database errors to the browser.
+        error: "We couldn't generate your insight right now. Try again in a minute.",
       },
       { status: 500 }
     );

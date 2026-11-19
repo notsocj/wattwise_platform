@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isCrossSiteApiWrite } from "@/lib/csrf";
 import { getHomePathForRole } from "@/lib/roles";
 import {
   FORWARDED_IDENTITY_HEADERS,
@@ -20,6 +21,19 @@ export async function updateSession(request: NextRequest) {
     /\.[a-zA-Z0-9]+$/.test(pathname)
   ) {
     return supabaseResponse;
+  }
+
+  // Refuse API writes sent by another website before touching the session.
+  if (
+    isCrossSiteApiWrite({
+      method: request.method,
+      pathname,
+      origin: request.headers.get("origin"),
+      host: request.headers.get("host"),
+      secFetchSite: request.headers.get("sec-fetch-site"),
+    })
+  ) {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
   const supabase = createServerClient(

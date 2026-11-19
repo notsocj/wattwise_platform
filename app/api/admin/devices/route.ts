@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { adminError, requireAdminApi } from "@/lib/admin-auth";
 import { toIlikeSearchTerm } from "@/lib/postgrest";
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   if (q) query = query.or(`device_name.ilike.%${q}%,mac_address.ilike.%${q}%`);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return adminError(error.message, "Something went wrong. Try again.", 500);
   const devices = data ?? [];
 
   // energy_logs.device_id holds either devices.id or the legacy MAC address.

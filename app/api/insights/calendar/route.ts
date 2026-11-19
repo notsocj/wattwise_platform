@@ -7,6 +7,7 @@ import type {
   CalendarAnalyticsRequest,
   CalendarAnalyticsResponse,
 } from "@/lib/calendar-ai";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 const SYSTEM_PROMPT = `You are WattWise Tipid Advisor, a Filipino energy consultant.
 Language: Casual conversational Taglish.
@@ -132,6 +133,9 @@ export async function POST(request: NextRequest) {
     weekdayDays.length > 0
       ? weekdayDays.reduce((sum, day) => sum + day.cost_php, 0) / weekdayDays.length
       : 0;
+
+  const limited = await takeAiRequestSlot(user.id);
+  if (limited) return limited;
 
   const openai = new OpenAI({ apiKey });
 

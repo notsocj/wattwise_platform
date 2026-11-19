@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+import { adminError, requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function PATCH(
@@ -52,7 +52,7 @@ export async function PATCH(
   if (Object.keys(update).length > 0) {
     const result = await auth.admin.from("devices").update(update).eq("id", deviceId);
     if (result.error) {
-      return NextResponse.json({ error: result.error.message }, { status: 400 });
+      return adminError(result.error.message, "That change couldn't be saved. Check the values and try again.", 400);
     }
   }
 
@@ -68,7 +68,7 @@ export async function PATCH(
       p_auto_cutoff_enabled: autoCutoffEnabled,
     });
     if (budgetError) {
-      return NextResponse.json({ error: budgetError.message }, { status: 400 });
+      return adminError(budgetError.message, "That change couldn't be saved. Check the values and try again.", 400);
     }
   }
 

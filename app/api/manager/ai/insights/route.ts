@@ -8,6 +8,7 @@ import {
   type ManagerDevice,
   type ManagerFleetSnapshot,
 } from "@/lib/manager-data";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 const MANAGER_INSIGHT_TYPES = [
   "manager_fleet_alert",
@@ -214,6 +215,9 @@ export async function GET() {
         fallback: true,
       });
     }
+
+    const limited = await takeAiRequestSlot(user.id);
+    if (limited) return limited;
 
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+import { adminError, requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
 import { buildDemoSimulationUpdate } from "@/lib/demo-units";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
@@ -35,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       : Promise.resolve({ data: beforeDevice, error: null }),
   ]);
   if (simulationResult.error || deviceResult.error) {
-    return NextResponse.json({ error: simulationResult.error?.message ?? deviceResult.error?.message }, { status: 400 });
+    return adminError(simulationResult.error?.message ?? deviceResult.error?.message, "That change couldn't be saved. Check the values and try again.", 400);
   }
 
   await writeAdminAudit(auth.admin, {

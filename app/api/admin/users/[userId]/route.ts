@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+import { adminError, requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
 const roles = new Set(["user", "manager", "tenant", "super_admin"]);
 export async function PATCH(
   request: NextRequest,
@@ -37,13 +37,13 @@ export async function PATCH(
   }
   if (Object.keys(update).length) {
     const result = await auth.admin.from("profiles").update(update).eq("id", userId);
-    if (result.error) return NextResponse.json({ error: result.error.message }, { status: 500 });
+    if (result.error) return adminError(result.error.message, "Something went wrong. Try again.", 500);
   }
   if (disabling) {
     const result = await auth.admin.auth.admin.updateUserById(userId, {
       ban_duration: body.disabled ? "876000h" : "none",
     });
-    if (result.error) return NextResponse.json({ error: result.error.message }, { status: 500 });
+    if (result.error) return adminError(result.error.message, "Something went wrong. Try again.", 500);
   }
   const { data: after } = await auth.admin.from("profiles").select("*").eq("id", userId).single();
   await writeAdminAudit(auth.admin, {

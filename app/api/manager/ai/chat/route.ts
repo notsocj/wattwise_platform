@@ -7,6 +7,7 @@ import {
   getManagerSession,
   type ManagerFleetSnapshot,
 } from "@/lib/manager-data";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -115,6 +116,9 @@ export async function POST(request: NextRequest) {
         fallback: true,
       });
     }
+
+    const limited = await takeAiRequestSlot(user.id);
+    if (limited) return limited;
 
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({

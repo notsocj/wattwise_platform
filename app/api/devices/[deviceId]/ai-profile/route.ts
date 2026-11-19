@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeMeralcoBill } from "@/lib/meralco-rates";
 import { getActiveMeralcoRates } from "@/lib/meralco-rates-server";
 import { applianceLabel } from "@/lib/device-edit";
+import { takeAiRequestSlot } from "@/lib/ai-rate-limit";
 
 const FALLBACK_PROMPT_RATE_PHP_PER_KWH = 12;
 const AI_SAFETY_FACTOR_PHP_PER_KWH = 12;
@@ -264,6 +265,9 @@ export async function POST(
   }
 
   try {
+    const limited = await takeAiRequestSlot(user.id);
+    if (limited) return limited;
+
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
       model: OPENAI_CHAT_MODEL,

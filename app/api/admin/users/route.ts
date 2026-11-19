@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { adminError, requireAdminApi } from "@/lib/admin-auth";
 import { toIlikeSearchTerm } from "@/lib/postgrest";
 export async function GET(request: NextRequest) {
   const auth = await requireAdminApi();
@@ -24,6 +24,6 @@ export async function GET(request: NextRequest) {
   if (status === "disabled") query = query.not("disabled_at", "is", null);
   if (status === "active") query = query.is("disabled_at", null);
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return adminError(error.message, "Something went wrong. Try again.", 500);
   return NextResponse.json({ data: data ?? [], page, pageSize, total: count ?? 0 });
 }

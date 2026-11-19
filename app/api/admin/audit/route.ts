@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { adminError, requireAdminApi } from "@/lib/admin-auth";
 export async function GET(request: NextRequest) {
   const auth = await requireAdminApi();
   if ("response" in auth) return auth.response;
@@ -17,6 +17,6 @@ export async function GET(request: NextRequest) {
     if (value) q = q.eq(key, value);
   }
   const { data, error, count } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return adminError(error.message, "Something went wrong. Try again.", 500);
   return NextResponse.json({ data: data ?? [], page, pageSize: size, total: count ?? 0 });
 }

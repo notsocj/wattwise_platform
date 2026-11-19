@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
+import { adminError, requireAdminApi, writeAdminAudit } from "@/lib/admin-auth";
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ deviceId: string }> },
@@ -25,7 +25,7 @@ export async function POST(
     .eq("id", deviceId)
     .select("*")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return adminError(error.message, "Something went wrong. Try again.", 500);
   await writeAdminAudit(auth.admin, {
     actorId: auth.user.id,
     action: "relay_change",
