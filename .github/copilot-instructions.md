@@ -42,7 +42,7 @@ Overview, Users, Devices, Demo Units, Meralco Rates (read-only history; rates co
 ### Background systems
 - **Meralco rate sync**: Edge Function `supabase/functions/sync-meralco-rates`, triggered daily at 03:00 UTC by `.github/workflows/sync-meralco-rates.yml`.
 - **Budget notifications**: Edge Function `dispatch-budget-notifications` sends OneSignal push and Resend email from `device_budget_events` (50% in-app only, 80% push, 100% push plus email).
-- **Demo units**: simulated in SQL by `public.simulate_demo_units()` on a 10-second pg_cron job.
+- **Demo units**: simulated in SQL by `public.simulate_demo_units()` on a 15-second pg_cron job (migration `047`; keep it under the 20 s LIVE window).
 - **Budget cutoff**: a database trigger compares variable Meralco spend for the billing cycle against each device's limit.
 
 ### Not built

@@ -149,7 +149,7 @@ Needs a super admin account.
 - [ ] Devices shows Online for units that reported in the last 20 seconds, and "last seen …" or "never seen" for the rest.
 - [ ] Save a user or device edit that the server rejects. ✅ The error shows inside the edit panel, not a browser popup.
 - [ ] Reset or delete a demo unit. ✅ The app's own confirmation dialog appears.
-- [ ] Create and start a new demo unit. ✅ Within about 10 seconds its owner's dashboard shows it LIVE. It begins with live readings; it does not seed 14 days of history.
+- [ ] Create and start a new demo unit. ✅ Within about 15 seconds its owner's dashboard shows it LIVE. It begins with live readings; it does not seed 14 days of history.
 - [ ] Start an existing demo unit that has been paused for at least 30 minutes. ✅ It resumes its cumulative meter and fills the existing gap in 15-minute steps, capped at 14 days. Previously recorded history remains intact.
 - [ ] Pause a running demo unit and restart it within one minute. ✅ Its next reading starts a fresh four-hour run, with its cumulative meter and previous history preserved.
 - [ ] Turn a running demo unit off from the owner's dashboard. ✅ Its watts drop to 0 and its kWh stops growing.

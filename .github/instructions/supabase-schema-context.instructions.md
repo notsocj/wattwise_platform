@@ -634,7 +634,7 @@ SECURITY DEFINER, EXECUTE for `service_role` only (also checks `auth.role()`). R
 
 | Job | Schedule | Command |
 | --- | --- | --- |
-| `simulate-demo-units` | `10 seconds` | `SELECT public.simulate_demo_units()` |
+| `simulate-demo-units` | `15 seconds` (migration `047`) | `SELECT public.simulate_demo_units()` |
 | `purge-cron-run-details` | `17 3 * * *` (daily, pg_cron clock) | `DELETE FROM cron.job_run_details WHERE end_time < now() - interval '1 day'` |
 | `run-device-automations` (`041`) | `15 seconds` | `SELECT public.run_device_automations()` |
 

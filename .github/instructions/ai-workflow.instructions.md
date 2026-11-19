@@ -107,7 +107,7 @@ const { data } = await supabase.rpc('get_usage_kwh_by_device', {
 
 ### 2c. Demo-unit lifecycle
 
-- `public.simulate_demo_units()` runs through pg_cron every 10 seconds (migration `039`). The previous Edge Function and manual Run now endpoint are removed.
+- `public.simulate_demo_units()` runs through pg_cron every 15 seconds (migration `039`, slowed by `047` to save disk IO; keep it under the 20 s LIVE window). The previous Edge Function and manual Run now endpoint are removed.
 - An explicit Start (`PATCH /api/admin/demo-units/[deviceId]` with `is_active: true`) must clear `live_since` in the same update. The simulator establishes the new timestamp on its next tick, preventing an expired run from immediately pausing again. Pause and settings-only edits must not renew the run.
 - Start preserves `energy_kwh` and `last_generated_at`, allowing the SQL simulator to backfill an existing gap in 15-minute steps, capped at 14 days. New or reset meters have no prior timestamp and begin with live readings rather than seeded history. Meter reset retains historical rows.
 - Keep regression coverage for restarting after the four-hour timeout and after a short manual pause. The restart fix changes the admin write contract only; it requires no new migration beyond `039`.
