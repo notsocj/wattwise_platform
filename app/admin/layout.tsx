@@ -26,6 +26,11 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
+  // Second factor (authenticator app), also enforced by the middleware.
+  if (user.aal !== "aal2") {
+    redirect("/two-factor");
+  }
+
   return (
     <div className="min-h-screen bg-canvas text-fg">
       <AdminSidebar

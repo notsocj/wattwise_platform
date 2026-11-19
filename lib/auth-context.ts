@@ -4,6 +4,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
+  USER_AAL_HEADER,
   USER_BILLING_DAY_HEADER,
   USER_EMAIL_HEADER,
   USER_ID_HEADER,
@@ -22,6 +23,8 @@ export type SessionUser = {
    * returns. Null when unknown. Tenants bill on their owner's day instead.
    */
   billingCycleStartDay: number | null;
+  /** "aal2" once this session passed a second factor; null when unknown (treated as not verified). */
+  aal: string | null;
 };
 
 /**
@@ -38,6 +41,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
       email: requestHeaders.get(USER_EMAIL_HEADER) || null,
       role: requestHeaders.get(USER_ROLE_HEADER) || null,
       billingCycleStartDay: Number.isInteger(billingDay) && billingDay >= 1 ? billingDay : null,
+      aal: requestHeaders.get(USER_AAL_HEADER) || null,
     };
   }
 
@@ -46,6 +50,6 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     data: { user },
   } = await supabase.auth.getUser();
   return user
-    ? { id: user.id, email: user.email ?? null, role: null, billingCycleStartDay: null }
+    ? { id: user.id, email: user.email ?? null, role: null, billingCycleStartDay: null, aal: null }
     : null;
 });

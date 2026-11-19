@@ -16,6 +16,10 @@ export async function requireAdminApi() {
     .single();
   if (profile?.role !== "super_admin")
     return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) } as const;
+  if (user.aal !== "aal2")
+    return {
+      response: NextResponse.json({ error: "Verify with your authenticator app first." }, { status: 403 }),
+    } as const;
   try {
     return { user, profile, admin: createAdminClient() } as const;
   } catch {

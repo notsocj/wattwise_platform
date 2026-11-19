@@ -5,9 +5,12 @@ export const USER_ID_HEADER = "x-wattwise-user-id";
 export const USER_EMAIL_HEADER = "x-wattwise-user-email";
 export const USER_ROLE_HEADER = "x-wattwise-user-role";
 export const USER_BILLING_DAY_HEADER = "x-wattwise-billing-day";
+// The session's authenticator assurance level ("aal1", or "aal2" after a second factor).
+export const USER_AAL_HEADER = "x-wattwise-aal";
 export const FORWARDED_IDENTITY_HEADERS = [
   USER_ID_HEADER,
   USER_EMAIL_HEADER,
   USER_ROLE_HEADER,
   USER_BILLING_DAY_HEADER,
+  USER_AAL_HEADER,
 ];

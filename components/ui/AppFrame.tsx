@@ -6,7 +6,7 @@ import AppSidebar from "@/components/ui/AppSidebar";
 import AuthBrandPanel from "@/components/ui/AuthBrandPanel";
 import { APP_DESKTOP_SECTIONS, APP_SHELL_PREFIXES, matchesPath } from "@/components/ui/app-nav";
 
-const AUTH_SPLIT_PREFIXES = ["/login", "/register", "/forgot-password"];
+const AUTH_SPLIT_PREFIXES = ["/login", "/register", "/forgot-password", "/two-factor"];
 
 /** Phones get the 430px app column; laptops and desktops (lg+) get room to breathe. */
 const PHONE_COLUMN = "mx-auto min-h-dvh w-full max-w-[430px] overflow-x-hidden sm:min-h-screen";

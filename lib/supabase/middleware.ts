@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getHomePathForRole } from "@/lib/roles";
 import {
   FORWARDED_IDENTITY_HEADERS,
+  USER_AAL_HEADER,
   USER_BILLING_DAY_HEADER,
   USER_EMAIL_HEADER,
   USER_ID_HEADER,
@@ -48,6 +49,8 @@ export async function updateSession(request: NextRequest) {
   // waits on an Auth server round trip the way getUser did.
   const { data: claimsData } = await supabase.auth.getClaims();
   const claims = claimsData?.claims;
+  // "aal2" only once this session passed a second factor (authenticator app code).
+  const aal = typeof claims?.aal === "string" ? claims.aal : null;
   let user: { id: string; email: string | null } | null =
     typeof claims?.sub === "string"
       ? { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null }
@@ -83,6 +86,7 @@ export async function updateSession(request: NextRequest) {
     "/admin",
     "/manager",
     "/update-password",
+    "/two-factor",
   ];
   const isProtected = protectedRoutes.some((route) =>
     pathname.startsWith(route)
@@ -100,6 +104,22 @@ export async function updateSession(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("error", "unauthorized");
     return NextResponse.redirect(loginUrl);
+  }
+
+  // The admin console also needs a second factor: send admins to verify (or set up)
+  // their authenticator app first. Admin APIs check the same in requireAdminApi().
+  if (pathname.startsWith("/admin") && user && aal !== "aal2") {
+    const verifyUrl = request.nextUrl.clone();
+    verifyUrl.pathname = "/two-factor";
+    verifyUrl.search = "";
+    return NextResponse.redirect(verifyUrl);
+  }
+
+  if (pathname.startsWith("/two-factor") && user && (profile?.role !== "super_admin" || aal === "aal2")) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = getHomePathForRole(profile?.role);
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (pathname.startsWith("/manager") && user && profile?.role !== "manager") {
@@ -139,6 +159,7 @@ export async function updateSession(request: NextRequest) {
     requestHeaders.set(USER_ID_HEADER, user.id);
     if (user.email) requestHeaders.set(USER_EMAIL_HEADER, user.email);
     if (profile?.role) requestHeaders.set(USER_ROLE_HEADER, profile.role);
+    if (aal) requestHeaders.set(USER_AAL_HEADER, aal);
     if (profile?.billing_cycle_start_day) {
       requestHeaders.set(USER_BILLING_DAY_HEADER, String(profile.billing_cycle_start_day));
     }
